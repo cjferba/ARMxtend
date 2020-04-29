@@ -12,7 +12,6 @@ import pickle
 import itertools
 import numpy as np
 
-from decimal import Decimal
 
 
 class apriori(object):

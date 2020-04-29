@@ -3,7 +3,7 @@
 ![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)
 ![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)
 
-**Mlxtend (machine learning extensions) is a Python library of useful tools for the association rule mining.**
+**ARMxtend (association rule mining extensions) is a Python library of useful tools for the association rule mining.**
 
 <br>
 
