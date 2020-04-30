@@ -1,0 +1,28 @@
+site_name: ARMxtend
+site_url: http://ugritlab.github.io/ARMxtend
+
+repo_url: https://github.com/ugritlab/ARMxtend
+repo_name: GitHub
+
+markdown_extensions:
+  - tables
+  - fenced_code
+#  - mdx_math:
+#      enable_dollar_delimiter: True #for use of inline $..$
+extra_javascript:
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
+  - mathjaxhelper.js
+extra_css:
+  - cinder/css/base.css
+  - cinder/css/bootstrap-custom.css
+  - cinder/css/bootstrap-custom.min.css
+  - cinder/css/cinder.css
+  - cinder/css/font-awesome-4.0.3.css
+  - cinder/css/highlight.css
+
+nav:
+- Home: index.md
+- About:
+  - Contributors: about.md
+  - Citing: cite.md
+
