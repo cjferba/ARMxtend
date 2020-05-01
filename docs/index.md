@@ -21,8 +21,8 @@
 
 ## Examples
 
-
-If you use mlxtend as part of your workflow in a scientific publication, please consider citing the mlxtend repository with the following DOI:
+## Citting
+If you use armxtend as part of your workflow in a scientific publication, please consider citing the armxtend repository with the following DOI:
 
 [![DOI](https://img.shields.io/badge/KNOSYS-2018.09.026-green)](https://doi.org/10.1016/j.knosys.2018.09.026)
 
