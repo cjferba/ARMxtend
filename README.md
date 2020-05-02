@@ -32,7 +32,7 @@ Check out the [Quick Start](http://cjferba.github.io/armxtend) documentation to 
 
 ## About Omniboard
 
-Lead Developer: [Carlos Fernandez Basso](https://github.com/vivekratnavel)
+Lead Developer: [Carlos Fernandez Basso](https://github.com/cjferba)
 
 
 ## License

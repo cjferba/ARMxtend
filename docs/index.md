@@ -15,8 +15,8 @@
 
 ## Links
 
-- **Documentation:** [http://cjferba.github.io/armxtend](http://cjferba.github.io/mlxtend)
-- Source code repository: [https://github.com/cjferba/armxtend](https://github.com/rasbt/mlxtend)
+- **Documentation:** [http://cjferba.github.io/armxtend](http://cjferba.github.io/ARMxtend)
+- Source code repository: [https://github.com/cjferba/armxtend](https://github.com/cjferba/ARMxtend)
 <hr>
 
 ## Examples
