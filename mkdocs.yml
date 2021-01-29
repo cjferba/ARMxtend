@@ -1,18 +1,18 @@
 site_name: ARMxtend
 site_url: http://cjferba.github.io/ARMxtend
-site_author: Sebastian Raschka
-site_description: A library consisting of useful tools and extensions for the day-to-day data science tasks.
+site_author: Carlos Fernandez-Basso
+site_description: A library consisting of useful tools for association rule mining.
 
 repo_url: https://github.com/cjferba/ARMxtend
 repo_name: GitHub
-edit_uri: docs/sources/user_guide/
+edit_uri: docs/user_guide/
 
 #include_search: true # not necessary for this theme
-docs_dir: sources
+#docs_dir: sources
 
-theme:
-    name: null
-    custom_dir: 'custom_theme/'
+#theme:
+#    name: null
+#    custom_dir: 'custom_theme/'
 
 markdown_extensions:
   - tables
@@ -30,7 +30,7 @@ extra_css:
   - cinder/css/font-awesome-4.0.3.css
   - cinder/css/highlight.css
 
-copyright: Copyright &copy; 2014-2020 <a href="http://sebastianraschka.com">Sebastian Raschka</a>
+copyright: Copyright &copy; 2016-2021 <a href="http://cjferba.github.com">Carlos Fernanadez-Basso</a>
 google_analytics: ['260344680', 'cjferba.github.io/ARMxtend/']
 
 nav:
