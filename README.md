@@ -13,7 +13,7 @@ Carlos Fernandez-Basso  2015-2020
 
 ## Links
 
-- **Documentation:** [http://cjferba.github.io/armxtend](http://cjferba.github.io/armxtend)
+- **Documentation:** [http://cjferba.github.io/armxtend](http://cjferba.github.io/ARMxtend)
 - PyPI: 
 
 
