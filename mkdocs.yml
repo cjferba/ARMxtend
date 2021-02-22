@@ -35,10 +35,10 @@ google_analytics: ['260344680', 'cjferba.github.io/ARMxtend/']
 
 nav:
 - Home: index.md
-# - User Guide:
-#   - USER_GUIDE_INDEX.md
-#   - classifier:
-#     - user_guide/classifier/Adaline.md
+- User Guide:
+   - USER_GUIDE_INDEX.md
+   - preprocessing:
+     - user_guide/preprocessing/Dicretization.md
 #     - user_guide/classifier/EnsembleVoteClassifier.md
 #     - user_guide/classifier/LogisticRegression.md
 #     - user_guide/classifier/MultiLayerPerceptron.md
