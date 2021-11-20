@@ -1,0 +1,65 @@
+class ItemsTree:
+    ITemsIterDeep = []
+    ItemOrder = []
+
+    # Guardar listas con ordenes
+    def __init__(self, ItemsCount, itemsOrde):
+        self.ItemOrder = itemsOrde
+        auxDic = dict()
+        for i in ItemsCount:
+            print(i)
+            auxDic[i[0]] = i[1]
+        self.ITemsIterDeep.append((1, auxDic))
+
+    def GenerateCombi(self, iItem, FrequItem=[], orden=[]):
+        if iItem > 1:
+            if (iItem == 2):
+                auxDic = dict()
+                for i in range(0, len(self.ItemOrder)):
+                    for j in range(i + 1, len(self.ItemOrder)):
+                        auxDic[str(self.ItemOrder[i]) + "_" + str(self.ItemOrder[j])] = 0
+                if (len(self.ITemsIterDeep) > 0):
+                    self.ITemsIterDeep.append((1, auxDic))
+                else:
+                    self.ITemsIterDeep[1] = (1, auxDic)
+            #                   Almacenar ordenes
+            else:
+                auxDic = dict()
+                for i in range(0, len(FrequItem)):
+                    A = FrequItem[i].split("_")
+                    Used = FrequItem[i].split("_")
+                    for j in range(i + 1, len(FrequItem)):
+                        B = FrequItem[j].split("_")
+                        common = list(set(A) - (set(A) - set(B)))
+                        NoRepeat = [x for x in B if x not in set(common + Used)]
+                        for item in NoRepeat:
+                            Used.append(item)
+                            A1 = '_'.join(map(str, A + [item]))
+                            print(A1)
+                        # auxDic[str(FrequItem[i]) + str(FrequItem[j])] = 0
+                        # print(str(self.ItemOrder[i]) + str(self.ItemOrder[j]))
+                        # commonalities = list(set(A) - (set(A) - set(B)))
+                        # l3 = [x for x in A if x not in commonalities]
+                # if (len(self.ITemsIterDeep) >= iItem-1):
+                #     self.ITemsIterDeep.append((1, auxDic))
+                else:
+                    self.ITemsIterDeep[1] = (1, auxDic)
+        return auxDic
+
+    def SetItemset(self, iItem):
+        x = 0
+        return 0
+
+
+lista = [("a", 2), ("b", 6), ("c", 4), ("d", 9), ("e", 6), ("f", 4)]
+orden = ["d", "b", "f", "e", "c", "a"]
+a = ItemsTree(lista, orden)
+print(a.ITemsIterDeep)
+print(a.GenerateCombi(2))
+FI = ["a_b", "b_c", "c_e", "d_e", "d_f", "e_f"]
+#FI = ["a", "b", "c", "d", "e", "f"]
+a.GenerateCombi(3, FI, orden)
+# A = ["c", "f", "g"]
+# B = ["a", "b", "c"]
+#
+# set(A).intersection(B)
