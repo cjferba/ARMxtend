@@ -70,7 +70,8 @@ def association_rules(df, metric="confidence",
     Examples
     -----------
     For usage examples, please see
-    http://rasbt.github.io/mlxtend/user_guide/frequent_patterns/association_rules/
+    https://cjferba.github.io/ARMxtend/user_guide/ARM/association_rules/
+    and ``examples/example_association_rules.py`` in this repository.
 
     """
 
