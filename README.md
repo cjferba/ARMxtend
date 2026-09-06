@@ -44,7 +44,7 @@ que no requieren un cluster ni una JVM en ejecucion).
 ### Preprocesado y visualizacion
 
 * `preprocessing.FuzzyLib`: fuzzificacion de atributos numericos (particion triangular de Ruspini)
-* `VizARM.AREtoGraph`: exportacion de reglas de asociacion a un grafo (GraphML/DOT)
+* `VizARM.AREtoGraph`: transformacion de reglas de asociacion al grafo tipado item/rule VizARE, exportable a JGF/GraphML/DOT
 
 
 ## Getting Started

@@ -147,14 +147,16 @@ rules = association_rules_bd(sc, freq_itemsets, min_conf=0.7)
 
 ## 6. Visualizing rules
 
-`VizARM.AREtoGraph` turns a rules DataFrame into a directed graph (GraphML or DOT), ready to open in
-Gephi, Cytoscape or Graphviz:
+`VizARM.AREtoGraph` turns a rules DataFrame into the VizARE typed graph -- item nodes and rule
+nodes connected by `antecedent`/`consequent` edges, following Fernandez-Basso et al. (2026, see
+[Citing ARMxtend](cite.md)) -- ready to export to JSON Graph Format, GraphML, or DOT (Gephi,
+Cytoscape, Graphviz, NetworkX):
 
 ```python
 from ARMxtend.VizARM import AREtoGraph
 
 graph = AREtoGraph.from_dataframe(rules, rule_measures=("confidence", "certainty_factor"))
-dot = graph.exportGraph(type=1)   # 0: GraphML, 1: DOT, 2: the networkx.DiGraph itself
+jgf = graph.exportGraph(type=0)  # 0: JGF, 1: GraphML, 2: DOT, 3: the networkx.DiGraph itself
 ```
 
 ## 7. Fuzzifying numeric attributes

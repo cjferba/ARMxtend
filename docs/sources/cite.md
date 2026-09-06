@@ -103,6 +103,27 @@ Applied Soft Computing, 49, 212-223.
 
 [![DOI](https://img.shields.io/badge/ASOC-2016.08.014-green)](https://doi.org/10.1016/j.asoc.2016.08.014)
 
+## Rule visualization (`VizARM`)
+
+Fernandez-Basso, C., Ruiz, M.D., Molina-Solana, M., Martin-Bautista, M.J. (2026).
+[VizARE: An Intermediate Representation to Support the Visualization of Association Rules in Data Mining](https://doi.org/10.3390/fi18070374).
+Future Internet, 18(7), 374.
+
+```
+@article{fernandezbasso2026vizare,
+  title={VizARE: An Intermediate Representation to Support the Visualization of Association Rules in Data Mining},
+  author={Fernandez-Basso, Carlos and Ruiz, M. Dolores and Molina-Solana, Miguel and Martin-Bautista, Maria J.},
+  journal={Future Internet},
+  volume={18},
+  number={7},
+  pages={374},
+  year={2026},
+  publisher={MDPI}
+}
+```
+
+[![DOI](https://img.shields.io/badge/FI-fi18070374-green)](https://doi.org/10.3390/fi18070374)
+
 ## Fuzzification / preprocessing (`preprocessing.FuzzyLib`)
 
 Fernandez-Basso, C., Ruiz, M. D., & Martin-Bautista, M. J. (2020).

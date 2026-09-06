@@ -371,12 +371,14 @@ rules = association_rules_bd(sc, freq_itemsets, min_conf=0.7)
 <p><code>SFIM</code> mines frequent itemsets over a Spark Streaming sliding window (see <code>SFIM.main</code>), and
 <code>SARE.extractAssociationRules</code> extracts association rules from its current frequent-itemset tree.</p>
 <h2 id="6-visualizing-rules">6. Visualizing rules</h2>
-<p><code>VizARM.AREtoGraph</code> turns a rules DataFrame into a directed graph (GraphML or DOT), ready to open in
-Gephi, Cytoscape or Graphviz:</p>
+<p><code>VizARM.AREtoGraph</code> turns a rules DataFrame into the VizARE typed graph -- item nodes and rule
+nodes connected by <code>antecedent</code>/<code>consequent</code> edges, following Fernandez-Basso et al. (2026, see
+<a href="../cite/">Citing ARMxtend</a>) -- ready to export to JSON Graph Format, GraphML, or DOT (Gephi,
+Cytoscape, Graphviz, NetworkX):</p>
 <pre><code class="language-python">from ARMxtend.VizARM import AREtoGraph
 
 graph = AREtoGraph.from_dataframe(rules, rule_measures=(&quot;confidence&quot;, &quot;certainty_factor&quot;))
-dot = graph.exportGraph(type=1)   # 0: GraphML, 1: DOT, 2: the networkx.DiGraph itself
+jgf = graph.exportGraph(type=0)  # 0: JGF, 1: GraphML, 2: DOT, 3: the networkx.DiGraph itself
 </code></pre>
 <h2 id="7-fuzzifying-numeric-attributes">7. Fuzzifying numeric attributes</h2>
 <p><code>preprocessing.FuzzyLib</code> turns a numeric column into a set of overlapping fuzzy labels (a

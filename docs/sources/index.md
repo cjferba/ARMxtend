@@ -30,7 +30,7 @@ streaming scenarios, plus meta-association rules for summarizing rules found acr
 | Meta-rules (rules about rules, across multiple datasets) | `ARM.meta_rules.crisp_meta_association_rules` | `ARM.meta_rules.fuzzy_meta_association_rules`               |
 
 Plus `preprocessing.FuzzyLib` for fuzzifying numeric attributes and `VizARM.AREtoGraph` for
-exporting rules to a graph (GraphML/DOT).
+transforming rules into the VizARE typed item/rule graph (JGF/GraphML/DOT).
 
 See the [Quick Start](quick-start.md) for runnable examples of every one of these, and the
 [User Guide](USER_GUIDE_INDEX.md) for the full reference of each module.

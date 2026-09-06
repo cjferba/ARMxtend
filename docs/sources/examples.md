@@ -255,10 +255,12 @@ Columnas difusas anadidas: ['temperature_cold', 'temperature_comfortable', 'temp
         28.0        s6               0.0                      0.0               1.0
 ```
 
-## Visualization: exporting rules to a graph (`VizARM.AREtoGraph`)
+## Visualization: the VizARE typed graph (`VizARM.AREtoGraph`)
 
-Takes the crisp rules mined in the first example and exports them as a directed graph (items as
-nodes, rules as edges) in GraphML (Gephi/Cytoscape) and DOT (Graphviz) format. See
+Takes the crisp rules mined in the first example and transforms them into the **VizARE** typed
+graph (item nodes + rule nodes, connected by `antecedent`/`consequent` edges) of Fernandez-Basso,
+Ruiz, Molina-Solana & Martin-Bautista (2026), exports it to the paper's proposed intermediate
+format (JSON Graph Format), and builds the optional rule-summarization layer (Section 4.2). See
 [`VizARM.AREtoGraph`](user_guide/VizARM.md).
 
 ```python
@@ -284,36 +286,50 @@ def main():
     })
     rulesDf = association_rules(itemsetsDf, metric="confidence", min_threshold=0.7)
 
-    graph = AREtoGraph.from_dataframe(rulesDf, rule_measures=("confidence", "lift"))
-    print("Grafo: {} nodos (items), {} aristas (reglas)".format(
-        graph.graph.number_of_nodes(), graph.graph.number_of_edges()))
-    print(graph.exportGraph(type=1))  # DOT
+    graph = AREtoGraph.from_dataframe(rulesDf, rule_measures=("support", "confidence", "lift"))
+    # Each rule is its own node -- e.g. rule::A=>C -- linked to item nodes A
+    # (antecedent edge) and C (consequent edge); there is no direct A -> C edge.
+    print(graph.to_jgf())
 
-    return graph
+    summaryIds = graph.summarize(signature="consequent", measures=("confidence", "lift"))
+    return graph, summaryIds
 
 
 if __name__ == "__main__":
     main()
 ```
 
-(full source, including the GraphML export: [`examples/example_vizarm.py`](https://github.com/cjferba/ARMxtend/blob/master/examples/example_vizarm.py))
+(full source: [`examples/example_vizarm.py`](https://github.com/cjferba/ARMxtend/blob/master/examples/example_vizarm.py))
 
-Output:
+Output (abridged):
 
 ```text
-Grafo: 4 nodos (items), 3 aristas (reglas)
+Grafo: 4 nodos item, 3 nodos rule, 6 aristas
+  rule::A=>C: ['A'] -> ['C']  support=0.40 confidence=0.80 lift=1.14
+  rule::D=>B: ['D'] -> ['B']  support=0.50 confidence=0.83 lift=1.04
+  rule::C=>B: ['C'] -> ['B']  support=0.50 confidence=0.71 lift=0.89
 
-DOT:
-digraph ARM {
-    "A";
-    "C";
-    "D";
-    "B";
-    "A" -> "C" [confidence="0.8", lift="1.142857142857143"];
-    "C" -> "B" [confidence="0.7142857142857143", lift="0.8928571428571428"];
-    "D" -> "B" [confidence="0.8333333333333334", lift="1.0416666666666667"];
-}
+JGF (formato intermedio propuesto, primeras lineas):
+{
+  "graph": {
+    "directed": true,
+    "type": "association-rules",
+    "nodes": {
+      "rule::A=>C": {
+        "label": "A -> C",
+        "metadata": {
+          "kind": "rule",
+          "group": "rule",
+          "support": 0.4,
+          "confidence": 0.8,
+
+Resumen por consecuente (2 grupos):
+  1 reglas -> ['C']  confidence en [0.80, 0.80] (media 0.80)
+  2 reglas -> ['B']  confidence en [0.71, 0.83] (media 0.77)
 ```
+
+GraphML (Gephi/Cytoscape/NetworkX) and DOT (Graphviz) exports are still available as
+`graph.exportGraph(type=1)`/`type=2`, for tools that don't consume JGF directly.
 
 ## Big Data and streaming algorithms
 
