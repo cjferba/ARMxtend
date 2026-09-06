@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Carlos Fernandez-Basso">
+        <link rel="canonical" href="http://cjferba.github.io/ARMxtend/user_guide/ARM/meta_rules/">
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>ARM.meta_rules - ARMxtend</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">ARMxtend</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../USER_GUIDE_INDEX/" class="dropdown-item">User Guide Index</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crisp association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
+</li>
+                                    
+<li>
+    <a href="../../../contributors/" class="dropdown-item">Contributors</a>
+</li>
+                                    
+<li>
+    <a href="../../../license/" class="dropdown-item">License</a>
+</li>
+                                    
+<li>
+    <a href="../../../cite/" class="dropdown-item">Citing ARMxtend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../../SARE_SFIM/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../../VizARM/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/user_guide/ARM/meta_rules.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#armmeta_rules" class="nav-link">ARM.meta_rules</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#mining-the-primary-rules" class="nav-link">Mining the primary rules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#crisp-meta-rules" class="nav-link">Crisp meta-rules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#fuzzy-meta-rules" class="nav-link">Fuzzy meta-rules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#example" class="nav-link">Example</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="armmeta_rules"><code>ARM.meta_rules</code></h1>
+<p>Meta-association rules: mining associations over a set of association rules already extracted from
+<strong>multiple</strong> datasets, following Ruiz, Gomez-Romero, Molina-Solana, Campana &amp; Martin-Bautista
+(2016) -- see <a href="../../../cite/">Citing ARMxtend</a>.</p>
+<p>Given k datasets <code>D_1, ..., D_k</code> sharing a domain (e.g. one per store, sensor, or time window),
+each yielding a set of primary association rules <code>R_1, ..., R_k</code>, a <strong>meta-database</strong> is built where
+each row is a dataset <code>D_j</code> and each column (item) is a rule <code>r_i</code> (plus, optionally, extra
+attributes of the dataset). Mining association rules over this meta-database yields <strong>meta-rules</strong>
+such as <code>r1 ^ r2 -&gt; r3</code> (rules that co-occur across a high proportion of datasets) or <code>r1 -&gt; at2</code>
+(a rule associated with a dataset attribute).</p>
+<p>Two variants are provided, mirroring Algorithms 3 and 4 of the paper:</p>
+<ul>
+<li><strong>Crisp</strong> (<code>crisp_meta_association_rules</code>): the meta-database is boolean -- 1 if the rule was
+  found in that dataset, 0 otherwise. Only presence/absence matters, not how strong the rule was.</li>
+<li><strong>Fuzzy</strong> (<code>fuzzy_meta_association_rules</code>): the meta-database uses the rule's own support or
+  certainty factor in that dataset as its fuzzy degree, so a rule mined with confidence 0.95
+  contributes more than one mined with confidence 0.51 -- the resulting meta-rules incorporate the
+  quality of the primary rules, not just their presence.</li>
+</ul>
+<p>!!! warning "Rule and item identifiers"
+    Identifiers used as meta-database items (rule keys, attribute names) must not contain the <code>-</code>
+    character, since it is used internally as the itemset-key separator. Use <code>rule_key()</code> to build
+    safe rule identifiers.</p>
+<h2 id="mining-the-primary-rules">Mining the primary rules</h2>
+<pre><code class="language-python">mine_primary_rule_measures(datasets, min_supp=0.1, min_conf=0.5, metric=&quot;confidence&quot;)
+</code></pre>
+<p>Mines crisp rules independently in each dataset of <code>datasets</code> (a list of transaction lists) using
+<a href="../../FFIM/"><code>FFIM.fpgrowth</code></a> + <a href="../association_rules/"><code>ARM.association_rules</code></a>, and returns one
+<code>dict {rule_key: metric value}</code> per dataset -- the input expected by both meta-rule variants below.</p>
+<h2 id="crisp-meta-rules">Crisp meta-rules</h2>
+<pre><code class="language-python">build_crisp_meta_database(rule_sets, attributes=None)
+crisp_meta_association_rules(rule_sets, attributes=None, min_supp=0.5, min_conf=0.5, metric=&quot;confidence&quot;)
+</code></pre>
+<ul>
+<li><strong>rule_sets</strong> (<code>Sequence[Set[str]]</code>): for each dataset, the set of rule keys found in it (or a
+  <code>dict</code>, as returned by <code>mine_primary_rule_measures</code> -- only its keys are used).</li>
+<li><strong>attributes</strong> (<code>Sequence[dict[str, int]]</code>, optional): extra boolean attributes per dataset.</li>
+</ul>
+<h2 id="fuzzy-meta-rules">Fuzzy meta-rules</h2>
+<pre><code class="language-python">build_fuzzy_meta_database(rule_measure_sets, attributes=None, normalize=False)
+fuzzy_meta_association_rules(rule_measure_sets, attributes=None, num_alpha=10,
+                             min_supp=0.1, min_conf=0.5, metric=&quot;confidence&quot;, normalize=False)
+</code></pre>
+<ul>
+<li><strong>rule_measure_sets</strong> (<code>Sequence[dict[str, float]]</code>): for each dataset, <code>{rule_key: measure in
+  [0, 1]}</code> -- the output of <code>mine_primary_rule_measures</code>.</li>
+<li><strong>normalize</strong> (<code>bool</code>): if <code>True</code>, scales each rule's column to <code>[0, 1]</code> by its maximum across
+  datasets (useful when every primary rule's support is very low in absolute terms).</li>
+</ul>
+<h2 id="example">Example</h2>
+<pre><code class="language-python">from ARMxtend.ARM.meta_rules import mine_primary_rule_measures, crisp_meta_association_rules, \
+    fuzzy_meta_association_rules
+
+store1 = [[&quot;bread&quot;, &quot;milk&quot;]] * 6 + [[&quot;bread&quot;]] * 2 + [[&quot;milk&quot;]] * 2
+store2 = [[&quot;bread&quot;, &quot;milk&quot;]] * 5 + [[&quot;bread&quot;]] * 3 + [[&quot;milk&quot;]] * 2
+store3 = [[&quot;cola&quot;, &quot;chips&quot;]] * 7 + [[&quot;cola&quot;]] * 3
+
+rule_measures = mine_primary_rule_measures([store1, store2, store3], min_supp=0.3, min_conf=0.5)
+# [{'milk=&gt;bread': 0.75, 'bread=&gt;milk': 0.75},
+#  {'milk=&gt;bread': 0.71, 'bread=&gt;milk': 0.62},
+#  {'chips=&gt;cola': 1.0, 'cola=&gt;chips': 0.7}]
+
+crisp_meta = crisp_meta_association_rules([set(m) for m in rule_measures], min_supp=0.5, min_conf=0.9)
+# bread=&gt;milk &lt;-&gt; milk=&gt;bread, support=0.67 (found in 2/3 stores);
+# the chips&lt;-&gt;cola rules are dropped (found in only 1/3 stores, below min_supp)
+
+fuzzy_meta = fuzzy_meta_association_rules(rule_measures, num_alpha=10, min_supp=0.3, min_conf=0.5)
+</code></pre></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../js/base.js"></script>
+        <script src="../../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

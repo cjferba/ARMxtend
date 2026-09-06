@@ -1,40 +1,30 @@
 # User Guide Index
 
+## Crisp association rule mining (single machine)
+- [ARM.association_rules](user_guide/ARM/association_rules.md)
+- [FFIM.fpgrowth](user_guide/FFIM.md)
 
-## `data`
-- [autompg_data](user_guide/data/autompg_data.md)
+## Fuzzy association rule mining (single machine)
+- [FIM.FARE](user_guide/FIM/FARE.md)
+- [FFIM.fuzzy_fpgrowth](user_guide/FFIM.md)
 
+## Crisp frequent itemsets and association rules (Big Data, Spark)
+- [FIM.apriori (DApriori / DAprioriTID)](user_guide/FIM/apriori.md)
+- [FIM.Eclat.DECLAT](user_guide/FIM/Eclat.md)
+- [FIM.BD_ARE](user_guide/FIM/BD_ARE.md)
 
-## `evaluate`
-- [confidence](user_guide/evaluate/confidence.md)
+## Fuzzy frequent itemsets (Big Data, Spark)
+- [FIM.BD_FARE.FuzzyDAprioriTID](user_guide/FIM/BD_FARE.md)
+- [FIM.Eclat.FuzzyDECLAT](user_guide/FIM/Eclat.md)
 
+## Streaming frequent itemsets and association rules (Spark)
+- [SFIM / SARE (FIMoTS)](user_guide/SARE_SFIM.md)
 
-## `feature_extraction`
+## Meta-association rules
+- [ARM.meta_rules](user_guide/ARM/meta_rules.md)
 
+## Visualization
+- [VizARM.AREtoGraph](user_guide/VizARM.md)
 
-## `feature_selection`
-
-
-
-## `frequent itemset mining`
-- [apriori](user_guide/frequent_patterns/apriori.md)
-- [fpgrowth](user_guide/frequent_patterns/fpgrowth.md)
-
-## `association rule mining`
-- [association_rules](user_guide/frequent_patterns/association_rules.md)
-
-## `general concepts`
-- [activation-functions](user_guide/general_concepts/activation-functions.md)
-- [gradient-optimization](user_guide/general_concepts/gradient-optimization.md)
-- [linear-gradient-derivative](user_guide/general_concepts/linear-gradient-derivative.md)
-- [regularization-linear](user_guide/general_concepts/regularization-linear.md)
-
-
-## `Visualization`
-
-## `preprocessing`
-- [Discretization](user_guide/preprocessing/Discretization.md)
-
-
-## `utils`
-- [Counter](user_guide/utils/)
+## Preprocessing
+- [preprocessing.FuzzyLib](user_guide/preprocessing/FuzzyLib.md)

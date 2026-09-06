@@ -7,6 +7,8 @@ from itertools import combinations
 import numpy as np
 import pandas as pd
 
+from ._measures import certainty_factor
+
 
 def association_rules(df, metric="confidence",
                       min_threshold=0.8, support_only=False):
@@ -101,13 +103,14 @@ def association_rules(df, metric="confidence",
         "lift": lambda sAC, sA, sC: metric_dict["confidence"](sAC, sA, sC)/sC,
         "leverage": lambda sAC, sA, sC: metric_dict["support"](
              sAC, sA, sC) - sA*sC,
-        "conviction": lambda sAC, sA, sC: conviction_helper(sAC, sA, sC)
+        "conviction": lambda sAC, sA, sC: conviction_helper(sAC, sA, sC),
+        "certainty_factor": lambda sAC, sA, sC: certainty_factor(sAC, sA, sC)
         }
 
     columns_ordered = ["antecedent support", "consequent support",
                        "support",
                        "confidence", "lift",
-                       "leverage", "conviction"]
+                       "leverage", "conviction", "certainty_factor"]
 
     # check for metric compliance
     if support_only:

@@ -1,9 +1,0 @@
-# Discretization
-
-## Explanation
-   
-   
-## Use
-
-## Examples
-

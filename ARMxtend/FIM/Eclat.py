@@ -18,7 +18,7 @@ consistente con el resto de algoritmos difusos de ARMxtend (FIM.BD_FARE).
 """
 import numpy as np
 
-from ._shared import generate_candidates, alpha_cuts
+from ._shared import generate_candidates, alpha_cuts, alpha_levels, alpha_weights, weighted_alpha_aggregate
 
 
 class DECLAT(object):
@@ -115,9 +115,18 @@ class FuzzyDECLAT(object):
             num_alpha (int): numero de alpha-cortes a considerar
 
         Retorna:
-            dict {itemset_key: numpy.ndarray(num_alpha)} con el soporte
-            relativo de cada itemset frecuente en, al menos, un alpha-corte
+            dict {itemset_key: numpy.ndarray(num_alpha)} con el bit-list de
+            soporte relativo de cada itemset frecuente en cada alpha-corte
+            (ver `FIM._shared.alpha_cuts`). Un itemset se considera frecuente
+            si su soporte difuso agregado FSupp (ver
+            `FIM._shared.weighted_alpha_aggregate`) alcanza `min_supp`; dicho
+            vector se conserva integro (no solo el agregado) porque
+            `FIM.FARE` lo necesita para calcular la confianza difusa nivel a
+            nivel (Ecs. (2)-(4) de Fernandez-Basso, Ruiz & Martin-Bautista,
+            2021).
         """
+        weights = alpha_weights(alpha_levels(num_alpha))
+
         indexedTransacs = transactions.zipWithIndex()
         totalTransacs = indexedTransacs.count()
         if totalTransacs == 0:
@@ -141,7 +150,7 @@ class FuzzyDECLAT(object):
         freqItemsets = {}
         for item, tidVectorMap in itemTidVectors.items():
             support = supportVector(tidVectorMap)
-            if np.any(support >= min_supp):
+            if weighted_alpha_aggregate(support, weights) >= min_supp:
                 freqItemsets[item] = support
 
         globalFreqItemsets = dict(freqItemsets)
@@ -173,7 +182,7 @@ class FuzzyDECLAT(object):
             broadcastTidVectors.unpersist()
 
             freqItemsets = {key: support for key, support in supports.items()
-                            if np.any(support >= min_supp)}
+                            if weighted_alpha_aggregate(support, weights) >= min_supp}
             if not freqItemsets:
                 break
 

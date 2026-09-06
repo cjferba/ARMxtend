@@ -17,10 +17,12 @@ de pertenencia reales, ya que dos transacciones con los mismos items pero
 distinto grado de pertenencia dejarian de ser "el mismo camino" del arbol.
 Este modulo resuelve esto binarizando cada transaccion en cada alpha-corte
 (ver ``ARMxtend.FIM._shared.alpha_cuts``) y ejecutando el FP-Growth crisp de
-forma independiente en cada uno de los `num_alpha` niveles, combinando los
-resultados en un vector de soporte por itemset -- exactamente la misma
-convencion que usan ``FuzzyDECLAT`` y ``FuzzyDAprioriTID``, lo que permite
-usar indistintamente cualquiera de los tres algoritmos como entrada de
+forma independiente en cada uno de los `num_alpha` niveles para descubrir
+candidatos, recalculando despues su soporte exacto en todos los niveles y
+filtrando por el soporte difuso agregado FSupp (ver `fuzzy_fpgrowth`) --
+exactamente la misma convencion (bit-list de soporte por alpha-corte) que
+usan ``FuzzyDECLAT`` y ``FuzzyDAprioriTID``, lo que permite usar
+indistintamente cualquiera de los tres algoritmos como entrada de
 ``ARMxtend.FIM.FARE``.
 
 Sustituye al contenido que existia previamente en este fichero, que era una
@@ -32,7 +34,7 @@ from collections import Counter
 
 import numpy as np
 
-from ..FIM._shared import itemset_to_key, alpha_cuts
+from ..FIM._shared import itemset_to_key, alpha_cuts, alpha_levels, alpha_weights, weighted_alpha_aggregate
 
 
 class _FPNode(object):
@@ -154,14 +156,27 @@ def fpgrowth(transactions, min_supp):
 
 def fuzzy_fpgrowth(transactions, min_supp, num_alpha):
     """
-    FP-Growth difuso: ejecuta `fpgrowth` de forma independiente en cada uno
-    de los `num_alpha` alpha-cortes (tras binarizar los grados de
-    pertenencia de cada transaccion con `alpha_cuts`), y combina los
-    resultados en un vector de soporte por itemset, siguiendo la misma
-    convencion que ``ARMxtend.FIM.Eclat.FuzzyDECLAT`` y
-    ``ARMxtend.FIM.BD_FARE.FuzzyDAprioriTID``: un itemset se conserva si es
-    frecuente en, al menos, uno de los alpha-cortes (propiedad que se
-    conserva por cierre descendente, ver docstring de `FuzzyDECLAT`).
+    FP-Growth difuso: encuentra candidatos ejecutando `fpgrowth` de forma
+    independiente en cada uno de los `num_alpha` alpha-cortes (tras
+    binarizar los grados de pertenencia de cada transaccion con
+    `alpha_cuts`), y despues recalcula, para cada candidato, su bit-list de
+    soporte EXACTO en todos los niveles (no solo en aquellos donde ya era
+    frecuente de forma aislada), de forma que el soporte difuso agregado
+    FSupp (ver `FIM._shared.weighted_alpha_aggregate`, Ec. (2) de
+    Fernandez-Basso, Ruiz & Martin-Bautista, 2021) se calcule correctamente.
+
+    Este paso de recalculo es necesario porque, si un itemset es frecuente
+    en el nivel alpha_i (soporte >= min_supp), su soporte agregado FSupp
+    (una media ponderada de sus soportes en todos los niveles) puede ser
+    inferior a min_supp si en el resto de niveles su soporte es bajo; y a la
+    inversa, un itemset puede tener FSupp >= min_supp sin llegar a
+    min_supp de forma aislada en NINGUN nivel salvo el de mayor soporte
+    (ya que FSupp es una media ponderada, esta acotada por el maximo de los
+    soportes por nivel, luego ese nivel de soporte maximo si sera detectado
+    por `fpgrowth`). Por eso es correcto usar la union de los itemsets
+    frecuentes de cada nivel como conjunto de candidatos, pero es necesario
+    recalcular su soporte real en cada nivel (no asumir 0 en los niveles
+    donde no fueron detectados) antes de agregar y filtrar por FSupp.
 
     Argumentos:
         transactions (Sequence[Iterable[Tuple[str, float]]]): cada
@@ -171,28 +186,46 @@ def fuzzy_fpgrowth(transactions, min_supp, num_alpha):
         num_alpha (int): numero de alpha-cortes a considerar
 
     Retorna:
-        dict {itemset_key: numpy.ndarray(num_alpha)}
+        dict {itemset_key: numpy.ndarray(num_alpha)} con el bit-list de
+        soporte relativo de cada itemset frecuente (FSupp >= min_supp) en
+        cada alpha-corte.
     """
     totalTransacs = len(transactions)
     if totalTransacs == 0:
         return {}
+
+    weights = alpha_weights(alpha_levels(num_alpha))
 
     transactionAlphaVectors = [
         {item: alpha_cuts(degree, num_alpha) for item, degree in transaction}
         for transaction in transactions
     ]
 
-    supportPerLevel = []
+    candidateKeys = set()
     for alphaLevel in range(num_alpha):
         binarizedTransactions = [
             {item for item, vector in txVectors.items() if vector[alphaLevel]}
             for txVectors in transactionAlphaVectors
         ]
-        supportPerLevel.append(fpgrowth(binarizedTransactions, min_supp))
+        candidateKeys.update(fpgrowth(binarizedTransactions, min_supp).keys())
 
-    allKeys = set()
-    for levelResult in supportPerLevel:
-        allKeys.update(levelResult.keys())
+    def exactSupportAllLevels(itemsetKey):
+        items = itemsetKey.split("-")
+        total = np.zeros(num_alpha, dtype=float)
+        for txVectors in transactionAlphaVectors:
+            memberVectors = [txVectors.get(item) for item in items]
+            if any(vector is None for vector in memberVectors):
+                continue
+            membership = np.ones(num_alpha, dtype=int)
+            for vector in memberVectors:
+                membership = np.minimum(membership, vector)
+            total = total + membership
+        return total / totalTransacs
 
-    return {key: np.array([supportPerLevel[level].get(key, 0.0) for level in range(num_alpha)])
-            for key in allKeys}
+    result = {}
+    for itemsetKey in candidateKeys:
+        supportVector = exactSupportAllLevels(itemsetKey)
+        if weighted_alpha_aggregate(supportVector, weights) >= min_supp:
+            result[itemsetKey] = supportVector
+
+    return result

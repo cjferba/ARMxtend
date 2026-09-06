@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Carlos Fernandez-Basso">
+        <link rel="canonical" href="http://cjferba.github.io/ARMxtend/user_guide/SARE_SFIM/">
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>SFIM / SARE (FIMoTS) - ARMxtend</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">ARMxtend</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../USER_GUIDE_INDEX/" class="dropdown-item">User Guide Index</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crisp association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
+</li>
+                                    
+<li>
+    <a href="../../contributors/" class="dropdown-item">Contributors</a>
+</li>
+                                    
+<li>
+    <a href="../../license/" class="dropdown-item">License</a>
+</li>
+                                    
+<li>
+    <a href="../../cite/" class="dropdown-item">Citing ARMxtend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../FIM/Eclat/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../ARM/meta_rules/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/user_guide/SARE_SFIM.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#sfim-sare-streaming-frequent-itemsets-and-association-rules-spark" class="nav-link">SFIM / SARE -- streaming frequent itemsets and association rules (Spark)</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#running-the-algorithm" class="nav-link">Running the algorithm</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#sareextractassociationrules" class="nav-link">SARE.extractAssociationRules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="sfim-sare-streaming-frequent-itemsets-and-association-rules-spark"><code>SFIM</code> / <code>SARE</code> -- streaming frequent itemsets and association rules (Spark)</h1>
+<p>Requires the <code>spark</code> extra (<code>pip install -e ".[spark]"</code>, see <a href="../../installation/">Installation</a>).</p>
+<p>FIMoTS (Frequent Itemset Mining over Time-sensitive Streams) mines frequent itemsets over a Spark
+Streaming sliding window, implementing the distributed algorithm of Fernandez-Basso,
+Francisco-Agra, Martin-Bautista &amp; Ruiz (2019) -- see <a href="../../cite/">Citing ARMxtend</a>. Rather than
+rescanning the whole window on every new batch of transactions, it maintains a Frequent Itemset
+Tree (FIT) together with per-itemset <em>transforming bounds</em> that bracket how many transactions can
+be added/removed before an itemset's frequent/infrequent status could possibly change, so only
+itemsets close to that boundary need their support recomputed.</p>
+<p><code>SFIM</code> and <code>SARE</code> share the exact same FIMoTS implementation (<code>FIMoTS_Structure</code>, <code>FIMoTS_Tree</code>,
+<code>FIMoTS_Node</code>, <code>FIMoTS_List</code>, <code>FIMoTS_Bounds</code>, <code>WindowData</code>, <code>DecimalFraction</code>, <code>FIMoTS_Algorithm</code>).
+<code>SARE</code> additionally extracts association rules from the current tree of frequent itemsets --
+the extension to association rule mining that the 2019 paper lists as future work.</p>
+<h2 id="running-the-algorithm">Running the algorithm</h2>
+<pre><code class="language-python">from ARMxtend.SFIM import main  # or ARMxtend.SARE
+
+main(minSuppNum=1, minSuppDen=3, mode=&quot;STREAMING&quot;, intervals=5,
+    hostname=&quot;localhost&quot;, port=9999, threads=2, seconds=5)
+</code></pre>
+<ul>
+<li><code>minSuppNum</code>/<code>minSuppDen</code>: minimum relative support, as a fraction of integers (e.g. 1/3).</li>
+<li><code>mode</code>: <code>"TEXTFILE"</code> for a static dataset (one transaction per line, items separated by spaces,
+  read from <code>filesDir</code>) or <code>"STREAMING"</code> to receive transactions in real time via Spark Streaming.</li>
+<li><code>intervals</code>: number of time intervals (batches of transactions) that make up the sliding window.</li>
+<li><code>SARE.main</code> additionally accepts <code>minConf</code>: if given, association rules with confidence
+  <code>&gt;= minConf</code> are extracted and printed after every window update, alongside the frequent
+  itemsets.</li>
+</ul>
+<h2 id="sareextractassociationrules"><code>SARE.extractAssociationRules</code></h2>
+<pre><code class="language-python">extractAssociationRules(actual_fimots_structure, metric=&quot;confidence&quot;, min_threshold=0.7)
+</code></pre>
+<p>Extracts crisp association rules from the frequent itemsets currently held in a <code>FIMoTS_Structure</code>
+(built and kept up to date by <code>SARE.main</code>/<code>FIMoTS_Algorithm</code>). Because the FIT already stores, by
+construction, the support of every non-empty subset of each frequent itemset (candidates are
+generated by combining shorter frequent itemsets), extracting rules reduces exactly to the crisp,
+non-distributed case: this function builds the <code>pandas.DataFrame</code> expected by
+<a href="../ARM/association_rules/"><code>ARM.association_rules</code></a> from the tree, and delegates to it.</p>
+<pre><code class="language-python">from ARMxtend.SARE import extractAssociationRules
+
+rules = extractAssociationRules(actual_fimots_structure, min_threshold=0.7)
+</code></pre>
+<p>See <code>tests/test_sare_association_rules.py</code> for a runnable example that builds a <code>FIMoTS_Structure</code>
+by hand (without running the full streaming algorithm) and verifies the extracted rules against
+<a href="../FIM/BD_ARE/"><code>FIM.BD_ARE.generate_rules</code></a>.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+        <script src="../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

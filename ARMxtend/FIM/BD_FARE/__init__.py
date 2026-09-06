@@ -16,7 +16,7 @@ generacion de candidatos es ahora compartida con el resto de algoritmos de
 """
 import numpy as np
 
-from .._shared import generate_candidates, alpha_cuts
+from .._shared import generate_candidates, alpha_cuts, alpha_levels, alpha_weights, weighted_alpha_aggregate
 
 
 class FuzzyDAprioriTID(object):
@@ -39,9 +39,14 @@ class FuzzyDAprioriTID(object):
             num_alpha (int): numero de alpha-cortes a considerar
 
         Retorna:
-            dict {itemset_key: numpy.ndarray(num_alpha)} con el soporte de
-            cada itemset frecuente en, al menos, un alpha-corte
+            dict {itemset_key: numpy.ndarray(num_alpha)} con el bit-list de
+            soporte relativo de cada itemset frecuente en cada alpha-corte.
+            Un itemset se considera frecuente si su soporte difuso agregado
+            FSupp (ver `FIM._shared.weighted_alpha_aggregate`, Ec. (2) de
+            Fernandez-Basso, Ruiz & Martin-Bautista, 2021) alcanza `min_supp`.
         """
+        weights = alpha_weights(alpha_levels(num_alpha))
+
         alphaTransactions = transactions.map(
             lambda memberships: {item: alpha_cuts(degree, num_alpha) for item, degree in memberships})
 
@@ -56,7 +61,7 @@ class FuzzyDAprioriTID(object):
 
         freqItemsets = {item: vector / totalTransacs
                         for item, vector in itemVectors.items()
-                        if np.any(vector / totalTransacs >= min_supp)}
+                        if weighted_alpha_aggregate(vector / totalTransacs, weights) >= min_supp}
 
         # Filtrar de cada transaccion los items infrecuentes (optimizacion
         # Apriori-TID: las fases siguientes solo consultan datos reducidos)
@@ -97,7 +102,7 @@ class FuzzyDAprioriTID(object):
 
             freqItemsets = {key: vector / totalTransacs
                             for key, vector in itemsetVectors.items()
-                            if np.any(vector / totalTransacs >= min_supp)}
+                            if weighted_alpha_aggregate(vector / totalTransacs, weights) >= min_supp}
             if not freqItemsets:
                 break
 

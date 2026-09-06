@@ -1,113 +1,173 @@
+# Quick Start
 
-![](./img/logo.png)
+All the snippets on this page are runnable as-is (they are also covered by the test suite under
+`tests/`). See [Installation](installation.md) first.
 
-### Welcome to mlxtend's documentation!
+## 1. Crisp association rules
 
-**Mlxtend (machine learning extensions) is a Python library of useful tools for the day-to-day data science tasks.**
-
-
-[![DOI](https://joss.theoj.org/papers/10.21105/joss.00638/status.svg)](https://doi.org/10.21105/joss.00638)
-[![PyPI version](https://badge.fury.io/py/mlxtend.svg)](http://badge.fury.io/py/mlxtend)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/mlxtend/badges/version.svg)](https://anaconda.org/conda-forge/mlxtend)
-![Python 3](https://img.shields.io/badge/python-3-blue.svg)
-[![License](https://img.shields.io/badge/license-BSD-blue.svg)](./license)
-[![Discuss](https://img.shields.io/badge/discuss-github-blue.svg)](https://github.com/rasbt/mlxtend/discussions)
-
-<hr>
-
-## Links
-
-- **Documentation:** [http://rasbt.github.io/mlxtend](http://rasbt.github.io/mlxtend)
-- Source code repository: [https://github.com/rasbt/mlxtend](https://github.com/rasbt/mlxtend)
-- PyPI: [https://pypi.python.org/pypi/mlxtend](https://pypi.python.org/pypi/mlxtend)
-- Questions? Check out the [GitHub Discussions board](https://github.com/rasbt/mlxtend/discussions)
-
-<hr>
-
-
-## Examples
+`ARM.association_rules` takes a `pandas.DataFrame` of frequent itemsets (columns `support` and
+`itemsets`, as produced by `FFIM.fpgrowth` -- see below) and returns the rules whose `metric`
+reaches `min_threshold`. Besides the usual `confidence`/`lift`/`leverage`/`conviction`, it also
+supports `certainty_factor` (Shortliffe & Buchanan's CF), which unlike confidence takes the base
+rate of the consequent into account and is bounded in `[-1, 1]`:
 
 ```python
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-import itertools
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from mlxtend.classifier import EnsembleVoteClassifier
-from mlxtend.data import iris_data
-from mlxtend.plotting import plot_decision_regions
+import pandas as pd
+from ARMxtend.ARM import association_rules
 
-# Initializing Classifiers
-clf1 = LogisticRegression(random_state=0)
-clf2 = RandomForestClassifier(random_state=0)
-clf3 = SVC(random_state=0, probability=True)
-eclf = EnsembleVoteClassifier(clfs=[clf1, clf2, clf3],
-                              weights=[2, 1, 1], voting='soft')
-
-# Loading some example data
-X, y = iris_data()
-X = X[:,[0, 2]]
-
-# Plotting Decision Regions
-
-gs = gridspec.GridSpec(2, 2)
-fig = plt.figure(figsize=(10, 8))
-
-labels = ['Logistic Regression',
-          'Random Forest',
-          'RBF kernel SVM',
-          'Ensemble']
-
-for clf, lab, grd in zip([clf1, clf2, clf3, eclf],
-                         labels,
-                         itertools.product([0, 1],
-                         repeat=2)):
-    clf.fit(X, y)
-    ax = plt.subplot(gs[grd[0], grd[1]])
-    fig = plot_decision_regions(X=X, y=y,
-                                clf=clf, legend=2)
-    plt.title(lab)
-
-plt.show()
+df = pd.DataFrame({
+    "support": [0.5, 0.8, 0.7, 0.3],
+    "itemsets": [frozenset(["bread"]), frozenset(["milk"]), frozenset(["butter"]),
+                frozenset(["bread", "milk"])],
+})
+rules = association_rules(df, metric="confidence", min_threshold=0.5)
+print(rules[["antecedents", "consequents", "support", "confidence", "certainty_factor"]])
+#   antecedents consequents  support  confidence  certainty_factor
+# 0     (bread)      (milk)      0.3         0.6             -0.25
 ```
 
----
+Note the negative certainty factor: although "bread -> milk" clears the 0.5 confidence bar, milk is
+already present in 80% of transactions on its own, so bread's presence actually *decreases* the
+belief in milk relative to its base rate -- a case confidence alone does not reveal.
 
-![](./img/ensemble_decision_regions_2d.png)
+## 2. Frequent itemsets with FP-Growth
 
-If you use mlxtend as part of your workflow in a scientific publication, please consider citing the mlxtend repository with the following DOI:
+`FFIM.fpgrowth` mines frequent itemsets directly from raw transactions (no candidate generation),
+returning a `dict {itemset_key: support}` ready to feed into `association_rules` after converting
+it to the expected DataFrame shape (`FIM._shared.key_to_itemset` undoes the `'A-B-C'` key encoding):
 
-[![DOI](http://joss.theoj.org/papers/10.21105/joss.00638/status.svg)](https://doi.org/10.21105/joss.00638)
+```python
+from ARMxtend.FFIM import fpgrowth
+from ARMxtend.FIM._shared import key_to_itemset
+from ARMxtend.ARM import association_rules
+import pandas as pd
 
+transactions = [
+    ["bread", "milk"],
+    ["bread", "diapers", "beer", "eggs"],
+    ["milk", "diapers", "beer", "cola"],
+    ["bread", "milk", "diapers", "beer"],
+    ["bread", "milk", "diapers", "cola"],
+]
+freq_itemsets = fpgrowth(transactions, min_supp=0.5)
+
+df = pd.DataFrame({"support": list(freq_itemsets.values()),
+                   "itemsets": [key_to_itemset(k) for k in freq_itemsets]})
+rules = association_rules(df, metric="confidence", min_threshold=0.7)
 ```
-@article{raschkas_2018_mlxtend,
-  author       = {Sebastian Raschka},
-  title        = {MLxtend: Providing machine learning and data science 
-                  utilities and extensions to Python’s  
-                  scientific computing stack},
-  journal      = {The Journal of Open Source Software},
-  volume       = {3},
-  number       = {24},
-  month        = apr,
-  year         = 2018,
-  publisher    = {The Open Journal},
-  doi          = {10.21105/joss.00638},
-  url          = {http://joss.theoj.org/papers/10.21105/joss.00638}
-}
+
+## 3. Fuzzy association rules
+
+Fuzzy itemsets and rules generalize the crisp case to items with a *degree* of membership in
+`[0, 1]` (e.g. "cold" or "low humidity" instead of a hard threshold). `FFIM.fuzzy_fpgrowth` mines
+fuzzy frequent itemsets by decomposing the fuzzy database into `num_alpha` alpha-cuts (10 is a good
+default, see [Fernandez-Basso, Ruiz & Martin-Bautista, 2021](cite.md)); `FIM.FARE.fuzzy_association_rules`
+then derives the fuzzy support (FSupp), confidence (FConf) and certainty factor (FCF), integrating
+the crisp measure at each alpha-cut weighted by the width of that cut (see the
+[FARE user guide](user_guide/FIM/FARE.md) for the exact formulas):
+
+```python
+from ARMxtend.FFIM import fuzzy_fpgrowth
+from ARMxtend.FIM.FARE import fuzzy_association_rules
+
+# each transaction: a list of (item, membership degree in [0, 1]) pairs
+fuzzy_transactions = [
+    [("cold", 1.0), ("low_humidity", 0.8)],
+    [("cold", 0.9), ("low_humidity", 0.6)],
+    [("warm", 0.7), ("low_humidity", 0.9)],
+    [("cold", 0.6), ("low_humidity", 0.7)],
+    [("warm", 1.0), ("low_humidity", 0.2)],
+]
+freq_itemsets = fuzzy_fpgrowth(fuzzy_transactions, min_supp=0.3, num_alpha=10)
+rules = fuzzy_association_rules(freq_itemsets, num_alpha=10, metric="confidence", min_threshold=0.5)
+print(rules[["antecedents", "consequents", "support", "confidence", "certainty_factor"]])
 ```
 
+`FIM.Eclat.FuzzyDECLAT` and `FIM.BD_FARE.FuzzyDAprioriTID` mine the same kind of fuzzy frequent
+itemsets, but distributed on Spark (see section 5 below).
 
-## License
+## 4. Meta-association rules
 
-- This project is released under a permissive new BSD open source license ([LICENSE-BSD3.txt](https://github.com/rasbt/mlxtend/blob/master/LICENSE-BSD3.txt)) and commercially usable. There is no warranty; not even for merchantability or fitness for a particular purpose.
-- In addition, you may use, copy, modify and redistribute all artistic creative works (figures and images) included in this distribution under the directory
-according to the terms and conditions of the Creative Commons Attribution 4.0 International License.  See the file [LICENSE-CC-BY.txt](https://github.com/rasbt/mlxtend/blob/master/LICENSE-CC-BY.txt) for details. (Computer-generated graphics such as the plots produced by matplotlib fall under the BSD license mentioned above).
+When you have already mined association rules independently from *several* datasets (e.g. one per
+store, sensor, or time period), `ARM.meta_rules` finds "rules about rules": which primary rules
+tend to co-occur across a high enough proportion of the datasets, optionally together with extra
+attributes of each dataset. This is useful both to summarize a large number of per-dataset rules and
+to spot cross-dataset patterns invisible in any single dataset (see
+[Ruiz et al., 2016](cite.md)).
 
-## Contact
+```python
+from ARMxtend.ARM.meta_rules import mine_primary_rule_measures, crisp_meta_association_rules, \
+    fuzzy_meta_association_rules
 
-I received a lot of feedback and questions about mlxtend recently, and I thought that it would be worthwhile to set up a public communication channel. Before you write an email with a question about mlxtend, please consider posting it here since it can also be useful to others! Please join the [Google Groups Mailing List](https://groups.google.com/forum/#!forum/mlxtend)!
+store1 = [["bread", "milk"]] * 6 + [["bread"]] * 2 + [["milk"]] * 2
+store2 = [["bread", "milk"]] * 5 + [["bread"]] * 3 + [["milk"]] * 2
+store3 = [["cola", "chips"]] * 7 + [["cola"]] * 3
 
-If Google Groups is not for you, please feel free to write me an [email](mailto:mail@sebastianraschka.com) or consider filing an issue on [GitHub's issue tracker](https://github.com/rasbt/mlxtend/issues) for new feature requests or bug reports. In addition, I setup a [Gitter channel](https://gitter.im/rasbt/mlxtend?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) for live discussions.
+# Step 1: mine primary crisp rules (and their confidence) independently per dataset
+rule_measures = mine_primary_rule_measures([store1, store2, store3], min_supp=0.3, min_conf=0.5)
+# -> [{'milk=>bread': 0.75, 'bread=>milk': 0.75}, {'milk=>bread': 0.71, 'bread=>milk': 0.62}, {'chips=>cola': 1.0, 'cola=>chips': 0.7}]
 
+# Step 2a: crisp meta-rules -- only presence/absence of each primary rule matters
+crisp_meta = crisp_meta_association_rules([set(m) for m in rule_measures], min_supp=0.5, min_conf=0.9)
+print(crisp_meta[["antecedents", "consequents", "support", "confidence"]])
+# bread=>milk <-> milk=>bread, support=0.67 (found in 2/3 datasets); chips<->cola rules are
+# dropped, since they were only found in 1/3 datasets (below min_supp)
+
+# Step 2b: fuzzy meta-rules -- also weighs how strong (confident) each primary rule was
+fuzzy_meta = fuzzy_meta_association_rules(rule_measures, num_alpha=10, min_supp=0.3, min_conf=0.5)
+print(fuzzy_meta[["antecedents", "consequents", "support", "confidence"]])
+```
+
+## 5. Big Data (Spark)
+
+`FIM.apriori`, `FIM.Eclat` and `FIM.BD_ARE`/`FIM.BD_FARE` mirror the algorithms above but distribute
+the counting across a Spark cluster (`pip install -e ".[spark]"`, see [Installation](installation.md)).
+They take a `pyspark.SparkContext` and an `RDD` of transactions instead of a plain Python list:
+
+```python
+from pyspark import SparkContext, SparkConf
+from ARMxtend.FIM.apriori import DApriori
+from ARMxtend.FIM.BD_ARE import association_rules_bd
+
+sc = SparkContext(conf=SparkConf().setAppName("armxtend-quickstart").setMaster("local[*]"))
+transactions = sc.parallelize([
+    "bread,milk",
+    "bread,diapers,beer,eggs",
+    "milk,diapers,beer,cola",
+    "bread,milk,diapers,beer",
+    "bread,milk,diapers,cola",
+])
+
+freq_itemsets = DApriori.run(sc, transactions, min_supp=0.5)   # or DAprioriTID, or Eclat.DECLAT
+rules = association_rules_bd(sc, freq_itemsets, min_conf=0.7)
+```
+
+`SFIM` mines frequent itemsets over a Spark Streaming sliding window (see `SFIM.main`), and
+`SARE.extractAssociationRules` extracts association rules from its current frequent-itemset tree.
+
+## 6. Visualizing rules
+
+`VizARM.AREtoGraph` turns a rules DataFrame into a directed graph (GraphML or DOT), ready to open in
+Gephi, Cytoscape or Graphviz:
+
+```python
+from ARMxtend.VizARM import AREtoGraph
+
+graph = AREtoGraph.from_dataframe(rules, rule_measures=("confidence", "certainty_factor"))
+dot = graph.exportGraph(type=1)   # 0: GraphML, 1: DOT, 2: the networkx.DiGraph itself
+```
+
+## 7. Fuzzifying numeric attributes
+
+`preprocessing.FuzzyLib` turns a numeric column into a set of overlapping fuzzy labels (a
+triangular Ruspini partition), ready to be used as items in the fuzzy pipelines above:
+
+```python
+import pandas as pd
+from ARMxtend.preprocessing import FuzzyLib
+
+fuzzy_lib = FuzzyLib()
+fuzzy_lib.data = pd.DataFrame({"temperature": [15, 19, 22, 25, 28]})
+added_columns = fuzzy_lib.Fuzzification(["temperature"], [[18, 22, 26]], [["cold", "comfort", "warm"]])
+# adds temperature_cold, temperature_comfort, temperature_warm columns, degrees summing to 1 per row
+```

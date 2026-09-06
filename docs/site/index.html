@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -10,29 +10,15 @@
         <link rel="shortcut icon" href="img/favicon.ico">
         <title>ARMxtend</title>
         <link href="css/bootstrap.min.css" rel="stylesheet">
-        <link href="css/font-awesome.min.css" rel="stylesheet">
+        <link href="css/fontawesome.min.css" rel="stylesheet">
+        <link href="css/brands.min.css" rel="stylesheet">
+        <link href="css/solid.min.css" rel="stylesheet">
+        <link href="css/v4-font-face.min.css" rel="stylesheet">
         <link href="css/base.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
-        <link href="cinder/css/base.css" rel="stylesheet">
-        <link href="cinder/css/bootstrap-custom.css" rel="stylesheet">
-        <link href="cinder/css/bootstrap-custom.min.css" rel="stylesheet">
-        <link href="cinder/css/cinder.css" rel="stylesheet">
-        <link href="cinder/css/font-awesome-4.0.3.css" rel="stylesheet">
-        <link href="cinder/css/highlight.css" rel="stylesheet">
-
-        <script src="js/jquery-1.10.2.min.js" defer></script>
-        <script src="js/bootstrap.min.js" defer></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-        <script>hljs.initHighlightingOnLoad();</script>
-        <script>
-            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-            })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-            ga('create', '260344680', 'cjferba.github.io/ARMxtend/');
-            ga('send', 'pageview');
-        </script> 
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
     </head>
 
     <body class="homepage">
@@ -40,7 +26,7 @@
             <div class="container">
                 <a class="navbar-brand" href=".">ARMxtend</a>
                 <!-- Expander button -->
-                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
@@ -48,11 +34,17 @@
                 <div id="navbar-collapse" class="navbar-collapse collapse">
                         <!-- Main navigation -->
                         <ul class="nav navbar-nav">
-                            <li class="navitem active">
-                                <a href="." class="nav-link">Home</a>
+                            <li class="nav-item">
+                                <a href="." class="nav-link active" aria-current="page">Home</a>
                             </li>
-                            <li class="dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">User Guide <b class="caret"></b></a>
+                            <li class="nav-item">
+                                <a href="installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
                                 <ul class="dropdown-menu">
                                     
 <li>
@@ -60,27 +52,105 @@
 </li>
                                     
   <li class="dropdown-submenu">
-    <a href="#" class="dropdown-item">preprocessing</a>
+    <a href="#" class="dropdown-item">Crisp association rules</a>
     <ul class="dropdown-menu">
             
 <li>
-    <a href="user_guide/preprocessing/Dicretization.md" class="dropdown-item">None</a>
+    <a href="user_guide/ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="user_guide/FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="user_guide/FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="user_guide/FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="user_guide/FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="user_guide/SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="user_guide/VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="user_guide/preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
 </li>
     </ul>
   </li>
                                 </ul>
                             </li>
-                            <li class="dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
                                 <ul class="dropdown-menu">
-                                    
-<li>
-    <a href="CHANGELOG.md" class="dropdown-item">Release Notes</a>
-</li>
-                                    
-<li>
-    <a href="Code-of-Conduct.md" class="dropdown-item">Code of Conduct</a>
-</li>
                                     
 <li>
     <a href="CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
@@ -97,17 +167,13 @@
 <li>
     <a href="cite/" class="dropdown-item">Citing ARMxtend</a>
 </li>
-                                    
-<li>
-    <a href="discuss.md" class="dropdown-item">Discuss</a>
-</li>
                                 </ul>
                             </li>
                         </ul>
 
-                    <ul class="nav navbar-nav ml-auto">
+                    <ul class="nav navbar-nav ms-md-auto">
                         <li class="nav-item">
-                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
                                 <i class="fa fa-search"></i> Search
                             </a>
                         </li>
@@ -117,12 +183,12 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="USER_GUIDE_INDEX/" class="nav-link">
+                                <a rel="next" href="installation/" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/index.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/index.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
                             </li>
                     </ul>
                 </div>
@@ -131,33 +197,33 @@
 
         <div class="container">
             <div class="row">
-                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
     <div class="navbar-header">
-        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
             <span class="fa fa-angle-down"></span>
         </button>
     </div>
 
     
-    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-level="2"><a href="#welcome-to-armxtends-documentation" class="nav-link">Welcome to ARMxtend's documentation!</a>
+            <li class="nav-item" data-bs-level="2"><a href="#welcome-to-armxtends-documentation" class="nav-link">Welcome to ARMxtend's documentation!</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
-            <li class="nav-item" data-level="2"><a href="#links" class="nav-link">Links</a>
+            <li class="nav-item" data-bs-level="2"><a href="#links" class="nav-link">Links</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
-            <li class="nav-item" data-level="2"><a href="#examples" class="nav-link">Examples</a>
+            <li class="nav-item" data-bs-level="2"><a href="#features" class="nav-link">Features</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
-            <li class="nav-item" data-level="2"><a href="#citting" class="nav-link">Citting</a>
+            <li class="nav-item" data-bs-level="2"><a href="#citing" class="nav-link">Citing</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -166,9 +232,10 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><img alt="" src="./img/logo.png" /></p>
 <h2 id="welcome-to-armxtends-documentation">Welcome to ARMxtend's documentation!</h2>
-<p><strong>ARMxtend (association rule mining extensions) is a Python library of useful tools for association rule mining.</strong></p>
+<p><strong>ARMxtend (association rule mining extensions) is a Python library for mining association rules,
+covering the crisp and fuzzy cases, on a single machine as well as on Apache Spark for Big Data and
+streaming scenarios, plus meta-association rules for summarizing rules found across multiple datasets.</strong></p>
 <p><a href="https://doi.org/10.1016/j.knosys.2018.09.026"><img alt="DOI" src="https://img.shields.io/badge/KNOSYS-2018.09.026-green" /></a>
 <img alt="Python 3.6" src="https://img.shields.io/badge/python-3.6-blue.svg" />
 <img alt="Python 3.7" src="https://img.shields.io/badge/python-3.7-blue.svg" /></p>
@@ -181,9 +248,47 @@
 </ul>
 <hr>
 
-<h2 id="examples">Examples</h2>
-<h2 id="citting">Citting</h2>
-<p>If you use armxtend as part of your workflow in a scientific publication, please consider citing the armxtend repository with the following DOI:</p>
+<h2 id="features">Features</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Crisp</th>
+<th>Fuzzy (alpha-cuts)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single machine</td>
+<td><code>ARM.association_rules</code>, <code>FFIM.fpgrowth</code></td>
+<td><code>FIM.FARE</code>, <code>FFIM.fuzzy_fpgrowth</code></td>
+</tr>
+<tr>
+<td>Big Data (Spark)</td>
+<td><code>FIM.apriori</code> (DApriori/DAprioriTID), <code>FIM.Eclat.DECLAT</code>, <code>FIM.BD_ARE</code></td>
+<td><code>FIM.BD_FARE.FuzzyDAprioriTID</code>, <code>FIM.Eclat.FuzzyDECLAT</code></td>
+</tr>
+<tr>
+<td>Streaming (Spark)</td>
+<td><code>SFIM</code> (FIMoTS) + <code>SARE.extractAssociationRules</code></td>
+<td>-</td>
+</tr>
+<tr>
+<td>Meta-rules (rules about rules, across multiple datasets)</td>
+<td><code>ARM.meta_rules.crisp_meta_association_rules</code></td>
+<td><code>ARM.meta_rules.fuzzy_meta_association_rules</code></td>
+</tr>
+</tbody>
+</table>
+<p>Plus <code>preprocessing.FuzzyLib</code> for fuzzifying numeric attributes and <code>VizARM.AREtoGraph</code> for
+exporting rules to a graph (GraphML/DOT).</p>
+<p>See the <a href="quick-start/">Quick Start</a> for runnable examples of every one of these, and the
+<a href="USER_GUIDE_INDEX/">User Guide</a> for the full reference of each module.</p>
+<hr>
+
+<h2 id="citing">Citing</h2>
+<p>If you use ARMxtend as part of your workflow in a scientific publication, please consider citing the
+underlying research:</p>
 <p><a href="https://doi.org/10.1016/j.knosys.2018.09.026"><img alt="DOI" src="https://img.shields.io/badge/KNOSYS-2018.09.026-green" /></a></p>
 <pre><code>@article{fernandez2019finding,
   title={Finding tendencies in streaming data using big data frequent itemset mining},
@@ -194,42 +299,40 @@
   year={2019},
   publisher={Elsevier}
 }
-</code></pre></div>
+</code></pre>
+<p>See <a href="cite/">Citing ARMxtend</a> for the references behind each individual module (crisp/fuzzy Big Data
+algorithms, fuzzy association rules, meta-association rules).</p></div>
             </div>
         </div>
 
         <footer class="col-md-12">
             <hr>
-                <p>Copyright &copy; 2016-2021 <a href="http://cjferba.github.com">Carlos Fernanadez-Basso</a></p>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
             <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
         </footer>
+        <script src="js/bootstrap.bundle.min.js"></script>
         <script>
             var base_url = ".",
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
-        <script src="js/base.js" defer></script>
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" defer></script>
-        <script src="mathjaxhelper.js" defer></script>
-        <script src="search/main.js" defer></script>
+        <script src="js/base.js"></script>
+        <script src="search/main.js"></script>
 
         <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="searchModalLabel">Search</h4>
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>
-                    From here you can search these documents. Enter
-                    your search terms below.
-                </p>
+                <p>From here you can search these documents. Enter your search terms below.</p>
                 <form>
                     <div class="form-group">
                         <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
                     </div>
                 </form>
-                <div id="mkdocs-search-results"></div>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
             </div>
             <div class="modal-footer">
             </div>
@@ -240,7 +343,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
               <table class="table">
@@ -280,6 +383,6 @@
 </html>
 
 <!--
-MkDocs version : 1.1.2
-Build Date UTC : 2021-02-22 16:22:42.675211+00:00
+MkDocs version : 1.6.1
+Build Date UTC : 2026-09-06 01:45:14.222030+00:00
 -->

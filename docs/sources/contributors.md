@@ -1,3 +1,4 @@
 # Contributors
 
-For the current list of contributors to mlxtend, please see the GitHub contributor page at [https://github.com/rasbt/mlxtend/graphs/contributors](https://github.com/rasbt/mlxtend/graphs/contributors  ).
+For the current list of contributors to ARMxtend, please see the GitHub contributor page at
+[https://github.com/cjferba/ARMxtend/graphs/contributors](https://github.com/cjferba/ARMxtend/graphs/contributors).

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,31 +8,17 @@
         <meta name="author" content="Carlos Fernandez-Basso">
         <link rel="canonical" href="http://cjferba.github.io/ARMxtend/installation/">
         <link rel="shortcut icon" href="../img/favicon.ico">
-        <title>Installing mlxtend - ARMxtend</title>
+        <title>Installation - ARMxtend</title>
         <link href="../css/bootstrap.min.css" rel="stylesheet">
-        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../css/brands.min.css" rel="stylesheet">
+        <link href="../css/solid.min.css" rel="stylesheet">
+        <link href="../css/v4-font-face.min.css" rel="stylesheet">
         <link href="../css/base.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
-        <link href="../cinder/css/base.css" rel="stylesheet">
-        <link href="../cinder/css/bootstrap-custom.css" rel="stylesheet">
-        <link href="../cinder/css/bootstrap-custom.min.css" rel="stylesheet">
-        <link href="../cinder/css/cinder.css" rel="stylesheet">
-        <link href="../cinder/css/font-awesome-4.0.3.css" rel="stylesheet">
-        <link href="../cinder/css/highlight.css" rel="stylesheet">
-
-        <script src="../js/jquery-1.10.2.min.js" defer></script>
-        <script src="../js/bootstrap.min.js" defer></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-        <script>hljs.initHighlightingOnLoad();</script>
-        <script>
-            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-            })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-            ga('create', '260344680', 'cjferba.github.io/ARMxtend/');
-            ga('send', 'pageview');
-        </script> 
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
     </head>
 
     <body>
@@ -40,7 +26,7 @@
             <div class="container">
                 <a class="navbar-brand" href="..">ARMxtend</a>
                 <!-- Expander button -->
-                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
@@ -48,11 +34,17 @@
                 <div id="navbar-collapse" class="navbar-collapse collapse">
                         <!-- Main navigation -->
                         <ul class="nav navbar-nav">
-                            <li class="navitem">
+                            <li class="nav-item">
                                 <a href=".." class="nav-link">Home</a>
                             </li>
-                            <li class="dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">User Guide <b class="caret"></b></a>
+                            <li class="nav-item">
+                                <a href="./" class="nav-link active" aria-current="page">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
                                 <ul class="dropdown-menu">
                                     
 <li>
@@ -60,27 +52,105 @@
 </li>
                                     
   <li class="dropdown-submenu">
-    <a href="#" class="dropdown-item">preprocessing</a>
+    <a href="#" class="dropdown-item">Crisp association rules</a>
     <ul class="dropdown-menu">
             
 <li>
-    <a href="../user_guide/preprocessing/Dicretization.md" class="dropdown-item">None</a>
+    <a href="../user_guide/ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
 </li>
     </ul>
   </li>
                                 </ul>
                             </li>
-                            <li class="dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
                                 <ul class="dropdown-menu">
-                                    
-<li>
-    <a href="../CHANGELOG.md" class="dropdown-item">Release Notes</a>
-</li>
-                                    
-<li>
-    <a href="../Code-of-Conduct.md" class="dropdown-item">Code of Conduct</a>
-</li>
                                     
 <li>
     <a href="../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
@@ -97,22 +167,28 @@
 <li>
     <a href="../cite/" class="dropdown-item">Citing ARMxtend</a>
 </li>
-                                    
-<li>
-    <a href="../discuss.md" class="dropdown-item">Discuss</a>
-</li>
                                 </ul>
                             </li>
                         </ul>
 
-                    <ul class="nav navbar-nav ml-auto">
+                    <ul class="nav navbar-nav ms-md-auto">
                         <li class="nav-item">
-                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
                                 <i class="fa fa-search"></i> Search
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/installation.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                                <a rel="prev" href=".." class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../quick-start/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/installation.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
                             </li>
                     </ul>
                 </div>
@@ -121,18 +197,18 @@
 
         <div class="container">
             <div class="row">
-                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
     <div class="navbar-header">
-        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
             <span class="fa fa-angle-down"></span>
         </button>
     </div>
 
     
-    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-level="1"><a href="#installing-mlxtend" class="nav-link">Installing mlxtend</a>
+            <li class="nav-item" data-bs-level="1"><a href="#installing-armxtend" class="nav-link">Installing ARMxtend</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -141,76 +217,64 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h1 id="installing-mlxtend">Installing mlxtend</h1>
+<h1 id="installing-armxtend">Installing ARMxtend</h1>
 <hr />
-<h3 id="pypi">PyPI</h3>
-<p>To install mlxtend, just execute  </p>
-<pre><code class="language-bash">pip install mlxtend  
+<p>ARMxtend is not yet published on PyPI. Install it directly from a local checkout of the
+<a href="https://github.com/cjferba/ARMxtend">GitHub repository</a>:</p>
+<pre><code class="language-bash">git clone https://github.com/cjferba/ARMxtend.git
+cd ARMxtend
+pip install -e .
 </code></pre>
-<p>Alternatively, you download the package manually from the Python Package Index <a href="https://pypi.python.org/pypi/mlxtend">https://pypi.python.org/pypi/mlxtend</a>, unzip it, navigate into the package, and use the command:</p>
-<pre><code class="language-bash">python setup.py install
+<p>This installs the core, single-machine part of the library: <code>ARM</code> (crisp association rules and
+meta-rules), <code>FIM.FARE</code> (fuzzy association rules), <code>FFIM</code> (crisp and fuzzy FP-Growth), <code>VizARM</code>
+and <code>preprocessing</code>. Its only dependencies are <code>numpy</code>, <code>pandas</code> and <code>networkx</code>.</p>
+<h3 id="big-data-streaming-extra">Big Data / streaming extra</h3>
+<p>The Big Data and streaming algorithms (<code>FIM.apriori</code>, <code>FIM.Eclat</code>, <code>FIM.BD_ARE</code>, <code>FIM.BD_FARE</code>,
+<code>SARE</code>, <code>SFIM</code>) run on <a href="https://spark.apache.org/">Apache Spark</a> and additionally require
+<code>pyspark</code>. Install it with the <code>spark</code> extra:</p>
+<pre><code class="language-bash">pip install -e &quot;.[spark]&quot;
 </code></pre>
-<h5 id="upgrading-via-pip">Upgrading via <code>pip</code></h5>
-<p>To upgrade an existing version of mlxtend from PyPI, execute</p>
-<pre><code class="language-bash">pip install mlxtend --upgrade --no-deps
+<p><code>pyspark</code> itself requires a Java runtime (JDK 8/11/17) to be installed and on your <code>PATH</code>; see the
+<a href="https://spark.apache.org/docs/latest/api/python/getting_started/install.html">PySpark installation guide</a>
+if <code>pyspark</code> fails to start a <code>SparkContext</code>.</p>
+<h3 id="running-the-tests">Running the tests</h3>
+<pre><code class="language-bash">pip install pytest
+pytest tests/ ARMxtend/FIM/BD_ARE/TestFunctions.py
 </code></pre>
-<p>Please note that the dependencies (NumPy and SciPy) will also be upgraded if you omit the <code>--no-deps</code> flag; use the <code>--no-deps</code> ("no dependencies") flag if you don't want this.</p>
-<h5 id="installing-mlxtend-from-the-source-distribution">Installing mlxtend from the source distribution</h5>
-<p>In rare cases, users reported problems on certain systems with the default <code>pip</code> installation command, which installs mlxtend from the binary distribution ("wheels") on PyPI. If you should encounter similar problems, you could try to install mlxtend from the source distribution instead via</p>
-<pre><code class="language-bash">pip install --no-binary :all: mlxtend
-</code></pre>
-<p>Also, I would appreciate it if you could report any issues that occur when using <code>pip install mlxtend</code> in hope that we can fix these in future releases.</p>
-<h3 id="conda">Conda</h3>
-<p>The mlxtend package is also <a href="https://github.com/conda-forge/mlxtend-feedstock">available through conda forge</a>. </p>
-<p>To install mlxtend using conda, use the following command:</p>
-<pre><code>conda install mlxtend --channel conda-forge
-</code></pre>
-<p>or simply </p>
-<pre><code>conda install mlxtend
-</code></pre>
-<p>if you added conda-forge to your channels (<code>conda config --add channels conda-forge</code>).</p>
-<h3 id="dev-version">Dev Version</h3>
-<p>The mlxtend version on PyPI may always one step behind; you can install the latest development version from the GitHub repository by executing</p>
-<pre><code class="language-bash">pip install git+git://github.com/rasbt/mlxtend.git
-</code></pre>
-<p>Or, you can fork the GitHub repository from https://github.com/rasbt/mlxtend and install mlxtend from your local drive via</p>
-<pre><code class="language-bash">python setup.py install
-</code></pre></div>
+<p>The tests covering the Spark-based algorithms run against <code>tests/spark_stub.py</code>, a local double of
+the small part of the Spark RDD/broadcast API these algorithms use, so they exercise the exact same
+production code without requiring a real cluster or a JVM.</p></div>
             </div>
         </div>
 
         <footer class="col-md-12">
             <hr>
-                <p>Copyright &copy; 2016-2021 <a href="http://cjferba.github.com">Carlos Fernanadez-Basso</a></p>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
             <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
         </footer>
+        <script src="../js/bootstrap.bundle.min.js"></script>
         <script>
             var base_url = "..",
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
-        <script src="../js/base.js" defer></script>
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" defer></script>
-        <script src="../mathjaxhelper.js" defer></script>
-        <script src="../search/main.js" defer></script>
+        <script src="../js/base.js"></script>
+        <script src="../search/main.js"></script>
 
         <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="searchModalLabel">Search</h4>
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>
-                    From here you can search these documents. Enter
-                    your search terms below.
-                </p>
+                <p>From here you can search these documents. Enter your search terms below.</p>
                 <form>
                     <div class="form-group">
                         <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
                     </div>
                 </form>
-                <div id="mkdocs-search-results"></div>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
             </div>
             <div class="modal-footer">
             </div>
@@ -221,7 +285,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
               <table class="table">

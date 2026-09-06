@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Carlos Fernandez-Basso">
+        <link rel="canonical" href="http://cjferba.github.io/ARMxtend/user_guide/preprocessing/FuzzyLib/">
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>preprocessing.FuzzyLib - ARMxtend</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">ARMxtend</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../USER_GUIDE_INDEX/" class="dropdown-item">User Guide Index</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crisp association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">preprocessing.FuzzyLib</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
+</li>
+                                    
+<li>
+    <a href="../../../contributors/" class="dropdown-item">Contributors</a>
+</li>
+                                    
+<li>
+    <a href="../../../license/" class="dropdown-item">License</a>
+</li>
+                                    
+<li>
+    <a href="../../../cite/" class="dropdown-item">Citing ARMxtend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../../VizARM/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../../../CONTRIBUTING/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/user_guide/preprocessing/FuzzyLib.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#preprocessingfuzzylib" class="nav-link">preprocessing.FuzzyLib</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#loading-data" class="nav-link">Loading data</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#fuzzification" class="nav-link">Fuzzification</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="preprocessingfuzzylib"><code>preprocessing.FuzzyLib</code></h1>
+<p>Loads a tabular dataset and fuzzifies its numeric attributes into named fuzzy sets (e.g.
+<code>Temperature</code> -&gt; <code>cold</code>/<code>comfort</code>/<code>warm</code>), ready to be used as fuzzy items in
+<a href="../../FIM/FARE/"><code>FIM.FARE</code></a>, <a href="../../FIM/BD_FARE/"><code>FIM.BD_FARE</code></a>, <a href="../../FIM/Eclat/"><code>FIM.Eclat.FuzzyDECLAT</code></a>
+or <a href="../../FFIM/"><code>FFIM.fuzzy_fpgrowth</code></a>.</p>
+<h2 id="loading-data">Loading data</h2>
+<pre><code class="language-python">fuzzy_lib = FuzzyLib()
+fuzzy_lib.LoadData(&quot;path/to/data.csv&quot;)   # or set fuzzy_lib.data directly to an existing DataFrame
+fuzzy_lib.GetData()        # the underlying pandas.DataFrame
+fuzzy_lib.GetAtributes()   # column names
+fuzzy_lib.GetTypes()       # column dtypes
+</code></pre>
+<h2 id="fuzzification">Fuzzification</h2>
+<pre><code class="language-python">Fuzzification(Atri, thresholds, FuzzyLabel)
+</code></pre>
+<ul>
+<li><strong>Atri</strong> (<code>list[str]</code>): names of the numeric attributes to fuzzify.</li>
+<li><strong>thresholds</strong> (<code>list[list[float]]</code>): for each attribute, one ascending <em>peak</em> per fuzzy label.</li>
+<li><strong>FuzzyLabel</strong> (<code>list[list[str]]</code>): for each attribute, the name of each fuzzy label (same length
+  as its <code>thresholds</code> entry).</li>
+</ul>
+<p>For each attribute, this computes a <strong>triangular Ruspini partition</strong>: given <code>n</code> ascending peaks
+<code>p_1 &lt; ... &lt; p_n</code> (one per label), the two extreme labels are "shoulders" (full membership beyond
+their own peak) and the intermediate ones are triangles centered on their peak, so that the
+membership degrees of all <code>n</code> labels always sum to 1 for every row. It adds one new column
+<code>&lt;attribute&gt;_&lt;label&gt;</code> per label, with its membership degree, and returns the list of added column
+names.</p>
+<pre><code class="language-python">import pandas as pd
+from ARMxtend.preprocessing import FuzzyLib
+
+fuzzy_lib = FuzzyLib()
+fuzzy_lib.data = pd.DataFrame({&quot;temperature&quot;: [15, 19, 22, 25, 28]})
+added_columns = fuzzy_lib.Fuzzification([&quot;temperature&quot;], [[18, 22, 26]], [[&quot;cold&quot;, &quot;comfort&quot;, &quot;warm&quot;]])
+print(fuzzy_lib.data)
+#    temperature  temperature_cold  temperature_comfort  temperature_warm
+# 0           15              1.00                 0.00              0.00
+# 1           19              0.75                 0.25              0.00
+# 2           22              0.00                 1.00              0.00
+# 3           25              0.00                 0.25              0.75
+# 4           28              0.00                 0.00              1.00
+</code></pre>
+<p>Each row's fuzzified columns for that attribute sum to 1: <code>fuzzy_lib.data[added_columns].sum(axis=1)</code>.</p>
+<p>To turn a fuzzified row into the <code>(item, degree)</code> pairs expected by the fuzzy mining algorithms,
+pair each added column name with its value, e.g.
+<code>[(col, row[col]) for col in added_columns if row[col] &gt; 0]</code>.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../js/base.js"></script>
+        <script src="../../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

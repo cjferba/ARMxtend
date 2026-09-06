@@ -1,9 +1,9 @@
 
-![](./img/logo.png)
-
 ## Welcome to ARMxtend's documentation!
 
-**ARMxtend (association rule mining extensions) is a Python library of useful tools for association rule mining.**
+**ARMxtend (association rule mining extensions) is a Python library for mining association rules,
+covering the crisp and fuzzy cases, on a single machine as well as on Apache Spark for Big Data and
+streaming scenarios, plus meta-association rules for summarizing rules found across multiple datasets.**
 
 
 [![DOI](https://img.shields.io/badge/KNOSYS-2018.09.026-green)](https://doi.org/10.1016/j.knosys.2018.09.026)
@@ -17,12 +17,30 @@
 
 - **Documentation:** [http://cjferba.github.io/armxtend](http://cjferba.github.io/ARMxtend)
 - Source code repository: [https://github.com/cjferba/armxtend](https://github.com/cjferba/ARMxtend)
+
 <hr>
 
-## Examples
+## Features
 
-## Citting
-If you use armxtend as part of your workflow in a scientific publication, please consider citing the armxtend repository with the following DOI:
+|                    | Crisp                                                   | Fuzzy (alpha-cuts)                                       |
+|--------------------|----------------------------------------------------------|------------------------------------------------------------|
+| Single machine     | `ARM.association_rules`, `FFIM.fpgrowth`                  | `FIM.FARE`, `FFIM.fuzzy_fpgrowth`                           |
+| Big Data (Spark)   | `FIM.apriori` (DApriori/DAprioriTID), `FIM.Eclat.DECLAT`, `FIM.BD_ARE` | `FIM.BD_FARE.FuzzyDAprioriTID`, `FIM.Eclat.FuzzyDECLAT`     |
+| Streaming (Spark)  | `SFIM` (FIMoTS) + `SARE.extractAssociationRules`          | -                                                            |
+| Meta-rules (rules about rules, across multiple datasets) | `ARM.meta_rules.crisp_meta_association_rules` | `ARM.meta_rules.fuzzy_meta_association_rules`               |
+
+Plus `preprocessing.FuzzyLib` for fuzzifying numeric attributes and `VizARM.AREtoGraph` for
+exporting rules to a graph (GraphML/DOT).
+
+See the [Quick Start](quick-start.md) for runnable examples of every one of these, and the
+[User Guide](USER_GUIDE_INDEX.md) for the full reference of each module.
+
+<hr>
+
+## Citing
+
+If you use ARMxtend as part of your workflow in a scientific publication, please consider citing the
+underlying research:
 
 [![DOI](https://img.shields.io/badge/KNOSYS-2018.09.026-green)](https://doi.org/10.1016/j.knosys.2018.09.026)
 
@@ -37,3 +55,6 @@ If you use armxtend as part of your workflow in a scientific publication, please
   publisher={Elsevier}
 }
 ```
+
+See [Citing ARMxtend](cite.md) for the references behind each individual module (crisp/fuzzy Big Data
+algorithms, fuzzy association rules, meta-association rules).

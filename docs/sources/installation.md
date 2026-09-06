@@ -1,65 +1,41 @@
-# Installing mlxtend
+# Installing ARMxtend
 
 ---
 
-### PyPI
-
-To install mlxtend, just execute  
-
-```bash
-pip install mlxtend  
-```
-
-Alternatively, you download the package manually from the Python Package Index [https://pypi.python.org/pypi/mlxtend](https://pypi.python.org/pypi/mlxtend), unzip it, navigate into the package, and use the command:
+ARMxtend is not yet published on PyPI. Install it directly from a local checkout of the
+[GitHub repository](https://github.com/cjferba/ARMxtend):
 
 ```bash
-python setup.py install
+git clone https://github.com/cjferba/ARMxtend.git
+cd ARMxtend
+pip install -e .
 ```
 
-##### Upgrading via `pip`
+This installs the core, single-machine part of the library: `ARM` (crisp association rules and
+meta-rules), `FIM.FARE` (fuzzy association rules), `FFIM` (crisp and fuzzy FP-Growth), `VizARM`
+and `preprocessing`. Its only dependencies are `numpy`, `pandas` and `networkx`.
 
-To upgrade an existing version of mlxtend from PyPI, execute
+### Big Data / streaming extra
+
+The Big Data and streaming algorithms (`FIM.apriori`, `FIM.Eclat`, `FIM.BD_ARE`, `FIM.BD_FARE`,
+`SARE`, `SFIM`) run on [Apache Spark](https://spark.apache.org/) and additionally require
+`pyspark`. Install it with the `spark` extra:
 
 ```bash
-pip install mlxtend --upgrade --no-deps
+pip install -e ".[spark]"
 ```
 
-Please note that the dependencies (NumPy and SciPy) will also be upgraded if you omit the `--no-deps` flag; use the `--no-deps` ("no dependencies") flag if you don't want this.
+`pyspark` itself requires a Java runtime (JDK 8/11/17) to be installed and on your `PATH`; see the
+[PySpark installation guide](https://spark.apache.org/docs/latest/api/python/getting_started/install.html)
+if `pyspark` fails to start a `SparkContext`.
 
-##### Installing mlxtend from the source distribution
-
-In rare cases, users reported problems on certain systems with the default `pip` installation command, which installs mlxtend from the binary distribution ("wheels") on PyPI. If you should encounter similar problems, you could try to install mlxtend from the source distribution instead via
+### Running the tests
 
 ```bash
-pip install --no-binary :all: mlxtend
+pip install pytest
+pytest tests/ ARMxtend/FIM/BD_ARE/TestFunctions.py
 ```
 
-Also, I would appreciate it if you could report any issues that occur when using `pip install mlxtend` in hope that we can fix these in future releases.
-
-### Conda
-
-The mlxtend package is also [available through conda forge](https://github.com/conda-forge/mlxtend-feedstock). 
-
-To install mlxtend using conda, use the following command:
-
-    conda install mlxtend --channel conda-forge
-
-or simply 
-
-    conda install mlxtend
-
-if you added conda-forge to your channels (`conda config --add channels conda-forge`).
-
-### Dev Version
-
-The mlxtend version on PyPI may always one step behind; you can install the latest development version from the GitHub repository by executing
-
-```bash
-pip install git+git://github.com/rasbt/mlxtend.git
-```
-
-Or, you can fork the GitHub repository from https://github.com/rasbt/mlxtend and install mlxtend from your local drive via
-
-```bash
-python setup.py install
-```
+The tests covering the Spark-based algorithms run against `tests/spark_stub.py`, a local double of
+the small part of the Spark RDD/broadcast API these algorithms use, so they exercise the exact same
+production code without requiring a real cluster or a JVM.
