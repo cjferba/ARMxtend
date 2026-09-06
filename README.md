@@ -2,6 +2,7 @@
 
 ![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)
 ![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)
+[![CI](https://github.com/cjferba/ARMxtend/actions/workflows/ci.yml/badge.svg)](https://github.com/cjferba/ARMxtend/actions/workflows/ci.yml)
 
 **ARMxtend (association rule mining extensions) is a Python library of useful tools for the association rule mining.**
 
@@ -14,6 +15,7 @@ Carlos Fernandez-Basso  2015-2020
 ## Links
 
 - **Documentation:** [http://cjferba.github.io/armxtend](http://cjferba.github.io/ARMxtend)
+- **Examples:** [http://cjferba.github.io/ARMxtend/examples](http://cjferba.github.io/ARMxtend/examples/) -- runnable, CI-tested scripts for every module (see [`examples/`](examples/))
 - PyPI: 
 
 
