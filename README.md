@@ -26,9 +26,10 @@ pip install -e .            # nucleo: ARM, FIM.FARE, FFIM, VizARM, preprocessing
 pip install -e ".[spark]"   # + pyspark, necesario para los algoritmos de Big Data/streaming
 ```
 
-Ejecutar los tests: `pip install pytest && pytest tests/ ARMxtend/FIM/BD_ARE/TestFunctions.py`
-(los tests de los algoritmos de Spark corren contra `tests/spark_stub.py`, un doble local
-de la API de Spark, por lo que no requieren un cluster ni una JVM instalados).
+Ejecutar los tests: `pip install -e ".[spark]" pytest && pytest tests/ ARMxtend/FIM/BD_ARE/TestFunctions.py`
+(el paquete `pyspark` debe estar instalado para que los modulos de Spark se puedan *importar*,
+pero los tests corren contra `tests/spark_stub.py`, un doble local de la API de Spark, por lo
+que no requieren un cluster ni una JVM en ejecucion).
 
 ## Features
 
