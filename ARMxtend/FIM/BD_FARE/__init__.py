@@ -1,210 +1,108 @@
 # -*- coding: utf-8 -*-
-
-
 """
-Algoritmo SeqApriori usando Spark
-@author Carlos Fernandez-Basso (2016)
+FuzzyDAprioriTID: mineria de itemsets frecuentes difusos sobre Big Data
+(Apache Spark), inspirada en Apriori-TID, usando una representacion en
+alpha-cortes de los grados de pertenencia (ver ``ARMxtend.FIM._shared``).
 
-Algoritmo Apriori para la obtención de itemsets frecuentes en conjuntos difusos
+Sustituye a la clase ``AprioriTID`` que existia previamente en este fichero:
+tenia varios errores que impedian su uso (un `__init__`/`run_model` que
+referenciaban un `sc`/`model` inexistentes fuera de un notebook interactivo,
+una llamada a la funcion `AlphaCortes` sin cualificar que lanzaba
+`NameError`, e imports duplicados/sin usar). La logica de alpha-cortes y de
+generacion de candidatos es ahora compartida con el resto de algoritmos de
+`FIM` a traves de `FIM._shared`.
+
+@author Carlos Fernandez-Basso
 """
-from _decimal import Decimal
 import numpy as np
-from decimal import Decimal
-from decimal import Decimal
 
-class AprioriTID(object):
-    @staticmethod
-    def transformation_function(a_model):
-        delim = a_model.delim
+from .._shared import generate_candidates, alpha_cuts
 
-        def _transformation_function(row):
-            return row.split(delim)
 
-        return _transformation_function
+class FuzzyDAprioriTID(object):
+    """
+    Mineria de itemsets frecuentes difusos en Spark. Cada transaccion es una
+    lista de pares (item, grado de pertenencia en [0, 1]); el soporte de un
+    itemset se calcula, para cada alpha-corte, como la media del minimo
+    (t-norma) de los grados de pertenencia de sus items en cada transaccion.
+    """
 
-    def __init__(self):
-        self.delim = ','
-        self.data = sc.textFile('some.csv')
-
-    def run_model(self):
-        self.data = self.data.map(model.transformation_function(self))
-
-    def GenItems(Long, Items):
+    @classmethod
+    def run(cls, sc, transactions, min_supp, num_alpha):
         """
-        Funcion que nos permite generar los itemset para las siguientes fases del algoritmo SeqApriori.
-        :param Long: Longitud de los item que se quieren obtener
-        :param Items: Lista de (i-1)-items que se quieren generar
-        :return: Lista con los itemsets generados
+        Argumentos:
+            sc (SparkContext)
+            transactions (RDD[Iterable[Tuple[str, float]]]): cada
+                transaccion es una lista de pares (item, grado de
+                pertenencia)
+            min_supp (float): soporte minimo relativo, en (0, 1]
+            num_alpha (int): numero de alpha-cortes a considerar
+
+        Retorna:
+            dict {itemset_key: numpy.ndarray(num_alpha)} con el soporte de
+            cada itemset frecuente en, al menos, un alpha-corte
         """
-        listaOut = []
-        ListaRepes = []
-        for i in range(0, len(Items)):
-            if Long == 1:
-                A = Items[i]
-                Used = Items[i].split("-")
-            else:
-                A = Items[i].split("-")
-                Used = Items[i].split("-")
-            for j in range(i + 1, len(Items)):
-                if Long == 1:
-                    B = Items[j]
-                else:
-                    B = Items[j].split("-")
+        alphaTransactions = transactions.map(
+            lambda memberships: {item: alpha_cuts(degree, num_alpha) for item, degree in memberships})
 
-                common = list(set(A) - (set(A) - set(B)))
-                NoRepeat = [x for x in B if x not in set(common + Used)]
+        totalTransacs = alphaTransactions.count()
+        if totalTransacs == 0:
+            return {}
 
-                for item in NoRepeat:
-                    Used.append(item)
-                    A1 = '-'.join(map(str, A + [item]))
-                    if not (sorted(Used) in ListaRepes):
-                        ListaRepes.append(sorted(Used))
-                        listaOut.append(A1)
-        return listaOut
+        # Fase 1: soporte (vector de alpha-cortes) de itemsets de longitud 1
+        itemVectors = alphaTransactions.flatMap(lambda tx: list(tx.items())) \
+                                        .reduceByKey(lambda a, b: a + b) \
+                                        .collectAsMap()
 
-    def GenFuzzItems(Long, Items):
-        """
-        Funcion que nos permite generar los itemset para las siguientes fases del algoritmo SeqApriori.
-        :param Long: Longitud de los item que se quieren obtener
-        :param Items: Lista de (i-1)-items que se quieren generar
-        :return: Lista con los itemsets generados
-        """
-        listaOut = []
-        for i in range(0, len(Items)):
-            if Long == 1:
-                A = Items[i]
-                Used = Items[i].split("-")
-            else:
-                A = Items[i].split("-")
-                Used = Items[i].split("-")
-            for j in range(i + 1, len(Items)):
-                if Long == 1:
-                    B = Items[j]
-                else:
-                    B = Items[j].split("-")
-                common = list(set(A) - (set(A) - set(B)))
-                NoRepeat = [x for x in B if x not in set(common + Used)]
+        freqItemsets = {item: vector / totalTransacs
+                        for item, vector in itemVectors.items()
+                        if np.any(vector / totalTransacs >= min_supp)}
 
-                for item in NoRepeat:
-                    Used.append(item)
-                    A1 = '-'.join(map(str, A + [item]))
-                    listaOut.append(A1)
-        return listaOut
+        # Filtrar de cada transaccion los items infrecuentes (optimizacion
+        # Apriori-TID: las fases siguientes solo consultan datos reducidos)
+        broadcastFreqItems = sc.broadcast(set(freqItemsets.keys()))
+        filteredTransactions = alphaTransactions.map(
+            lambda tx: {item: vector for item, vector in tx.items() if item in broadcastFreqItems.value})
 
-    def FiltradoFrecuentes(broadcastFrequ, transaction):
-        lista = []
-        for i in transaction:
-            if i[0] in broadcastFrequ.value:
-                lista.append(i)
-        if len(lista) != 0:
-            return lista
-        else:
-            return []
+        globalFreqItemsets = dict(freqItemsets)
+        currentLevelKeys = sorted(freqItemsets.keys())
 
-    def FiltradoFrecuentesVset(broadcastFrequ, transaction):
-        s = set(broadcastFrequ.value) & set(transaction)
-        lista = dict((k, transaction[k]) for k in s)
-        return lista
+        # Fase 2: generacion iterativa de candidatos de longitud creciente
+        while len(currentLevelKeys) > 1:
+            candidateKeys = generate_candidates(currentLevelKeys)
+            if not candidateKeys:
+                break
 
-    def FilterEmpty(transaction):
-        lista = []
-        for i in transaction:
-            if sum(i[1]) != 0:
-                lista.append(i)
-        if len(lista) != 0:
-            return lista
-        else:
-            return []
+            candidateItems = {key: key.split("-") for key in candidateKeys}
+            broadcastCandidates = sc.broadcast(candidateItems)
 
-    #######################################################################################################################
-    ########################                              Phase1                                    ########################
-    ########################################################################################################################
-    def Ordenar(transaction):
-        # split the input line in word and count on the comma
-        items = transaction.split(",")
-        lista = []
-        for a in broadcastOrden.value:
-            if a in items:
-                lista.append(a)
-        # turn the count to an integer
-        if lista == []:
-            lista = 0
-        return (lista)
+            def countCandidates(tx):
+                counted = []
+                for key, items in broadcastCandidates.value.items():
+                    membership = np.ones(num_alpha, dtype=float)
+                    isPresent = True
+                    for item in items:
+                        if item not in tx:
+                            isPresent = False
+                            break
+                        membership = np.minimum(membership, tx[item])
+                    if isPresent:
+                        counted.append((key, membership))
+                return counted
 
-    def ContarPhase1(transaction):
-        return transaction
+            itemsetVectors = filteredTransactions.flatMap(countCandidates) \
+                                                  .reduceByKey(lambda a, b: a + b) \
+                                                  .collectAsMap()
+            broadcastCandidates.unpersist()
 
-    def ReducePhase1(x, y):
-        return x + y
+            freqItemsets = {key: vector / totalTransacs
+                            for key, vector in itemsetVectors.items()
+                            if np.any(vector / totalTransacs >= min_supp)}
+            if not freqItemsets:
+                break
 
-    ########################################################################################################################
-    ########################                              Phase 2                                   ########################
-    ########################################################################################################################
-    def ContarPhase2(Items, AphaCuts, transaction):
-        x = Items.value
-        if type(transaction) == type((1, 2)):
-            transaction = [transaction]
-        tra = dict(transaction)
-        lista = []
-        #  print("\nTransacction " + str(tra))
+            globalFreqItemsets.update(freqItemsets)
+            currentLevelKeys = sorted(freqItemsets.keys())
 
-        for i in x:
-            s = i.split("-")
-            s = set(s)
-            keys_tra = set(tra.keys())
-            # print("\nKeys: " + str(tra))
-            #   print("\nitems: " + str(i))
-            intersection = s & keys_tra
-            auxFuz = np.full(AphaCuts.value[0], 1)
-            # for j in intersection:
-            for j in s:
-                if j in tra:
-                    auxFuz = tra[j] * auxFuz
-            # print("\nFuzz: " + str(auxFuz))
-            lista.append((i, auxFuz))
-        #  print("\nlista: " + str(lista))
-        return lista
-
-    def ReducePhase2(x, y):
-        return x + y
-
-    ########################################################################################################################
-    ########################                          FUZZY FNTIONS                                 ########################
-    ########################################################################################################################
-    # def Ordenar(transaction):
-    #     # split the input line in word and count on the comma
-    #     items = transaction.split(",")
-    #     lista = []
-    #     for a in broadcastOrden.value:
-    #         if a in items:
-    #             lista.append(a)
-    #     # turn the count to an integer
-    #     if lista == []:
-    #         lista = 0
-    #     return (lista)
-
-    def AlphaCortes(item, alpha):
-        # Alphacutincre=Decimal(1.0 / alpha)
-        Alfacut = np.linspace(0, 1, num=alpha, endpoint=False)[::-1]
-        Alfacut = np.append(1, Alfacut)
-        med = Decimal(1.0)
-        list = []
-        for i in range(0, alpha):
-            med = Alfacut[i]
-            if round(med, 10) <= item > 0:
-                list.append(1)
-            else:
-                list.append(0)
-            # max = med
-            # med = Decimal(1) - Decimal(Alphacutincre * Decimal(i+1))
-        return np.array(list)
-
-    def CreateTList(broadcastParam, transaction):
-        items = transaction.split(",")
-        lista = []
-        for i in range(0, len(items)):
-            if items[i] == "":
-                items[i] = 0
-            x = AlphaCortes(float(items[i]), broadcastParam.value[0])
-            lista.append((str(broadcastParam.value[4][i]), x))  # .copy()))
-        return lista
+        broadcastFreqItems.unpersist()
+        return globalFreqItemsets

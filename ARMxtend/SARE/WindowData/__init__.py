@@ -19,7 +19,7 @@ class WindowData(object):
 	@author Abel Francisco (2016)
     """
 
-    def __init__(self, transactionIntervals = [], timeWindow = -1):
+    def __init__(self, transactionIntervals=None, timeWindow=-1):
         """
 		Inicialización de una nueva ventana de tiempo deslizante.
 
@@ -29,7 +29,7 @@ class WindowData(object):
 			timeWindow (int, obligatorio): Nuevo identificador del punto temporal en el que termina 
 				la ventana de tiempo
         """
-        self.transactionIntervals = transactionIntervals
+        self.transactionIntervals = transactionIntervals if transactionIntervals is not None else []
         self.timeWindow = timeWindow
         self.totalWindowTransacs = self.countTotalWindowTransacs()
 

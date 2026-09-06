@@ -17,9 +17,6 @@ import os
 import time
 import datetime
 
-from pyspark import SparkContext
-from pyspark.streaming import StreamingContext
-
 from math import floor
 
 from ..DecimalFraction import DecimalFraction
@@ -198,7 +195,7 @@ def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWin
         newLevelCandidates = []
 
         # Para cada nodo hermano derecho
-        for keyRightSibling, rightSibling in rightSiblingsCurrentNode.iteritems():
+        for keyRightSibling, rightSibling in rightSiblingsCurrentNode.items():
 
             # Si el itemset asociado al nodo hermano es frecuente
             if rightSibling.relativeSupport >= minRelSupport:

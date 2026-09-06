@@ -1,210 +1,198 @@
 # -*- coding: utf-8 -*-
-
-
 """
-Algoritmo SeqApriori usando Spark
-@author Carlos Fernandez-Basso (2016)
+FFIM (Fuzzy Frequent Itemset Mining): mineria de itemsets frecuentes,
+crisp y difusos, en una sola maquina (sin Spark), mediante el algoritmo
+FP-Growth (Han, Pei & Yin, 2000).
 
-Algoritmo Apriori para la obtención de itemsets frecuentes en conjuntos difusos
+Es el contrapunto secuencial de los algoritmos difusos de Big Data de
+``ARMxtend.FIM.BD_FARE``/``ARMxtend.FIM.Eclat.FuzzyDECLAT``: en lugar de
+generar y contar candidatos nivel a nivel (Apriori/Eclat), construye un
+arbol de patrones frecuentes (FP-Tree) y lo consulta recursivamente sin
+generar candidatos explicitos, lo que suele ser mas eficiente en una unica
+maquina para datasets con muchos items.
+
+Para la version difusa, el arbol FP-Growth (que fusiona conteos de
+transacciones con el MISMO prefijo de items) no admite directamente grados
+de pertenencia reales, ya que dos transacciones con los mismos items pero
+distinto grado de pertenencia dejarian de ser "el mismo camino" del arbol.
+Este modulo resuelve esto binarizando cada transaccion en cada alpha-corte
+(ver ``ARMxtend.FIM._shared.alpha_cuts``) y ejecutando el FP-Growth crisp de
+forma independiente en cada uno de los `num_alpha` niveles, combinando los
+resultados en un vector de soporte por itemset -- exactamente la misma
+convencion que usan ``FuzzyDECLAT`` y ``FuzzyDAprioriTID``, lo que permite
+usar indistintamente cualquiera de los tres algoritmos como entrada de
+``ARMxtend.FIM.FARE``.
+
+Sustituye al contenido que existia previamente en este fichero, que era una
+copia identica (con los mismos errores) de ``FIM/BD_FARE/__init__.py``.
+
+@author Carlos Fernandez-Basso
 """
-from _decimal import Decimal
+from collections import Counter
+
 import numpy as np
-from decimal import Decimal
-from decimal import Decimal
 
-class AprioriTID(object):
-    @staticmethod
-    def transformation_function(a_model):
-        delim = a_model.delim
+from ..FIM._shared import itemset_to_key, alpha_cuts
 
-        def _transformation_function(row):
-            return row.split(delim)
 
-        return _transformation_function
+class _FPNode(object):
+    __slots__ = ("item", "count", "parent", "children", "link")
 
-    def __init__(self):
-        self.delim = ','
-        self.data = sc.textFile('some.csv')
+    def __init__(self, item, parent):
+        self.item = item
+        self.count = 0
+        self.parent = parent
+        self.children = {}
+        self.link = None
 
-    def run_model(self):
-        self.data = self.data.map(model.transformation_function(self))
 
-    def GenItems(Long, Items):
-        """
-        Funcion que nos permite generar los itemset para las siguientes fases del algoritmo SeqApriori.
-        :param Long: Longitud de los item que se quieren obtener
-        :param Items: Lista de (i-1)-items que se quieren generar
-        :return: Lista con los itemsets generados
-        """
-        listaOut = []
-        ListaRepes = []
-        for i in range(0, len(Items)):
-            if Long == 1:
-                A = Items[i]
-                Used = Items[i].split("-")
-            else:
-                A = Items[i].split("-")
-                Used = Items[i].split("-")
-            for j in range(i + 1, len(Items)):
-                if Long == 1:
-                    B = Items[j]
+def _build_fptree(transactions, min_count):
+    """
+    Construye un FP-Tree a partir de una lista de transacciones (cada una,
+    una coleccion de items), conservando unicamente los items cuyo conteo
+    absoluto (sobre el total de transacciones ORIGINAL, no el tamano de
+    `transactions`) alcanza `min_count`.
+
+    Retorna (header, order, item_counts): la tabla de cabeceras (item -> primer
+    nodo del arbol con ese item, enlazados entre si via `link`), el orden
+    descendente de frecuencia de los items conservados, y sus conteos.
+    """
+    itemCounts = Counter()
+    for transaction in transactions:
+        itemCounts.update(set(transaction))
+
+    itemCounts = {item: count for item, count in itemCounts.items() if count >= min_count}
+    if not itemCounts:
+        return {}, [], {}
+
+    order = sorted(itemCounts, key=lambda item: (-itemCounts[item], item))
+    orderIndex = {item: idx for idx, item in enumerate(order)}
+
+    root = _FPNode(None, None)
+    header = {item: None for item in order}
+    headerTail = {item: None for item in order}
+
+    for transaction in transactions:
+        filteredItems = sorted((item for item in set(transaction) if item in itemCounts),
+                               key=lambda item: orderIndex[item])
+        node = root
+        for item in filteredItems:
+            child = node.children.get(item)
+            if child is None:
+                child = _FPNode(item, node)
+                node.children[item] = child
+                if header[item] is None:
+                    header[item] = child
                 else:
-                    B = Items[j].split("-")
+                    headerTail[item].link = child
+                headerTail[item] = child
+            child.count += 1
+            node = child
 
-                common = list(set(A) - (set(A) - set(B)))
-                NoRepeat = [x for x in B if x not in set(common + Used)]
+    return header, order, itemCounts
 
-                for item in NoRepeat:
-                    Used.append(item)
-                    A1 = '-'.join(map(str, A + [item]))
-                    if not (sorted(Used) in ListaRepes):
-                        ListaRepes.append(sorted(Used))
-                        listaOut.append(A1)
-        return listaOut
 
-    def GenFuzzItems(Long, Items):
-        """
-        Funcion que nos permite generar los itemset para las siguientes fases del algoritmo SeqApriori.
-        :param Long: Longitud de los item que se quieren obtener
-        :param Items: Lista de (i-1)-items que se quieren generar
-        :return: Lista con los itemsets generados
-        """
-        listaOut = []
-        for i in range(0, len(Items)):
-            if Long == 1:
-                A = Items[i]
-                Used = Items[i].split("-")
-            else:
-                A = Items[i].split("-")
-                Used = Items[i].split("-")
-            for j in range(i + 1, len(Items)):
-                if Long == 1:
-                    B = Items[j]
-                else:
-                    B = Items[j].split("-")
-                common = list(set(A) - (set(A) - set(B)))
-                NoRepeat = [x for x in B if x not in set(common + Used)]
+def _ascend_prefix_path(node):
+    """Items (sin contar el propio nodo) desde la raiz hasta el nodo dado."""
+    path = []
+    node = node.parent
+    while node is not None and node.item is not None:
+        path.append(node.item)
+        node = node.parent
+    return path
 
-                for item in NoRepeat:
-                    Used.append(item)
-                    A1 = '-'.join(map(str, A + [item]))
-                    listaOut.append(A1)
-        return listaOut
 
-    def FiltradoFrecuentes(broadcastFrequ, transaction):
-        lista = []
-        for i in transaction:
-            if i[0] in broadcastFrequ.value:
-                lista.append(i)
-        if len(lista) != 0:
-            return lista
-        else:
-            return []
+def _mine_fptree(header, order, itemCounts, min_count, prefix, result):
+    # Se procesan los items del menos al mas frecuente: cada uno se combina
+    # con el prefijo actual para formar un nuevo itemset frecuente, y su
+    # base de patrones condicional se mina recursivamente
+    for item in reversed(order):
+        newItemset = frozenset(prefix) | {item}
+        result[newItemset] = itemCounts[item]
 
-    def FiltradoFrecuentesVset(broadcastFrequ, transaction):
-        s = set(broadcastFrequ.value) & set(transaction)
-        lista = dict((k, transaction[k]) for k in s)
-        return lista
+        conditionalTransactions = []
+        node = header[item]
+        while node is not None:
+            prefixPath = _ascend_prefix_path(node)
+            if prefixPath:
+                conditionalTransactions.extend([prefixPath] * node.count)
+            node = node.link
 
-    def FilterEmpty(transaction):
-        lista = []
-        for i in transaction:
-            if sum(i[1]) != 0:
-                lista.append(i)
-        if len(lista) != 0:
-            return lista
-        else:
-            return []
+        if conditionalTransactions:
+            condHeader, condOrder, condCounts = _build_fptree(conditionalTransactions, min_count)
+            if condOrder:
+                _mine_fptree(condHeader, condOrder, condCounts, min_count, newItemset, result)
 
-    #######################################################################################################################
-    ########################                              Phase1                                    ########################
-    ########################################################################################################################
-    def Ordenar(transaction):
-        # split the input line in word and count on the comma
-        items = transaction.split(",")
-        lista = []
-        for a in broadcastOrden.value:
-            if a in items:
-                lista.append(a)
-        # turn the count to an integer
-        if lista == []:
-            lista = 0
-        return (lista)
 
-    def ContarPhase1(transaction):
-        return transaction
+def fpgrowth(transactions, min_supp):
+    """
+    FP-Growth crisp: mineria exhaustiva de itemsets frecuentes sin generar
+    candidatos explicitos.
 
-    def ReducePhase1(x, y):
-        return x + y
+    Argumentos:
+        transactions (Sequence[Iterable[str]]): una transaccion por
+            elemento, cada una una coleccion de items
+        min_supp (float): soporte minimo relativo, en (0, 1]
 
-    ########################################################################################################################
-    ########################                              Phase 2                                   ########################
-    ########################################################################################################################
-    def ContarPhase2(Items, AphaCuts, transaction):
-        x = Items.value
-        if type(transaction) == type((1, 2)):
-            transaction = [transaction]
-        tra = dict(transaction)
-        lista = []
-        #  print("\nTransacction " + str(tra))
+    Retorna:
+        dict {itemset_key: soporte relativo} con todos los itemsets
+        frecuentes de cualquier longitud
+    """
+    totalTransacs = len(transactions)
+    if totalTransacs == 0:
+        return {}
 
-        for i in x:
-            s = i.split("-")
-            s = set(s)
-            keys_tra = set(tra.keys())
-            # print("\nKeys: " + str(tra))
-            #   print("\nitems: " + str(i))
-            intersection = s & keys_tra
-            auxFuz = np.full(AphaCuts.value[0], 1)
-            # for j in intersection:
-            for j in s:
-                if j in tra:
-                    auxFuz = tra[j] * auxFuz
-            # print("\nFuzz: " + str(auxFuz))
-            lista.append((i, auxFuz))
-        #  print("\nlista: " + str(lista))
-        return lista
+    minCount = min_supp * totalTransacs - 1e-9
+    header, order, itemCounts = _build_fptree(transactions, minCount)
 
-    def ReducePhase2(x, y):
-        return x + y
+    result = {}
+    if order:
+        _mine_fptree(header, order, itemCounts, minCount, frozenset(), result)
 
-    ########################################################################################################################
-    ########################                          FUZZY FNTIONS                                 ########################
-    ########################################################################################################################
-    # def Ordenar(transaction):
-    #     # split the input line in word and count on the comma
-    #     items = transaction.split(",")
-    #     lista = []
-    #     for a in broadcastOrden.value:
-    #         if a in items:
-    #             lista.append(a)
-    #     # turn the count to an integer
-    #     if lista == []:
-    #         lista = 0
-    #     return (lista)
+    return {itemset_to_key(itemset): count / totalTransacs for itemset, count in result.items()}
 
-    def AlphaCortes(item, alpha):
-        # Alphacutincre=Decimal(1.0 / alpha)
-        Alfacut = np.linspace(0, 1, num=alpha, endpoint=False)[::-1]
-        Alfacut = np.append(1, Alfacut)
-        med = Decimal(1.0)
-        list = []
-        for i in range(0, alpha):
-            med = Alfacut[i]
-            if round(med, 10) <= item > 0:
-                list.append(1)
-            else:
-                list.append(0)
-            # max = med
-            # med = Decimal(1) - Decimal(Alphacutincre * Decimal(i+1))
-        return np.array(list)
 
-    def CreateTList(broadcastParam, transaction):
-        items = transaction.split(",")
-        lista = []
-        for i in range(0, len(items)):
-            if items[i] == "":
-                items[i] = 0
-            x = AlphaCortes(float(items[i]), broadcastParam.value[0])
-            lista.append((str(broadcastParam.value[4][i]), x))  # .copy()))
-        return lista
+def fuzzy_fpgrowth(transactions, min_supp, num_alpha):
+    """
+    FP-Growth difuso: ejecuta `fpgrowth` de forma independiente en cada uno
+    de los `num_alpha` alpha-cortes (tras binarizar los grados de
+    pertenencia de cada transaccion con `alpha_cuts`), y combina los
+    resultados en un vector de soporte por itemset, siguiendo la misma
+    convencion que ``ARMxtend.FIM.Eclat.FuzzyDECLAT`` y
+    ``ARMxtend.FIM.BD_FARE.FuzzyDAprioriTID``: un itemset se conserva si es
+    frecuente en, al menos, uno de los alpha-cortes (propiedad que se
+    conserva por cierre descendente, ver docstring de `FuzzyDECLAT`).
+
+    Argumentos:
+        transactions (Sequence[Iterable[Tuple[str, float]]]): cada
+            transaccion es una lista de pares (item, grado de pertenencia
+            en [0, 1])
+        min_supp (float): soporte minimo relativo, en (0, 1]
+        num_alpha (int): numero de alpha-cortes a considerar
+
+    Retorna:
+        dict {itemset_key: numpy.ndarray(num_alpha)}
+    """
+    totalTransacs = len(transactions)
+    if totalTransacs == 0:
+        return {}
+
+    transactionAlphaVectors = [
+        {item: alpha_cuts(degree, num_alpha) for item, degree in transaction}
+        for transaction in transactions
+    ]
+
+    supportPerLevel = []
+    for alphaLevel in range(num_alpha):
+        binarizedTransactions = [
+            {item for item, vector in txVectors.items() if vector[alphaLevel]}
+            for txVectors in transactionAlphaVectors
+        ]
+        supportPerLevel.append(fpgrowth(binarizedTransactions, min_supp))
+
+    allKeys = set()
+    for levelResult in supportPerLevel:
+        allKeys.update(levelResult.keys())
+
+    return {key: np.array([supportPerLevel[level].get(key, 0.0) for level in range(num_alpha)])
+            for key in allKeys}

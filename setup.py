@@ -13,6 +13,16 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/cjferba/ARMxtend",
     packages=setuptools.find_packages(),
+    install_requires=[
+        "numpy",
+        "pandas",
+        "networkx",
+    ],
+    extras_require={
+        # Necesario solo para los algoritmos de Big Data/streaming:
+        # FIM.apriori, FIM.Eclat, FIM.BD_ARE, FIM.BD_FARE, SARE, SFIM
+        "spark": ["pyspark"],
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

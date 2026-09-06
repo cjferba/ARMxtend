@@ -69,7 +69,7 @@ class FIMoTS_Tree(object):
     		Un Diccionario con todos los nodos del árbol que se ubican en el nivel indicado.
         """
         levelSelected = {k: v for k, v
-                         in self.nodeMap.iteritems()
+                         in self.nodeMap.items()
                          if k.count('_') == (levelNumber - 1) and
                          k != '-1'
                          }
@@ -95,13 +95,13 @@ class FIMoTS_Tree(object):
 
         if len(currentNodeElements) == 1:
             rightSiblingsMap = {k: v for k, v
-                                in self.nodeMap.iteritems()
+                                in self.nodeMap.items()
                                 if keyNode.count('_') == k.count('_') and
                                 k.split('_')[-1] > lastNodeElement
                                 }
         else:
             rightSiblingsMap = {k: v for k, v
-                                in self.nodeMap.iteritems()
+                                in self.nodeMap.items()
                                 if keyNode.count('_') == k.count('_') and
                                 k.split('_')[-1] > lastNodeElement and
                                 k.startswith(node.parentNode)
@@ -120,12 +120,12 @@ class FIMoTS_Tree(object):
 			Una lista con las claves de los elementos/nodos eliminados
         """
         deletedNodes = {k: v for k, v
-                        in self.nodeMap.iteritems()
+                        in self.nodeMap.items()
                         if keyParentNode.count('_') == (k.count('_') - 1) and
                         k.startswith(keyParentNode)
                         }
         self.nodeMap = {k: v for k, v
-                        in self.nodeMap.iteritems()
+                        in self.nodeMap.items()
                         if keyParentNode.count('_') != (k.count('_') - 1) or
                         not k.startswith(keyParentNode)
                         }

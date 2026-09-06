@@ -13,7 +13,6 @@ import sys
 import os
 import time
 import datetime
-import sh
 
 from os import walk
 
@@ -222,8 +221,9 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
             filesNames.extend([(dirPath + fileName) for fileName in fileNames])
             break
 
-        # Buscar en directorio HDFS
+        # Buscar en directorio HDFS (import diferido: 'sh' solo hace falta en este caso)
         if not filesNames:
+            import sh
             filesNames = [line.rsplit(None, 1)[-1] for line in sh.hdfs('dfs', '-ls', filesDir).split('\n') if
                           len(line.rsplit(None, 1))][1:]
         # filesNames = esutil.hdfs.ls(hdfs_url=filesDir, recurse=False, full=False)

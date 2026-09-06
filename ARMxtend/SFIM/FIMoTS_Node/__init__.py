@@ -29,7 +29,7 @@ class FIMoTS_Node(object):
  	@author Abel Francisco (2016)
     """
 
-    def __init__(self, itemPrefix=[], relativeSupport=0.0, fractionElems=None,
+    def __init__(self, itemPrefix=None, relativeSupport=0.0, fractionElems=None,
                  parentNode='', totalChildNodes=0, lastUpdate=-1):
         """
     	Inicialización de un nuevo nodo del árbol lexicográfico que representa a un itemset
@@ -51,7 +51,7 @@ class FIMoTS_Node(object):
     			momento, en la ventana de tiempo deslizante, en que el soporte relativo del
     			presente itemset ha sido actualizado por última vez 
         """
-        self.itemPrefix = itemPrefix
+        self.itemPrefix = itemPrefix if itemPrefix is not None else []
         self.relativeSupport = relativeSupport
         self.fractionElems = fractionElems
         self.parentNode = parentNode

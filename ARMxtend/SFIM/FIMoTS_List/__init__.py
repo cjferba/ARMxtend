@@ -16,7 +16,7 @@ class FIMoTS_List(object):
 	@author Abel Francisco (2016)
     """
 
-    def __init__(self, itemsBounds=[]):
+    def __init__(self, itemsBounds=None):
         """
 		Inicialización la estructura con la lista de cotas transformadoras (superior - inferior) 
 		que tienen los itemsets en una solución del algoritmo FIMoTS.
@@ -25,7 +25,7 @@ class FIMoTS_List(object):
 			itemsBounds (Array(FIMoTS_Bounds), opcional, por defecto []): La nueva lista de 
 				combinaciones distintas de cotas transformadoras        
         """
-        self.itemsBounds = itemsBounds
+        self.itemsBounds = itemsBounds if itemsBounds is not None else []
 
     def __repr__(self):
         """

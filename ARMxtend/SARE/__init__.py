@@ -13,9 +13,10 @@ import sys
 import os
 import time
 import datetime
-import sh
 
 from os import walk
+
+import pandas as pd
 
 from pyspark import SparkContext
 from pyspark import SparkConf
@@ -28,9 +29,56 @@ from .FIMoTS_Structure import FIMoTS_Structure
 from .FIMoTS_Algorithm import FIMoTS_TreeInitialization
 from .FIMoTS_Algorithm import FIMoTS_Main
 
+from ARMxtend.ARM.association_rules import association_rules
+
+
+def extractAssociationRules(Actual_FIMoTS_Structure, metric="confidence", min_threshold=0.7):
+    """
+    Extension de FIMoTS a la mineria de reglas de asociacion (no solo de
+    itemsets frecuentes), anunciada como trabajo futuro en:
+        Fernandez-Basso, C., Francisco-Agra, A.J., Martin-Bautista, M.J.,
+        Ruiz, M.D. (2019). "Finding tendencies in streaming data using Big
+        Data frequent itemset mining". Knowledge-Based Systems, 163,
+        666-674 (Seccion 5, Conclusiones: "we plan [...] to extend it to
+        consider association rule mining in order to study the
+        co-occurrences of frequent items in data streams").
+
+    Dado que el Frequent Itemset Tree (FIT) de FIMoTS ya contiene, por
+    construccion (generacion de candidatos por cierre descendente, ver
+    `FIMoTS_Initial`), el soporte de todo subconjunto no vacio de cada
+    itemset frecuente, la extraccion de reglas se reduce exactamente al
+    caso crisp no distribuido: basta construir el DataFrame de itemsets
+    frecuentes esperado por `ARM.association_rules` a partir del arbol
+    actual, y reutilizar dicha funcion sin duplicar su logica.
+
+    Argumentos:
+        Actual_FIMoTS_Structure (FIMoTS_Structure): estructura actual con la
+            ejecucion del algoritmo FIMoTS (arbol de itemsets + listas de
+            cotas transformadoras)
+        metric, min_threshold: ver `ARM.association_rules`
+
+    Retorna:
+        pandas.DataFrame con las reglas de asociacion vigentes sobre los
+        itemsets frecuentes de la ventana de tiempo actual (mismo formato
+        que `ARM.association_rules`)
+    """
+    freqItemsetKeys = Actual_FIMoTS_Structure.frequentItemsetsBounds.getItemsetsKeys()
+    if not freqItemsetKeys:
+        return pd.DataFrame(columns=["antecedents", "consequents"])
+
+    itemsets = []
+    supports = []
+    for itemsetKey in freqItemsetKeys:
+        node = Actual_FIMoTS_Structure.itemsetsTree.nodeMap[itemsetKey]
+        itemsets.append(frozenset(node.itemPrefix))
+        supports.append(node.relativeSupport)
+
+    freqItemsetsDf = pd.DataFrame({"support": supports, "itemsets": itemsets})
+    return association_rules(freqItemsetsDf, metric=metric, min_threshold=min_threshold)
+
 
 def runStreamingFIMoTSAlgorithm(addedTransactions, slidingWindow, intervals, Actual_FIMoTS_Structure,
-                                minSuppRelElements, sc):
+                                minSuppRelElements, sc, minConf=None):
     """
     Método para aplicar el manejo de intervalos de tiempo en la ventana deslizante, durante
     la ejecución del algoritmo FIMoTS en ambientes de flujos de datos (streaming), en
@@ -72,10 +120,10 @@ def runStreamingFIMoTSAlgorithm(addedTransactions, slidingWindow, intervals, Act
                     sc)
 
     if not isFirstWindow:
-        FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow)
+        FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow, minConf)
 
 
-def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow):
+def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow, minConf=None):
     """
     Muestra en pantalla los resultados de una iteración del algoritmo FIMoTS aplicado sobre
     una ventana de tiempo de transacciones.
@@ -84,6 +132,9 @@ def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow):
         Actual_FIMoTS_Structure (FIMoTS_Structure, obligatorio): estructura actual con la
             ejecución del algoritmo FIMoTS
         slidingWindow (WindowData, obligatorio): Ventana deslizante de tiempo actual
+        minConf (float, opcional): si se especifica, ademas de los itemsets frecuentes se
+            muestran las reglas de asociacion vigentes con confianza >= minConf
+            (ver `extractAssociationRules`)
     """
     current_time = time.time()
     current_datetime = datetime.datetime.fromtimestamp(current_time).strftime('%d/%m/%Y %H:%M:%S')
@@ -112,6 +163,14 @@ def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow):
     for freqItemsetKey in freqItemsetsKeys:
         print(' '.join(freqItemsetKey.split("_")))
 
+    if minConf is not None:
+        rules = extractAssociationRules(Actual_FIMoTS_Structure, min_threshold=minConf)
+        print("")
+        print("Reglas de Asociacion (confianza >= {}):".format(minConf))
+        for _, rule in rules.iterrows():
+            print("{} --> {} (confianza: {:.3f})".format(
+                ', '.join(rule['antecedents']), ', '.join(rule['consequents']), rule['confidence']))
+
     # Presentar solo itemsets infrecuentes en formato simple
     # infreqItemsetsKeys = Actual_FIMoTS_Structure.infrequentItemsetsBounds.getItemsetsKeys()
     # for infreqItemsetKey in infreqItemsetsKeys:
@@ -121,7 +180,7 @@ def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow):
 
 
 def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
-         threads=2, seconds=5, hostname='localhost', port=9999):
+         threads=2, seconds=5, hostname='localhost', port=9999, minConf=None):
     """
     Programa Principal para ejecutar el algoritmo FIMoTS en BigData con Spark (Estático o
     en Streaming).
@@ -131,6 +190,9 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
     		para que un itemset sea frecuente. Mayor que cero (0)
     	minSuppDen (int, opcional, por defecto 3): Denominador del soporte mínimo relativo
     		para que un itemset sea frecuente. Mayor que cero (0)
+    	minConf (float, opcional, por defecto None): si se especifica, ademas de los
+    		itemsets frecuentes se extraen y muestran las reglas de asociacion vigentes
+    		con confianza >= minConf en cada iteracion (ver `extractAssociationRules`)
     	mode (String, opcional, por defecto 'TEXTFILE'): Modo de recepción de transacciones
     		sobre las cuales aplicar el algoritmo FIMoTS. 'TEXTFILE' para un conjunto de
     		datos estáticos, con las transacciones especificadas en un archivo de texto (cada
@@ -202,7 +264,7 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
         # desde el streaming en cada instante de tiempo
         transactions.foreachRDD(
             lambda rdd: runStreamingFIMoTSAlgorithm(rdd, slidingWindow, intervals, Actual_FIMoTS_Structure,
-                                                    minSuppRelElements, sc))
+                                                    minSuppRelElements, sc, minConf))
 
         # Iniciar la computación en streaming
         ssc.start()
@@ -222,8 +284,9 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
             filesNames.extend([(dirPath + fileName) for fileName in fileNames])
             break
 
-        # Buscar en directorio HDFS
+        # Buscar en directorio HDFS (import diferido: 'sh' solo hace falta en este caso)
         if not filesNames:
+            import sh
             filesNames = [line.rsplit(None, 1)[-1] for line in sh.hdfs('dfs', '-ls', filesDir).split('\n') if
                           len(line.rsplit(None, 1))][1:]
         # filesNames = esutil.hdfs.ls(hdfs_url=filesDir, recurse=False, full=False)
@@ -250,7 +313,7 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
                             minSuppRelElements, sc)
 
             if not isFirstWindow:
-                FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow)
+                FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow, minConf)
 
     if mode == 'STREAMING':
         # Esperar a que la computación termine
