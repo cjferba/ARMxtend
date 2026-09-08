@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Carlos Fernandez-Basso">
+        <link rel="canonical" href="http://cjferba.github.io/ARMxtend/examples/">
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Examples - ARMxtend</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../css/brands.min.css" rel="stylesheet">
+        <link href="../css/solid.min.css" rel="stylesheet">
+        <link href="../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">ARMxtend</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href=".." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="./" class="nav-link active" aria-current="page">Examples</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../USER_GUIDE_INDEX/" class="dropdown-item">User Guide Index</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crisp association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
+</li>
+                                    
+<li>
+    <a href="../contributors/" class="dropdown-item">Contributors</a>
+</li>
+                                    
+<li>
+    <a href="../license/" class="dropdown-item">License</a>
+</li>
+                                    
+<li>
+    <a href="../cite/" class="dropdown-item">Citing ARMxtend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../quick-start/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../USER_GUIDE_INDEX/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/examples.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#examples" class="nav-link">Examples</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#crisp-association-rules-armassociation_rules-ffimfpgrowth" class="nav-link">Crisp association rules (ARM.association_rules + FFIM.fpgrowth)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#fuzzy-association-rules-ffimfuzzy_fpgrowth-fimfare" class="nav-link">Fuzzy association rules (FFIM.fuzzy_fpgrowth + FIM.FARE)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#meta-association-rules-armmeta_rules" class="nav-link">Meta-association rules (ARM.meta_rules)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#preprocessing-fuzzifying-a-numeric-attribute-preprocessingfuzzylib" class="nav-link">Preprocessing: fuzzifying a numeric attribute (preprocessing.FuzzyLib)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#visualization-the-vizare-typed-graph-vizarmaretograph" class="nav-link">Visualization: the VizARE typed graph (VizARM.AREtoGraph)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#big-data-and-streaming-algorithms" class="nav-link">Big Data and streaming algorithms</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="examples">Examples</h1>
+<p>Every example on this page lives as a runnable, self-contained script under
+<a href="https://github.com/cjferba/ARMxtend/tree/master/examples"><code>examples/</code></a> in the repository, and is executed on every
+push by <a href="https://github.com/cjferba/ARMxtend/blob/master/tests/test_examples.py"><code>tests/test_examples.py</code></a> as part of
+the <a href="https://github.com/cjferba/ARMxtend/actions">CI workflow</a> (see the badge on the project <a href="https://github.com/cjferba/ARMxtend#readme">README</a>).
+This means the code and the output shown below are guaranteed to stay in sync with the current
+version of the library -- if a change to <code>ARMxtend</code> breaks one of these examples, CI turns red.</p>
+<p>Run any of them locally with:</p>
+<pre><code class="language-bash">pip install -e .
+python examples/example_association_rules.py
+</code></pre>
+<h2 id="crisp-association-rules-armassociation_rules-ffimfpgrowth">Crisp association rules (<code>ARM.association_rules</code> + <code>FFIM.fpgrowth</code>)</h2>
+<p>Mines frequent itemsets with FP-Growth and then crisp association rules (support/confidence/lift),
+on the classic 10-transaction, 4-item dataset used throughout the FIM papers cited in
+<a href="../cite/">Citing ARMxtend</a>.</p>
+<pre><code class="language-python">import pandas as pd
+
+from ARMxtend.ARM.association_rules import association_rules
+from ARMxtend.FFIM import fpgrowth
+from ARMxtend.FIM._shared import key_to_itemset
+
+TRANSACTIONS = [
+    &quot;A,B,C&quot;, &quot;B,D&quot;, &quot;A,C,D&quot;, &quot;B,C&quot;, &quot;A,C&quot;,
+    &quot;B,D&quot;, &quot;A,B,C&quot;, &quot;B,C,D&quot;, &quot;A,B,D&quot;, &quot;B,C,D&quot;,
+]
+
+
+def main():
+    transactions = [line.split(&quot;,&quot;) for line in TRANSACTIONS]
+
+    freqItemsets = fpgrowth(transactions, min_supp=0.3)
+    print(&quot;Itemsets frecuentes (min_supp=0.3):&quot;)
+    for itemsetKey, support in sorted(freqItemsets.items()):
+        print(&quot;  {:&lt;10} support={:.2f}&quot;.format(itemsetKey, support))
+
+    itemsetsDf = pd.DataFrame({
+        &quot;support&quot;: list(freqItemsets.values()),
+        &quot;itemsets&quot;: [key_to_itemset(key) for key in freqItemsets],
+    })
+    rulesDf = association_rules(itemsetsDf, metric=&quot;confidence&quot;, min_threshold=0.7)
+
+    print(&quot;\nReglas de asociacion (min_confidence=0.7):&quot;)
+    for _, rule in rulesDf.iterrows():
+        antecedent = &quot;,&quot;.join(sorted(rule[&quot;antecedents&quot;]))
+        consequent = &quot;,&quot;.join(sorted(rule[&quot;consequents&quot;]))
+        print(&quot;  {} -&gt; {:&lt;6} support={:.2f} confidence={:.2f} lift={:.2f}&quot;.format(
+            antecedent, consequent, rule[&quot;support&quot;], rule[&quot;confidence&quot;], rule[&quot;lift&quot;]))
+
+    return freqItemsets, rulesDf
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre>
+<p>(full source: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_association_rules.py"><code>examples/example_association_rules.py</code></a>)</p>
+<p>Output:</p>
+<pre><code class="language-text">Itemsets frecuentes (min_supp=0.3):
+  A          support=0.50
+  A-B        support=0.30
+  A-C        support=0.40
+  B          support=0.80
+  B-C        support=0.50
+  B-D        support=0.50
+  C          support=0.70
+  C-D        support=0.30
+  D          support=0.60
+
+Reglas de asociacion (min_confidence=0.7):
+  A -&gt; C      support=0.40 confidence=0.80 lift=1.14
+  D -&gt; B      support=0.50 confidence=0.83 lift=1.04
+  C -&gt; B      support=0.50 confidence=0.71 lift=0.89
+</code></pre>
+<h2 id="fuzzy-association-rules-ffimfuzzy_fpgrowth-fimfare">Fuzzy association rules (<code>FFIM.fuzzy_fpgrowth</code> + <code>FIM.FARE</code>)</h2>
+<p>Reproduces, alpha-cut by alpha-cut, the worked example of Delgado, Ruiz, Sanchez &amp; Serrano (2011)
+-- see <a href="../user_guide/FIM/FARE/"><code>FIM.FARE</code></a> -- for the rule <code>{i1,i3} -&gt; {i4}</code>: FSupp = 0.266,
+FConf = 0.5, FCF = 0.33. This is exactly what <a href="https://github.com/cjferba/ARMxtend/blob/master/tests/test_examples.py"><code>tests/test_examples.py</code></a>
+asserts, so any regression in the alpha-cut aggregation breaks CI immediately.</p>
+<pre><code class="language-python">from ARMxtend.FFIM import fuzzy_fpgrowth
+from ARMxtend.FIM.FARE import fuzzy_association_rules
+
+# t1..t6, grados de pertenencia de i1..i5 (Tabla 2 del articulo)
+FUZZY_TRANSACTIONS = [
+    [(&quot;i1&quot;, 1.0), (&quot;i2&quot;, 0.2), (&quot;i3&quot;, 1.0), (&quot;i4&quot;, 0.8), (&quot;i5&quot;, 0.9)],
+    [(&quot;i1&quot;, 1.0), (&quot;i2&quot;, 1.0), (&quot;i3&quot;, 0.8)],
+    [(&quot;i1&quot;, 0.4), (&quot;i2&quot;, 0.1), (&quot;i3&quot;, 0.7), (&quot;i4&quot;, 0.6)],
+    [(&quot;i1&quot;, 0.6), (&quot;i3&quot;, 0.4), (&quot;i4&quot;, 0.4), (&quot;i5&quot;, 0.5)],
+    [(&quot;i1&quot;, 0.4), (&quot;i2&quot;, 0.1)],
+    [(&quot;i2&quot;, 1.0)],
+]
+
+NUM_ALPHA = 5  # alpha-cortes {1, 0.8, 0.6, 0.4, 0.2}, como en el articulo
+
+
+def main():
+    freqItemsets = fuzzy_fpgrowth(FUZZY_TRANSACTIONS, min_supp=0.1, num_alpha=NUM_ALPHA)
+    rulesDf = fuzzy_association_rules(freqItemsets, NUM_ALPHA, metric=&quot;support&quot;, min_threshold=0.0)
+
+    target = next(
+        row for _, row in rulesDf.iterrows()
+        if set(row[&quot;antecedents&quot;]) == {&quot;i1&quot;, &quot;i3&quot;} and set(row[&quot;consequents&quot;]) == {&quot;i4&quot;}
+    )
+    print(&quot;Comprobacion contra el articulo para {i1,i3} -&gt; {i4}:&quot;)
+    print(&quot;  esperado  FSupp=0.266 FConf=0.5 FCF=0.33&quot;)
+    print(&quot;  obtenido  FSupp={:.3f} FConf={:.3f} FCF={:.3f}&quot;.format(
+        target[&quot;support&quot;], target[&quot;confidence&quot;], target[&quot;certainty_factor&quot;]))
+
+    return freqItemsets, rulesDf
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre>
+<p>(full source, including every printed itemset/rule: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_fuzzy_association_rules.py"><code>examples/example_fuzzy_association_rules.py</code></a>)</p>
+<p>Output (abridged -- the full run lists every fuzzy rule found):</p>
+<pre><code class="language-text">Comprobacion contra el articulo para {i1,i3} -&gt; {i4}:
+  esperado  FSupp=0.266 FConf=0.5 FCF=0.33
+  obtenido  FSupp=0.267 FConf=0.500 FCF=0.330
+</code></pre>
+<h2 id="meta-association-rules-armmeta_rules">Meta-association rules (<code>ARM.meta_rules</code>)</h2>
+<p>Mines primary rules independently in three small datasets, then meta-rules describing which
+primary rules co-occur across datasets -- crisp (presence/absence) and fuzzy (weighted by each
+rule's own support/confidence). See <a href="../user_guide/ARM/meta_rules/"><code>ARM.meta_rules</code></a> for the
+underlying model (Ruiz et al., 2016).</p>
+<pre><code class="language-python">from ARMxtend.ARM.meta_rules import (
+    mine_primary_rule_measures,
+    crisp_meta_association_rules,
+    fuzzy_meta_association_rules,
+)
+
+# Tres datasets D1, D2, D3 en los que A -&gt; B es una regla fuerte y
+# consistente (aparece siempre que aparece A), y C -&gt; D solo aparece,
+# debilmente, en D3.
+DATASETS = [
+    [[&quot;A&quot;, &quot;B&quot;], [&quot;A&quot;, &quot;B&quot;], [&quot;A&quot;, &quot;B&quot;], [&quot;C&quot;]],
+    [[&quot;A&quot;, &quot;B&quot;], [&quot;A&quot;, &quot;B&quot;], [&quot;B&quot;], [&quot;C&quot;]],
+    [[&quot;A&quot;, &quot;B&quot;], [&quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;], [&quot;C&quot;, &quot;D&quot;], [&quot;B&quot;]],
+]
+
+
+def main():
+    ruleMeasuresPerDataset = mine_primary_rule_measures(DATASETS, min_supp=0.4, min_conf=0.5)
+
+    crispMetaRules = crisp_meta_association_rules(
+        ruleMeasuresPerDataset, min_supp=0.6, min_conf=0.6)
+
+    fuzzyMetaRules = fuzzy_meta_association_rules(
+        ruleMeasuresPerDataset, num_alpha=5, min_supp=0.3, min_conf=0.5)
+
+    return ruleMeasuresPerDataset, crispMetaRules, fuzzyMetaRules
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre>
+<p>(full source, with the printing of every rule set: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_meta_rules.py"><code>examples/example_meta_rules.py</code></a>)</p>
+<p>Output:</p>
+<pre><code class="language-text">Reglas primarias minadas en cada dataset:
+  D1: {'A=&gt;B': 1.0, 'B=&gt;A': 1.0}
+  D2: {'A=&gt;B': 1.0, 'B=&gt;A': 0.6666666666666666}
+  D3: {'C=&gt;D': 1.0, 'D=&gt;C': 1.0, 'A=&gt;B': 1.0, 'B=&gt;A': 0.6666666666666666}
+
+Meta-reglas crisp (co-ocurrencia de reglas entre datasets):
+  {'A=&gt;B'} -&gt; {'B=&gt;A'}  support=1.00 confidence=1.00
+  {'B=&gt;A'} -&gt; {'A=&gt;B'}  support=1.00 confidence=1.00
+
+Meta-reglas difusas (ponderadas por la fuerza de cada regla primaria):
+  {'A=&gt;B'} -&gt; {'B=&gt;A'}  FSupp=0.73 FConf=0.73
+  {'B=&gt;A'} -&gt; {'A=&gt;B'}  FSupp=0.73 FConf=1.00
+  {'C=&gt;D'} -&gt; {'D=&gt;C'}  FSupp=0.33 FConf=1.00
+  {'D=&gt;C'} -&gt; {'C=&gt;D'}  FSupp=0.33 FConf=1.00
+  ...
+</code></pre>
+<p>Note how the crisp variant only sees <code>A=&gt;B</code> and <code>B=&gt;A</code> co-occurring in all three datasets (a
+boolean fact), while the fuzzy variant additionally distinguishes that the <code>A=&gt;B</code> &lt;-&gt; <code>B=&gt;A</code>
+association (FSupp=0.73) is far more prominent than the <code>C=&gt;D</code> &lt;-&gt; <code>D=&gt;C</code> one (FSupp=0.33, since
+<code>C=&gt;D</code>/<code>D=&gt;C</code> were only mined at all in dataset D3).</p>
+<h2 id="preprocessing-fuzzifying-a-numeric-attribute-preprocessingfuzzylib">Preprocessing: fuzzifying a numeric attribute (<code>preprocessing.FuzzyLib</code>)</h2>
+<p>Turns a numeric <code>temperature</code> column into a Ruspini triangular fuzzy partition (<code>cold</code> /
+<code>comfortable</code> / <code>warm</code>), the usual preprocessing step before feeding data into any of the fuzzy
+mining algorithms above. See <a href="../user_guide/preprocessing/FuzzyLib/"><code>preprocessing.FuzzyLib</code></a>.</p>
+<pre><code class="language-python">import pandas as pd
+
+from ARMxtend.preprocessing import FuzzyLib
+
+
+def main():
+    fuzzyLib = FuzzyLib()
+    fuzzyLib.data = pd.DataFrame({
+        &quot;temperature&quot;: [17.0, 19.5, 21.0, 23.0, 25.5, 28.0],
+        &quot;sensor_id&quot;: [&quot;s1&quot;, &quot;s2&quot;, &quot;s3&quot;, &quot;s4&quot;, &quot;s5&quot;, &quot;s6&quot;],
+    })
+    fuzzyLib.atributes = list(fuzzyLib.data.columns)
+
+    addedColumns = fuzzyLib.Fuzzification(
+        Atri=[&quot;temperature&quot;],
+        thresholds=[[18, 21, 25]],
+        FuzzyLabel=[[&quot;cold&quot;, &quot;comfortable&quot;, &quot;warm&quot;]],
+    )
+
+    print(&quot;Columnas difusas anadidas:&quot;, addedColumns)
+    print(fuzzyLib.GetData().to_string(index=False))
+    return fuzzyLib.GetData()
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre>
+<p>(full source: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_preprocessing.py"><code>examples/example_preprocessing.py</code></a>)</p>
+<p>Output:</p>
+<pre><code class="language-text">Columnas difusas anadidas: ['temperature_cold', 'temperature_comfortable', 'temperature_warm']
+
+ temperature sensor_id  temperature_cold  temperature_comfortable  temperature_warm
+        17.0        s1               1.0                      0.0               0.0
+        19.5        s2               0.5                      0.5               0.0
+        21.0        s3               0.0                      1.0               0.0
+        23.0        s4               0.0                      0.5               0.5
+        25.5        s5               0.0                      0.0               1.0
+        28.0        s6               0.0                      0.0               1.0
+</code></pre>
+<h2 id="visualization-the-vizare-typed-graph-vizarmaretograph">Visualization: the VizARE typed graph (<code>VizARM.AREtoGraph</code>)</h2>
+<p>Takes the crisp rules mined in the first example and transforms them into the <strong>VizARE</strong> typed
+graph (item nodes + rule nodes, connected by <code>antecedent</code>/<code>consequent</code> edges) of Fernandez-Basso,
+Ruiz, Molina-Solana &amp; Martin-Bautista (2026), exports it to the paper's proposed intermediate
+format (JSON Graph Format), and builds the optional rule-summarization layer (Section 4.2). See
+<a href="../user_guide/VizARM/"><code>VizARM.AREtoGraph</code></a>.</p>
+<pre><code class="language-python">import pandas as pd
+
+from ARMxtend.ARM.association_rules import association_rules
+from ARMxtend.FFIM import fpgrowth
+from ARMxtend.FIM._shared import key_to_itemset
+from ARMxtend.VizARM import AREtoGraph
+
+TRANSACTIONS = [
+    &quot;A,B,C&quot;, &quot;B,D&quot;, &quot;A,C,D&quot;, &quot;B,C&quot;, &quot;A,C&quot;,
+    &quot;B,D&quot;, &quot;A,B,C&quot;, &quot;B,C,D&quot;, &quot;A,B,D&quot;, &quot;B,C,D&quot;,
+]
+
+
+def main():
+    transactions = [line.split(&quot;,&quot;) for line in TRANSACTIONS]
+    freqItemsets = fpgrowth(transactions, min_supp=0.3)
+    itemsetsDf = pd.DataFrame({
+        &quot;support&quot;: list(freqItemsets.values()),
+        &quot;itemsets&quot;: [key_to_itemset(key) for key in freqItemsets],
+    })
+    rulesDf = association_rules(itemsetsDf, metric=&quot;confidence&quot;, min_threshold=0.7)
+
+    graph = AREtoGraph.from_dataframe(rulesDf, rule_measures=(&quot;support&quot;, &quot;confidence&quot;, &quot;lift&quot;))
+    # Each rule is its own node -- e.g. rule::A=&gt;C -- linked to item nodes A
+    # (antecedent edge) and C (consequent edge); there is no direct A -&gt; C edge.
+    print(graph.to_jgf())
+
+    summaryIds = graph.summarize(signature=&quot;consequent&quot;, measures=(&quot;confidence&quot;, &quot;lift&quot;))
+    return graph, summaryIds
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre>
+<p>(full source: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_vizarm.py"><code>examples/example_vizarm.py</code></a>)</p>
+<p>Output (abridged):</p>
+<pre><code class="language-text">Grafo: 4 nodos item, 3 nodos rule, 6 aristas
+  rule::A=&gt;C: ['A'] -&gt; ['C']  support=0.40 confidence=0.80 lift=1.14
+  rule::D=&gt;B: ['D'] -&gt; ['B']  support=0.50 confidence=0.83 lift=1.04
+  rule::C=&gt;B: ['C'] -&gt; ['B']  support=0.50 confidence=0.71 lift=0.89
+
+JGF (formato intermedio propuesto, primeras lineas):
+{
+  &quot;graph&quot;: {
+    &quot;directed&quot;: true,
+    &quot;type&quot;: &quot;association-rules&quot;,
+    &quot;nodes&quot;: {
+      &quot;rule::A=&gt;C&quot;: {
+        &quot;label&quot;: &quot;A -&gt; C&quot;,
+        &quot;metadata&quot;: {
+          &quot;kind&quot;: &quot;rule&quot;,
+          &quot;group&quot;: &quot;rule&quot;,
+          &quot;support&quot;: 0.4,
+          &quot;confidence&quot;: 0.8,
+
+Resumen por consecuente (2 grupos):
+  1 reglas -&gt; ['C']  confidence en [0.80, 0.80] (media 0.80)
+  2 reglas -&gt; ['B']  confidence en [0.71, 0.83] (media 0.77)
+</code></pre>
+<p>GraphML (Gephi/Cytoscape/NetworkX) and DOT (Graphviz) exports are still available as
+<code>graph.exportGraph(type=1)</code>/<code>type=2</code>, for tools that don't consume JGF directly.</p>
+<h2 id="big-data-and-streaming-algorithms">Big Data and streaming algorithms</h2>
+<p>The Spark-based algorithms (<code>FIM.apriori</code>, <code>FIM.Eclat</code>, <code>FIM.BD_ARE</code>, <code>FIM.BD_FARE</code>, <code>SARE</code>,
+<code>SFIM</code>) are exercised in <code>tests/test_fim_apriori_eclat.py</code>, <code>tests/test_sare_association_rules.py</code>
+and the rest of the <code>tests/</code> suite against <code>tests/spark_stub.py</code>, a small local double of the Spark
+RDD API -- see the <a href="../USER_GUIDE_INDEX/">User Guide</a> for each algorithm's reference and the
+<code>pip install -e ".[spark]"</code> note in the project <a href="https://github.com/cjferba/ARMxtend#readme">README</a>
+for running them against a real cluster.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js"></script>
+        <script src="../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

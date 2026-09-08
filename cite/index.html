@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -10,29 +10,15 @@
         <link rel="shortcut icon" href="../img/favicon.ico">
         <title>Citing ARMxtend - ARMxtend</title>
         <link href="../css/bootstrap.min.css" rel="stylesheet">
-        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../css/brands.min.css" rel="stylesheet">
+        <link href="../css/solid.min.css" rel="stylesheet">
+        <link href="../css/v4-font-face.min.css" rel="stylesheet">
         <link href="../css/base.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
-        <link href="../cinder/css/base.css" rel="stylesheet">
-        <link href="../cinder/css/bootstrap-custom.css" rel="stylesheet">
-        <link href="../cinder/css/bootstrap-custom.min.css" rel="stylesheet">
-        <link href="../cinder/css/cinder.css" rel="stylesheet">
-        <link href="../cinder/css/font-awesome-4.0.3.css" rel="stylesheet">
-        <link href="../cinder/css/highlight.css" rel="stylesheet">
-
-        <script src="../js/jquery-1.10.2.min.js" defer></script>
-        <script src="../js/bootstrap.min.js" defer></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-        <script>hljs.initHighlightingOnLoad();</script>
-        <script>
-            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-            })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-            ga('create', '260344680', 'cjferba.github.io/ARMxtend/');
-            ga('send', 'pageview');
-        </script> 
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
     </head>
 
     <body>
@@ -40,7 +26,7 @@
             <div class="container">
                 <a class="navbar-brand" href="..">ARMxtend</a>
                 <!-- Expander button -->
-                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
@@ -48,11 +34,20 @@
                 <div id="navbar-collapse" class="navbar-collapse collapse">
                         <!-- Main navigation -->
                         <ul class="nav navbar-nav">
-                            <li class="navitem">
+                            <li class="nav-item">
                                 <a href=".." class="nav-link">Home</a>
                             </li>
-                            <li class="dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">User Guide <b class="caret"></b></a>
+                            <li class="nav-item">
+                                <a href="../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../examples/" class="nav-link">Examples</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
                                 <ul class="dropdown-menu">
                                     
 <li>
@@ -60,27 +55,105 @@
 </li>
                                     
   <li class="dropdown-submenu">
-    <a href="#" class="dropdown-item">preprocessing</a>
+    <a href="#" class="dropdown-item">Crisp association rules</a>
     <ul class="dropdown-menu">
             
 <li>
-    <a href="../user_guide/preprocessing/Dicretization.md" class="dropdown-item">None</a>
+    <a href="../user_guide/ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
 </li>
     </ul>
   </li>
                                 </ul>
                             </li>
-                            <li class="dropdown active">
-                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
                                 <ul class="dropdown-menu">
-                                    
-<li>
-    <a href="../CHANGELOG.md" class="dropdown-item">Release Notes</a>
-</li>
-                                    
-<li>
-    <a href="../Code-of-Conduct.md" class="dropdown-item">Code of Conduct</a>
-</li>
                                     
 <li>
     <a href="../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
@@ -95,19 +168,15 @@
 </li>
                                     
 <li>
-    <a href="./" class="dropdown-item active">Citing ARMxtend</a>
-</li>
-                                    
-<li>
-    <a href="../discuss.md" class="dropdown-item">Discuss</a>
+    <a href="./" class="dropdown-item active" aria-current="page">Citing ARMxtend</a>
 </li>
                                 </ul>
                             </li>
                         </ul>
 
-                    <ul class="nav navbar-nav ml-auto">
+                    <ul class="nav navbar-nav ms-md-auto">
                         <li class="nav-item">
-                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
                                 <i class="fa fa-search"></i> Search
                             </a>
                         </li>
@@ -122,7 +191,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/cite.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/cite.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
                             </li>
                     </ul>
                 </div>
@@ -131,19 +200,47 @@
 
         <div class="container">
             <div class="row">
-                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
     <div class="navbar-header">
-        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
             <span class="fa fa-angle-down"></span>
         </button>
     </div>
 
     
-    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-level="1"><a href="#citing-armxtend" class="nav-link">Citing armxtend</a>
+            <li class="nav-item" data-bs-level="1"><a href="#citing-armxtend" class="nav-link">Citing ARMxtend</a>
               <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#big-data-streaming-frequent-itemset-mining-sfim-sare" class="nav-link">Big Data / streaming frequent itemset mining (SFIM, SARE)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#crisp-big-data-association-rule-mining-fimapriori-fimeclat-fimbd_are" class="nav-link">Crisp Big Data association rule mining (FIM.apriori, FIM.Eclat, FIM.BD_ARE)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#fuzzy-big-data-association-rule-mining-fimbd_fare-fimfare" class="nav-link">Fuzzy Big Data association rule mining (FIM.BD_FARE, FIM.FARE)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#fuzzy-association-rules-via-representation-by-levels-fimfare-rl-theory" class="nav-link">Fuzzy association rules via Representation by Levels (FIM.FARE, RL-theory)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#meta-association-rules-armmeta_rules" class="nav-link">Meta-association rules (ARM.meta_rules)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#rule-visualization-vizarm" class="nav-link">Rule visualization (VizARM)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#fuzzification-preprocessing-preprocessingfuzzylib" class="nav-link">Fuzzification / preprocessing (preprocessing.FuzzyLib)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -151,22 +248,13 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h1 id="citing-armxtend">Citing armxtend</h1>
-<p>If you use armxtend as part of your workflow in a scientific publication, please consider citing the armxtend repository with the following DOI:</p>
-<h3 id="streaming-module">Streaming module:</h3>
-<p>Fernandez-Basso, C., Francisco-Agra, A. J., Martin-Bautista, M. J., &amp; Ruiz, M. D. (2019). <a href="http://cjferba.github.io/armxtend/">Finding tendencies in streaming data using big data frequent itemset mining</a> Knowledge-Based Systems, 163, 666-674..</p>
-<pre><code>@article{fernandez2019finding,
-  title={Finding tendencies in streaming data using big data frequent itemset mining},
-  author={Fernandez-Basso, Carlos and Francisco-Agra, Abel J and Martin-Bautista, Maria J and Ruiz, M Dolores},
-  journal={Knowledge-Based Systems},
-  volume={163},
-  pages={666--674},
-  year={2019},
-  publisher={Elsevier}
-}
-</code></pre>
-<h3 id="streaming-module_1">Streaming module:</h3>
-<p>Fernandez-Basso, C., Francisco-Agra, A. J., Martin-Bautista, M. J., &amp; Ruiz, M. D. (2019). <a href="http://cjferba.github.io/armxtend/">Finding tendencies in streaming data using big data frequent itemset mining</a> Knowledge-Based Systems, 163, 666-674..</p>
+<h1 id="citing-armxtend">Citing ARMxtend</h1>
+<p>If you use ARMxtend as part of your workflow in a scientific publication, please consider citing
+the paper(s) behind the specific module(s) you used.</p>
+<h2 id="big-data-streaming-frequent-itemset-mining-sfim-sare">Big Data / streaming frequent itemset mining (<code>SFIM</code>, <code>SARE</code>)</h2>
+<p>Fernandez-Basso, C., Francisco-Agra, A. J., Martin-Bautista, M. J., &amp; Ruiz, M. D. (2019).
+<a href="https://doi.org/10.1016/j.knosys.2018.09.026">Finding tendencies in streaming data using big data frequent itemset mining</a>.
+Knowledge-Based Systems, 163, 666-674.</p>
 <pre><code>@article{fernandez2019finding,
   title={Finding tendencies in streaming data using big data frequent itemset mining},
   author={Fernandez-Basso, Carlos and Francisco-Agra, Abel J and Martin-Bautista, Maria J and Ruiz, M Dolores},
@@ -178,16 +266,92 @@
 }
 </code></pre>
 <p><a href="https://doi.org/10.1016/j.knosys.2018.09.026"><img alt="DOI" src="https://img.shields.io/badge/KNOSYS-2018.09.026-green" /></a></p>
-<h3 id="fuzzification-module">Fuzzification module:</h3>
-<p>Fernandez-Basso, C., Ruiz, M. D., &amp; Martin-Bautista, M. J.  (2020). <a href="http://cjferba.github.io/armxtend/">A fuzzy mining approach for energy efficiency in a Big Data framework</a> IEEE Transactions on Fuzzy Systems.</p>
-<pre><code>@article{fernandez2019finding,
-  title={Finding tendencies in streaming data using big data frequent itemset mining},
-  author={Fernandez-Basso, Carlos and Francisco-Agra, Abel J and Martin-Bautista, Maria J and Ruiz, M Dolores},
-  journal={Knowledge-Based Systems},
-  volume={163},
-  pages={666--674},
-  year={2019},
+<h2 id="crisp-big-data-association-rule-mining-fimapriori-fimeclat-fimbd_are">Crisp Big Data association rule mining (<code>FIM.apriori</code>, <code>FIM.Eclat</code>, <code>FIM.BD_ARE</code>)</h2>
+<p>Fernandez-Basso, C., Ruiz, M.D., Martin-Bautista, M.J. (2024).
+<a href="https://doi.org/10.1007/s10586-023-04014-w">New Spark solutions for distributed frequent itemset and association rule mining algorithms</a>.
+Cluster Computing, 27, 1217-1234.</p>
+<pre><code>@article{fernandez2024new,
+  title={New Spark solutions for distributed frequent itemset and association rule mining algorithms},
+  author={Fernandez-Basso, Carlos and Ruiz, M. Dolores and Martin-Bautista, Maria J.},
+  journal={Cluster Computing},
+  volume={27},
+  pages={1217--1234},
+  year={2024},
+  publisher={Springer}
+}
+</code></pre>
+<p><a href="https://doi.org/10.1007/s10586-023-04014-w"><img alt="DOI" src="https://img.shields.io/badge/CLUS-s10586--023--04014--w-green" /></a></p>
+<h2 id="fuzzy-big-data-association-rule-mining-fimbd_fare-fimfare">Fuzzy Big Data association rule mining (<code>FIM.BD_FARE</code>, <code>FIM.FARE</code>)</h2>
+<p>Fernandez-Basso, C., Ruiz, M.D., Martin-Bautista, M.J. (2021).
+<a href="https://doi.org/10.1016/j.ijar.2021.07.004">Spark solutions for discovering fuzzy association rules in Big Data</a>.
+International Journal of Approximate Reasoning, 137, 94-112.</p>
+<pre><code>@article{fernandez2021spark,
+  title={Spark solutions for discovering fuzzy association rules in Big Data},
+  author={Fernandez-Basso, Carlos and Ruiz, M. Dolores and Martin-Bautista, Maria J.},
+  journal={International Journal of Approximate Reasoning},
+  volume={137},
+  pages={94--112},
+  year={2021},
   publisher={Elsevier}
+}
+</code></pre>
+<p><a href="https://doi.org/10.1016/j.ijar.2021.07.004"><img alt="DOI" src="https://img.shields.io/badge/IJAR-2021.07.004-green" /></a></p>
+<h2 id="fuzzy-association-rules-via-representation-by-levels-fimfare-rl-theory">Fuzzy association rules via Representation by Levels (<code>FIM.FARE</code>, RL-theory)</h2>
+<p>Delgado, M., Ruiz, M.D., Sanchez, D., Serrano, J.M. (2011).
+<a href="https://doi.org/10.1016/j.ins.2011.07.029">A formal model for mining fuzzy rules using the RL representation theory</a>.
+Information Sciences, 181, 5194-5213.</p>
+<pre><code>@article{delgado2011formal,
+  title={A formal model for mining fuzzy rules using the RL representation theory},
+  author={Delgado, Miguel and Ruiz, M. Dolores and Sanchez, Daniel and Serrano, J.M.},
+  journal={Information Sciences},
+  volume={181},
+  pages={5194--5213},
+  year={2011},
+  publisher={Elsevier}
+}
+</code></pre>
+<p><a href="https://doi.org/10.1016/j.ins.2011.07.029"><img alt="DOI" src="https://img.shields.io/badge/INS-2011.07.029-green" /></a></p>
+<h2 id="meta-association-rules-armmeta_rules">Meta-association rules (<code>ARM.meta_rules</code>)</h2>
+<p>Ruiz, M.D., Gomez-Romero, J., Molina-Solana, M., Campana, J.R., Martin-Bautista, M.J. (2016).
+<a href="https://doi.org/10.1016/j.asoc.2016.08.014">Meta-association rules for mining interesting associations in multiple datasets</a>.
+Applied Soft Computing, 49, 212-223.</p>
+<pre><code>@article{ruiz2016meta,
+  title={Meta-association rules for mining interesting associations in multiple datasets},
+  author={Ruiz, M. Dolores and Gomez-Romero, Juan and Molina-Solana, Miguel and Campana, Jesus R. and Martin-Bautista, Maria J.},
+  journal={Applied Soft Computing},
+  volume={49},
+  pages={212--223},
+  year={2016},
+  publisher={Elsevier}
+}
+</code></pre>
+<p><a href="https://doi.org/10.1016/j.asoc.2016.08.014"><img alt="DOI" src="https://img.shields.io/badge/ASOC-2016.08.014-green" /></a></p>
+<h2 id="rule-visualization-vizarm">Rule visualization (<code>VizARM</code>)</h2>
+<p>Fernandez-Basso, C., Ruiz, M.D., Molina-Solana, M., Martin-Bautista, M.J. (2026).
+<a href="https://doi.org/10.3390/fi18070374">VizARE: An Intermediate Representation to Support the Visualization of Association Rules in Data Mining</a>.
+Future Internet, 18(7), 374.</p>
+<pre><code>@article{fernandezbasso2026vizare,
+  title={VizARE: An Intermediate Representation to Support the Visualization of Association Rules in Data Mining},
+  author={Fernandez-Basso, Carlos and Ruiz, M. Dolores and Molina-Solana, Miguel and Martin-Bautista, Maria J.},
+  journal={Future Internet},
+  volume={18},
+  number={7},
+  pages={374},
+  year={2026},
+  publisher={MDPI}
+}
+</code></pre>
+<p><a href="https://doi.org/10.3390/fi18070374"><img alt="DOI" src="https://img.shields.io/badge/FI-fi18070374-green" /></a></p>
+<h2 id="fuzzification-preprocessing-preprocessingfuzzylib">Fuzzification / preprocessing (<code>preprocessing.FuzzyLib</code>)</h2>
+<p>Fernandez-Basso, C., Ruiz, M. D., &amp; Martin-Bautista, M. J. (2020).
+<a href="https://doi.org/10.1109/TFUZZ.2020.2992180">A fuzzy mining approach for energy efficiency in a Big Data framework</a>.
+IEEE Transactions on Fuzzy Systems.</p>
+<pre><code>@article{fernandez2020fuzzy,
+  title={A fuzzy mining approach for energy efficiency in a Big Data framework},
+  author={Fernandez-Basso, Carlos and Ruiz, M. Dolores and Martin-Bautista, Maria J.},
+  journal={IEEE Transactions on Fuzzy Systems},
+  year={2020},
+  publisher={IEEE}
 }
 </code></pre>
 <p><a href="https://doi.org/10.1109/TFUZZ.2020.2992180"><img alt="DOI" src="https://img.shields.io/badge/IEEETFS-2020.2992180-green" /></a></p></div>
@@ -196,36 +360,32 @@
 
         <footer class="col-md-12">
             <hr>
-                <p>Copyright &copy; 2016-2021 <a href="http://cjferba.github.com">Carlos Fernanadez-Basso</a></p>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
             <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
         </footer>
+        <script src="../js/bootstrap.bundle.min.js"></script>
         <script>
             var base_url = "..",
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
-        <script src="../js/base.js" defer></script>
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" defer></script>
-        <script src="../mathjaxhelper.js" defer></script>
-        <script src="../search/main.js" defer></script>
+        <script src="../js/base.js"></script>
+        <script src="../search/main.js"></script>
 
         <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="searchModalLabel">Search</h4>
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>
-                    From here you can search these documents. Enter
-                    your search terms below.
-                </p>
+                <p>From here you can search these documents. Enter your search terms below.</p>
                 <form>
                     <div class="form-group">
                         <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
                     </div>
                 </form>
-                <div id="mkdocs-search-results"></div>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
             </div>
             <div class="modal-footer">
             </div>
@@ -236,7 +396,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
               <table class="table">

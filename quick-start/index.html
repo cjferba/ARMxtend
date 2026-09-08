@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,31 +8,17 @@
         <meta name="author" content="Carlos Fernandez-Basso">
         <link rel="canonical" href="http://cjferba.github.io/ARMxtend/quick-start/">
         <link rel="shortcut icon" href="../img/favicon.ico">
-        <title>Quick start - ARMxtend</title>
+        <title>Quick Start - ARMxtend</title>
         <link href="../css/bootstrap.min.css" rel="stylesheet">
-        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../css/brands.min.css" rel="stylesheet">
+        <link href="../css/solid.min.css" rel="stylesheet">
+        <link href="../css/v4-font-face.min.css" rel="stylesheet">
         <link href="../css/base.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
-        <link href="../cinder/css/base.css" rel="stylesheet">
-        <link href="../cinder/css/bootstrap-custom.css" rel="stylesheet">
-        <link href="../cinder/css/bootstrap-custom.min.css" rel="stylesheet">
-        <link href="../cinder/css/cinder.css" rel="stylesheet">
-        <link href="../cinder/css/font-awesome-4.0.3.css" rel="stylesheet">
-        <link href="../cinder/css/highlight.css" rel="stylesheet">
-
-        <script src="../js/jquery-1.10.2.min.js" defer></script>
-        <script src="../js/bootstrap.min.js" defer></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-        <script>hljs.initHighlightingOnLoad();</script>
-        <script>
-            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-            })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-            ga('create', '260344680', 'cjferba.github.io/ARMxtend/');
-            ga('send', 'pageview');
-        </script> 
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
     </head>
 
     <body>
@@ -40,7 +26,7 @@
             <div class="container">
                 <a class="navbar-brand" href="..">ARMxtend</a>
                 <!-- Expander button -->
-                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
@@ -48,11 +34,20 @@
                 <div id="navbar-collapse" class="navbar-collapse collapse">
                         <!-- Main navigation -->
                         <ul class="nav navbar-nav">
-                            <li class="navitem">
+                            <li class="nav-item">
                                 <a href=".." class="nav-link">Home</a>
                             </li>
-                            <li class="dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">User Guide <b class="caret"></b></a>
+                            <li class="nav-item">
+                                <a href="../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="./" class="nav-link active" aria-current="page">Quick Start</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../examples/" class="nav-link">Examples</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
                                 <ul class="dropdown-menu">
                                     
 <li>
@@ -60,27 +55,105 @@
 </li>
                                     
   <li class="dropdown-submenu">
-    <a href="#" class="dropdown-item">preprocessing</a>
+    <a href="#" class="dropdown-item">Crisp association rules</a>
     <ul class="dropdown-menu">
             
 <li>
-    <a href="../user_guide/preprocessing/Dicretization.md" class="dropdown-item">None</a>
+    <a href="../user_guide/ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
 </li>
     </ul>
   </li>
                                 </ul>
                             </li>
-                            <li class="dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
                                 <ul class="dropdown-menu">
-                                    
-<li>
-    <a href="../CHANGELOG.md" class="dropdown-item">Release Notes</a>
-</li>
-                                    
-<li>
-    <a href="../Code-of-Conduct.md" class="dropdown-item">Code of Conduct</a>
-</li>
                                     
 <li>
     <a href="../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
@@ -97,22 +170,28 @@
 <li>
     <a href="../cite/" class="dropdown-item">Citing ARMxtend</a>
 </li>
-                                    
-<li>
-    <a href="../discuss.md" class="dropdown-item">Discuss</a>
-</li>
                                 </ul>
                             </li>
                         </ul>
 
-                    <ul class="nav navbar-nav ml-auto">
+                    <ul class="nav navbar-nav ms-md-auto">
                         <li class="nav-item">
-                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
                                 <i class="fa fa-search"></i> Search
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/quick-start.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                                <a rel="prev" href="../installation/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../examples/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/quick-start.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
                             </li>
                     </ul>
                 </div>
@@ -121,35 +200,47 @@
 
         <div class="container">
             <div class="row">
-                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
     <div class="navbar-header">
-        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
             <span class="fa fa-angle-down"></span>
         </button>
     </div>
 
     
-    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            
-            <li class="nav-item" data-level="2"><a href="#links" class="nav-link">Links</a>
+            <li class="nav-item" data-bs-level="1"><a href="#quick-start" class="nav-link">Quick Start</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#1-crisp-association-rules" class="nav-link">1. Crisp association rules</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            
-            <li class="nav-item" data-level="2"><a href="#examples" class="nav-link">Examples</a>
+            <li class="nav-item" data-bs-level="2"><a href="#2-frequent-itemsets-with-fp-growth" class="nav-link">2. Frequent itemsets with FP-Growth</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            
-            <li class="nav-item" data-level="2"><a href="#license" class="nav-link">License</a>
+            <li class="nav-item" data-bs-level="2"><a href="#3-fuzzy-association-rules" class="nav-link">3. Fuzzy association rules</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            
-            <li class="nav-item" data-level="2"><a href="#contact" class="nav-link">Contact</a>
+            <li class="nav-item" data-bs-level="2"><a href="#4-meta-association-rules" class="nav-link">4. Meta-association rules</a>
               <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#5-big-data-spark" class="nav-link">5. Big Data (Spark)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#6-visualizing-rules" class="nav-link">6. Visualizing rules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#7-fuzzifying-numeric-attributes" class="nav-link">7. Fuzzifying numeric attributes</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -157,134 +248,180 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><img alt="" src="./img/logo.png" /></p>
-<h3 id="welcome-to-mlxtends-documentation">Welcome to mlxtend's documentation!</h3>
-<p><strong>Mlxtend (machine learning extensions) is a Python library of useful tools for the day-to-day data science tasks.</strong></p>
-<p><a href="https://doi.org/10.21105/joss.00638"><img alt="DOI" src="https://joss.theoj.org/papers/10.21105/joss.00638/status.svg" /></a>
-<a href="http://badge.fury.io/py/mlxtend"><img alt="PyPI version" src="https://badge.fury.io/py/mlxtend.svg" /></a>
-<a href="https://anaconda.org/conda-forge/mlxtend"><img alt="Anaconda-Server Badge" src="https://anaconda.org/conda-forge/mlxtend/badges/version.svg" /></a>
-<img alt="Python 3" src="https://img.shields.io/badge/python-3-blue.svg" />
-<a href="./license"><img alt="License" src="https://img.shields.io/badge/license-BSD-blue.svg" /></a>
-<a href="https://github.com/rasbt/mlxtend/discussions"><img alt="Discuss" src="https://img.shields.io/badge/discuss-github-blue.svg" /></a></p>
-<hr>
+<h1 id="quick-start">Quick Start</h1>
+<p>All the snippets on this page are runnable as-is (they are also covered by the test suite under
+<code>tests/</code>). See <a href="../installation/">Installation</a> first.</p>
+<h2 id="1-crisp-association-rules">1. Crisp association rules</h2>
+<p><code>ARM.association_rules</code> takes a <code>pandas.DataFrame</code> of frequent itemsets (columns <code>support</code> and
+<code>itemsets</code>, as produced by <code>FFIM.fpgrowth</code> -- see below) and returns the rules whose <code>metric</code>
+reaches <code>min_threshold</code>. Besides the usual <code>confidence</code>/<code>lift</code>/<code>leverage</code>/<code>conviction</code>, it also
+supports <code>certainty_factor</code> (Shortliffe &amp; Buchanan's CF), which unlike confidence takes the base
+rate of the consequent into account and is bounded in <code>[-1, 1]</code>:</p>
+<pre><code class="language-python">import pandas as pd
+from ARMxtend.ARM import association_rules
 
-<h2 id="links">Links</h2>
-<ul>
-<li><strong>Documentation:</strong> <a href="http://rasbt.github.io/mlxtend">http://rasbt.github.io/mlxtend</a></li>
-<li>Source code repository: <a href="https://github.com/rasbt/mlxtend">https://github.com/rasbt/mlxtend</a></li>
-<li>PyPI: <a href="https://pypi.python.org/pypi/mlxtend">https://pypi.python.org/pypi/mlxtend</a></li>
-<li>Questions? Check out the <a href="https://github.com/rasbt/mlxtend/discussions">GitHub Discussions board</a></li>
-</ul>
-<hr>
-
-<h2 id="examples">Examples</h2>
-<pre><code class="language-python">import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-import itertools
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from mlxtend.classifier import EnsembleVoteClassifier
-from mlxtend.data import iris_data
-from mlxtend.plotting import plot_decision_regions
-
-# Initializing Classifiers
-clf1 = LogisticRegression(random_state=0)
-clf2 = RandomForestClassifier(random_state=0)
-clf3 = SVC(random_state=0, probability=True)
-eclf = EnsembleVoteClassifier(clfs=[clf1, clf2, clf3],
-                              weights=[2, 1, 1], voting='soft')
-
-# Loading some example data
-X, y = iris_data()
-X = X[:,[0, 2]]
-
-# Plotting Decision Regions
-
-gs = gridspec.GridSpec(2, 2)
-fig = plt.figure(figsize=(10, 8))
-
-labels = ['Logistic Regression',
-          'Random Forest',
-          'RBF kernel SVM',
-          'Ensemble']
-
-for clf, lab, grd in zip([clf1, clf2, clf3, eclf],
-                         labels,
-                         itertools.product([0, 1],
-                         repeat=2)):
-    clf.fit(X, y)
-    ax = plt.subplot(gs[grd[0], grd[1]])
-    fig = plot_decision_regions(X=X, y=y,
-                                clf=clf, legend=2)
-    plt.title(lab)
-
-plt.show()
+df = pd.DataFrame({
+    &quot;support&quot;: [0.5, 0.8, 0.7, 0.3],
+    &quot;itemsets&quot;: [frozenset([&quot;bread&quot;]), frozenset([&quot;milk&quot;]), frozenset([&quot;butter&quot;]),
+                frozenset([&quot;bread&quot;, &quot;milk&quot;])],
+})
+rules = association_rules(df, metric=&quot;confidence&quot;, min_threshold=0.5)
+print(rules[[&quot;antecedents&quot;, &quot;consequents&quot;, &quot;support&quot;, &quot;confidence&quot;, &quot;certainty_factor&quot;]])
+#   antecedents consequents  support  confidence  certainty_factor
+# 0     (bread)      (milk)      0.3         0.6             -0.25
 </code></pre>
-<hr />
-<p><img alt="" src="./img/ensemble_decision_regions_2d.png" /></p>
-<p>If you use mlxtend as part of your workflow in a scientific publication, please consider citing the mlxtend repository with the following DOI:</p>
-<p><a href="https://doi.org/10.21105/joss.00638"><img alt="DOI" src="http://joss.theoj.org/papers/10.21105/joss.00638/status.svg" /></a></p>
-<pre><code>@article{raschkas_2018_mlxtend,
-  author       = {Sebastian Raschka},
-  title        = {MLxtend: Providing machine learning and data science 
-                  utilities and extensions to Python’s  
-                  scientific computing stack},
-  journal      = {The Journal of Open Source Software},
-  volume       = {3},
-  number       = {24},
-  month        = apr,
-  year         = 2018,
-  publisher    = {The Open Journal},
-  doi          = {10.21105/joss.00638},
-  url          = {http://joss.theoj.org/papers/10.21105/joss.00638}
-}
+<p>Note the negative certainty factor: although "bread -&gt; milk" clears the 0.5 confidence bar, milk is
+already present in 80% of transactions on its own, so bread's presence actually <em>decreases</em> the
+belief in milk relative to its base rate -- a case confidence alone does not reveal.</p>
+<h2 id="2-frequent-itemsets-with-fp-growth">2. Frequent itemsets with FP-Growth</h2>
+<p><code>FFIM.fpgrowth</code> mines frequent itemsets directly from raw transactions (no candidate generation),
+returning a <code>dict {itemset_key: support}</code> ready to feed into <code>association_rules</code> after converting
+it to the expected DataFrame shape (<code>FIM._shared.key_to_itemset</code> undoes the <code>'A-B-C'</code> key encoding):</p>
+<pre><code class="language-python">from ARMxtend.FFIM import fpgrowth
+from ARMxtend.FIM._shared import key_to_itemset
+from ARMxtend.ARM import association_rules
+import pandas as pd
+
+transactions = [
+    [&quot;bread&quot;, &quot;milk&quot;],
+    [&quot;bread&quot;, &quot;diapers&quot;, &quot;beer&quot;, &quot;eggs&quot;],
+    [&quot;milk&quot;, &quot;diapers&quot;, &quot;beer&quot;, &quot;cola&quot;],
+    [&quot;bread&quot;, &quot;milk&quot;, &quot;diapers&quot;, &quot;beer&quot;],
+    [&quot;bread&quot;, &quot;milk&quot;, &quot;diapers&quot;, &quot;cola&quot;],
+]
+freq_itemsets = fpgrowth(transactions, min_supp=0.5)
+
+df = pd.DataFrame({&quot;support&quot;: list(freq_itemsets.values()),
+                   &quot;itemsets&quot;: [key_to_itemset(k) for k in freq_itemsets]})
+rules = association_rules(df, metric=&quot;confidence&quot;, min_threshold=0.7)
 </code></pre>
-<h2 id="license">License</h2>
-<ul>
-<li>This project is released under a permissive new BSD open source license (<a href="https://github.com/rasbt/mlxtend/blob/master/LICENSE-BSD3.txt">LICENSE-BSD3.txt</a>) and commercially usable. There is no warranty; not even for merchantability or fitness for a particular purpose.</li>
-<li>In addition, you may use, copy, modify and redistribute all artistic creative works (figures and images) included in this distribution under the directory
-according to the terms and conditions of the Creative Commons Attribution 4.0 International License.  See the file <a href="https://github.com/rasbt/mlxtend/blob/master/LICENSE-CC-BY.txt">LICENSE-CC-BY.txt</a> for details. (Computer-generated graphics such as the plots produced by matplotlib fall under the BSD license mentioned above).</li>
-</ul>
-<h2 id="contact">Contact</h2>
-<p>I received a lot of feedback and questions about mlxtend recently, and I thought that it would be worthwhile to set up a public communication channel. Before you write an email with a question about mlxtend, please consider posting it here since it can also be useful to others! Please join the <a href="https://groups.google.com/forum/#!forum/mlxtend">Google Groups Mailing List</a>!</p>
-<p>If Google Groups is not for you, please feel free to write me an <a href="mailto:mail@sebastianraschka.com">email</a> or consider filing an issue on <a href="https://github.com/rasbt/mlxtend/issues">GitHub's issue tracker</a> for new feature requests or bug reports. In addition, I setup a <a href="https://gitter.im/rasbt/mlxtend?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge">Gitter channel</a> for live discussions.</p></div>
+<h2 id="3-fuzzy-association-rules">3. Fuzzy association rules</h2>
+<p>Fuzzy itemsets and rules generalize the crisp case to items with a <em>degree</em> of membership in
+<code>[0, 1]</code> (e.g. "cold" or "low humidity" instead of a hard threshold). <code>FFIM.fuzzy_fpgrowth</code> mines
+fuzzy frequent itemsets by decomposing the fuzzy database into <code>num_alpha</code> alpha-cuts (10 is a good
+default, see <a href="../cite/">Fernandez-Basso, Ruiz &amp; Martin-Bautista, 2021</a>); <code>FIM.FARE.fuzzy_association_rules</code>
+then derives the fuzzy support (FSupp), confidence (FConf) and certainty factor (FCF), integrating
+the crisp measure at each alpha-cut weighted by the width of that cut (see the
+<a href="../user_guide/FIM/FARE/">FARE user guide</a> for the exact formulas):</p>
+<pre><code class="language-python">from ARMxtend.FFIM import fuzzy_fpgrowth
+from ARMxtend.FIM.FARE import fuzzy_association_rules
+
+# each transaction: a list of (item, membership degree in [0, 1]) pairs
+fuzzy_transactions = [
+    [(&quot;cold&quot;, 1.0), (&quot;low_humidity&quot;, 0.8)],
+    [(&quot;cold&quot;, 0.9), (&quot;low_humidity&quot;, 0.6)],
+    [(&quot;warm&quot;, 0.7), (&quot;low_humidity&quot;, 0.9)],
+    [(&quot;cold&quot;, 0.6), (&quot;low_humidity&quot;, 0.7)],
+    [(&quot;warm&quot;, 1.0), (&quot;low_humidity&quot;, 0.2)],
+]
+freq_itemsets = fuzzy_fpgrowth(fuzzy_transactions, min_supp=0.3, num_alpha=10)
+rules = fuzzy_association_rules(freq_itemsets, num_alpha=10, metric=&quot;confidence&quot;, min_threshold=0.5)
+print(rules[[&quot;antecedents&quot;, &quot;consequents&quot;, &quot;support&quot;, &quot;confidence&quot;, &quot;certainty_factor&quot;]])
+</code></pre>
+<p><code>FIM.Eclat.FuzzyDECLAT</code> and <code>FIM.BD_FARE.FuzzyDAprioriTID</code> mine the same kind of fuzzy frequent
+itemsets, but distributed on Spark (see section 5 below).</p>
+<h2 id="4-meta-association-rules">4. Meta-association rules</h2>
+<p>When you have already mined association rules independently from <em>several</em> datasets (e.g. one per
+store, sensor, or time period), <code>ARM.meta_rules</code> finds "rules about rules": which primary rules
+tend to co-occur across a high enough proportion of the datasets, optionally together with extra
+attributes of each dataset. This is useful both to summarize a large number of per-dataset rules and
+to spot cross-dataset patterns invisible in any single dataset (see
+<a href="../cite/">Ruiz et al., 2016</a>).</p>
+<pre><code class="language-python">from ARMxtend.ARM.meta_rules import mine_primary_rule_measures, crisp_meta_association_rules, \
+    fuzzy_meta_association_rules
+
+store1 = [[&quot;bread&quot;, &quot;milk&quot;]] * 6 + [[&quot;bread&quot;]] * 2 + [[&quot;milk&quot;]] * 2
+store2 = [[&quot;bread&quot;, &quot;milk&quot;]] * 5 + [[&quot;bread&quot;]] * 3 + [[&quot;milk&quot;]] * 2
+store3 = [[&quot;cola&quot;, &quot;chips&quot;]] * 7 + [[&quot;cola&quot;]] * 3
+
+# Step 1: mine primary crisp rules (and their confidence) independently per dataset
+rule_measures = mine_primary_rule_measures([store1, store2, store3], min_supp=0.3, min_conf=0.5)
+# -&gt; [{'milk=&gt;bread': 0.75, 'bread=&gt;milk': 0.75}, {'milk=&gt;bread': 0.71, 'bread=&gt;milk': 0.62}, {'chips=&gt;cola': 1.0, 'cola=&gt;chips': 0.7}]
+
+# Step 2a: crisp meta-rules -- only presence/absence of each primary rule matters
+crisp_meta = crisp_meta_association_rules([set(m) for m in rule_measures], min_supp=0.5, min_conf=0.9)
+print(crisp_meta[[&quot;antecedents&quot;, &quot;consequents&quot;, &quot;support&quot;, &quot;confidence&quot;]])
+# bread=&gt;milk &lt;-&gt; milk=&gt;bread, support=0.67 (found in 2/3 datasets); chips&lt;-&gt;cola rules are
+# dropped, since they were only found in 1/3 datasets (below min_supp)
+
+# Step 2b: fuzzy meta-rules -- also weighs how strong (confident) each primary rule was
+fuzzy_meta = fuzzy_meta_association_rules(rule_measures, num_alpha=10, min_supp=0.3, min_conf=0.5)
+print(fuzzy_meta[[&quot;antecedents&quot;, &quot;consequents&quot;, &quot;support&quot;, &quot;confidence&quot;]])
+</code></pre>
+<h2 id="5-big-data-spark">5. Big Data (Spark)</h2>
+<p><code>FIM.apriori</code>, <code>FIM.Eclat</code> and <code>FIM.BD_ARE</code>/<code>FIM.BD_FARE</code> mirror the algorithms above but distribute
+the counting across a Spark cluster (<code>pip install -e ".[spark]"</code>, see <a href="../installation/">Installation</a>).
+They take a <code>pyspark.SparkContext</code> and an <code>RDD</code> of transactions instead of a plain Python list:</p>
+<pre><code class="language-python">from pyspark import SparkContext, SparkConf
+from ARMxtend.FIM.apriori import DApriori
+from ARMxtend.FIM.BD_ARE import association_rules_bd
+
+sc = SparkContext(conf=SparkConf().setAppName(&quot;armxtend-quickstart&quot;).setMaster(&quot;local[*]&quot;))
+transactions = sc.parallelize([
+    &quot;bread,milk&quot;,
+    &quot;bread,diapers,beer,eggs&quot;,
+    &quot;milk,diapers,beer,cola&quot;,
+    &quot;bread,milk,diapers,beer&quot;,
+    &quot;bread,milk,diapers,cola&quot;,
+])
+
+freq_itemsets = DApriori.run(sc, transactions, min_supp=0.5)   # or DAprioriTID, or Eclat.DECLAT
+rules = association_rules_bd(sc, freq_itemsets, min_conf=0.7)
+</code></pre>
+<p><code>SFIM</code> mines frequent itemsets over a Spark Streaming sliding window (see <code>SFIM.main</code>), and
+<code>SARE.extractAssociationRules</code> extracts association rules from its current frequent-itemset tree.</p>
+<h2 id="6-visualizing-rules">6. Visualizing rules</h2>
+<p><code>VizARM.AREtoGraph</code> turns a rules DataFrame into the VizARE typed graph -- item nodes and rule
+nodes connected by <code>antecedent</code>/<code>consequent</code> edges, following Fernandez-Basso et al. (2026, see
+<a href="../cite/">Citing ARMxtend</a>) -- ready to export to JSON Graph Format, GraphML, or DOT (Gephi,
+Cytoscape, Graphviz, NetworkX):</p>
+<pre><code class="language-python">from ARMxtend.VizARM import AREtoGraph
+
+graph = AREtoGraph.from_dataframe(rules, rule_measures=(&quot;confidence&quot;, &quot;certainty_factor&quot;))
+jgf = graph.exportGraph(type=0)  # 0: JGF, 1: GraphML, 2: DOT, 3: the networkx.DiGraph itself
+</code></pre>
+<h2 id="7-fuzzifying-numeric-attributes">7. Fuzzifying numeric attributes</h2>
+<p><code>preprocessing.FuzzyLib</code> turns a numeric column into a set of overlapping fuzzy labels (a
+triangular Ruspini partition), ready to be used as items in the fuzzy pipelines above:</p>
+<pre><code class="language-python">import pandas as pd
+from ARMxtend.preprocessing import FuzzyLib
+
+fuzzy_lib = FuzzyLib()
+fuzzy_lib.data = pd.DataFrame({&quot;temperature&quot;: [15, 19, 22, 25, 28]})
+added_columns = fuzzy_lib.Fuzzification([&quot;temperature&quot;], [[18, 22, 26]], [[&quot;cold&quot;, &quot;comfort&quot;, &quot;warm&quot;]])
+# adds temperature_cold, temperature_comfort, temperature_warm columns, degrees summing to 1 per row
+</code></pre></div>
             </div>
         </div>
 
         <footer class="col-md-12">
             <hr>
-                <p>Copyright &copy; 2016-2021 <a href="http://cjferba.github.com">Carlos Fernanadez-Basso</a></p>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
             <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
         </footer>
+        <script src="../js/bootstrap.bundle.min.js"></script>
         <script>
             var base_url = "..",
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
-        <script src="../js/base.js" defer></script>
-        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" defer></script>
-        <script src="../mathjaxhelper.js" defer></script>
-        <script src="../search/main.js" defer></script>
+        <script src="../js/base.js"></script>
+        <script src="../search/main.js"></script>
 
         <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="searchModalLabel">Search</h4>
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>
-                    From here you can search these documents. Enter
-                    your search terms below.
-                </p>
+                <p>From here you can search these documents. Enter your search terms below.</p>
                 <form>
                     <div class="form-group">
                         <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
                     </div>
                 </form>
-                <div id="mkdocs-search-results"></div>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
             </div>
             <div class="modal-footer">
             </div>
@@ -295,7 +432,7 @@ according to the terms and conditions of the Creative Commons Attribution 4.0 In
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
               <table class="table">
