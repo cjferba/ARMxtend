@@ -33,9 +33,15 @@ import numpy as np
 import pandas as pd
 
 from .._shared import alpha_levels, alpha_weights, weighted_alpha_aggregate
-from ...ARM._measures import certainty_factor
+from ...ARM._measures import MEASURES
 
-_METRICS = ("support", "confidence", "certainty_factor")
+# 'support' (FSupp) se calcula del bit-list del itemset A u B; el resto son
+# funciones de (supp(AB), supp(A), supp(B)) evaluadas en cada alpha-corte y
+# agregadas con los pesos (alpha_i - alpha_i+1), segun la RL-theory. La
+# confianza difusa usa ademas la convencion 0/0 := 1 (ver
+# `_confidence_per_level`).
+_DEFAULT_COLUMNS = ("support", "confidence", "certainty_factor")
+_METRICS = ("support",) + tuple(MEASURES)
 
 
 def _confidence_per_level(support_AB_vector, support_A_vector):
@@ -52,7 +58,7 @@ def _confidence_per_level(support_AB_vector, support_A_vector):
                     1.0)
 
 
-def fuzzy_association_rules(freq_itemsets, num_alpha, metric="confidence", min_threshold=0.8):
+def fuzzy_association_rules(freq_itemsets, num_alpha, metric="confidence", min_threshold=0.8, measures=None):
     """
     Genera las reglas de asociacion difusas A -> B con `metric` >=
     `min_threshold`, a partir de un conjunto de itemsets frecuentes difusos.
@@ -68,17 +74,32 @@ def fuzzy_association_rules(freq_itemsets, num_alpha, metric="confidence", min_t
             propiedad de cierre descendente de dichos algoritmos)
         num_alpha (int): numero de alpha-cortes usados para construir
             `freq_itemsets` (debe coincidir con el empleado al minarlos)
-        metric (str): 'support' (FSupp), 'confidence' (FConf) o
-            'certainty_factor' (FCF)
+        metric (str): 'support' (FSupp), 'confidence' (FConf),
+            'certainty_factor' (FCF) o cualquiera de las medidas de
+            `ARM._measures.MEASURES` ('lift', 'leverage', 'jaccard',
+            'cosine', 'kulczynski', 'all_confidence', 'max_confidence',
+            'added_value', 'zhangs_metric', 'yules_q'), que se calculan en
+            cada alpha-corte y se agregan con los pesos de la RL-theory
         min_threshold (float): umbral minimo para `metric`
+        measures (Iterable[str], opcional): medidas adicionales a incluir
+            como columnas del resultado, ademas de 'support', 'confidence'
+            y 'certainty_factor' (que se devuelven siempre)
 
     Retorna:
         pandas.DataFrame con columnas 'antecedents', 'consequents',
-        'support' (FSupp), 'confidence' (FConf) y 'certainty_factor' (FCF)
-        de cada regla que alcanza `min_threshold` en `metric`.
+        'support' (FSupp), 'confidence' (FConf) y 'certainty_factor' (FCF),
+        mas una columna por cada medida de `measures`, de cada regla que
+        alcanza `min_threshold` en `metric`.
     """
     if metric not in _METRICS:
         raise ValueError("metric debe ser uno de {}, recibido: '{}'".format(_METRICS, metric))
+    extraMeasures = [m for m in (measures or []) if m not in _DEFAULT_COLUMNS]
+    for measure in extraMeasures:
+        if measure not in _METRICS:
+            raise ValueError("measure debe ser una de {}, recibida: '{}'".format(_METRICS, measure))
+    columns = list(_DEFAULT_COLUMNS) + extraMeasures
+    # `metric` ha de calcularse siempre para poder filtrar por el, aunque no se devuelva
+    computed = columns + ([metric] if metric not in columns else [])
 
     weights = alpha_weights(alpha_levels(num_alpha))
     rows = []
@@ -100,20 +121,19 @@ def fuzzy_association_rules(freq_itemsets, num_alpha, metric="confidence", min_t
                     continue
 
                 # FSupp(A -> B) = FSupp(A U B), Ec. (3): t(AUB)>=alpha <=> t(A)>=alpha and t(B)>=alpha
-                fsupp = weighted_alpha_aggregate(supportVectorAB, weights)
-                fconf = weighted_alpha_aggregate(
-                    _confidence_per_level(supportVectorAB, supportVectorA), weights)
-                fcf = weighted_alpha_aggregate(
-                    certainty_factor(supportVectorAB, supportVectorA, supportVectorB), weights)
+                scores = {"support": weighted_alpha_aggregate(supportVectorAB, weights)}
+                for measure in computed:
+                    if measure == "support":
+                        continue
+                    if measure == "confidence":
+                        perLevel = _confidence_per_level(supportVectorAB, supportVectorA)
+                    else:
+                        perLevel = MEASURES[measure](supportVectorAB, supportVectorA, supportVectorB)
+                    scores[measure] = weighted_alpha_aggregate(perLevel, weights)
 
-                scores = {"support": fsupp, "confidence": fconf, "certainty_factor": fcf}
                 if scores[metric] >= min_threshold:
-                    rows.append({
-                        "antecedents": frozenset(antecedent),
-                        "consequents": frozenset(consequent),
-                        "support": fsupp,
-                        "confidence": fconf,
-                        "certainty_factor": fcf,
-                    })
+                    row = {"antecedents": frozenset(antecedent), "consequents": frozenset(consequent)}
+                    row.update({column: scores[column] for column in columns})
+                    rows.append(row)
 
-    return pd.DataFrame(rows, columns=["antecedents", "consequents", "support", "confidence", "certainty_factor"])
+    return pd.DataFrame(rows, columns=["antecedents", "consequents"] + columns)

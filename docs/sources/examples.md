@@ -331,6 +331,84 @@ Resumen por consecuente (2 grupos):
 GraphML (Gephi/Cytoscape/NetworkX) and DOT (Graphviz) exports are still available as
 `graph.exportGraph(type=1)`/`type=2`, for tools that don't consume JGF directly.
 
+## Other kinds of rules and tools
+
+Rules with **absent items**, **exception** and **anomalous** rules, **gradual** rules, **closed /
+maximal** itemsets with **redundant-rule pruning**, and **automatic fuzzification** feeding the fuzzy
+miners with extra interest measures. See [`ARM.negative_rules`](user_guide/ARM/negative_rules.md),
+[`ARM.exception_rules`](user_guide/ARM/exception_rules.md),
+[`ARM.gradual_rules`](user_guide/ARM/gradual_rules.md),
+[`FIM.condensed`](user_guide/FIM/condensed.md), [`ARM.redundancy`](user_guide/ARM/redundancy.md) and
+[`preprocessing.FuzzyLib`](user_guide/preprocessing/FuzzyLib.md).
+
+```python
+from ARMxtend.ARM import (
+    anomalous_rules, exception_rules, gradual_rules, negative_association_rules, prune_redundant_rules,
+)
+from ARMxtend.FFIM import fuzzy_fpgrowth
+from ARMxtend.FIM import closed_itemsets, maximal_itemsets
+from ARMxtend.FIM.FARE import fuzzy_association_rules
+from ARMxtend.preprocessing import FuzzyLib
+
+# quien toma cafe no toma te
+negative = negative_association_rules(drinks, min_supp=0.25, min_threshold=0.95)
+
+# "fever -> rest" falla cuando ademas hay "must_work" (excepcion) o termina en "hospital" (anomalia)
+exceptions = exception_rules(sickness, min_supp=0.3, min_conf=0.8, min_exception_supp=0.03)
+anomalies = anomalous_rules(sickness, min_supp=0.3, min_conf=0.7, min_anomalous_supp=0.05,
+                            min_anomalous_conf=0.6)
+
+# cuanto mas edad y menos ejercicio, mas colesterol -- directamente sobre columnas numericas
+gradual = gradual_rules(health, min_supp=0.25, min_conf=0.8)
+
+# representaciones condensadas y poda
+closed, maximal = closed_itemsets(frequent), maximal_itemsets(frequent)
+pruned = prune_redundant_rules(all_rules)
+
+# fuzzificacion automatica (cuantiles) + reglas difusas con medidas adicionales
+fuzzy = FuzzyLib()
+fuzzy.data = health[["age", "cholesterol"]].copy()
+fuzzy.AutoFuzzification(n_labels=3, method="quantile")
+itemsets = fuzzy_fpgrowth(fuzzy.GetFuzzyTransactions(), min_supp=0.1, num_alpha=10)
+rules = fuzzy_association_rules(itemsets, 10, metric="zhangs_metric", min_threshold=0.4,
+                                measures=["zhangs_metric", "kulczynski"])
+```
+
+(full source, with the data of each case: [`examples/example_rule_types.py`](https://github.com/cjferba/ARMxtend/blob/master/examples/example_rule_types.py))
+
+Output:
+
+```text
+Reglas con items ausentes:
+  {~coffee, ~sugar} -> {tea}  support=0.36 confidence=1.00
+  {tea, ~sugar} -> {~coffee}  support=0.36 confidence=1.00
+  {~coffee} -> {tea}  support=0.43 confidence=1.00
+  {tea} -> {~coffee}  support=0.43 confidence=1.00
+  {sugar, ~tea} -> {coffee}  support=0.43 confidence=1.00
+  {coffee, sugar} -> {~tea}  support=0.43 confidence=1.00
+  {~tea} -> {coffee}  support=0.57 confidence=1.00
+  {coffee} -> {~tea}  support=0.57 confidence=1.00
+
+Excepciones a reglas comunes fuertes:
+  {must_work} -> rest (conf 0.88), pero con {fever} ocurre ~rest: confidence=1.00 (referencia 0.20)
+  {fever} -> rest (conf 0.80), pero con {must_work} ocurre ~rest: confidence=1.00 (referencia 0.12)
+Anomalias (A y no b -> C):
+  {fever} -> rest: en 15 casos con ~rest, aparece {hospital} (confidence=0.67)
+
+Reglas graduales:
+  cuanto age↑, exercise↓ -> cholesterol↑  support=0.51 confidence=0.98
+  cuanto cholesterol↑, exercise↑ -> age↑  support=0.29 confidence=0.97
+  cuanto age↑ -> cholesterol↑  support=0.80 confidence=0.80
+
+Itemsets frecuentes: 8, cerrados: ['a-b', 'a-b-c', 'd'], maximales: ['a-b-c', 'd']
+Reglas: 12 -> 5 tras eliminar las redundantes
+
+Reglas difusas con Zhang >= 0.4:
+  {age_low} -> {cholesterol_low}  FSupp=0.12 FConf=0.37 zhang=0.74 kulczynski=0.55
+  {cholesterol_low} -> {age_low}  FSupp=0.12 FConf=0.73 zhang=0.63 kulczynski=0.55
+  {age_high} -> {cholesterol_high}  FSupp=0.12 FConf=0.48 zhang=0.49 kulczynski=0.51
+```
+
 ## Big Data and streaming algorithms
 
 The Spark-based algorithms (`FIM.apriori`, `FIM.Eclat`, `FIM.BD_ARE`, `FIM.BD_FARE`, `SARE`,

@@ -141,3 +141,27 @@ IEEE Transactions on Fuzzy Systems.
 ```
 
 [![DOI](https://img.shields.io/badge/IEEETFS-2020.2992180-green)](https://doi.org/10.1109/TFUZZ.2020.2992180)
+
+## Methods implemented from the wider literature
+
+Besides the papers above, some modules implement classic methods from other authors; please cite the
+originals when you use them:
+
+- **Rules with absent items** (`ARM.negative_rules`): Delgado, Ruiz, Sanchez & Serrano (2011, see above);
+  restriction to items whose positive form is frequent: Han & Beheshti, as cited in refs. [18, 19] of
+  that paper.
+- **Exception rules** (`ARM.exception_rules`): Suzuki, E. (1997). *Autonomous discovery of reliable
+  exception rules.* KDD-97. **Anomalous rules**: Delgado, M., Ruiz, M.D., Sanchez, D. (2011). *New
+  approaches for discovering exception and anomalous rules.* Int. J. Uncertainty, Fuzziness and
+  Knowledge-Based Systems, 19(2), 361-399.
+- **Gradual rules** (`ARM.gradual_rules`): Hullermeier, E. (2002). *Association rules for expressing
+  gradual dependencies.* PKDD 2002, LNCS 2431, 200-211.
+- **Closed / maximal itemsets** (`FIM.condensed`): Pasquier, N., Bastide, Y., Taouil, R., Lakhal, L.
+  (1999). *Discovering frequent closed itemsets for association rules.* ICDT'99; Bayardo, R. (1998).
+  *Efficiently mining long patterns from databases.* SIGMOD'98.
+- **Redundant rules** (`ARM.redundancy`): Bastide, Y., Taouil, R., Pasquier, N., Stumme, G., Lakhal, L.
+  (2000). *Mining minimal non-redundant association rules using frequent closed itemsets.* CL 2000.
+- **Interest measures** (`ARM.association_rules`): Zhang, T. (2000), *Association rules*, PAKDD; Tan, P.-N.,
+  Kumar, V., Srivastava, J. (2004), *Selecting the right objective measure for association analysis*,
+  Information Systems 29(4); Wu, T., Chen, Y., Han, J. (2010), *Re-examination of interestingness
+  measures in pattern mining: a unified framework*, Data Mining and Knowledge Discovery 21(3).

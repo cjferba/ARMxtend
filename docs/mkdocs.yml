@@ -30,6 +30,12 @@ nav:
   - Crisp association rules:
     - ARM.association_rules: user_guide/ARM/association_rules.md
     - FFIM (FP-Growth): user_guide/FFIM.md
+    - FIM.condensed (closed / maximal): user_guide/FIM/condensed.md
+    - ARM.redundancy: user_guide/ARM/redundancy.md
+  - Other kinds of rules:
+    - ARM.negative_rules (absent items): user_guide/ARM/negative_rules.md
+    - ARM.exception_rules (exceptions / anomalies): user_guide/ARM/exception_rules.md
+    - ARM.gradual_rules: user_guide/ARM/gradual_rules.md
   - Fuzzy association rules:
     - FIM.FARE: user_guide/FIM/FARE.md
   - Big Data (Spark) - crisp:

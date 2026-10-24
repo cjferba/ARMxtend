@@ -7,7 +7,7 @@ from itertools import combinations
 import numpy as np
 import pandas as pd
 
-from ._measures import certainty_factor
+from ._measures import MEASURES, EXTRA_MEASURES
 
 
 def association_rules(df, metric="confidence",
@@ -25,8 +25,11 @@ def association_rules(df, metric="confidence",
       Metric to evaluate if a rule is of interest.
       **Automatically set to 'support' if `support_only=True`.**
       Otherwise, supported metrics are 'support', 'confidence', 'lift',
-      'leverage', and 'conviction'
-      These metrics are computed as follows:
+      'leverage', 'conviction', 'certainty_factor' and the additional
+      measures 'jaccard', 'cosine', 'kulczynski', 'all_confidence',
+      'max_confidence', 'added_value', 'zhangs_metric' and 'yules_q'
+      (see ``ARMxtend.ARM._measures`` for their definitions and ranges).
+      The classic ones are computed as follows:
 
       - support(A->C) = support(A+C) [aka 'support'], range: [0, 1]\n
       - confidence(A->C) = support(A+C) / support(A), range: [0, 1]\n
@@ -35,6 +38,8 @@ def association_rules(df, metric="confidence",
         range: [-1, 1]\n
       - conviction = [1 - support(C)] / [1 - confidence(A->C)],
         range: [0, inf]\n
+      - certainty_factor: see ``ARMxtend.ARM._measures.certainty_factor``,
+        range: [-1, 1]\n
 
     min_threshold : float (default: 0.8)
       Minimal threshold for the evaluation metric,
@@ -58,7 +63,8 @@ def association_rules(df, metric="confidence",
       that store itemsets, plus the scoring metric columns:
       "antecedent support", "consequent support",
       "support", "confidence", "lift",
-      "leverage", "conviction"
+      "leverage", "conviction", "certainty_factor" and the additional
+      measures listed above
       of all rules for which
       metric(rule) >= min_threshold.
       Each entry in the "antecedents" and "consequents" columns are
@@ -100,31 +106,29 @@ def association_rules(df, metric="confidence",
         "antecedent support": lambda _, sA, __: sA,
         "consequent support": lambda _, __, sC: sC,
         "support": lambda sAC, _, __: sAC,
-        "confidence": lambda sAC, sA, _: sAC/sA,
-        "lift": lambda sAC, sA, sC: metric_dict["confidence"](sAC, sA, sC)/sC,
-        "leverage": lambda sAC, sA, sC: metric_dict["support"](
-             sAC, sA, sC) - sA*sC,
         "conviction": lambda sAC, sA, sC: conviction_helper(sAC, sA, sC),
-        "certainty_factor": lambda sAC, sA, sC: certainty_factor(sAC, sA, sC)
         }
+    # confidence, lift, leverage, certainty_factor and the extra measures
+    # (see ARM._measures.MEASURES) are pure functions of (sAC, sA, sC)
+    metric_dict.update(MEASURES)
 
     columns_ordered = ["antecedent support", "consequent support",
                        "support",
                        "confidence", "lift",
-                       "leverage", "conviction", "certainty_factor"]
+                       "leverage", "conviction", "certainty_factor"] + list(EXTRA_MEASURES)
 
     # check for metric compliance
     if support_only:
         metric = 'support'
     else:
         if metric not in metric_dict.keys():
-            raise ValueError("Metric must be 'confidence' or 'lift', got '{}'"
-                             .format(metric))
+            raise ValueError("Metric must be one of {}, got '{}'"
+                             .format(sorted(metric_dict), metric))
 
     # get dict of {frequent itemset} -> support
     keys = df['itemsets'].values
     values = df['support'].values
-    frozenset_vect = np.vectorize(lambda x: frozenset(x))
+    frozenset_vect = np.vectorize(lambda x: frozenset(x), otypes=[object])
     frequent_items_dict = dict(zip(frozenset_vect(keys), values))
 
     # prepare buckets to collect frequent rules

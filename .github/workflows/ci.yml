@@ -27,13 +27,19 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Set up Java (needed by the real-Spark integration tests)
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
       - name: Install ARMxtend (editable, with the "spark" extra) + test dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[spark]"
           pip install pytest
 
-      - name: Run the full test suite (Spark algorithms run against tests/spark_stub.py, no cluster/JVM needed)
+      - name: Run the full test suite (Spark algorithms run against tests/spark_stub.py and, via tests/test_spark_integration.py, a real local Spark)
         run: pytest tests/ ARMxtend/FIM/BD_ARE/TestFunctions.py -v
 
   docs:

@@ -1,8 +1,15 @@
 # User Guide Index
 
 ## Crisp association rule mining (single machine)
-- [ARM.association_rules](user_guide/ARM/association_rules.md)
+- [ARM.association_rules](user_guide/ARM/association_rules.md) (including the additional interest measures)
 - [FFIM.fpgrowth](user_guide/FFIM.md)
+- [FIM.condensed (closed and maximal itemsets)](user_guide/FIM/condensed.md)
+- [ARM.redundancy (pruning redundant rules)](user_guide/ARM/redundancy.md)
+
+## Other kinds of rules (single machine)
+- [ARM.negative_rules (rules with absent items, crisp and fuzzy)](user_guide/ARM/negative_rules.md)
+- [ARM.exception_rules (exception and anomalous rules)](user_guide/ARM/exception_rules.md)
+- [ARM.gradual_rules ("the more A, the more B")](user_guide/ARM/gradual_rules.md)
 
 ## Fuzzy association rule mining (single machine)
 - [FIM.FARE](user_guide/FIM/FARE.md)

@@ -19,6 +19,7 @@ EXAMPLE_MODULES = [
     "example_meta_rules",
     "example_preprocessing",
     "example_vizarm",
+    "example_rule_types",
 ]
 
 
@@ -55,3 +56,21 @@ def test_fuzzy_example_reproduces_paper_values(capsys):
     assert rule["support"] == pytest.approx(0.266, abs=0.002)
     assert rule["confidence"] == pytest.approx(0.5, abs=0.002)
     assert rule["certainty_factor"] == pytest.approx(0.33, abs=0.002)
+
+
+def test_rule_types_example_finds_the_planted_patterns():
+    module = importlib.import_module("example_rule_types")
+    negative, exceptions, anomalies, gradual, (closed, maximal, pruned), fuzzyRules = module.main()
+
+    # quien toma cafe no toma te
+    assert ((negative["antecedents"] == frozenset(["coffee"])) & (negative["consequents"] == frozenset(["~tea"]))).any()
+    # la excepcion plantada a "fever -> rest"
+    assert ((exceptions["antecedents"] == frozenset(["fever"])) & (exceptions["condition"] == frozenset(["must_work"]))).any()
+    assert frozenset(["hospital"]) in set(anomalies["anomaly"])
+    # cuanto mas edad y menos ejercicio, mas colesterol
+    planted = (gradual["antecedents"] == frozenset([("age", "+"), ("exercise", "-")])) \
+        & (gradual["consequents"] == frozenset([("cholesterol", "+")]))
+    assert planted.any()
+    assert set(maximal) == {"a-b-c", "d"} and len(pruned) == 5
+    assert ((fuzzyRules["antecedents"] == frozenset(["age_low"]))
+            & (fuzzyRules["consequents"] == frozenset(["cholesterol_low"]))).any()

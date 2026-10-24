@@ -190,16 +190,39 @@ def fuzzy_fpgrowth(transactions, min_supp, num_alpha):
         soporte relativo de cada itemset frecuente (FSupp >= min_supp) en
         cada alpha-corte.
     """
-    totalTransacs = len(transactions)
-    if totalTransacs == 0:
-        return {}
-
-    weights = alpha_weights(alpha_levels(num_alpha))
-
     transactionAlphaVectors = [
         {item: alpha_cuts(degree, num_alpha) for item, degree in transaction}
         for transaction in transactions
     ]
+    return fuzzy_fpgrowth_from_vectors(transactionAlphaVectors, min_supp, num_alpha)
+
+
+def fuzzy_fpgrowth_from_vectors(transaction_vectors, min_supp, num_alpha):
+    """
+    Igual que `fuzzy_fpgrowth`, pero partiendo de transacciones ya
+    expresadas como bit-lists por alpha-corte en lugar de grados de
+    pertenencia. Permite minar items cuyo bit-list no se deriva de un unico
+    grado -- p.ej. los items AUSENTES de la RL-theory, cuyo bit-list es el
+    complemento nivel a nivel del bit-list del item (ver
+    `ARM.negative_rules`).
+
+    Argumentos:
+        transaction_vectors (Sequence[dict[str, numpy.ndarray]]): para cada
+            transaccion, {item: bit-list de `num_alpha` valores 0/1}. Un
+            item que no aparece en el dict se considera ausente en todos
+            los niveles de esa transaccion
+        min_supp (float): soporte minimo relativo FSupp, en (0, 1]
+        num_alpha (int): numero de alpha-cortes (longitud de los bit-lists)
+
+    Retorna:
+        dict {itemset_key: numpy.ndarray(num_alpha)}, como `fuzzy_fpgrowth`.
+    """
+    transactionAlphaVectors = transaction_vectors
+    totalTransacs = len(transactionAlphaVectors)
+    if totalTransacs == 0:
+        return {}
+
+    weights = alpha_weights(alpha_levels(num_alpha))
 
     candidateKeys = set()
     for alphaLevel in range(num_alpha):

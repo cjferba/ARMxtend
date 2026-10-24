@@ -29,8 +29,11 @@ pip install -e ".[spark]"   # + pyspark, necesario para los algoritmos de Big Da
 
 Ejecutar los tests: `pip install -e ".[spark]" pytest && pytest tests/ ARMxtend/FIM/BD_ARE/TestFunctions.py`
 (el paquete `pyspark` debe estar instalado para que los modulos de Spark se puedan *importar*,
-pero los tests corren contra `tests/spark_stub.py`, un doble local de la API de Spark, por lo
-que no requieren un cluster ni una JVM en ejecucion).
+pero la mayoria de tests corren contra `tests/spark_stub.py`, un doble local de la API de Spark,
+por lo que no requieren cluster ni JVM). Ademas, `tests/test_spark_integration.py` ejecuta los
+algoritmos de Big Data sobre un Spark real en modo `local[2]` y comprueba que coinciden con el
+doble local y con las versiones secuenciales; requiere un JDK >= 17 (`JAVA_HOME`) y se omite
+automaticamente si no lo hay.
 
 ## Features
 
@@ -42,6 +45,14 @@ que no requieren un cluster ni una JVM en ejecucion).
 | Big Data (Spark) | `FIM.apriori.DApriori`/`DAprioriTID`, `FIM.Eclat.DECLAT`, `FIM.BD_ARE` | `FIM.BD_FARE.FuzzyDAprioriTID`, `FIM.Eclat.FuzzyDECLAT` |
 | Streaming (Spark) | `SFIM` (FIMoTS) + `SARE.extractAssociationRules` | -                                             |
 
+### Otros tipos de reglas y herramientas
+
+* `ARM.negative_rules`: reglas con **items ausentes** (`A -> ~B`), crisp y difusas (negacion como complemento por niveles, RL-theory)
+* `ARM.exception_rules`: reglas de **excepcion** y **anomalas** (cuando falla una regla fuerte)
+* `ARM.gradual_rules`: reglas **graduales** ("cuanto mas A, mas B") sobre columnas numericas
+* `FIM.condensed` (itemsets **cerrados/maximales**) y `ARM.redundancy` (**poda de reglas redundantes**)
+* `ARM.association_rules` / `FIM.FARE`: ademas de soporte, confianza, lift, leverage, conviccion y factor de certeza, Jaccard, cosine, Kulczynski, all/max-confidence, added value, Zhang y Yule's Q (en el caso difuso, agregadas por alpha-cortes)
+
 ### Meta-reglas de asociacion
 
 * `ARM.meta_rules`: mineria de reglas de asociacion sobre reglas ya extraidas de **multiples** datasets
@@ -50,7 +61,7 @@ que no requieren un cluster ni una JVM en ejecucion).
 
 ### Preprocesado y visualizacion
 
-* `preprocessing.FuzzyLib`: fuzzificacion de atributos numericos (particion triangular de Ruspini)
+* `preprocessing.FuzzyLib`: fuzzificacion de atributos numericos con conjuntos triangulares (Ruspini), trapezoidales o gaussianos, a mano o **automatica** (uniforme, cuantiles o k-means), y conversion a transacciones difusas
 * `VizARM.AREtoGraph`: transformacion de reglas de asociacion al grafo tipado item/rule VizARE, exportable a JGF/GraphML/DOT
 
 

@@ -2,6 +2,7 @@
 # ARMxtend Association Rule Mining Library Extensions
 # Author: Carlos Fernandez Basso
 
+from . import membership
 from .FuzzyLib import FuzzyLib
 
-__all__ = ["FuzzyLib"]
+__all__ = ["FuzzyLib", "membership"]

@@ -12,15 +12,37 @@ association_rules(df, metric="confidence", min_threshold=0.8, support_only=False
 
 - **df** (`pandas.DataFrame`): frequent itemsets, with columns `support` (float) and `itemsets`
   (a `frozenset` of items).
-- **metric** (`str`): one of `"support"`, `"confidence"`, `"lift"`, `"leverage"`, `"conviction"` or
-  `"certainty_factor"`.
+- **metric** (`str`): one of `"support"`, `"confidence"`, `"lift"`, `"leverage"`, `"conviction"`,
+  `"certainty_factor"` or any of the [additional measures](#additional-interest-measures) below.
 - **min_threshold** (`float`): minimum value of `metric` for a rule to be returned.
 - **support_only** (`bool`): if `True`, only computes `support` (useful when `df` does not contain
   the support of every antecedent/consequent needed for the other metrics).
 
 Returns a `pandas.DataFrame` with columns `antecedents`, `consequents`, `antecedent support`,
 `consequent support`, `support`, `confidence`, `lift`, `leverage`, `conviction`,
-`certainty_factor`.
+`certainty_factor`, plus one column per additional measure.
+
+## Additional interest measures
+
+All are functions of `(supp(AB), supp(A), supp(B))` (equivalently of the 4-fold table
+`<a, b, c, d> = <sAB, sA-sAB, sB-sAB, 1-sA-sB+sAB>`), defined in `ARMxtend.ARM._measures`. They are
+neutral (`0`) when undefined (`0/0`), never `NaN`.
+
+| Measure (`metric=`) | Definition | Range | Symmetric |
+|---|---|---|---|
+| `jaccard` | `sAB / (sA + sB - sAB)` | [0, 1] | yes |
+| `cosine` | `sAB / sqrt(sA sB)` | [0, 1] | yes |
+| `kulczynski` | `(Conf(A->B) + Conf(B->A)) / 2` -- robust to null transactions (Wu, Chen & Han, 2010) | [0, 1] | yes |
+| `all_confidence` | `sAB / max(sA, sB)` = `min(Conf(A->B), Conf(B->A))` | [0, 1] | yes |
+| `max_confidence` | `max(Conf(A->B), Conf(B->A))` | [0, 1] | yes |
+| `added_value` | `Conf(A->B) - supp(B)` (Tan, Kumar & Srivastava, 2004) | [-1, 1] | no |
+| `zhangs_metric` | `(sAB - sA sB) / max(sAB(1-sA), sB(sA-sAB))` (Zhang, 2000) | [-1, 1] | no |
+| `yules_q` | `(ad - bc) / (ad + bc)` | [-1, 1] | yes |
+
+For asymmetric-direction questions use `added_value`, `zhangs_metric` or `certainty_factor`; for
+"are A and B just co-occurring?" the symmetric ones. In the fuzzy case
+([`FIM.FARE`](../FIM/FARE.md)) every one of them is evaluated at each alpha-cut and aggregated with
+the RL-theory weights, exactly like `FConf` and `FCF`.
 
 ## Certainty factor
 

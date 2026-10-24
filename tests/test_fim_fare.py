@@ -75,5 +75,6 @@ def test_min_threshold_filters_rules(freq_itemsets):
 
 
 def test_invalid_metric_raises(freq_itemsets):
+    # 'conviction' no se admite en el caso difuso: es no acotada nivel a nivel
     with pytest.raises(ValueError):
-        fuzzy_association_rules(freq_itemsets, num_alpha=_NUM_ALPHA, metric="lift", min_threshold=0.5)
+        fuzzy_association_rules(freq_itemsets, num_alpha=_NUM_ALPHA, metric="conviction", min_threshold=0.5)

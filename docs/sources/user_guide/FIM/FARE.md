@@ -37,7 +37,7 @@ For equidistant alpha-cuts, every weight equals `1/p`, so `FSupp`/`FConf`/`FCF` 
 ## `fuzzy_association_rules`
 
 ```python
-fuzzy_association_rules(freq_itemsets, num_alpha, metric="confidence", min_threshold=0.8)
+fuzzy_association_rules(freq_itemsets, num_alpha, metric="confidence", min_threshold=0.8, measures=None)
 ```
 
 - **freq_itemsets** (`dict[str, numpy.ndarray]`): fuzzy frequent itemsets, mapping `'A-B-C'` to its
@@ -47,11 +47,16 @@ fuzzy_association_rules(freq_itemsets, num_alpha, metric="confidence", min_thres
   every non-empty subset of each itemset -- guaranteed by the downward-closure property of those
   mining algorithms.
 - **num_alpha** (`int`): number of alpha-cuts used to mine `freq_itemsets` (must match).
-- **metric** (`str`): `"support"` (FSupp), `"confidence"` (FConf) or `"certainty_factor"` (FCF).
+- **metric** (`str`): `"support"` (FSupp), `"confidence"` (FConf), `"certainty_factor"` (FCF) or any
+  other measure of [`ARM.association_rules`](../ARM/association_rules.md#additional-interest-measures)
+  except `conviction` (unbounded level by level): `lift`, `leverage`, `jaccard`, `cosine`,
+  `kulczynski`, `all_confidence`, `max_confidence`, `added_value`, `zhangs_metric`, `yules_q`. Each is
+  computed at every alpha-cut and aggregated with the weights `(alpha_i - alpha_(i+1))`.
 - **min_threshold** (`float`): minimum value of `metric` for a rule to be kept.
+- **measures** (`list[str]`, optional): extra measures to add as columns of the result.
 
 Returns a `pandas.DataFrame` with columns `antecedents`, `consequents`, `support` (FSupp),
-`confidence` (FConf) and `certainty_factor` (FCF).
+`confidence` (FConf) and `certainty_factor` (FCF), plus one column per entry of `measures`.
 
 ## Example
 

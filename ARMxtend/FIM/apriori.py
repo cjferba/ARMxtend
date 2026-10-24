@@ -30,15 +30,19 @@ class DApriori(object):
                             .reduceByKey(lambda a, b: a + b)
 
     @classmethod
-    def _count_candidates(cls, transactions, candidate_itemsets):
+    def _count_candidates(cls, transactions, broadcast_candidates):
         """
-        candidate_itemsets: dict {itemset_key: frozenset(items)}
+        broadcast_candidates: variable broadcast cuyo valor es un dict
+        {itemset_key: frozenset(items)}. Se lee con `.value` DENTRO del
+        closure, es decir, en los ejecutores: si se leyera en el driver, los
+        candidatos viajarian serializados dentro de cada tarea en lugar de
+        enviarse una sola vez a cada nodo.
         Devuelve un RDD[(itemset_key, count)] con el conteo de apariciones
         de cada itemset candidato en las transacciones.
         """
         def emit(line):
             items_in_tx = cls._split(line)
-            return [(key, 1) for key, iset in candidate_itemsets.items()
+            return [(key, 1) for key, iset in broadcast_candidates.value.items()
                     if iset.issubset(items_in_tx)]
 
         return transactions.flatMap(emit).reduceByKey(lambda a, b: a + b)
@@ -81,7 +85,7 @@ class DApriori(object):
             candidateItemsets = {key: key_to_itemset(key) for key in candidateKeys}
             broadcastCandidates = sc.broadcast(candidateItemsets)
 
-            itemsetCounts = cls._count_candidates(transactions, broadcastCandidates.value).collectAsMap()
+            itemsetCounts = cls._count_candidates(transactions, broadcastCandidates).collectAsMap()
             broadcastCandidates.unpersist()
 
             freqItemsets = {key: count / totalTransacs
