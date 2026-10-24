@@ -26,6 +26,7 @@ tanto esta en el diccionario.
 
 @author Carlos Fernandez-Basso
 """
+from typing import Any, Dict, Iterable, Mapping, Union
 import numpy as np
 
 from ._shared import key_to_itemset, itemset_to_key
@@ -47,7 +48,7 @@ def _immediate_subsets(freq_itemsets):
                 yield key, subsetKey
 
 
-def closed_itemsets(freq_itemsets, tol=1e-12):
+def closed_itemsets(freq_itemsets: Mapping[str, Any], tol: float = 1e-12) -> Dict[str, Any]:
     """
     Itemsets frecuentes cerrados.
 
@@ -66,7 +67,7 @@ def closed_itemsets(freq_itemsets, tol=1e-12):
     return {key: support for key, support in freq_itemsets.items() if key not in notClosed}
 
 
-def maximal_itemsets(freq_itemsets):
+def maximal_itemsets(freq_itemsets: Mapping[str, Any]) -> Dict[str, Any]:
     """
     Itemsets frecuentes maximales (sin ningun superconjunto frecuente).
 
@@ -80,7 +81,7 @@ def maximal_itemsets(freq_itemsets):
     return {key: support for key, support in freq_itemsets.items() if key not in notMaximal}
 
 
-def support_from_closed(itemset, closed):
+def support_from_closed(itemset: Union[str, Iterable[str]], closed: Mapping[str, Any]) -> Any:
     """
     Recupera el soporte de un itemset frecuente a partir de los itemsets
     cerrados: es el MAXIMO (elemento a elemento, si es un bit-list) entre

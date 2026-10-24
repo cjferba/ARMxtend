@@ -19,9 +19,13 @@ con items ausentes de ``ARM.negative_rules`` o las graduales de
 @author Carlos Fernandez-Basso
 """
 import math
+from typing import Dict, List, Tuple
+
+import pandas as pd
 
 
-def prune_redundant_rules(rules, tol=1e-9, support_column="support", confidence_column="confidence"):
+def prune_redundant_rules(rules: pd.DataFrame, tol: float = 1e-9, support_column: str = "support",
+                         confidence_column: str = "confidence") -> pd.DataFrame:
     """
     Elimina las reglas redundantes de `rules`.
 
@@ -47,7 +51,7 @@ def prune_redundant_rules(rules, tol=1e-9, support_column="support", confidence_
     # Solo pueden ser equivalentes las reglas con (soporte, confianza) iguales:
     # se agrupan por esos valores redondeados a `tol` y se comparan dentro del grupo.
     digits = max(0, int(round(-math.log10(tol)))) if tol > 0 else 12
-    groups = {}
+    groups: Dict[Tuple[float, float], List[int]] = {}
     for position in range(len(rules)):
         groups.setdefault((round(support[position], digits), round(confidence[position], digits)), []).append(position)
 

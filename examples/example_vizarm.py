@@ -61,6 +61,11 @@ def main():
             data["rule_count"], sorted(graph.graph.successors(summaryId)),
             data["confidence_min"], data["confidence_max"], data["confidence_mean"]))
 
+    # Visor interactivo autocontenido: un unico fichero HTML, sin red ni dependencias
+    # (con path="reglas.html" se escribe en disco y se abre en cualquier navegador).
+    html = graph.to_html(title="ARMxtend - VizARE")
+    print("\nVisor HTML interactivo: {} bytes, grafo JGF embebido".format(len(html)))
+
     return graph
 
 

@@ -30,11 +30,17 @@ Ademas del grafo tipado, este modulo implementa:
       propuesto en el articulo (Seccion 3.3.3 y 4), ademas de GraphML y DOT
       (formatos ya soportados por herramientas como Gephi/Cytoscape/
       Graphviz/NetworkX, tambien mencionadas en la Seccion 4.4 del articulo).
+    * Un visor HTML interactivo y autocontenido (`AREtoGraph.to_html`) y la
+      exportacion a Neo4j (`to_cypher`) y MongoDB (`to_documents`) descritas
+      en la Seccion 4.3.
 
 @author Carlos Fernandez-Basso
 """
 import csv
 import json
+import math
+from pathlib import Path
+from typing import Dict
 
 import networkx as nx
 import numpy as np
@@ -60,6 +66,41 @@ def _sanitize_for_export(value):
     if isinstance(value, (list, tuple, set, frozenset)):
         return ";".join(str(v) for v in value)
     return value
+
+
+def _json_safe(value):
+    """Convierte escalares de numpy a tipos nativos y NaN/inf a None, para que el JSON sea valido en JavaScript."""
+    if isinstance(value, np.generic):
+        value = value.item()
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return [_json_safe(item) for item in value]
+    return value
+
+
+def _embed_json(obj):
+    """JSON seguro para incrustar dentro de una etiqueta <script> (escapa '<' para que '</script>' no cierre la etiqueta)."""
+    return json.dumps(_json_safe(obj)).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+
+
+def _cypher_string(value):
+    return "'" + str(value).replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n") + "'"
+
+
+def _cypher_value(value):
+    value = _json_safe(value)
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return repr(value)
+    if isinstance(value, list):
+        return "[" + ", ".join(_cypher_value(item) for item in value) + "]"
+    return _cypher_string(value)
 
 
 class AREtoGraph(object):
@@ -94,7 +135,7 @@ class AREtoGraph(object):
         self.SepRule = SepRule
         self.SepFI = SepFI
         self.SepItems = SepItems
-        self.graph = nx.DiGraph()
+        self.graph: nx.DiGraph = nx.DiGraph()
 
         if path:
             self.load_rules(path)
@@ -206,7 +247,7 @@ class AREtoGraph(object):
             raise ValueError("signature debe ser uno de {}, recibido: {}".format(_VALID_SIGNATURES, signature))
         measures = list(measures) if measures is not None else self.MeasuresRules
 
-        groups = {}
+        groups: Dict[tuple, dict] = {}
         for node, data in self.graph.nodes(data=True):
             if data.get("kind") != "rule":
                 continue
@@ -232,14 +273,14 @@ class AREtoGraph(object):
         summaryIds = []
         for index, group in enumerate(groups.values()):
             summaryId = "summary::{}::{}".format(signature, index)
-            stats = {"rule_count": len(group["ruleIds"])}
+            stats: Dict[str, float] = {"rule_count": len(group["ruleIds"])}
 
             for measure in measures:
-                values = [self.graph.nodes[ruleId][measure] for ruleId in group["ruleIds"]
-                          if measure in self.graph.nodes[ruleId]]
-                if not values:
+                found = [self.graph.nodes[ruleId][measure] for ruleId in group["ruleIds"]
+                         if measure in self.graph.nodes[ruleId]]
+                if not found:
                     continue
-                values = np.asarray(values, dtype=float)
+                values = np.asarray(found, dtype=float)
                 stats["{}_min".format(measure)] = float(values.min())
                 stats["{}_max".format(measure)] = float(values.max())
                 stats["{}_mean".format(measure)] = float(values.mean())
@@ -289,6 +330,53 @@ class AREtoGraph(object):
                     if measure in row:
                         self.graph.nodes[itemset][measure] = float(row[measure])
 
+    def _selected_graph(self, max_rules=None, sort_by=None):
+        """
+        El grafo completo o, si `max_rules` esta indicado, un subgrafo con
+        solo las `max_rules` reglas de mayor `sort_by` (por defecto, la
+        primera medida de `MeasuresRules` que tengan las reglas), sus items,
+        y los nodos de resumen con alguna de esas reglas como miembro (con
+        `members` reducido a las que se conservan).
+        """
+        if max_rules is None:
+            return self.graph
+
+        ruleNodes = [(node, data) for node, data in self.graph.nodes(data=True) if data.get("kind") == "rule"]
+        measure = sort_by or next(
+            (m for m in self.MeasuresRules if any(m in data for _, data in ruleNodes)), None)
+        if measure is not None:
+            ruleNodes.sort(key=lambda item: item[1].get(measure, float("-inf")), reverse=True)
+        keptRules = {node for node, _ in ruleNodes[:max_rules]}
+
+        keep = set(keptRules)
+        for node, data in self.graph.nodes(data=True):
+            if data.get("kind") == "summary" and keptRules.intersection(data.get("members", [])):
+                keep.add(node)
+        for node in list(keep):
+            keep.update(self.graph.predecessors(node))
+            keep.update(self.graph.successors(node))
+
+        subgraph = self.graph.subgraph(keep).copy()
+        for node, data in subgraph.nodes(data=True):
+            if data.get("kind") == "summary":
+                data["members"] = [m for m in data["members"] if m in keptRules]
+                data["rule_count"] = len(data["members"])
+        return subgraph
+
+    @staticmethod
+    def _jgf_from(graph):
+        nodes = {}
+        for node, data in graph.nodes(data=True):
+            metadata = {key: _json_safe(value) for key, value in data.items() if key not in ("name",)}
+            nodes[node] = {"label": data.get("name", node), "metadata": metadata}
+
+        edges = [
+            {"source": source, "target": target, "relation": data.get("relation"), "metadata": {}}
+            for source, target, data in graph.edges(data=True)
+        ]
+
+        return {"graph": {"directed": True, "type": "association-rules", "nodes": nodes, "edges": edges}}
+
     def to_jgf_dict(self):
         """
         Serializa el grafo al formato intermedio propuesto en el articulo:
@@ -302,21 +390,106 @@ class AREtoGraph(object):
             {id: {'label', 'metadata': {...}}}, 'edges': [{'source',
             'target', 'relation', 'metadata'}]}}
         """
-        nodes = {}
-        for node, data in self.graph.nodes(data=True):
-            metadata = {key: value for key, value in data.items() if key not in ("name",)}
-            nodes[node] = {"label": data.get("name", node), "metadata": metadata}
-
-        edges = [
-            {"source": source, "target": target, "relation": data.get("relation"), "metadata": {}}
-            for source, target, data in self.graph.edges(data=True)
-        ]
-
-        return {"graph": {"directed": True, "type": "association-rules", "nodes": nodes, "edges": edges}}
+        return self._jgf_from(self.graph)
 
     def to_jgf(self, indent=2):
         """Serializa el grafo a una cadena JSON en formato JGF (ver `to_jgf_dict`)."""
         return json.dumps(self.to_jgf_dict(), indent=indent)
+
+    def to_html(self, path=None, title="ARMxtend - VizARE", max_rules=None, sort_by=None, measure=None,
+                min_value=None):
+        """
+        Genera un visor HTML INTERACTIVO y autocontenido del grafo VizARE:
+        un unico fichero sin dependencias externas (ni CDN ni red) que se
+        abre en cualquier navegador y que embebe el propio grafo en formato
+        JGF (`to_jgf_dict`), de modo que el visor consume exactamente la
+        representacion intermedia propuesta en el articulo.
+
+        El visor ofrece: disposicion automatica por fuerzas, zoom, desplazamiento
+        y arrastre de nodos (fijar/soltar con doble clic), tooltip y panel de
+        detalle (regla legible y todas sus medidas), busqueda de nodos, filtro
+        por valor minimo de una medida, tamano y color de las reglas segun la
+        medida elegida, y activar/desactivar las capas de items, reglas y
+        resumenes (ver `summarize`). Al pasar el raton o seleccionar un nodo se
+        resaltan sus vecinos.
+
+        Argumentos:
+            path (str | os.PathLike, opcional): si se indica, el HTML se
+                escribe en ese fichero
+            title (str): titulo de la pagina
+            max_rules (int, opcional): para conjuntos grandes, conserva solo
+                las `max_rules` reglas con mayor `sort_by` (con sus items);
+                el visor es fluido hasta unos pocos miles de nodos
+            sort_by (str, opcional): medida para elegir esas reglas (por
+                defecto, la primera de `MeasuresRules`)
+            measure (str, opcional): medida inicial para tamano/color y filtro
+            min_value (float, opcional): valor minimo inicial de `measure`
+
+        Retorna:
+            str: el contenido HTML
+        """
+        template = (Path(__file__).parent / "viewer_template.html").read_text(encoding="utf-8")
+        data = _embed_json(self._jgf_from(self._selected_graph(max_rules, sort_by)))
+        options = _embed_json({"measure": measure, "min_value": min_value})
+        escapedTitle = (str(title).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+        html = (template.replace("__TITLE__", escapedTitle)
+                .replace("__OPTIONS__", options).replace("__DATA__", data))
+
+        if path is not None:
+            Path(path).write_text(html, encoding="utf-8")
+        return html
+
+    def to_cypher(self, max_rules=None, sort_by=None):
+        """
+        Sentencias Cypher (Neo4j) que crean el grafo: un nodo `:Item`,
+        `:Rule` o `:Summary` por nodo (con todos sus atributos como
+        propiedades) y una relacion `:ANTECEDENT` (item -> regla) o
+        `:CONSEQUENT` (regla -> item) por arista (Seccion 4.3 del articulo).
+        Los identificadores se guardan en la propiedad `id`.
+
+        Argumentos: ver `to_html` para `max_rules` y `sort_by`.
+
+        Retorna:
+            str: sentencias separadas por ';' y saltos de linea, listas para
+            `cypher-shell` o el navegador de Neo4j
+        """
+        graph = self._selected_graph(max_rules, sort_by)
+        labels = {"item": "Item", "rule": "Rule", "summary": "Summary"}
+        lines = []
+        for node, data in graph.nodes(data=True):
+            properties = {"id": node, "name": data.get("name", node)}
+            properties.update({key: value for key, value in data.items() if key not in ("name",)})
+            body = ", ".join("{}: {}".format(key, _cypher_value(value)) for key, value in properties.items())
+            lines.append("CREATE (:{} {{{}}});".format(labels.get(data.get("kind"), "Node"), body))
+        for source, target, data in graph.edges(data=True):
+            relation = "ANTECEDENT" if data.get("relation") == "antecedent" else "CONSEQUENT"
+            lines.append("MATCH (a {{id: {}}}), (b {{id: {}}}) CREATE (a)-[:{}]->(b);".format(
+                _cypher_string(source), _cypher_string(target), relation))
+        return "\n".join(lines)
+
+    def to_documents(self, max_rules=None, sort_by=None):
+        """
+        Documentos planos listos para insertar en una base documental como
+        MongoDB (`collection.insert_many`), Seccion 4.3 del articulo: una
+        coleccion de nodos, con `_id` = id del nodo, `name`, `kind`, `group`
+        y las medidas como campos de primer nivel (asi se pueden indexar y
+        filtrar, p.ej. `{"kind": "rule", "confidence": {"$gte": 0.8}}`), y
+        una coleccion de aristas con `source`, `target` y `relation`.
+
+        Argumentos: ver `to_html` para `max_rules` y `sort_by`.
+
+        Retorna:
+            dict {'nodes': [...], 'edges': [...]}
+        """
+        graph = self._selected_graph(max_rules, sort_by)
+        nodes = []
+        for node, data in graph.nodes(data=True):
+            document = {"_id": node, "name": data.get("name", node)}
+            document.update({key: _json_safe(value) for key, value in data.items() if key != "name"})
+            nodes.append(document)
+        edges = [{"source": source, "target": target, "relation": data.get("relation")}
+                 for source, target, data in graph.edges(data=True)]
+        return {"nodes": nodes, "edges": edges}
 
     def exportGraph(self, type=0):
         """

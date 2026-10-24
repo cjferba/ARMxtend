@@ -27,8 +27,8 @@ muestra aleatoria reproducible de filas.
 @author Carlos Fernandez-Basso
 """
 import itertools
+from typing import Any, Dict, Hashable, Iterable, Optional, Sequence, Tuple
 
-import numpy as np
 import pandas as pd
 
 INCREASING = "+"
@@ -36,13 +36,13 @@ DECREASING = "-"
 _FLIP = {INCREASING: DECREASING, DECREASING: INCREASING}
 
 
-def format_gradual_item(item):
+def format_gradual_item(item: Tuple[Hashable, str]) -> str:
     """('A', '+') -> 'A↑' ("cuanto mas A"); ('A', '-') -> 'A↓' ("cuanto menos A")."""
     attribute, direction = item
     return "{}{}".format(attribute, "↑" if direction == INCREASING else "↓")
 
 
-def format_gradual_itemset(items):
+def format_gradual_itemset(items: Iterable[Tuple[Hashable, str]]) -> str:
     """Texto de un conjunto de items graduales, p.ej. 'A↑, B↓'."""
     return ", ".join(sorted(format_gradual_item(item) for item in items))
 
@@ -97,7 +97,9 @@ def _prepare(data, attributes, max_rows, random_state):
     return table.reset_index(drop=True), attributes
 
 
-def gradual_itemsets(data, min_supp, attributes=None, max_len=None, max_rows=None, random_state=0):
+def gradual_itemsets(data: Any, min_supp: float, attributes: Optional[Sequence[Hashable]] = None,
+                    max_len: Optional[int] = None, max_rows: Optional[int] = None,
+                    random_state: int = 0) -> Dict[tuple, float]:
     """
     Itemsets graduales frecuentes (soporte por pares >= `min_supp`),
     mediante una busqueda por niveles estilo Apriori (el soporte por pares
@@ -120,8 +122,8 @@ def gradual_itemsets(data, min_supp, attributes=None, max_len=None, max_rows=Non
     table, attributes = _prepare(data, attributes, max_rows, random_state)
     counter = _PairSupport(table, attributes)
 
-    frequent = {}
-    level = {}
+    frequent: Dict[tuple, float] = {}
+    level: Dict[tuple, float] = {}
     for attribute in attributes:
         itemset = ((attribute, INCREASING),)
         support = counter.support(itemset)
@@ -138,7 +140,7 @@ def gradual_itemsets(data, min_supp, attributes=None, max_len=None, max_rows=Non
                 for direction in (INCREASING, DECREASING):
                     candidates.append(itemset + ((attribute, direction),))
 
-        nextLevel = {}
+        nextLevel: Dict[tuple, float] = {}
         for candidate in candidates:
             subsets = (candidate[:i] + candidate[i + 1:] for i in range(len(candidate)))
             if not all(_canonical(subset, counter.order) in frequent for subset in subsets):
@@ -154,7 +156,9 @@ def gradual_itemsets(data, min_supp, attributes=None, max_len=None, max_rows=Non
     return frequent
 
 
-def gradual_rules(data, min_supp, min_conf, attributes=None, max_len=None, max_rows=None, random_state=0):
+def gradual_rules(data: Any, min_supp: float, min_conf: float, attributes: Optional[Sequence[Hashable]] = None,
+                  max_len: Optional[int] = None, max_rows: Optional[int] = None,
+                  random_state: int = 0) -> pd.DataFrame:
     """
     Reglas graduales  A -> B  (A y B, conjuntos de items graduales de
     atributos distintos) con soporte >= `min_supp` y confianza >=

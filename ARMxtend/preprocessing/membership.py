@@ -16,7 +16,9 @@ ARMxtend (``FFIM.fuzzy_fpgrowth``, ``FIM.FARE``, ...).
 
 @author Carlos Fernandez-Basso
 """
+from typing import List, Sequence, Tuple, Union
 import numpy as np
+from numpy.typing import ArrayLike
 
 METHODS = ("uniform", "quantile", "kmeans")
 MEMBERSHIPS = ("triangular", "trapezoidal", "gaussian")
@@ -33,12 +35,12 @@ _LABELS = {
 _FWHM_FACTOR = 2.0 * np.sqrt(2.0 * np.log(2.0))
 
 
-def default_labels(n_labels):
+def default_labels(n_labels: int) -> List[str]:
     """Etiquetas por defecto de una particion de `n_labels` conjuntos ('low', 'medium', 'high', ...)."""
     return list(_LABELS.get(n_labels, ["L{}".format(i + 1) for i in range(n_labels)]))
 
 
-def triangular_partition(values, peaks):
+def triangular_partition(values: ArrayLike, peaks: Union[Sequence[float], np.ndarray]) -> np.ndarray:
     """
     Particion difusa triangular de Ruspini: dado un conjunto de picos
     ordenados ascendentemente, devuelve el grado de pertenencia de cada
@@ -85,7 +87,7 @@ def triangular_partition(values, peaks):
     return memberships
 
 
-def trapezoidal_membership(values, a, b, c, d):
+def trapezoidal_membership(values: ArrayLike, a: float, b: float, c: float, d: float) -> np.ndarray:
     """
     Funcion de pertenencia trapezoidal: 0 hasta `a`, sube linealmente hasta
     1 en `b`, vale 1 entre `b` y `c`, y baja linealmente hasta 0 en `d`.
@@ -110,7 +112,7 @@ def trapezoidal_membership(values, a, b, c, d):
     return np.clip(np.minimum(rising, falling), 0.0, 1.0)
 
 
-def trapezoidal_partition(values, params):
+def trapezoidal_partition(values: ArrayLike, params: Sequence[Tuple[float, float, float, float]]) -> np.ndarray:
     """
     Grados de pertenencia a cada trapecio de `params`.
 
@@ -125,7 +127,7 @@ def trapezoidal_partition(values, params):
     return np.column_stack([trapezoidal_membership(values, *vertices) for vertices in params])
 
 
-def gaussian_membership(values, center, sigma):
+def gaussian_membership(values: ArrayLike, center: float, sigma: float) -> np.ndarray:
     """exp(-(x - center)^2 / (2 sigma^2)). Vale 1 en `center`; sigma > 0."""
     if sigma <= 0:
         raise ValueError("sigma debe ser > 0, recibido: {}".format(sigma))
@@ -133,7 +135,7 @@ def gaussian_membership(values, center, sigma):
     return np.exp(-0.5 * ((values - center) / sigma) ** 2)
 
 
-def gaussian_partition(values, params):
+def gaussian_partition(values: ArrayLike, params: Sequence[Tuple[float, float]]) -> np.ndarray:
     """
     Grados de pertenencia a cada gaussiana de `params`.
 
@@ -159,7 +161,7 @@ def _kmeans_1d(values, initial_centers, max_iter=100):
     return np.sort(centers)
 
 
-def automatic_peaks(values, n_labels=3, method="quantile"):
+def automatic_peaks(values: ArrayLike, n_labels: int = 3, method: str = "quantile") -> np.ndarray:
     """
     Calcula `n_labels` picos para una particion de los datos.
 
@@ -203,7 +205,8 @@ def automatic_peaks(values, n_labels=3, method="quantile"):
     return peaks
 
 
-def automatic_partition(values, n_labels=3, method="quantile", membership="triangular"):
+def automatic_partition(values: ArrayLike, n_labels: int = 3, method: str = "quantile",
+                        membership: str = "triangular") -> Tuple[np.ndarray, list]:
     """
     Particion difusa calculada automaticamente a partir de los datos.
 
@@ -237,14 +240,14 @@ def automatic_partition(values, n_labels=3, method="quantile", membership="trian
     if membership == "gaussian":
         # separacion local: media de los huecos vecinos
         spacing = np.array([gaps[0]] + [(gaps[i - 1] + gaps[i]) / 2.0 for i in range(1, n_labels - 1)] + [gaps[-1]])
-        params = [(float(c), float(s / _FWHM_FACTOR)) for c, s in zip(peaks, spacing)]
-        return gaussian_partition(values, params), params
+        gaussians = [(float(c), float(s / _FWHM_FACTOR)) for c, s in zip(peaks, spacing)]
+        return gaussian_partition(values, gaussians), gaussians
 
-    params = []
+    trapezoids = []
     for i in range(n_labels):
         a = -np.inf if i == 0 else peaks[i - 1] + gaps[i - 1] / 4.0
         b = -np.inf if i == 0 else peaks[i] - gaps[i - 1] / 4.0
         c = np.inf if i == n_labels - 1 else peaks[i] + gaps[i] / 4.0
         d = np.inf if i == n_labels - 1 else peaks[i + 1] - gaps[i] / 4.0
-        params.append((float(a), float(b), float(c), float(d)))
-    return trapezoidal_partition(values, params), params
+        trapezoids.append((float(a), float(b), float(c), float(d)))
+    return trapezoidal_partition(values, trapezoids), trapezoids

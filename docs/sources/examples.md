@@ -292,6 +292,7 @@ def main():
     print(graph.to_jgf())
 
     summaryIds = graph.summarize(signature="consequent", measures=("confidence", "lift"))
+    graph.to_html("rules.html")    # interactive viewer, self-contained
     return graph, summaryIds
 
 
@@ -326,7 +327,12 @@ JGF (formato intermedio propuesto, primeras lineas):
 Resumen por consecuente (2 grupos):
   1 reglas -> ['C']  confidence en [0.80, 0.80] (media 0.80)
   2 reglas -> ['B']  confidence en [0.71, 0.83] (media 0.77)
+
+Visor HTML interactivo: 25950 bytes, grafo JGF embebido
 ```
+
+`graph.to_html("rules.html")` writes that interactive viewer to disk -- a single file you can open in any
+browser (see [`VizARM.AREtoGraph`](user_guide/VizARM.md#interactive-viewer)).
 
 GraphML (Gephi/Cytoscape/NetworkX) and DOT (Graphviz) exports are still available as
 `graph.exportGraph(type=1)`/`type=2`, for tools that don't consume JGF directly.

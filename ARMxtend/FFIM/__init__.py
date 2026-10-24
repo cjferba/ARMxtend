@@ -31,6 +31,7 @@ copia identica (con los mismos errores) de ``FIM/BD_FARE/__init__.py``.
 @author Carlos Fernandez-Basso
 """
 from collections import Counter
+from typing import Dict, Iterable, Optional, Sequence, Set, Tuple
 
 import numpy as np
 
@@ -59,11 +60,11 @@ def _build_fptree(transactions, min_count):
     nodo del arbol con ese item, enlazados entre si via `link`), el orden
     descendente de frecuencia de los items conservados, y sus conteos.
     """
-    itemCounts = Counter()
+    rawCounts: Counter = Counter()
     for transaction in transactions:
-        itemCounts.update(set(transaction))
+        rawCounts.update(set(transaction))
 
-    itemCounts = {item: count for item, count in itemCounts.items() if count >= min_count}
+    itemCounts = {item: count for item, count in rawCounts.items() if count >= min_count}
     if not itemCounts:
         return {}, [], {}
 
@@ -71,8 +72,8 @@ def _build_fptree(transactions, min_count):
     orderIndex = {item: idx for idx, item in enumerate(order)}
 
     root = _FPNode(None, None)
-    header = {item: None for item in order}
-    headerTail = {item: None for item in order}
+    header: Dict[str, Optional[_FPNode]] = {item: None for item in order}
+    headerTail: Dict[str, Optional[_FPNode]] = {item: None for item in order}
 
     for transaction in transactions:
         filteredItems = sorted((item for item in set(transaction) if item in itemCounts),
@@ -83,10 +84,11 @@ def _build_fptree(transactions, min_count):
             if child is None:
                 child = _FPNode(item, node)
                 node.children[item] = child
-                if header[item] is None:
+                tail = headerTail[item]
+                if tail is None:
                     header[item] = child
                 else:
-                    headerTail[item].link = child
+                    tail.link = child
                 headerTail[item] = child
             child.count += 1
             node = child
@@ -126,7 +128,7 @@ def _mine_fptree(header, order, itemCounts, min_count, prefix, result):
                 _mine_fptree(condHeader, condOrder, condCounts, min_count, newItemset, result)
 
 
-def fpgrowth(transactions, min_supp):
+def fpgrowth(transactions: Sequence[Iterable[str]], min_supp: float) -> Dict[str, float]:
     """
     FP-Growth crisp: mineria exhaustiva de itemsets frecuentes sin generar
     candidatos explicitos.
@@ -147,14 +149,15 @@ def fpgrowth(transactions, min_supp):
     minCount = min_supp * totalTransacs - 1e-9
     header, order, itemCounts = _build_fptree(transactions, minCount)
 
-    result = {}
+    result: dict = {}
     if order:
         _mine_fptree(header, order, itemCounts, minCount, frozenset(), result)
 
     return {itemset_to_key(itemset): count / totalTransacs for itemset, count in result.items()}
 
 
-def fuzzy_fpgrowth(transactions, min_supp, num_alpha):
+def fuzzy_fpgrowth(transactions: Sequence[Iterable[Tuple[str, float]]], min_supp: float,
+                   num_alpha: int) -> Dict[str, np.ndarray]:
     """
     FP-Growth difuso: encuentra candidatos ejecutando `fpgrowth` de forma
     independiente en cada uno de los `num_alpha` alpha-cortes (tras
@@ -197,7 +200,8 @@ def fuzzy_fpgrowth(transactions, min_supp, num_alpha):
     return fuzzy_fpgrowth_from_vectors(transactionAlphaVectors, min_supp, num_alpha)
 
 
-def fuzzy_fpgrowth_from_vectors(transaction_vectors, min_supp, num_alpha):
+def fuzzy_fpgrowth_from_vectors(transaction_vectors: Sequence[Dict[str, np.ndarray]], min_supp: float,
+                                num_alpha: int) -> Dict[str, np.ndarray]:
     """
     Igual que `fuzzy_fpgrowth`, pero partiendo de transacciones ya
     expresadas como bit-lists por alpha-corte en lugar de grados de
@@ -224,7 +228,7 @@ def fuzzy_fpgrowth_from_vectors(transaction_vectors, min_supp, num_alpha):
 
     weights = alpha_weights(alpha_levels(num_alpha))
 
-    candidateKeys = set()
+    candidateKeys: Set[str] = set()
     for alphaLevel in range(num_alpha):
         binarizedTransactions = [
             {item for item, vector in txVectors.items() if vector[alphaLevel]}
@@ -236,8 +240,8 @@ def fuzzy_fpgrowth_from_vectors(transaction_vectors, min_supp, num_alpha):
         items = itemsetKey.split("-")
         total = np.zeros(num_alpha, dtype=float)
         for txVectors in transactionAlphaVectors:
-            memberVectors = [txVectors.get(item) for item in items]
-            if any(vector is None for vector in memberVectors):
+            memberVectors = [txVectors[item] for item in items if item in txVectors]
+            if len(memberVectors) < len(items):
                 continue
             membership = np.ones(num_alpha, dtype=int)
             for vector in memberVectors:

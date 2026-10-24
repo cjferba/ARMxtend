@@ -146,3 +146,47 @@ def test_fuzzy_can_filter_by_extra_metric_without_returning_it():
 def test_fuzzy_unknown_measure_raises():
     with pytest.raises(ValueError):
         fuzzy_association_rules(_fuzzy_itemsets(), 4, measures=["nope"])
+
+
+# --- factor de certeza frente a la Ec. (7) de Ruiz et al. (2016) -------------
+
+def _cf_from_4ft(a, b, c, d):
+    """CF(a, b, c, d), Ec. (7), con a + b + c + d = 1 (tabla de frecuencias relativas)."""
+    if a * d > b * c:
+        return (a * d - b * c) / ((a + b) * (b + d))
+    if a * d < b * c:
+        return (a * d - b * c) / ((a + b) * (a + c))
+    return 0.0
+
+
+def test_certainty_factor_matches_equation_7_on_random_tables():
+    rng = np.random.RandomState(0)
+    for _ in range(500):
+        a, b, c, d = rng.dirichlet([1, 1, 1, 1])
+        assert MEASURES["certainty_factor"](a, a + b, a + c) == pytest.approx(_cf_from_4ft(a, b, c, d))
+
+
+def test_certainty_factor_is_zero_when_the_antecedent_has_no_support():
+    # a = b = 0 -> ad = bc -> CF = 0 (no -1: sin antecedente no hay evidencia ni a favor ni en contra)
+    assert MEASURES["certainty_factor"](0.0, 0.0, 0.4) == 0.0
+    assert np.allclose(MEASURES["certainty_factor"]([0.0, 0.2], [0.0, 0.5], [0.4, 0.4]),
+                       [0.0, _cf_from_4ft(0.2, 0.3, 0.2, 0.3)])
+
+
+def test_fuzzy_certainty_factor_ignores_levels_where_the_antecedent_never_appears():
+    # A solo llega a grado 0.5: en los niveles 1 y 0.75 (de 4) no tiene soporte y su CF es 0
+    transactions = [[("A", 0.5), ("B", 0.5)], [("A", 0.5)], [("B", 1.0)], [("B", 0.5)]]
+    numAlpha = 4
+    itemsets = fuzzy_fpgrowth(transactions, min_supp=0.01, num_alpha=numAlpha)
+    rule = fuzzy_association_rules(itemsets, numAlpha, metric="support", min_threshold=0.0).pipe(
+        lambda df: df[(df["antecedents"] == frozenset("A")) & (df["consequents"] == frozenset("B"))].iloc[0])
+
+    weights = alpha_weights(alpha_levels(numAlpha))
+    perLevel = [_cf_from_4ft(*_table(itemsets, level)) for level in range(numAlpha)]
+    assert perLevel[0] == 0.0 and perLevel[1] == 0.0
+    assert rule["certainty_factor"] == pytest.approx(weighted_alpha_aggregate(perLevel, weights))
+
+
+def _table(itemsets, level):
+    sAB, sA, sB = itemsets["A-B"][level], itemsets["A"][level], itemsets["B"][level]
+    return sAB, sA - sAB, sB - sAB, 1 - sA - sB + sAB

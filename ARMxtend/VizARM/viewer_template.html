@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1f2328; --muted: #656d76; --panel: #f6f8fa; --border: #d0d7de;
+    --accent: #0969da; --antecedent: #3b82f6; --consequent: #f97316; --dim: 0.12;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d1117; --fg: #e6edf3; --muted: #8b949e; --panel: #161b22; --border: #30363d; --accent: #58a6ff; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { display: flex; font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); }
+  #side { width: 320px; min-width: 260px; max-width: 40vw; padding: 14px; overflow-y: auto; background: var(--panel);
+          border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
+  #side h1 { font-size: 16px; margin: 0; }
+  #stats { color: var(--muted); font-size: 12px; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+  input[type=search], select { padding: 6px 8px; font: inherit; color: var(--fg); background: var(--bg);
+          border: 1px solid var(--border); border-radius: 6px; }
+  input[type=range] { width: 100%; }
+  fieldset { border: 1px solid var(--border); border-radius: 6px; margin: 0; padding: 6px 10px; font-size: 13px; }
+  fieldset label { flex-direction: row; align-items: center; gap: 6px; color: var(--fg); font-size: 13px; }
+  legend { font-size: 12px; color: var(--muted); padding: 0 4px; }
+  .row { display: flex; gap: 8px; }
+  button { flex: 1; padding: 6px 8px; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--border);
+           border-radius: 6px; cursor: pointer; }
+  button:hover, button:focus-visible { border-color: var(--accent); outline: none; }
+  #details { font-size: 13px; border-top: 1px solid var(--border); padding-top: 10px; }
+  #details h2 { font-size: 14px; margin: 0 0 6px; word-break: break-word; }
+  #details table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  #details td { padding: 2px 0; vertical-align: top; }
+  #details td:first-child { color: var(--muted); padding-right: 10px; white-space: nowrap; }
+  #details .rule { font-weight: 600; margin-bottom: 6px; }
+  #details a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .sw { width: 12px; height: 12px; display: inline-block; }
+  #stage { flex: 1; position: relative; min-width: 0; }
+  canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+  canvas.dragging { cursor: grabbing; }
+  #tip { position: absolute; pointer-events: none; display: none; max-width: 320px; padding: 6px 8px; font-size: 12px;
+         background: var(--panel); color: var(--fg); border: 1px solid var(--border); border-radius: 6px;
+         box-shadow: 0 2px 8px rgba(0,0,0,.25); z-index: 2; }
+  #empty { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: var(--muted); }
+  @media (max-width: 700px) { body { flex-direction: column-reverse; } #side { width: 100%; max-width: none; max-height: 45vh;
+          border-right: 0; border-top: 1px solid var(--border); } }
+</style>
+</head>
+<body>
+<aside id="side">
+  <h1>__TITLE__</h1>
+  <div id="stats"></div>
+  <label>Search nodes<input type="search" id="search" placeholder="item or rule text" autocomplete="off"></label>
+  <label>Size and colour rules by<select id="measure"></select></label>
+  <label><span>Show rules with <span id="measureName"></span> &ge; <b id="thrValue"></b></span>
+    <input type="range" id="thr" min="0" max="1000" value="0"></label>
+  <fieldset>
+    <legend>Layers</legend>
+    <label><input type="checkbox" id="layerItem" checked> Items</label>
+    <label><input type="checkbox" id="layerRule" checked> Rules</label>
+    <label><input type="checkbox" id="layerSummary" checked> Summaries</label>
+  </fieldset>
+  <div class="row"><button id="fit" type="button">Fit view</button><button id="pause" type="button">Pause layout</button></div>
+  <div id="details"><span style="color:var(--muted)">Click a node to see its details. Drag nodes to pin them (double-click to release), drag the background to pan and scroll to zoom.</span></div>
+  <div>
+    <div class="legend-row"><span class="sw" style="border-radius:50%;background:#8b949e"></span> item (colour = attribute group)</div>
+    <div class="legend-row"><span class="sw" style="background:#7c3aed"></span> rule (size and colour = measure)</div>
+    <div class="legend-row"><span class="sw" style="background:#0f766e;transform:rotate(45deg) scale(.8)"></span> summary of rules</div>
+    <div class="legend-row"><span class="sw" style="height:3px;background:var(--antecedent)"></span> antecedent: item &rarr; rule</div>
+    <div class="legend-row"><span class="sw" style="height:3px;background:var(--consequent)"></span> consequent: rule &rarr; item</div>
+  </div>
+</aside>
+<main id="stage"><canvas id="cv" aria-label="Association rule graph"></canvas><div id="tip"></div><div id="empty">No rules match the current filters.</div></main>
+
+<script type="application/json" id="vizare-data">__DATA__</script>
+<script type="application/json" id="vizare-options">__OPTIONS__</script>
+<script>
+(function () {
+  "use strict";
+  var raw = JSON.parse(document.getElementById("vizare-data").textContent);
+  var opts = JSON.parse(document.getElementById("vizare-options").textContent);
+  var g = raw.graph;
+
+  // ---- model --------------------------------------------------------------------------------
+  var nodes = Object.keys(g.nodes).map(function (id) {
+    var n = g.nodes[id], meta = n.metadata || {};
+    return { id: id, label: n.label || id, meta: meta, kind: meta.kind || "item", group: meta.group || "",
+             x: 0, y: 0, vx: 0, vy: 0, fixed: false, visible: true, r: 6, nb: [], deg: 0 };
+  });
+  var byId = {};
+  nodes.forEach(function (n) { byId[n.id] = n; });
+  var edges = (g.edges || []).map(function (e) { return { s: byId[e.source], t: byId[e.target], rel: e.relation }; })
+    .filter(function (e) { return e.s && e.t; });
+  edges.forEach(function (e) { e.s.nb.push(e.t); e.t.nb.push(e.s); e.s.deg++; e.t.deg++; });
+
+  var measureKeys = [];
+  nodes.forEach(function (n) {
+    if (n.kind === "item") return;
+    Object.keys(n.meta).forEach(function (k) {
+      if (typeof n.meta[k] === "number" && measureKeys.indexOf(k) < 0 && !/_(min|max|mean|q\d+)$/.test(k) && k !== "rule_count")
+        measureKeys.push(k);
+    });
+  });
+
+  var state = { measure: opts.measure && measureKeys.indexOf(opts.measure) >= 0 ? opts.measure : (measureKeys[0] || null),
+                threshold: 0, selected: null, hover: null, query: "", paused: false, alpha: 1,
+                k: 1, tx: 0, ty: 0, range: [0, 1] };
+
+  function value(n, measure) {
+    if (n.kind === "item" || !measure) return null;
+    var v = n.meta[measure];
+    if (typeof v !== "number") v = n.meta[measure + "_mean"];
+    return typeof v === "number" ? v : null;
+  }
+
+  // ---- DOM ----------------------------------------------------------------------------------
+  var $ = function (id) { return document.getElementById(id); };
+  var cv = $("cv"), ctx = cv.getContext("2d"), tip = $("tip");
+  var measureSel = $("measure");
+  measureKeys.forEach(function (k) {
+    var o = document.createElement("option"); o.value = k; o.textContent = k; measureSel.appendChild(o);
+  });
+  if (state.measure) measureSel.value = state.measure; else { measureSel.disabled = true; $("thr").disabled = true; }
+
+  var palette = {};
+  function groupColor(group) {
+    if (!(group in palette)) {
+      var h = 0; for (var i = 0; i < group.length; i++) h = (h * 31 + group.charCodeAt(i)) >>> 0;
+      palette[group] = "hsl(" + (h % 360) + ",62%,52%)";
+    }
+    return palette[group];
+  }
+  function ramp(t) {  // 0..1 -> light violet .. deep violet
+    t = Math.max(0, Math.min(1, t));
+    return "hsl(" + (265 - 10 * t) + "," + (55 + 25 * t) + "%," + (78 - 40 * t) + "%)";
+  }
+
+  // ---- filtering ----------------------------------------------------------------------------
+  function recomputeRange() {
+    var lo = Infinity, hi = -Infinity;
+    nodes.forEach(function (n) { var v = value(n, state.measure); if (v !== null) { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
+    state.range = isFinite(lo) ? [lo, hi > lo ? hi : lo + 1e-9] : [0, 1];
+    $("measureName").textContent = state.measure || "-";
+  }
+  function thresholdValue() { return state.range[0] + (state.range[1] - state.range[0]) * (+$("thr").value) / 1000; }
+
+  function applyFilters(restart) {
+    var showItem = $("layerItem").checked, showRule = $("layerRule").checked, showSum = $("layerSummary").checked;
+    var thr = state.measure ? thresholdValue() : -Infinity;
+    state.threshold = thr;
+    $("thrValue").textContent = state.measure ? thr.toFixed(3) : "-";
+    nodes.forEach(function (n) {
+      if (n.kind === "item") return;
+      var layerOn = n.kind === "summary" ? showSum : showRule;
+      var v = value(n, state.measure);
+      n.visible = layerOn && (v === null || v >= thr - 1e-12);
+    });
+    nodes.forEach(function (n) {
+      if (n.kind !== "item") return;
+      n.visible = showItem && n.nb.some(function (m) { return m.kind !== "item" && m.visible; });
+    });
+    // edges only between visible nodes
+    var nVis = 0, rules = 0;
+    nodes.forEach(function (n) { if (n.visible) { nVis++; if (n.kind !== "item") rules++; } });
+    $("stats").textContent = nVis + " of " + nodes.length + " nodes visible (" + rules + " rule/summary nodes)";
+    $("empty").style.display = nVis === 0 ? "flex" : "none";
+    if (state.selected && !state.selected.visible) select(null);
+    sizeNodes();
+    if (restart) kick(0.6);
+  }
+
+  function sizeNodes() {
+    var span = state.range[1] - state.range[0];
+    nodes.forEach(function (n) {
+      if (n.kind === "item") { n.r = 5 + Math.min(7, Math.sqrt(n.deg)); return; }
+      var v = value(n, state.measure), t = v === null ? 0.5 : (v - state.range[0]) / span;
+      n.t = t;
+      n.r = (n.kind === "summary" ? 9 : 6) + 7 * Math.max(0, Math.min(1, t));
+    });
+  }
+
+  // ---- layout (force-directed, grid-accelerated repulsion) ----------------------------------
+  var W = 800, H = 600;
+  function seed() {
+    var R = Math.sqrt(nodes.length) * 30 + 60;
+    nodes.forEach(function (n, i) {
+      var a = i * 2.399963, d = R * Math.sqrt((i + 0.5) / nodes.length);
+      n.x = Math.cos(a) * d; n.y = Math.sin(a) * d;
+    });
+  }
+  var CELL = 140, CUT2 = CELL * CELL;
+  function tick() {
+    var vis = nodes.filter(function (n) { return n.visible; }), a = state.alpha, i, j;
+    var grid = {};
+    vis.forEach(function (n) {
+      var key = Math.floor(n.x / CELL) + "," + Math.floor(n.y / CELL);
+      (grid[key] || (grid[key] = [])).push(n);
+    });
+    vis.forEach(function (n) {
+      var cx = Math.floor(n.x / CELL), cy = Math.floor(n.y / CELL);
+      for (var dx = -1; dx <= 1; dx++) for (var dy = -1; dy <= 1; dy++) {
+        var cell = grid[(cx + dx) + "," + (cy + dy)];
+        if (!cell) continue;
+        for (j = 0; j < cell.length; j++) {
+          var m = cell[j]; if (m === n) continue;
+          var ex = n.x - m.x, ey = n.y - m.y, d2 = ex * ex + ey * ey;
+          if (d2 > CUT2) continue;
+          if (d2 < 1) { ex = Math.random() - 0.5; ey = Math.random() - 0.5; d2 = 1; }
+          var f = 5200 * a / d2;
+          n.vx += ex * f; n.vy += ey * f;
+        }
+      }
+    });
+    edges.forEach(function (e) {
+      if (!e.s.visible || !e.t.visible) return;
+      var dx = e.t.x - e.s.x, dy = e.t.y - e.s.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+      var f = (d - 85) * 0.03 * a / d;
+      e.s.vx += dx * f; e.s.vy += dy * f; e.t.vx -= dx * f; e.t.vy -= dy * f;
+    });
+    vis.forEach(function (n) {
+      n.vx -= n.x * 0.0025 * a; n.vy -= n.y * 0.0025 * a;
+      if (n.fixed) { n.vx = n.vy = 0; return; }
+      n.vx *= 0.82; n.vy *= 0.82;
+      n.x += Math.max(-30, Math.min(30, n.vx)); n.y += Math.max(-30, Math.min(30, n.vy));
+    });
+    state.alpha = a * 0.992;
+  }
+  function kick(a) { state.alpha = Math.max(state.alpha, a); }
+
+  // ---- drawing ------------------------------------------------------------------------------
+  function resize() {
+    var dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
+    W = r.width; H = r.height; cv.width = Math.max(1, Math.round(W * dpr)); cv.height = Math.max(1, Math.round(H * dpr));
+  }
+  function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+  function matches(n) { return state.query && (n.label + " " + n.id).toLowerCase().indexOf(state.query) >= 0; }
+  function isDim(n) {
+    if (state.query) return !matches(n);
+    var focus = state.hover || state.selected;
+    return !!focus && focus !== n && focus.nb.indexOf(n) < 0;
+  }
+  function path(n, r) {
+    if (n.kind === "item") { ctx.arc(n.x, n.y, r, 0, 6.2832); return; }
+    if (n.kind === "summary") { ctx.moveTo(n.x, n.y - r * 1.2); ctx.lineTo(n.x + r * 1.2, n.y); ctx.lineTo(n.x, n.y + r * 1.2); ctx.lineTo(n.x - r * 1.2, n.y); ctx.closePath(); return; }
+    ctx.rect(n.x - r, n.y - r, 2 * r, 2 * r);
+  }
+  function arrow(x1, y1, x2, y2, r2) {
+    var dx = x2 - x1, dy = y2 - y1, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
+    var tx = x2 - ux * (r2 + 2), ty = y2 - uy * (r2 + 2), s = 6;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(tx, ty); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx - ux * s - uy * s * 0.5, ty - uy * s + ux * s * 0.5);
+    ctx.lineTo(tx - ux * s + uy * s * 0.5, ty - uy * s - ux * s * 0.5); ctx.closePath(); ctx.fill();
+  }
+  function draw() {
+    var dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    ctx.save(); ctx.translate(W / 2 + state.tx, H / 2 + state.ty); ctx.scale(state.k, state.k);
+    var fg = css("--fg"), cA = css("--antecedent"), cC = css("--consequent"), dim = +css("--dim");
+
+    edges.forEach(function (e) {
+      if (!e.s.visible || !e.t.visible) return;
+      var faded = isDim(e.s) || isDim(e.t);
+      var color = e.rel === "consequent" ? cC : cA;
+      ctx.globalAlpha = faded ? dim : 0.65; ctx.strokeStyle = color; ctx.fillStyle = color;
+      ctx.lineWidth = 1.3 / Math.sqrt(state.k);
+      arrow(e.s.x, e.s.y, e.t.x, e.t.y, e.t.r);
+    });
+
+    nodes.forEach(function (n) {
+      if (!n.visible) return;
+      var faded = isDim(n);
+      ctx.globalAlpha = faded ? dim : 1;
+      ctx.beginPath(); path(n, n.r);
+      ctx.fillStyle = n.kind === "item" ? groupColor(n.group) : (state.measure && value(n, state.measure) !== null ? ramp(n.t) : "#7c3aed");
+      if (n.kind === "summary") ctx.fillStyle = state.measure ? ramp(n.t) : "#0f766e";
+      ctx.fill();
+      ctx.lineWidth = (n === state.selected || n === state.hover ? 3 : 1.2) / Math.sqrt(state.k);
+      ctx.strokeStyle = n === state.selected ? css("--accent") : (n.kind === "summary" ? "#0f766e" : fg);
+      ctx.stroke();
+      if (n.fixed) { ctx.beginPath(); ctx.arc(n.x + n.r, n.y - n.r, 2.5 / Math.sqrt(state.k), 0, 6.2832); ctx.fillStyle = fg; ctx.fill(); }
+      if (matches(n)) { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 5, 0, 6.2832); ctx.strokeStyle = "#e11d48"; ctx.lineWidth = 2 / Math.sqrt(state.k); ctx.stroke(); }
+    });
+
+    ctx.globalAlpha = 1; ctx.fillStyle = fg; ctx.font = (11 / Math.sqrt(state.k)) + "px system-ui, sans-serif"; ctx.textBaseline = "top";
+    nodes.forEach(function (n) {
+      if (!n.visible || isDim(n)) return;
+      var show = n === state.selected || n === state.hover || matches(n) || (n.kind === "item" && state.k > 0.55);
+      if (show) ctx.fillText(n.label, n.x + n.r + 3, n.y - 5);
+    });
+    ctx.restore();
+  }
+
+  // ---- interaction --------------------------------------------------------------------------
+  function toWorld(px, py) { return { x: (px - W / 2 - state.tx) / state.k, y: (py - H / 2 - state.ty) / state.k }; }
+  function pick(px, py) {
+    var p = toWorld(px, py);
+    for (var i = nodes.length - 1; i >= 0; i--) {
+      var n = nodes[i]; if (!n.visible) continue;
+      var dx = p.x - n.x, dy = p.y - n.y, r = n.r + 3 / state.k;
+      if (dx * dx + dy * dy <= r * r) return n;
+    }
+    return null;
+  }
+  function fmt(v) { return typeof v === "number" ? (Number.isInteger(v) ? String(v) : v.toFixed(4)) : String(v); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function relNodes(n, rel) {
+    return edges.filter(function (e) { return rel === "antecedent" ? (e.t === n && e.rel === "antecedent") : (e.s === n && e.rel === "consequent"); })
+      .map(function (e) { return rel === "antecedent" ? e.s : e.t; });
+  }
+  function select(n) {
+    state.selected = n;
+    var d = $("details");
+    if (!n) { d.innerHTML = '<span style="color:var(--muted)">Click a node to see its details.</span>'; return; }
+    var html = "<h2>" + esc(n.label) + "</h2>";
+    if (n.kind !== "item") {
+      var ant = relNodes(n, "antecedent").map(function (m) { return m.label; }).join(", ");
+      var con = relNodes(n, "consequent").map(function (m) { return m.label; }).join(", ");
+      html += '<div class="rule">' + esc(ant) + " &rarr; " + esc(con) + "</div>";
+    }
+    html += "<table>";
+    html += "<tr><td>kind</td><td>" + esc(n.kind) + "</td></tr>";
+    Object.keys(n.meta).forEach(function (k) {
+      if (k === "kind" || k === "members") return;
+      html += "<tr><td>" + esc(k) + "</td><td>" + esc(fmt(n.meta[k])) + "</td></tr>";
+    });
+    if (n.kind === "item") html += "<tr><td>rules</td><td>" + n.nb.filter(function (m) { return m.kind === "rule"; }).length + "</td></tr>";
+    html += "</table>";
+    if (n.meta.members) {
+      html += "<p>Rules in this summary:</p><ul>" + n.meta.members.map(function (id) {
+        return '<li><a data-node="' + esc(id) + '">' + esc(byId[id] ? byId[id].label : id) + "</a></li>"; }).join("") + "</ul>";
+    }
+    d.innerHTML = html;
+  }
+  $("details").addEventListener("click", function (ev) {
+    var id = ev.target && ev.target.getAttribute && ev.target.getAttribute("data-node");
+    if (id && byId[id]) { if (!byId[id].visible) { byId[id].visible = true; $("layerRule").checked = true; applyFilters(true); } select(byId[id]); centerOn(byId[id]); }
+  });
+  function centerOn(n) { state.tx = -n.x * state.k; state.ty = -n.y * state.k; }
+
+  function fit() {
+    var vis = nodes.filter(function (n) { return n.visible; });
+    if (!vis.length) return;
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    vis.forEach(function (n) { x0 = Math.min(x0, n.x - n.r); x1 = Math.max(x1, n.x + n.r); y0 = Math.min(y0, n.y - n.r); y1 = Math.max(y1, n.y + n.r); });
+    var k = Math.min((W - 80) / Math.max(1, x1 - x0), (H - 80) / Math.max(1, y1 - y0), 3);
+    state.k = k; state.tx = -((x0 + x1) / 2) * k; state.ty = -((y0 + y1) / 2) * k;
+  }
+
+  var drag = null;
+  cv.addEventListener("pointerdown", function (ev) {
+    var r = cv.getBoundingClientRect(), px = ev.clientX - r.left, py = ev.clientY - r.top, n = pick(px, py);
+    cv.setPointerCapture(ev.pointerId); cv.classList.add("dragging");
+    drag = { node: n, px: px, py: py, moved: false, tx: state.tx, ty: state.ty };
+  });
+  cv.addEventListener("pointermove", function (ev) {
+    var r = cv.getBoundingClientRect(), px = ev.clientX - r.left, py = ev.clientY - r.top;
+    if (drag) {
+      if (Math.abs(px - drag.px) + Math.abs(py - drag.py) > 3) drag.moved = true;
+      if (!drag.moved) return;
+      if (drag.node) { var p = toWorld(px, py); drag.node.fixed = true; drag.node.x = p.x; drag.node.y = p.y; kick(0.3); }
+      else { state.tx = drag.tx + (px - drag.px); state.ty = drag.ty + (py - drag.py); }
+      return;
+    }
+    var h = pick(px, py);
+    if (h !== state.hover) { state.hover = h; }
+    if (h) {
+      var lines = ["<b>" + esc(h.label) + "</b>", esc(h.kind)];
+      Object.keys(h.meta).forEach(function (k) { if (typeof h.meta[k] === "number" && !/_(min|max|mean|q\d+)$/.test(k)) lines.push(esc(k) + ": " + fmt(h.meta[k])); });
+      tip.innerHTML = lines.join("<br>"); tip.style.display = "block";
+      tip.style.left = Math.min(px + 14, W - 200) + "px"; tip.style.top = (py + 14) + "px";
+    } else tip.style.display = "none";
+  });
+  cv.addEventListener("pointerup", function (ev) {
+    if (drag) {
+      if (!drag.moved) select(drag.node);
+      cv.classList.remove("dragging");
+      drag = null;
+    }
+  });
+  cv.addEventListener("pointerleave", function () { state.hover = null; tip.style.display = "none"; });
+  cv.addEventListener("dblclick", function (ev) {
+    var r = cv.getBoundingClientRect(), n = pick(ev.clientX - r.left, ev.clientY - r.top);
+    if (n) { n.fixed = false; kick(0.4); }
+  });
+  cv.addEventListener("wheel", function (ev) {
+    ev.preventDefault();
+    var r = cv.getBoundingClientRect(), px = ev.clientX - r.left, py = ev.clientY - r.top, before = toWorld(px, py);
+    state.k = Math.max(0.08, Math.min(6, state.k * Math.exp(-ev.deltaY * 0.0015)));
+    state.tx = px - W / 2 - before.x * state.k; state.ty = py - H / 2 - before.y * state.k;
+  }, { passive: false });
+
+  $("search").addEventListener("input", function (ev) { state.query = ev.target.value.trim().toLowerCase(); });
+  $("search").addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter") return;
+    var m = nodes.filter(function (n) { return n.visible && matches(n); })[0];
+    if (m) { select(m); centerOn(m); }
+  });
+  measureSel.addEventListener("change", function () { state.measure = measureSel.value; recomputeRange(); applyFilters(true); });
+  $("thr").addEventListener("input", function () { applyFilters(true); });
+  ["layerItem", "layerRule", "layerSummary"].forEach(function (id) { $(id).addEventListener("change", function () { applyFilters(true); }); });
+  $("fit").addEventListener("click", fit);
+  $("pause").addEventListener("click", function () { state.paused = !state.paused; $("pause").textContent = state.paused ? "Resume layout" : "Pause layout"; });
+  window.addEventListener("resize", resize);
+
+  // ---- main loop ----------------------------------------------------------------------------
+  var frames = 0;
+  function loop() {
+    if (!state.paused && state.alpha > 0.008) { tick(); tick(); frames++; if (frames === 90) fit(); }
+    draw();
+    requestAnimationFrame(loop);
+  }
+  seed(); resize(); recomputeRange();
+  if (opts.min_value) { $("thr").value = Math.round(1000 * (opts.min_value - state.range[0]) / (state.range[1] - state.range[0])); }
+  applyFilters(false);
+  if (!nodes.some(function (n) { return n.kind === "summary"; })) $("layerSummary").parentNode.style.display = "none";
+  window.__vizare = { nodes: nodes, edges: edges, state: state, select: select, fit: fit };
+  loop();
+})();
+</script>
+</body>
+</html>

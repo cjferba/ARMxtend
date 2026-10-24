@@ -157,6 +157,7 @@ from ARMxtend.VizARM import AREtoGraph
 
 graph = AREtoGraph.from_dataframe(rules, rule_measures=("confidence", "certainty_factor"))
 jgf = graph.exportGraph(type=0)  # 0: JGF, 1: GraphML, 2: DOT, 3: the networkx.DiGraph itself
+graph.to_html("rules.html")      # interactive, self-contained viewer: open it in any browser
 ```
 
 ## 7. Fuzzifying numeric attributes

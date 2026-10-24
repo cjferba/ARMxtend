@@ -32,6 +32,7 @@ items en las claves de itemset de ``FIM._shared``.
 
 @author Carlos Fernandez-Basso
 """
+from typing import Iterable, List, Optional, Sequence, Set, Tuple
 import numpy as np
 import pandas as pd
 
@@ -43,12 +44,12 @@ from .association_rules import association_rules
 NEGATION_PREFIX = "~"
 
 
-def negate(item):
+def negate(item: str) -> str:
     """Nombre del item que representa la AUSENCIA de `item` ('A' -> '~A')."""
     return NEGATION_PREFIX + item
 
 
-def is_negated(item):
+def is_negated(item: str) -> bool:
     """True si `item` es un item ausente ('~A')."""
     return item.startswith(NEGATION_PREFIX)
 
@@ -64,7 +65,8 @@ def _negatable_items(vocabulary, positive_supports, negate_items, only_frequent_
     return sorted(candidates)
 
 
-def add_absent_items(transactions, negate_items=None):
+def add_absent_items(transactions: Sequence[Iterable[str]],
+                     negate_items: Optional[Iterable[str]] = None) -> List[Set[str]]:
     """
     Amplia cada transaccion crisp con un item ``~i`` por cada item ``i`` de
     `negate_items` que NO este presente en ella.
@@ -78,13 +80,14 @@ def add_absent_items(transactions, negate_items=None):
     Retorna:
         list[set[str]]: las transacciones ampliadas
     """
-    transactions = [set(t) for t in transactions]
-    negatable = set(negate_items) if negate_items is not None else set().union(*transactions) if transactions else set()
-    return [t | {negate(item) for item in negatable - t} for t in transactions]
+    sets = [set(t) for t in transactions]
+    negatable = set(negate_items) if negate_items is not None else set().union(*sets) if sets else set()
+    return [t | {negate(item) for item in negatable - t} for t in sets]
 
 
-def negative_association_rules(transactions, min_supp, metric="confidence", min_threshold=0.8,
-                               negate_items=None, only_frequent_positive=True, only_negative=True):
+def negative_association_rules(transactions: Sequence[Iterable[str]], min_supp: float, metric: str = "confidence",
+                               min_threshold: float = 0.8, negate_items: Optional[Iterable[str]] = None,
+                               only_frequent_positive: bool = True, only_negative: bool = True) -> pd.DataFrame:
     """
     Minera reglas de asociacion crisp con items presentes y/o ausentes.
 
@@ -129,9 +132,11 @@ def negative_association_rules(transactions, min_supp, metric="confidence", min_
     return rules
 
 
-def fuzzy_negative_association_rules(transactions, min_supp, num_alpha, metric="confidence",
-                                     min_threshold=0.8, negate_items=None, only_frequent_positive=True,
-                                     only_negative=True, measures=None):
+def fuzzy_negative_association_rules(transactions: Sequence[Iterable[Tuple[str, float]]], min_supp: float,
+                                     num_alpha: int, metric: str = "confidence", min_threshold: float = 0.8,
+                                     negate_items: Optional[Iterable[str]] = None,
+                                     only_frequent_positive: bool = True, only_negative: bool = True,
+                                     measures: Optional[Iterable[str]] = None) -> pd.DataFrame:
     """
     Minera reglas de asociacion DIFUSAS con items presentes y/o ausentes,
     segun la RL-theory (ver el modulo): el bit-list de ``~i`` en cada

@@ -1,0 +1,86 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ARMxtend"
+dynamic = ["version"]
+description = "ARMxtend (association rule mining extensions): crisp and fuzzy frequent itemsets and association rules, from a single machine to Spark"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "CC-BY-NC-4.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Carlos Fernandez-Basso", email = "cjferba@decsai.ugr.es" }]
+keywords = [
+    "association rules", "frequent itemsets", "data mining", "fuzzy logic", "fuzzy association rules",
+    "meta-association rules", "gradual rules", "apache spark", "big data", "streaming", "visualization",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+dependencies = ["numpy", "pandas", "networkx"]
+
+[project.optional-dependencies]
+# Only the Big Data / streaming algorithms need Spark:
+# FIM.apriori, FIM.Eclat, FIM.BD_ARE, FIM.BD_FARE, SARE, SFIM
+spark = ["pyspark"]
+docs = ["mkdocs"]
+dev = ["pytest", "pytest-cov", "ruff", "mypy", "pandas-stubs", "types-networkx", "build", "twine", "mkdocs"]
+
+[project.urls]
+Homepage = "https://github.com/cjferba/ARMxtend"
+Documentation = "https://cjferba.github.io/ARMxtend"
+Issues = "https://github.com/cjferba/ARMxtend/issues"
+Changelog = "https://github.com/cjferba/ARMxtend/blob/master/CHANGELOG.md"
+
+[project.scripts]
+armxtend = "ARMxtend.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "ARMxtend.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["ARMxtend*"]
+
+[tool.setuptools.package-data]
+ARMxtend = ["py.typed", "VizARM/viewer_template.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["ARMxtend"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+extend-exclude = ["docs/site"]
+
+[tool.ruff.lint]
+# Pyflakes (unused imports/variables, undefined names, ...) and syntax errors.
+select = ["F", "E9"]
+
+[tool.mypy]
+ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true
+files = ["ARMxtend"]
+
+[[tool.mypy.overrides]]
+# Legacy FIMoTS streaming code (Python 2 era style, untyped): not type-checked.
+module = ["ARMxtend.SARE.*", "ARMxtend.SFIM.*"]
+ignore_errors = true

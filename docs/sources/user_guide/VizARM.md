@@ -73,6 +73,50 @@ for summaryId in graph.summarize(signature="consequent"):
     print(data["rule_count"], "rules ->", data["members"])
 ```
 
+## Interactive viewer
+
+```python
+graph.to_html("rules.html", title="Smart office rules", max_rules=150, sort_by="lift", measure="lift")
+```
+
+Writes a **single, self-contained HTML file** -- no CDN, no server, no network access: it opens in any
+browser, can be e-mailed or archived, and embeds the graph itself in the paper's JGF format
+(`to_jgf_dict()`), so the viewer consumes exactly the intermediate representation.
+
+![VizARE interactive viewer](../img/vizare_viewer.jpg)
+
+What you get:
+
+- automatic force-directed layout; **zoom** (scroll), **pan** (drag the background), **pin** a node by
+  dragging it (double-click to release);
+- hover **tooltips** and a **details panel** with the readable rule (`A, B -> C`) and all its measures;
+  selecting or hovering a node highlights its neighbours and dims the rest;
+- **search** (Enter centres on the first match), **minimum-value slider** for any rule measure, and
+  **size/colour of the rules by that measure**;
+- switches for the **item / rule / summary layers** (see [Rule summarization](#rule-summarization-optional));
+  summary nodes list their member rules as links.
+
+Arguments: `path` (write the file), `title`, `max_rules` + `sort_by` (keep only the best `max_rules`
+rules by that measure, with their items and the summaries they belong to), `measure` and `min_value`
+(initial measure and threshold). The layout uses a spatial grid for repulsion, so thousands of nodes
+stay interactive (about 3,300 nodes / 16,000 edges ran at roughly 48 fps in our test), but a graph with
+that many edges is a hairball for human eyes: use `max_rules`, the threshold slider or the summaries
+to explore large rule sets.
+
+## Graph and document databases
+
+The paper (Section 4.3) stores the intermediate form natively in Neo4j or MongoDB:
+
+```python
+graph.to_cypher()      # CREATE (:Item {...}); CREATE (:Rule {...}); ... (:ANTECEDENT / :CONSEQUENT) relationships
+graph.to_documents()   # {'nodes': [{'_id': ..., 'kind': ..., 'confidence': ...}], 'edges': [...]}
+```
+
+`to_cypher()` returns statements ready for `cypher-shell` or the Neo4j browser (strings are escaped);
+`to_documents()` returns flat documents with the measures as top-level fields so they can be indexed and
+queried (`{"kind": "rule", "confidence": {"$gte": 0.8}}`) after `collection.insert_many(...)`. Both
+accept `max_rules`/`sort_by`.
+
 ## Exporting
 
 ```python

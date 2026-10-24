@@ -10,7 +10,9 @@ algoritmo FIMoTS completo (que requiere Spark Streaming).
 """
 import pytest
 
-from ARMxtend.SARE import extractAssociationRules
+pytest.importorskip("pyspark")  # SARE importa pyspark al cargarse (es parte del extra "spark")
+
+from ARMxtend.SARE import extractAssociationRules  # noqa: E402
 from ARMxtend.SARE.FIMoTS_Node import FIMoTS_Node
 from ARMxtend.SARE.FIMoTS_Tree import FIMoTS_Tree
 from ARMxtend.SARE.FIMoTS_List import FIMoTS_List
@@ -42,12 +44,6 @@ def test_extract_association_rules_matches_bd_are_generate_rules():
     rulesDf = extractAssociationRules(structure, min_threshold=0.7)
 
     expectedRules = generate_rules(FREQ_ITEMSETS, min_conf=0.7)
-    actualRules = {
-        (frozenset(row["antecedents"]) - frozenset(), tuple(sorted(row["consequents"]))[0]
-         if len(row["consequents"]) == 1 else None): row["confidence"]
-        for _, row in rulesDf.iterrows()
-    }
-
     assert len(rulesDf) == len(expectedRules)
     for _, row in rulesDf.iterrows():
         antecedentKey = "-".join(sorted(row["antecedents"]))

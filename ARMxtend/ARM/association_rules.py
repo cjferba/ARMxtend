@@ -10,8 +10,8 @@ import pandas as pd
 from ._measures import MEASURES, EXTRA_MEASURES
 
 
-def association_rules(df, metric="confidence",
-                      min_threshold=0.8, support_only=False):
+def association_rules(df: pd.DataFrame, metric: str = "confidence",
+                      min_threshold: float = 0.8, support_only: bool = False) -> pd.DataFrame:
     """Generates a DataFrame of association rules including the
     metrics 'score', 'confidence', and 'lift'
 
@@ -179,21 +179,21 @@ def association_rules(df, metric="confidence",
 
     else:
         # generate metrics
-        rule_supports = np.array(rule_supports).T.astype(float)
+        rule_supports_arr = np.array(rule_supports).T.astype(float)
         df_res = pd.DataFrame(
             data=list(zip(rule_antecedents, rule_consequents)),
             columns=["antecedents", "consequents"])
 
         if support_only:
-            sAC = rule_supports[0]
+            sAC = rule_supports_arr[0]
             for m in columns_ordered:
                 df_res[m] = np.nan
             df_res['support'] = sAC
 
         else:
-            sAC = rule_supports[0]
-            sA = rule_supports[1]
-            sC = rule_supports[2]
+            sAC = rule_supports_arr[0]
+            sA = rule_supports_arr[1]
+            sC = rule_supports_arr[2]
             for m in columns_ordered:
                 df_res[m] = metric_dict[m](sAC, sA, sC)
 

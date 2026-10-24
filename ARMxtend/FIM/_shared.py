@@ -9,24 +9,26 @@ con errores, de ``GenItems``/``AlphaCortes`` que existian duplicadas en
 
 @author Carlos Fernandez-Basso
 """
+from typing import FrozenSet, Iterable, List, Mapping
 import itertools
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 ITEM_SEP = "-"
 
 
-def itemset_to_key(itemset):
+def itemset_to_key(itemset: Iterable[str]) -> str:
     """Convierte un itemset (iterable de items) en su clave canonica ordenada."""
     return ITEM_SEP.join(sorted(itemset))
 
 
-def key_to_itemset(key):
+def key_to_itemset(key: str) -> FrozenSet[str]:
     """Convierte una clave canonica ('A-B-C') en un frozenset de items."""
     return frozenset(key.split(ITEM_SEP))
 
 
-def generate_candidates(freq_itemsets):
+def generate_candidates(freq_itemsets: Iterable[str]) -> List[str]:
     """
     Genera candidatos de longitud k+1 a partir de un conjunto de itemsets
     frecuentes de longitud k, siguiendo el procedimiento apriori-gen
@@ -66,7 +68,7 @@ def generate_candidates(freq_itemsets):
     return sorted(itemset_to_key(c) for c in candidates)
 
 
-def alpha_levels(num_alpha):
+def alpha_levels(num_alpha: int) -> np.ndarray:
     """
     Conjunto Lambda = {alpha_1, ..., alpha_p} de niveles alpha equidistantes
     usado para decomponer medidas difusas en la teoria de Representacion por
@@ -90,7 +92,7 @@ def alpha_levels(num_alpha):
     return np.arange(num_alpha, 0, -1) / float(num_alpha)
 
 
-def alpha_weights(levels):
+def alpha_weights(levels: np.ndarray) -> np.ndarray:
     """
     Pesos (alpha_i - alpha_(i+1)) de cada nivel alpha, con alpha_(p+1) = 0,
     usados para agregar una medida calculada en cada nivel (ver `alpha_levels`,
@@ -107,7 +109,7 @@ def alpha_weights(levels):
     return levels - np.append(levels[1:], 0.0)
 
 
-def weighted_alpha_aggregate(values_per_level, weights):
+def weighted_alpha_aggregate(values_per_level: ArrayLike, weights: ArrayLike) -> float:
     """
     Agregacion ponderada Σ_i weight_i * value_i de una medida calculada en
     cada nivel alpha (ver `alpha_weights`). Es el mecanismo central de la
@@ -126,7 +128,7 @@ def weighted_alpha_aggregate(values_per_level, weights):
     return float(np.dot(np.asarray(values_per_level, dtype=float), weights))
 
 
-def alpha_cuts(value, num_alpha):
+def alpha_cuts(value: float, num_alpha: int) -> np.ndarray:
     """
     Representacion en alpha-cortes (bit-list) de un grado de pertenencia
     difuso, siguiendo el procedimiento FuzzyToArray (Algoritmo 2) de
@@ -150,7 +152,8 @@ def alpha_cuts(value, num_alpha):
     return (value >= alpha_levels(num_alpha)).astype(int)
 
 
-def fuzzy_support(itemset, transaction_memberships, num_alpha):
+def fuzzy_support(itemset: Iterable[str], transaction_memberships: Mapping[str, np.ndarray],
+                  num_alpha: int) -> np.ndarray:
     """
     Bit-list por alpha-corte de un itemset en una transaccion: dado que
     t(A) = min_{i in A} t(i) (Definicion 2, fuzzy transaction), el bit-list

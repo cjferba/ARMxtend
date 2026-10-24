@@ -5,7 +5,9 @@ Medidas de interes para reglas de asociacion compartidas por el caso crisp
 
 @author Carlos Fernandez-Basso
 """
+from typing import Union
 import numpy as np
+from numpy.typing import ArrayLike
 
 
 def _as_arrays(support_AB, support_A, support_B):
@@ -27,7 +29,7 @@ def _safe_div(numerator, denominator, default=0.0):
     return np.where(positive, numerator / np.where(positive, denominator, 1.0), default)
 
 
-def certainty_factor(support_AB, support_A, support_B):
+def certainty_factor(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """
     Factor de certeza (certainty factor) de una regla A -> B (Shortliffe &
     Buchanan), tal y como se define en:
@@ -45,6 +47,9 @@ def certainty_factor(support_AB, support_A, support_B):
     CF(A -> B) = (Conf(A->B) - supp(B)) / (1 - supp(B))  si Conf(A->B) > supp(B)
                = (Conf(A->B) - supp(B)) / supp(B)         si Conf(A->B) < supp(B)
                = 0                                         si Conf(A->B) = supp(B)
+
+    Cuando el antecedente no tiene soporte (supp(A) = 0) el factor de certeza
+    es 0, como en la Ec. (7) de Ruiz et al. (2016) sobre la tabla 4ft.
 
     Es valido tanto con escalares como con arrays de numpy (aplicado
     elemento a elemento), lo que permite reutilizarlo para agregar el factor
@@ -71,6 +76,10 @@ def certainty_factor(support_AB, support_A, support_B):
 
     result = np.where(confidence > supportB, increaseBelief,
                       np.where(confidence < supportB, decreaseBelief, 0.0))
+    # Sin antecedente (supp(A) = 0, p.ej. en un alpha-corte alto donde A no
+    # aparece) la tabla 4ft cumple ad = bc y la Ec. (7) de Ruiz et al. (2016)
+    # da CF = 0; sin esta linea saldria -1 (confianza 0 < supp(B)).
+    result = np.where(supportA > 0, result, 0.0)
 
     return float(result) if result.ndim == 0 else result
 
@@ -87,37 +96,37 @@ def certainty_factor(support_AB, support_A, support_B):
 # sigue la convencion del articulo (0/0 := 1), implementada en `FIM.FARE`.
 # ---------------------------------------------------------------------------
 
-def confidence(support_AB, support_A, support_B):
+def confidence(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """Conf(A -> B) = supp(AB) / supp(A). Rango [0, 1]."""
     sAB, sA, _ = _as_arrays(support_AB, support_A, support_B)
     return _finish(_safe_div(sAB, sA))
 
 
-def lift(support_AB, support_A, support_B):
+def lift(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """Lift(A -> B) = Conf(A -> B) / supp(B). Rango [0, inf); 1 = independencia."""
     sAB, sA, sB = _as_arrays(support_AB, support_A, support_B)
     return _finish(_safe_div(_safe_div(sAB, sA), sB))
 
 
-def leverage(support_AB, support_A, support_B):
+def leverage(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """Leverage(A -> B) = supp(AB) - supp(A) supp(B). Rango [-1/4, 1/4]; 0 = independencia."""
     sAB, sA, sB = _as_arrays(support_AB, support_A, support_B)
     return _finish(sAB - sA * sB)
 
 
-def jaccard(support_AB, support_A, support_B):
+def jaccard(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """Jaccard(A, B) = supp(AB) / (supp(A) + supp(B) - supp(AB)). Rango [0, 1]; simetrica."""
     sAB, sA, sB = _as_arrays(support_AB, support_A, support_B)
     return _finish(_safe_div(sAB, sA + sB - sAB))
 
 
-def cosine(support_AB, support_A, support_B):
+def cosine(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """Cosine(A, B) = supp(AB) / sqrt(supp(A) supp(B)). Rango [0, 1]; simetrica."""
     sAB, sA, sB = _as_arrays(support_AB, support_A, support_B)
     return _finish(_safe_div(sAB, np.sqrt(sA * sB)))
 
 
-def kulczynski(support_AB, support_A, support_B):
+def kulczynski(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """
     Kulczynski(A, B) = (Conf(A -> B) + Conf(B -> A)) / 2. Rango [0, 1]; simetrica.
     A diferencia del lift o el cosine, es invariante frente a transacciones
@@ -127,25 +136,25 @@ def kulczynski(support_AB, support_A, support_B):
     return _finish(0.5 * (_safe_div(sAB, sA) + _safe_div(sAB, sB)))
 
 
-def all_confidence(support_AB, support_A, support_B):
+def all_confidence(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """AllConf(A, B) = supp(AB) / max(supp(A), supp(B)) = min(Conf(A->B), Conf(B->A)). Rango [0, 1]."""
     sAB, sA, sB = _as_arrays(support_AB, support_A, support_B)
     return _finish(_safe_div(sAB, np.maximum(sA, sB)))
 
 
-def max_confidence(support_AB, support_A, support_B):
+def max_confidence(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """MaxConf(A, B) = max(Conf(A -> B), Conf(B -> A)). Rango [0, 1]."""
     sAB, sA, sB = _as_arrays(support_AB, support_A, support_B)
     return _finish(np.maximum(_safe_div(sAB, sA), _safe_div(sAB, sB)))
 
 
-def added_value(support_AB, support_A, support_B):
+def added_value(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """AddedValue(A -> B) = Conf(A -> B) - supp(B) (Tan, Kumar & Srivastava, 2004). Rango [-1, 1]."""
     sAB, sA, sB = _as_arrays(support_AB, support_A, support_B)
     return _finish(np.where(sA > 0, _safe_div(sAB, sA) - sB, 0.0))
 
 
-def zhangs_metric(support_AB, support_A, support_B):
+def zhangs_metric(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """
     Zhang's metric (Zhang, 2000) = (supp(AB) - supp(A) supp(B)) /
     max(supp(AB)(1 - supp(A)), supp(B)(supp(A) - supp(AB))). Rango [-1, 1];
@@ -156,7 +165,7 @@ def zhangs_metric(support_AB, support_A, support_B):
     return _finish(_safe_div(sAB - sA * sB, denominator))
 
 
-def yules_q(support_AB, support_A, support_B):
+def yules_q(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """
     Yule's Q = (ad - bc) / (ad + bc) sobre la tabla 4ft <a, b, c, d> de la
     regla (Tan et al., 2004). Rango [-1, 1]; 0 = independencia.

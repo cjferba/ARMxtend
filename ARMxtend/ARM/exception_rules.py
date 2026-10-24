@@ -41,6 +41,7 @@ interesar al usuario.
 
 @author Carlos Fernandez-Basso
 """
+from typing import Iterable, Optional, Sequence
 import itertools
 
 import numpy as np
@@ -97,8 +98,10 @@ def _combinations(candidates, max_size):
             yield combination
 
 
-def exception_rules(transactions, min_supp=0.1, min_conf=0.8, min_exception_supp=0.01,
-                    min_exception_conf=0.8, max_reference_conf=0.5, max_condition_size=1, rules=None):
+def exception_rules(transactions: Sequence[Iterable[str]], min_supp: float = 0.1, min_conf: float = 0.8,
+                    min_exception_supp: float = 0.01, min_exception_conf: float = 0.8,
+                    max_reference_conf: float = 0.5, max_condition_size: int = 1,
+                    rules: Optional[pd.DataFrame] = None) -> pd.DataFrame:
     """
     Encuentra reglas de excepcion (Suzuki, 1997) de las reglas comunes
     fuertes  A -> b: condiciones Z tales que  A ^ Z -> ~b  es fuerte y
@@ -168,8 +171,10 @@ def exception_rules(transactions, min_supp=0.1, min_conf=0.8, min_exception_supp
     return result.sort_values(["exception_confidence", "exception_support"], ascending=False).reset_index(drop=True)
 
 
-def anomalous_rules(transactions, min_supp=0.1, min_conf=0.8, min_anomalous_supp=0.01,
-                    min_anomalous_conf=0.8, max_reference_conf=0.5, max_anomaly_size=1, rules=None):
+def anomalous_rules(transactions: Sequence[Iterable[str]], min_supp: float = 0.1, min_conf: float = 0.8,
+                    min_anomalous_supp: float = 0.01, min_anomalous_conf: float = 0.8,
+                    max_reference_conf: float = 0.5, max_anomaly_size: int = 1,
+                    rules: Optional[pd.DataFrame] = None) -> pd.DataFrame:
     """
     Encuentra reglas anomalas: de las reglas comunes fuertes  A -> b, los
     conjuntos de items C tales que  A ^ ~b -> C  es fuerte (C caracteriza

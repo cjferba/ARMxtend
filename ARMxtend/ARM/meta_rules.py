@@ -35,6 +35,7 @@ caracter '-' (usado como separador de items en las claves de itemset de
 
 @author Carlos Fernandez-Basso
 """
+from typing import Dict, Iterable, List, Optional, Sequence
 import pandas as pd
 
 from ..FIM._shared import key_to_itemset
@@ -43,7 +44,7 @@ from ..FFIM import fpgrowth, fuzzy_fpgrowth
 from .association_rules import association_rules
 
 
-def rule_key(antecedent, consequent):
+def rule_key(antecedent: Iterable[str], consequent: Iterable[str]) -> str:
     """
     Construye un identificador de regla seguro (sin '-') para usarlo como
     item en una meta-base de datos, p.ej. rule_key(['A','B'], ['C']) ->
@@ -52,7 +53,8 @@ def rule_key(antecedent, consequent):
     return "{}=>{}".format(",".join(sorted(antecedent)), ",".join(sorted(consequent)))
 
 
-def mine_primary_rule_measures(datasets, min_supp=0.1, min_conf=0.5, metric="confidence"):
+def mine_primary_rule_measures(datasets: Sequence[Sequence[Iterable[str]]], min_supp: float = 0.1,
+                                min_conf: float = 0.5, metric: str = "confidence") -> List[Dict[str, float]]:
     """
     Mina, para cada dataset de `datasets`, sus reglas de asociacion crisp
     (pasos 1-3 de los Algoritmos 3 y 4: "for all Di, obtain Ri using
@@ -90,7 +92,8 @@ def mine_primary_rule_measures(datasets, min_supp=0.1, min_conf=0.5, metric="con
     return ruleMeasuresPerDataset
 
 
-def build_crisp_meta_database(rule_sets, attributes=None):
+def build_crisp_meta_database(rule_sets: Sequence[Iterable[str]],
+                              attributes: Optional[Sequence[Dict[str, int]]] = None) -> pd.DataFrame:
     """
     Construye la meta-base de datos booleana D (Tabla 7 del articulo).
 
@@ -119,7 +122,9 @@ def build_crisp_meta_database(rule_sets, attributes=None):
     return pd.DataFrame(rows)
 
 
-def crisp_meta_association_rules(rule_sets, attributes=None, min_supp=0.5, min_conf=0.5, metric="confidence"):
+def crisp_meta_association_rules(rule_sets: Sequence[Iterable[str]],
+                                 attributes: Optional[Sequence[Dict[str, int]]] = None, min_supp: float = 0.5,
+                                 min_conf: float = 0.5, metric: str = "confidence") -> pd.DataFrame:
     """
     Algoritmo 3: mineria de meta-reglas de asociacion crisp.
 
@@ -153,7 +158,9 @@ def crisp_meta_association_rules(rule_sets, attributes=None, min_supp=0.5, min_c
     return association_rules(itemsetsDf, metric=metric, min_threshold=min_conf)
 
 
-def build_fuzzy_meta_database(rule_measure_sets, attributes=None, normalize=False):
+def build_fuzzy_meta_database(rule_measure_sets: Sequence[Dict[str, float]],
+                              attributes: Optional[Sequence[Dict[str, float]]] = None,
+                              normalize: bool = False) -> pd.DataFrame:
     """
     Construye la meta-base de datos difusa D~ (Tabla 8 del articulo): el
     grado de pertenencia de la regla r_i en el dataset D_j es el valor de la
@@ -194,8 +201,10 @@ def build_fuzzy_meta_database(rule_measure_sets, attributes=None, normalize=Fals
     return metaDatabase
 
 
-def fuzzy_meta_association_rules(rule_measure_sets, attributes=None, num_alpha=10,
-                                 min_supp=0.1, min_conf=0.5, metric="confidence", normalize=False):
+def fuzzy_meta_association_rules(rule_measure_sets: Sequence[Dict[str, float]],
+                                 attributes: Optional[Sequence[Dict[str, float]]] = None, num_alpha: int = 10,
+                                 min_supp: float = 0.1, min_conf: float = 0.5, metric: str = "confidence",
+                                 normalize: bool = False) -> pd.DataFrame:
     """
     Algoritmo 4: mineria de meta-reglas de asociacion difusas.
 

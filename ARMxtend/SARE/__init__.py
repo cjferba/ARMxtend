@@ -14,8 +14,6 @@ import os
 import time
 import datetime
 
-from os import walk
-
 import pandas as pd
 
 from pyspark import SparkContext
@@ -230,7 +228,6 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
     current_time = time.time()
     current_datetime = datetime.datetime.fromtimestamp(current_time).strftime('%Y%m%d_%H%M%S')
 
-    minSupp = minSuppNum / float(minSuppDen)
     minSuppRelElements = DecimalFraction(minSuppNum, minSuppDen)
 
     # Inicializar nueva ventana de tiempo

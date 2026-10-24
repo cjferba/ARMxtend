@@ -12,11 +12,6 @@ methods over time-sensitive streams", publicado en la revista Knowledge-Based Sy
 		Abel Francisco (Implementación - 2016)  
 """
 
-import sys
-import os
-import time
-import datetime
-
 from math import floor
 
 from ..DecimalFraction import DecimalFraction
@@ -24,7 +19,6 @@ from ..FIMoTS_Node import FIMoTS_Node
 from ..FIMoTS_Bounds import FIMoTS_Bounds
 from ..FIMoTS_List import FIMoTS_List
 from ..FIMoTS_Tree import FIMoTS_Tree
-from ..FIMoTS_Structure import FIMoTS_Structure
 
 
 def FIMoTS_TreeInitialization(initialStructure, slidingWindow, minRelSupportElems, sparkContext):
@@ -47,7 +41,6 @@ def FIMoTS_TreeInitialization(initialStructure, slidingWindow, minRelSupportElem
 		un árbol FP-Tree con el conteo inicial de itemsets en la ventana de tiempo
 		original.
     """
-    minSupp = minRelSupportElems.numeratorFraction / float(minRelSupportElems.denominatorFraction)
     currentTree = FIMoTS_GetFirstLevelTree(slidingWindow, sparkContext)
     initialStructure.itemsetsTree = currentTree
     initialStructure.frequentItemsetsBounds = FIMoTS_List([])
@@ -179,7 +172,6 @@ def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWin
     minRelSupport = minRelSupportElems.numeratorFraction / float(minRelSupportElems.denominatorFraction)
     transactions = slidingWindow.getUnionTransactions(sparkContext)
     transacTotal = slidingWindow.totalWindowTransacs
-    currentLevel = len(currentItemNode.itemPrefix)
 
     # Si el itemset es infrecuente
     if currentItemNode.relativeSupport < minRelSupport:
@@ -241,6 +233,63 @@ def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWin
                                minRelSupportElems, True, False, sparkContext)
 
         return newNodes
+
+
+def FIMoTS_ExtendLeftSiblings(keyNode, node, algStructure, slidingWindow, minRelSupportElems, sparkContext):
+    """
+    Incorporar un itemset que acaba de ser frecuente como "hermano derecho" de sus hermanos
+    izquierdos frecuentes. En el árbol, los hijos de un nodo L se forman uniendo L con sus
+    hermanos derechos FRECUENTES. Si un hermano derecho N era infrecuente cuando se
+    desplegaron los hijos de L, L no tiene el hijo L u N; cuando N pasa a ser frecuente
+    (p.ej. por un cambio en los datos de la ventana) hay que crearlo ahora. Sin este paso,
+    el algoritmo incremental pierde itemsets frecuentes que una inicialización completa de
+    la misma ventana sí encuentra.
+
+    Cada nuevo hijo L u N se registra en las listas de cotas (FIMoTS_Initial) y, si resulta
+    frecuente, se despliega su propia descendencia y se repite el proceso entre sus
+    hermanos izquierdos (los demás hijos de L).
+
+    Argumentos:
+        keyNode (String, obligatorio): clave en el árbol del nodo que ha pasado a ser frecuente
+        node (FIMoTS_Node, obligatorio): contenido de dicho nodo
+        algStructure (FIMoTS_Structure, obligatorio): estructura actual del algoritmo FIMoTS
+        slidingWindow (WindowData, obligatorio): ventana de tiempo actual
+        minRelSupportElems (DecimalFraction, obligatorio): mínimo soporte relativo
+        sparkContext(SparkContext): contexto distribuido de Spark
+    """
+    minRelSupport = minRelSupportElems.numeratorFraction / float(minRelSupportElems.denominatorFraction)
+    transactions = slidingWindow.getUnionTransactions(sparkContext)
+    transacTotal = slidingWindow.totalWindowTransacs
+    nodeMap = algStructure.itemsetsTree.nodeMap
+
+    newChildren = []
+    for keyLeft, left in sorted(algStructure.itemsetsTree.getLeftSiblings(keyNode, node).items()):
+        if left.relativeSupport < minRelSupport:
+            continue
+        itemPrefix = sorted(set(left.itemPrefix + node.itemPrefix))
+        child = FIMoTS_Node(itemPrefix, 0.0, None, left.getItemsetKey(), 0, slidingWindow.timeWindow)
+        if child.getItemsetKey() in nodeMap:
+            continue
+        newChildren.append((left, child))
+
+    if not newChildren:
+        return
+
+    counts = dict(FIMoTS_CalculateSupportLevelsTree([child for _, child in newChildren], transactions))
+    for left, child in newChildren:
+        count = counts.get(child.getItemsetKey(), 0)
+        child.relativeSupport = float(count) / float(transacTotal)
+        child.fractionElems = DecimalFraction(count, transacTotal)
+        nodeMap[child.getItemsetKey()] = child
+        left.totalChildNodes += 1
+
+    for left, child in newChildren:
+        # Registra las cotas del nuevo nodo y, si es frecuente, despliega sus hijos
+        FIMoTS_Initial(child.getItemsetKey(), child, algStructure, slidingWindow, minRelSupportElems, True, False,
+                       sparkContext)
+        if child.relativeSupport >= minRelSupport:
+            FIMoTS_ExtendLeftSiblings(child.getItemsetKey(), child, algStructure, slidingWindow, minRelSupportElems,
+                                      sparkContext)
 
 
 def FIMoTS_UpdateBoundsList(currentItemNode, algStructure, minSupportElems, windowSize):
@@ -586,6 +635,8 @@ def FIMoTS_Main(deletedTransacSize, addedTransacSize, algStructure, slidingWindo
         newFreqItemNode = algStructure.itemsetsTree.nodeMap.get(newFreqItemKey)
         FIMoTS_Initial(newFreqItemKey, newFreqItemNode, algStructure, slidingWindow, minRelSupportElems, False, False,
                        sparkContext)
+        FIMoTS_ExtendLeftSiblings(newFreqItemKey, newFreqItemNode, algStructure, slidingWindow, minRelSupportElems,
+                                  sparkContext)
 
     algStructure.frequentItemsetsBounds.clearEmptyBounds()
     algStructure.infrequentItemsetsBounds.clearEmptyBounds()

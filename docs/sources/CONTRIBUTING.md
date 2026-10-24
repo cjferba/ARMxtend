@@ -27,13 +27,13 @@ pip install pytest mkdocs
 
 1. Create a new branch for your change: `git checkout -b my-feature`.
 2. Implement your change, following the style of the surrounding code.
-3. Add or update unit tests under `tests/` (or `ARMxtend/FIM/BD_ARE/TestFunctions.py`) covering it.
+3. Add or update unit tests under `tests/` covering it.
    Tests for the Spark-based algorithms (`FIM.apriori`, `FIM.Eclat`, `FIM.BD_ARE`, `FIM.BD_FARE`,
    `SARE`, `SFIM`) should run against `tests/spark_stub.py` so they don't require a JVM/cluster.
 4. Run the test suite and make sure everything passes:
 
 ```bash
-pytest tests/ ARMxtend/FIM/BD_ARE/TestFunctions.py
+pytest tests/
 ```
 
 5. If your change affects the public API or adds a new module, update the relevant page under

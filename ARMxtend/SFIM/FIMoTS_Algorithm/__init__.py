@@ -12,11 +12,6 @@ methods over time-sensitive streams", publicado en la revista Knowledge-Based Sy
 		Abel Francisco (Implementación - 2016)  
 """
 
-import sys
-import os
-import time
-import datetime
-
 from math import floor
 
 from ..DecimalFraction import DecimalFraction
@@ -24,7 +19,6 @@ from ..FIMoTS_Node import FIMoTS_Node
 from ..FIMoTS_Bounds import FIMoTS_Bounds
 from ..FIMoTS_List import FIMoTS_List
 from ..FIMoTS_Tree import FIMoTS_Tree
-from ..FIMoTS_Structure import FIMoTS_Structure
 
 
 def FIMoTS_TreeInitialization(initialStructure, slidingWindow, minRelSupportElems, sparkContext):
@@ -47,7 +41,6 @@ def FIMoTS_TreeInitialization(initialStructure, slidingWindow, minRelSupportElem
 		un árbol FP-Tree con el conteo inicial de itemsets en la ventana de tiempo
 		original.
     """
-    minSupp = minRelSupportElems.numeratorFraction / float(minRelSupportElems.denominatorFraction)
     currentTree = FIMoTS_GetFirstLevelTree(slidingWindow, sparkContext)
     initialStructure.itemsetsTree = currentTree
     initialStructure.frequentItemsetsBounds = FIMoTS_List([])
@@ -179,7 +172,6 @@ def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWin
     minRelSupport = minRelSupportElems.numeratorFraction / float(minRelSupportElems.denominatorFraction)
     transactions = slidingWindow.getUnionTransactions(sparkContext)
     transacTotal = slidingWindow.totalWindowTransacs
-    currentLevel = len(currentItemNode.itemPrefix)
 
     # Si el itemset es infrecuente
     if currentItemNode.relativeSupport < minRelSupport:

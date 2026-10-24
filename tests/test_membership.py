@@ -9,7 +9,7 @@ from ARMxtend.FIM.FARE import fuzzy_association_rules
 from ARMxtend.preprocessing import FuzzyLib
 from ARMxtend.preprocessing.membership import (
     automatic_partition, automatic_peaks, default_labels, gaussian_membership,
-    trapezoidal_membership, trapezoidal_partition, triangular_partition,
+    trapezoidal_membership, triangular_partition,
 )
 
 

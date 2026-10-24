@@ -11,8 +11,9 @@ partir de los datos por reparto uniforme, cuantiles o k-means
 
 @author Carlos Fernandez-Basso
 """
+from typing import Any, Callable, Dict
+
 import pandas as pd
-import numpy as np
 
 from ..membership import (
     MEMBERSHIPS,
@@ -37,8 +38,8 @@ class FuzzyLib(object):
 
     def __init__(self):
         self.data = pd.DataFrame()
-        self.atributes = []
-        self.types = []
+        self.atributes: list = []
+        self.types: Any = []
         # {atributo: {'membership', 'labels', 'params', 'columns'}} de cada atributo fuzzificado
         self.partitions = {}
 
@@ -103,9 +104,12 @@ class FuzzyLib(object):
         if not (len(Atri) == len(thresholds) == len(FuzzyLabel)):
             raise ValueError("Atri, thresholds y FuzzyLabel deben tener la misma longitud")
 
-        partition = {"triangular": triangular_partition,
-                     "trapezoidal": trapezoidal_partition,
-                     "gaussian": gaussian_partition}[membership]
+        partitions: Dict[str, Callable[[Any, Any], Any]] = {
+            "triangular": triangular_partition,
+            "trapezoidal": trapezoidal_partition,
+            "gaussian": gaussian_partition,
+        }
+        partition = partitions[membership]
 
         addedColumns = []
         for attr, params, labels in zip(Atri, thresholds, FuzzyLabel):

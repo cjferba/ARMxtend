@@ -75,61 +75,70 @@ class FIMoTS_Tree(object):
                          }
         return levelSelected
 
-    def getRightSiblings(self, keyNode, node):
+    @staticmethod
+    def getParentKey(keyNode):
+        """
+        Clave del padre de un nodo: la clave sin su ultimo item ('a_b_c' -> 'a_b'). Los nodos
+        del primer nivel cuelgan de la raiz, de clave '-1'.
+        """
+        return keyNode.rsplit('_', 1)[0] if '_' in keyNode else '-1'
+
+    def _getSiblings(self, keyNode, isRight):
+        parentKey = self.getParentKey(keyNode)
+        lastElement = keyNode.split('_')[-1]
+        level = keyNode.count('_')
+        # Se compara el padre de forma EXACTA (no con startswith): con items como 'milk' y
+        # 'milkshake', 'milkshake_x' empieza por 'milk' pero no es hijo de 'milk'.
+        return {k: v for k, v in self.nodeMap.items()
+                if k != '-1' and k.count('_') == level and self.getParentKey(k) == parentKey and
+                ((k.split('_')[-1] > lastElement) if isRight else (k.split('_')[-1] < lastElement))}
+
+    def getRightSiblings(self, keyNode, node=None):
         """
     	Obtener los nodos hermanos derechos de un itemset en particular. Los nodos de un
     	mismo nivel del árbol se encuentran ordenados lexicográficamente de acuerdo a sus
-    	itemsets. Así, los hermanos derechos de un nodo son aquellos nodos de un mismo nivel 
-    	que tengan como último componente de su prefijo un elemento mayor (lexicográficamente)
-    	que el nodo en cuestión.
-    	
+    	itemsets. Así, los hermanos derechos de un nodo son aquellos nodos de un mismo nivel
+    	y con el mismo padre que tengan como último componente de su prefijo un elemento mayor
+    	(lexicográficamente) que el nodo en cuestión.
+
     	Argumentos:
     		keyNode(string): clave del nodo a buscar sus hermanos derechos
-    		node(FIMoTS_Node): contenido del nodo del árbol a buscar sus hermanos derechos
-    	
+    		node(FIMoTS_Node): se mantiene por compatibilidad; el padre se deduce de la clave
+
     	Retorna:
     		Un Diccionario con los hermanos derechos de un nodo en particular del árbol.
         """
-        currentNodeElements = keyNode.split('_')
-        lastNodeElement = currentNodeElements[-1]
+        return self._getSiblings(keyNode, True)
 
-        if len(currentNodeElements) == 1:
-            rightSiblingsMap = {k: v for k, v
-                                in self.nodeMap.items()
-                                if keyNode.count('_') == k.count('_') and
-                                k.split('_')[-1] > lastNodeElement
-                                }
-        else:
-            rightSiblingsMap = {k: v for k, v
-                                in self.nodeMap.items()
-                                if keyNode.count('_') == k.count('_') and
-                                k.split('_')[-1] > lastNodeElement and
-                                k.startswith(node.parentNode)
-                                }
-        return rightSiblingsMap
+    def getLeftSiblings(self, keyNode, node=None):
+        """
+    	Obtener los nodos hermanos izquierdos de un itemset: los de su mismo nivel y mismo
+    	padre cuyo último item es lexicográficamente menor. Son los nodos que, para formar
+    	sus hijos, deben considerar a este nodo como "hermano derecho" cuando es frecuente.
+
+    	Retorna:
+    		Un Diccionario con los hermanos izquierdos de un nodo en particular del árbol.
+        """
+        return self._getSiblings(keyNode, False)
 
     def deleteChildNodes(self, keyParentNode):
         """
-		Eliminar del árbol todos los nodos/itemsets descendientes de un nodo en particular.
-		
+		Eliminar del árbol todos los nodos/itemsets descendientes (hijos, nietos, ...) de un
+		nodo en particular. Los descendientes de 'a_b' son todas las claves que empiezan por
+		'a_b_'.
+
 		Argumentos:
-			keyParentNode(string): clave, en el diccionario/árbol, del nodo padre cuya 
+			keyParentNode(string): clave, en el diccionario/árbol, del nodo padre cuya
 				descendencia se desea eliminar
-		
+
 		Retorna:
 			Una lista con las claves de los elementos/nodos eliminados
         """
-        deletedNodes = {k: v for k, v
-                        in self.nodeMap.items()
-                        if keyParentNode.count('_') == (k.count('_') - 1) and
-                        k.startswith(keyParentNode)
-                        }
-        self.nodeMap = {k: v for k, v
-                        in self.nodeMap.items()
-                        if keyParentNode.count('_') != (k.count('_') - 1) or
-                        not k.startswith(keyParentNode)
-                        }
-        return deletedNodes.keys()
+        prefix = keyParentNode + '_'
+        deletedNodes = [k for k in self.nodeMap if k.startswith(prefix)]
+        for k in deletedNodes:
+            del self.nodeMap[k]
+        return deletedNodes
 
     def getItemsetsCount(self):
         """

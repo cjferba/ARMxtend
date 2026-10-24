@@ -124,7 +124,7 @@ class DAprioriTID(DApriori):
                      if count / totalTransacs >= min_supp}
 
         # Orden descendente de soporte: acelera el filtrado en fases siguientes
-        orderedItems = sorted(freqItems, key=freqItems.get, reverse=True)
+        orderedItems = sorted(freqItems, key=lambda item: freqItems[item], reverse=True)
         broadcastOrder = sc.broadcast(orderedItems)
 
         def removeInfrequentAndSort(line):

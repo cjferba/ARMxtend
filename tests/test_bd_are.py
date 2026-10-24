@@ -10,7 +10,7 @@ Sustituye al fichero de mismo nombre que existia previamente, que no era un
 test real, sino un fragmento de codigo de prueba manual (sin asserts) que
 no podia ejecutarse de forma independiente.
 
-Ejecucion: pytest ARMxtend/FIM/BD_ARE/TestFunctions.py
+Ejecucion: pytest tests/test_bd_are.py
 """
 import pytest
 

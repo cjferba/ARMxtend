@@ -27,6 +27,7 @@ alpha-corte, en lugar de evaluar la medida crisp en un unico nivel.
 
 @author Carlos Fernandez-Basso
 """
+from typing import Any, Dict, Iterable, Mapping, Optional
 import itertools
 
 import numpy as np
@@ -58,7 +59,8 @@ def _confidence_per_level(support_AB_vector, support_A_vector):
                     1.0)
 
 
-def fuzzy_association_rules(freq_itemsets, num_alpha, metric="confidence", min_threshold=0.8, measures=None):
+def fuzzy_association_rules(freq_itemsets: Mapping[str, np.ndarray], num_alpha: int, metric: str = "confidence",
+                            min_threshold: float = 0.8, measures: Optional[Iterable[str]] = None) -> pd.DataFrame:
     """
     Genera las reglas de asociacion difusas A -> B con `metric` >=
     `min_threshold`, a partir de un conjunto de itemsets frecuentes difusos.
@@ -132,7 +134,7 @@ def fuzzy_association_rules(freq_itemsets, num_alpha, metric="confidence", min_t
                     scores[measure] = weighted_alpha_aggregate(perLevel, weights)
 
                 if scores[metric] >= min_threshold:
-                    row = {"antecedents": frozenset(antecedent), "consequents": frozenset(consequent)}
+                    row: Dict[str, Any] = {"antecedents": frozenset(antecedent), "consequents": frozenset(consequent)}
                     row.update({column: scores[column] for column in columns})
                     rows.append(row)
 

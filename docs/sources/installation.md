@@ -33,7 +33,7 @@ if `pyspark` fails to start a `SparkContext`.
 
 ```bash
 pip install pytest
-pytest tests/ ARMxtend/FIM/BD_ARE/TestFunctions.py
+pytest tests/
 ```
 
 The tests covering the Spark-based algorithms run against `tests/spark_stub.py`, a local double of
