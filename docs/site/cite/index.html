@@ -98,6 +98,32 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Time series, sensors and sequences</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/preprocessing/timeseries/" class="dropdown-item">preprocessing.timeseries (items from series)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/temporal_rules/" class="dropdown-item">ARM.temporal_rules (lagged rules)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/rule_drift/" class="dropdown-item">ARM.rule_drift (rules over time)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/sequential/" class="dropdown-item">FIM.sequential (PrefixSpan)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Fuzzy association rules</a>
     <ul class="dropdown-menu">
             
@@ -431,6 +457,23 @@ originals when you use them:</p>
   Kumar, V., Srivastava, J. (2004), <em>Selecting the right objective measure for association analysis</em>,
   Information Systems 29(4); Wu, T., Chen, Y., Han, J. (2010), <em>Re-examination of interestingness
   measures in pattern mining: a unified framework</em>, Data Mining and Knowledge Discovery 21(3).</li>
+<li><strong>Temporal (inter-transaction) rules</strong> (<code>ARM.temporal_rules</code>): Lu, H., Han, J., Feng, L. (1998). <em>Stock
+  movement prediction and N-dimensional inter-transaction association rules.</em> ACM SIGMOD Workshop on
+  Research Issues in Data Mining and Knowledge Discovery; Tung, A.K.H., Lu, H., Han, J., Feng, L. (2003).
+  <em>Efficient mining of intertransaction association rules.</em> IEEE Transactions on Knowledge and Data
+  Engineering 15(1), 43-56.</li>
+<li><strong>Symbolic time series</strong> (<code>preprocessing.timeseries</code>, <code>method="sax"</code>): Lin, J., Keogh, E., Wei, L.,
+  Lonardi, S. (2007). <em>Experiencing SAX: a novel symbolic representation of time series.</em> Data Mining
+  and Knowledge Discovery 15, 107-144 (applied point-wise, without the PAA aggregation).</li>
+<li><strong>Sequential patterns</strong> (<code>FIM.sequential</code>): Pei, J., Han, J., Mortazavi-Asl, B., Wang, J., Pinto, H.,
+  Chen, Q., Dayal, U., Hsu, M.-C. (2004). <em>Mining sequential patterns by pattern-growth: the PrefixSpan
+  approach.</em> IEEE Transactions on Knowledge and Data Engineering 16(11), 1424-1440.</li>
+<li><strong>Sequential rules</strong> (<code>ARM.sequential_rules</code>): Fournier-Viger, P., Wu, C.-W., Tseng, V.S., Cao, L.,
+  Nkambou, R. (2015). <em>Mining partially-ordered sequential rules common to multiple sequences.</em> IEEE
+  Transactions on Knowledge and Data Engineering 27(8), 2203-2216 (definition of a valid rule; the
+  search is not the RuleGrowth algorithm).</li>
+<li><strong>Rule drift</strong> (<code>ARM.rule_drift</code>): the batch counterpart of the trends kept incrementally by FIMoTS
+  (Fernandez-Basso et al., 2019, see above).</li>
 </ul></div>
             </div>
         </div>

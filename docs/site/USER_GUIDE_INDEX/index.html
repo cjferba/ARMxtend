@@ -98,6 +98,32 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Time series, sensors and sequences</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/preprocessing/timeseries/" class="dropdown-item">preprocessing.timeseries (items from series)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/temporal_rules/" class="dropdown-item">ARM.temporal_rules (lagged rules)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/rule_drift/" class="dropdown-item">ARM.rule_drift (rules over time)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/sequential/" class="dropdown-item">FIM.sequential (PrefixSpan)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Fuzzy association rules</a>
     <ul class="dropdown-menu">
             
@@ -270,6 +296,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#time-series-sensors-and-sequences-single-machine" class="nav-link">Time series, sensors and sequences (single machine)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#fuzzy-association-rule-mining-single-machine" class="nav-link">Fuzzy association rule mining (single machine)</a>
               <ul class="nav flex-column">
               </ul>
@@ -327,6 +357,14 @@
 <li><a href="../user_guide/ARM/exception_rules/">ARM.exception_rules (exception and anomalous rules)</a></li>
 <li><a href="../user_guide/ARM/gradual_rules/">ARM.gradual_rules ("the more A, the more B")</a></li>
 </ul>
+<h2 id="time-series-sensors-and-sequences-single-machine">Time series, sensors and sequences (single machine)</h2>
+<ul>
+<li><a href="../user_guide/preprocessing/timeseries/">preprocessing.timeseries (symbols, events, calendar items, lags)</a></li>
+<li><a href="../user_guide/ARM/temporal_rules/">ARM.temporal_rules (rules with a delay, crisp and fuzzy; rule profiles by hour/day)</a></li>
+<li><a href="../user_guide/ARM/rule_drift/">ARM.rule_drift (emerging, stable and vanishing rules over time windows)</a></li>
+<li><a href="../user_guide/FIM/sequential/">FIM.sequential (frequent sequential patterns, PrefixSpan; Spark version)</a></li>
+<li><a href="../user_guide/ARM/sequential_rules/">ARM.sequential_rules ("if X, then later Y")</a></li>
+</ul>
 <h2 id="fuzzy-association-rule-mining-single-machine">Fuzzy association rule mining (single machine)</h2>
 <ul>
 <li><a href="../user_guide/FIM/FARE/">FIM.FARE</a></li>
@@ -357,7 +395,7 @@
 </ul>
 <h2 id="command-line">Command line</h2>
 <ul>
-<li><a href="../user_guide/cli/">armxtend (rules, fuzzy-rules, gradual-rules)</a></li>
+<li><a href="../user_guide/cli/">armxtend (rules, fuzzy-rules, gradual-rules, temporal-rules, rule-drift, sequences, sequential-rules)</a></li>
 </ul>
 <h2 id="visualization">Visualization</h2>
 <ul>

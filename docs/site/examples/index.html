@@ -98,6 +98,32 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Time series, sensors and sequences</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/preprocessing/timeseries/" class="dropdown-item">preprocessing.timeseries (items from series)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/temporal_rules/" class="dropdown-item">ARM.temporal_rules (lagged rules)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/rule_drift/" class="dropdown-item">ARM.rule_drift (rules over time)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/sequential/" class="dropdown-item">FIM.sequential (PrefixSpan)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Fuzzy association rules</a>
     <ul class="dropdown-menu">
             
@@ -283,6 +309,14 @@
               </ul>
             </li>
             <li class="nav-item" data-bs-level="2"><a href="#other-kinds-of-rules-and-tools" class="nav-link">Other kinds of rules and tools</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#time-series-and-sensors-lagged-rules-and-rule-drift-armtemporal_rules-armrule_drift" class="nav-link">Time series and sensors: lagged rules and rule drift (ARM.temporal_rules, ARM.rule_drift)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#event-logs-sequential-patterns-and-rules-fimsequential-armsequential_rules" class="nav-link">Event logs: sequential patterns and rules (FIM.sequential, ARM.sequential_rules)</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -657,6 +691,90 @@ Reglas difusas con Zhang &gt;= 0.4:
   {age_low} -&gt; {cholesterol_low}  FSupp=0.12 FConf=0.37 zhang=0.74 kulczynski=0.55
   {cholesterol_low} -&gt; {age_low}  FSupp=0.12 FConf=0.73 zhang=0.63 kulczynski=0.55
   {age_high} -&gt; {cholesterol_high}  FSupp=0.12 FConf=0.48 zhang=0.49 kulczynski=0.51
+</code></pre>
+<h2 id="time-series-and-sensors-lagged-rules-and-rule-drift-armtemporal_rules-armrule_drift">Time series and sensors: lagged rules and rule drift (<code>ARM.temporal_rules</code>, <code>ARM.rule_drift</code>)</h2>
+<p>Sixty days of hourly readings of a simulated house -- outdoor temperature, door and heater. The heater comes on one
+hour after the door is opened, but only from 17 h on; in the second half of the period it also comes on after a
+cold hour. The script turns the series into items (<a href="../user_guide/preprocessing/timeseries/"><code>preprocessing.timeseries</code></a>),
+mines lagged rules (<a href="../user_guide/ARM/temporal_rules/"><code>ARM.temporal_rules</code></a>), measures the same rule hour by hour
+and follows the rules over 15-day windows (<a href="../user_guide/ARM/rule_drift/"><code>ARM.rule_drift</code></a>).</p>
+<pre><code class="language-python">from ARMxtend.ARM import (
+    compare_rule_sets, prune_redundant_rules, rule_drift, rule_profile, temporal_association_rules, window_rules,
+)
+from ARMxtend.preprocessing.timeseries import calendar_items, discretize, to_items
+
+# temperatura -&gt; low/medium/high; puerta y calefaccion son eventos; + franja del dia
+items = to_items(discretize(house, [&quot;temp&quot;], n_symbols=3, method=&quot;quantile&quot;))
+with_calendar = items.join(calendar_items(items.index, [&quot;part_of_day&quot;]))
+
+# reglas con retardo: que hubo hace una hora para que la calefaccion este encendida ahora
+rules = temporal_association_rules(with_calendar, max_lag=1, min_supp=0.02, min_threshold=0.9,
+                                   targets=[&quot;heater_on&quot;], exclude_persistence=True)
+rules = prune_redundant_rules(rules)
+
+# la misma regla, hora a hora: solo vale a partir de las 17 h
+profile = rule_profile(items, [&quot;door_open@lag1&quot;], [&quot;heater_on&quot;], lambda stamps: stamps.hour)
+
+# deriva: reglas con retardo en ventanas de 15 dias; cuales emergen, se mantienen o desaparecen
+windows = window_rules(with_calendar, &quot;15D&quot;, miner=lambda w: temporal_association_rules(
+    w, max_lag=1, min_supp=0.03, min_threshold=0.85, targets=[&quot;heater_on&quot;], exclude_persistence=True))
+drift = rule_drift(windows)
+</code></pre>
+<p>(full source, with the simulated data: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_temporal_rules.py"><code>examples/example_temporal_rules.py</code></a>)</p>
+<p>Output:</p>
+<pre><code class="language-text">Items: temp=high, temp=low, temp=medium, door_open, heater_on
+
+Reglas con retardo (consecuente: heater_on):
+  door_open (t-1), part_of_day=evening (t), temp=high (t-1) -&gt; heater_on (t)  support=0.022 confidence=1.00 lift=4.4
+  door_open (t-1), part_of_day=evening (t) -&gt; heater_on (t)  support=0.051 confidence=0.95 lift=4.1
+  door_open (t-1), part_of_day=evening (t), part_of_day=evening (t-1) -&gt; heater_on (t)  support=0.043 confidence=0.94 lift=4.1
+  door_open (t-1), part_of_day=evening (t), temp=medium (t) -&gt; heater_on (t)  support=0.030 confidence=0.93 lift=4.1
+
+Confianza de 'puerta abierta hace 1 hora -&gt; calefaccion encendida' segun la hora:
+  04h: 0.55
+  10h: 0.00
+  16h: 0.00
+  17h: 1.00
+  20h: 0.86
+  23h: 0.92
+
+Ventanas: 4 | estados de las reglas: {'emerging': 52, 'vanishing': 6, 'intermittent': 3, 'stable': 2}
+  emerging: temp=low (t-1) -&gt; heater_on (t) (desde la ventana 2, confianza media 0.99)
+Primera frente a ultima ventana: {'new': 52, 'lost': 6, 'changed': 2}
+</code></pre>
+<h2 id="event-logs-sequential-patterns-and-rules-fimsequential-armsequential_rules">Event logs: sequential patterns and rules (<code>FIM.sequential</code>, <code>ARM.sequential_rules</code>)</h2>
+<p>The events of a person in a smart home over 120 days (alarm, bathroom, kitchen, coffee, TV, door and random phone
+calls). Rushed days (most workdays) end with the door right after the kitchen; relaxed days have coffee and then TV.
+The script builds one sequence per day from the event log, mines the routines with PrefixSpan
+(<a href="../user_guide/FIM/sequential/"><code>FIM.sequential</code></a>) and the "if X, then later Y" rules
+(<a href="../user_guide/ARM/sequential_rules/"><code>ARM.sequential_rules</code></a>); the lift separates the informative rule
+(<code>coffee =&gt; tv</code>) from the trivial ones that hold every day.</p>
+<pre><code class="language-python">from ARMxtend.ARM import sequential_rules
+from ARMxtend.FIM import format_sequence, prefixspan, sequences_from_events
+
+sequences = sequences_from_events(events, &quot;day&quot;, &quot;time&quot;, &quot;event&quot;)      # una secuencia por dia
+
+patterns = prefixspan(sequences, min_supp=0.3, min_len=4)             # rutinas frecuentes
+every = sequential_rules(sequences, min_supp=0.2, min_conf=0.0, max_antecedent=1, max_consequent=1)
+rules = every[every[&quot;confidence&quot;] &gt;= 0.7].sort_values(&quot;lift&quot;, ascending=False)
+</code></pre>
+<p>(full source: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_sequences.py"><code>examples/example_sequences.py</code></a>)</p>
+<p>Output:</p>
+<pre><code class="language-text">Secuencias: 120 | primer dia: {alarm} {bathroom} {kitchen} {door} {phone}
+
+Patrones frecuentes de 4 o mas eventos (soporte &gt;= 0.3):
+  &lt;{alarm} {bathroom} {kitchen} {phone}&gt;  support=0.67
+  &lt;{alarm} {bathroom} {kitchen} {door}&gt;  support=0.59
+  &lt;{alarm} {bathroom} {door} {phone}&gt;  support=0.41
+  &lt;{alarm} {kitchen} {door} {phone}&gt;  support=0.41
+
+Reglas secuenciales con confianza &gt;= 0.7, por lift decreciente:
+  coffee =&gt; tv  support=0.28 confidence=0.77 lift=2.44
+  bathroom =&gt; kitchen  support=1.00 confidence=1.00 lift=1.00
+  alarm =&gt; kitchen  support=1.00 confidence=1.00 lift=1.00
+  alarm =&gt; bathroom  support=1.00 confidence=1.00 lift=1.00
+
+confianza de coffee =&gt; tv: 0.77; de tv =&gt; coffee: 0.00
 </code></pre>
 <h2 id="big-data-and-streaming-algorithms">Big Data and streaming algorithms</h2>
 <p>The Spark-based algorithms (<code>FIM.apriori</code>, <code>FIM.Eclat</code>, <code>FIM.BD_ARE</code>, <code>FIM.BD_FARE</code>, <code>SARE</code>,

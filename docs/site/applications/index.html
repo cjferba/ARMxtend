@@ -98,6 +98,32 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Time series, sensors and sequences</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/preprocessing/timeseries/" class="dropdown-item">preprocessing.timeseries (items from series)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/temporal_rules/" class="dropdown-item">ARM.temporal_rules (lagged rules)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/rule_drift/" class="dropdown-item">ARM.rule_drift (rules over time)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/sequential/" class="dropdown-item">FIM.sequential (PrefixSpan)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Fuzzy association rules</a>
     <ul class="dropdown-menu">
             
@@ -411,6 +437,14 @@ over multiple datasets (2016) and the VizARE visualisation format (2026).</p>
 <tr>
 <td>Massive transaction data</td>
 <td><a href="../user_guide/FIM/apriori/"><code>FIM.apriori</code></a> or <a href="../user_guide/FIM/Eclat/"><code>FIM.Eclat</code></a> on Spark, then <a href="../user_guide/FIM/BD_ARE/"><code>FIM.BD_ARE</code></a> (see <a href="../user_guide/scalability/">Scalability</a>)</td>
+</tr>
+<tr>
+<td>Sensor time series where <em>when</em> matters (delays, daily cycles, behaviour that changes)</td>
+<td><a href="../user_guide/preprocessing/timeseries/"><code>preprocessing.timeseries</code></a> to turn series into items, <a href="../user_guide/ARM/temporal_rules/"><code>ARM.temporal_rules</code></a> for lagged rules, <a href="../user_guide/ARM/rule_drift/"><code>ARM.rule_drift</code></a> to see which rules emerge or vanish</td>
+</tr>
+<tr>
+<td>Event logs: routines, patient trajectories, sessions</td>
+<td><a href="../user_guide/FIM/sequential/"><code>FIM.sequential</code></a> (PrefixSpan) for frequent routines, <a href="../user_guide/ARM/sequential_rules/"><code>ARM.sequential_rules</code></a> for "if X, then later Y"</td>
 </tr>
 <tr>
 <td>Data streams</td>

@@ -11,6 +11,11 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
 - **Rules:** rules with absent items, crisp and fuzzy (`ARM.negative_rules`); exception and anomalous rules
   (`ARM.exception_rules`); gradual rules (`ARM.gradual_rules`); closed and maximal itemsets (`FIM.condensed`);
   redundant-rule pruning (`ARM.redundancy`); meta-association rules (`ARM.meta_rules`).
+- **Time series, sensors and sequences:** `preprocessing.timeseries` (symbolic discretization -- quantile,
+  uniform, SAX-like --, event and calendar items, lagged items, window items); lagged (inter-transaction) rules,
+  crisp and fuzzy, and per-group rule profiles (`ARM.temporal_rules`); rule drift over time windows with
+  stable / emerging / vanishing / intermittent status (`ARM.rule_drift`); PrefixSpan sequential patterns, with
+  a Spark MLlib version (`FIM.sequential`); sequential rules (`ARM.sequential_rules`).
 - **Measures:** Jaccard, cosine, Kulczynski, all/max confidence, added value, Zhang's metric and Yule's Q in
   `ARM.association_rules` and, aggregated level by level (RL-theory), in `FIM.FARE`.
 - **Fuzzification:** trapezoidal and Gaussian sets, automatic partitions (uniform, quantile, k-means) and
@@ -18,7 +23,8 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
 - **VizARM:** the VizARE typed item/rule graph (Fernandez-Basso et al., 2026), JSON Graph Format export, rule
   summaries, a self-contained interactive HTML viewer (`AREtoGraph.to_html`) and Neo4j/MongoDB exports
   (`to_cypher`, `to_documents`).
-- **Command line:** `armxtend rules | fuzzy-rules | gradual-rules` (also `python -m ARMxtend`).
+- **Command line:** `armxtend rules | fuzzy-rules | gradual-rules | temporal-rules | rule-drift | sequences |
+  sequential-rules` (also `python -m ARMxtend`).
 - **Tooling:** `pyproject.toml` packaging, type hints and `py.typed`, ruff, mypy, coverage, a release workflow with
   PyPI trusted publishing, runnable examples tested in CI, and a benchmark of the Spark algorithms
   (`benchmarks/spark_scalability.py`).

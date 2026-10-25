@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Carlos Fernandez-Basso">
+        <link rel="canonical" href="http://cjferba.github.io/ARMxtend/user_guide/FIM/sequential/">
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>FIM.sequential (PrefixSpan) - ARMxtend</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">ARMxtend</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../examples/" class="nav-link">Examples</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../applications/" class="nav-link">Applications</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../USER_GUIDE_INDEX/" class="dropdown-item">User Guide Index</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crisp association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+            
+<li>
+    <a href="../condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Time series, sensors and sequences</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../preprocessing/timeseries/" class="dropdown-item">preprocessing.timeseries (items from series)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/temporal_rules/" class="dropdown-item">ARM.temporal_rules (lagged rules)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/rule_drift/" class="dropdown-item">ARM.rule_drift (rules over time)</a>
+</li>
+            
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">FIM.sequential (PrefixSpan)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../cli/" class="dropdown-item">armxtend</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
+</li>
+                                    
+<li>
+    <a href="../../../contributors/" class="dropdown-item">Contributors</a>
+</li>
+                                    
+<li>
+    <a href="../../../license/" class="dropdown-item">License</a>
+</li>
+                                    
+<li>
+    <a href="../../../cite/" class="dropdown-item">Citing ARMxtend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../../ARM/rule_drift/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../../ARM/sequential_rules/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/user_guide/FIM/sequential.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#fimsequential-frequent-sequential-patterns-prefixspan" class="nav-link">FIM.sequential -- frequent sequential patterns (PrefixSpan)</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#data-model" class="nav-link">Data model</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#functions" class="nav-link">Functions</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#example" class="nav-link">Example</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#notes" class="nav-link">Notes</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#reference" class="nav-link">Reference</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="fimsequential-frequent-sequential-patterns-prefixspan"><code>FIM.sequential</code> -- frequent sequential patterns (PrefixSpan)</h1>
+<p>Sequential patterns are routines that repeat <strong>in a given order</strong>: the daily activities of a person in a smart
+home, the trajectory of a patient through a hospital, the pages of a web session, the alarms of a machine before a
+failure. Where an association rule asks <em>what goes together</em>, a sequential pattern asks <em>what happens after
+what</em>.</p>
+<pre><code class="language-python">from ARMxtend.FIM import prefixspan, format_sequence
+
+sequences = [
+    [{&quot;alarm&quot;}, {&quot;bathroom&quot;}, {&quot;kitchen&quot;}, {&quot;coffee&quot;}, {&quot;tv&quot;}],
+    [{&quot;alarm&quot;}, {&quot;bathroom&quot;}, {&quot;kitchen&quot;}, {&quot;door&quot;}],
+    ...
+]
+patterns = prefixspan(sequences, min_supp=0.3, min_len=3)
+for _, p in patterns.head(3).iterrows():
+    print(format_sequence(p[&quot;sequence&quot;]), p[&quot;support&quot;])
+# &lt;{alarm} {bathroom} {kitchen}&gt; 1.0
+</code></pre>
+<h2 id="data-model">Data model</h2>
+<ul>
+<li>A <strong>sequence</strong> is a list of <strong>elements</strong> ordered in time; an <strong>element</strong> is a set of items that happen at
+  the same time (<code>{"door", "light"}</code>). A bare string is accepted as a one-item element (<code>"coffee"</code>).</li>
+<li>A <strong>pattern</strong> <code>&lt;{a, b} {c}&gt;</code> is <em>contained</em> in a sequence if there are two different elements, one before
+  the other, containing <code>{a, b}</code> and <code>{c}</code> respectively. Other elements may lie in between.</li>
+<li>The <strong>support</strong> of a pattern is the fraction of sequences that contain it, counting each sequence once.</li>
+<li>Item names must not contain <code>-</code> (see the note in <a href="../../preprocessing/timeseries/"><code>preprocessing.timeseries</code></a>).</li>
+</ul>
+<h2 id="functions">Functions</h2>
+<pre><code class="language-python">prefixspan(sequences, min_supp, max_len=None, min_len=1)
+prefixspan_spark(spark, sequences, min_supp, max_pattern_length=10)
+sequences_from_events(events, sequence_column, time_column, item_column, bin=None)
+sequences_from_items(items, by=None)
+contains_sequence(sequence, pattern)
+format_sequence(pattern)       # ({'a','b'}, {'c'}) -&gt; '&lt;{a, b} {c}&gt;'
+</code></pre>
+<ul>
+<li><strong><code>prefixspan</code></strong> is a pure-Python implementation of PrefixSpan (Pei et al., 2004): pattern growth over
+  projected databases, with <em>s-extensions</em> (a new element after the prefix) and <em>i-extensions</em> (an item added to the
+  last element). It returns a <code>DataFrame</code> with <code>support</code>, <code>sequence</code> (a tuple of <code>frozenset</code>) and <code>length</code> (number
+  of items), sorted by decreasing support. <code>max_len</code> / <code>min_len</code> bound the number of items of a pattern.</li>
+<li><strong><code>prefixspan_spark</code></strong> runs the same computation with Spark MLlib's <code>PrefixSpan</code> (<code>pyspark.ml.fpm</code>), for
+  sequence databases that do not fit in a machine. It accepts a <code>SparkSession</code> or a <code>SparkContext</code>, and the
+  sequences as a Python list or an RDD, and returns the same <code>DataFrame</code>. It needs the <code>spark</code> extra
+  (<code>pip install "ARMxtend[spark]"</code>); <code>pyspark</code> is imported only when the function is called.</li>
+<li><strong><code>sequences_from_events</code></strong> builds sequences from an <strong>event log</strong> (one row per event): one sequence per value of
+  <code>sequence_column</code> (patient, user, day...), events ordered by <code>time_column</code>. Events with exactly the same time
+  form one element; with <code>bin="5min"</code> (or <code>"1h"</code>) all the events of a sequence within the same interval do.</li>
+<li><strong><code>sequences_from_items</code></strong> builds sequences from a boolean item table (one row per time step, e.g. the output
+  of <a href="../../preprocessing/timeseries/"><code>to_items</code></a>): every non-empty row is an element. <code>by</code> splits the table into
+  several sequences (a column, or a function of the index such as <code>lambda idx: idx.date</code> for one sequence per day).</li>
+</ul>
+<h2 id="example">Example</h2>
+<p>An event log of a house (<code>day</code>, <code>time</code>, <code>event</code>), one sequence per day:</p>
+<pre><code class="language-python">from ARMxtend.FIM import prefixspan, sequences_from_events
+
+sequences = sequences_from_events(events, &quot;day&quot;, &quot;time&quot;, &quot;event&quot;)
+prefixspan(sequences, min_supp=0.3, min_len=4).head(2)
+#                                     sequence  support  length
+# &lt;{alarm} {bathroom} {kitchen} {phone}&gt;   0.67       4
+# &lt;{alarm} {bathroom} {kitchen} {door}&gt;    0.59       4
+</code></pre>
+<p>From patterns to predictions, see <a href="../../ARM/sequential_rules/"><code>ARM.sequential_rules</code></a>: a frequent pattern says
+<em>how often</em> the routine happens; a sequential rule says <em>how reliably</em> the second part follows the first.</p>
+<p>Command line: <a href="../../cli/#sequences-and-sequential-rules"><code>armxtend sequences</code></a>.</p>
+<h2 id="notes">Notes</h2>
+<ul>
+<li>The search is exact. Cost depends mostly on <code>min_supp</code> and on how repetitive the sequences are; set <code>max_len</code>
+  to bound it.</li>
+<li>The Spark version relies on MLlib's PrefixSpan, whose <code>minSupport</code> is relative as well; results match the
+  local implementation (this is checked in the test suite).</li>
+<li>Repeated items inside a sequence do not increase the support (each sequence counts once), but they do allow
+  patterns such as <code>&lt;{a} {a}&gt;</code>.</li>
+</ul>
+<h2 id="reference">Reference</h2>
+<ul>
+<li>J. Pei, J. Han, B. Mortazavi-Asl, J. Wang, H. Pinto, Q. Chen, U. Dayal, M.-C. Hsu (2004). <em>Mining sequential
+  patterns by pattern-growth: the PrefixSpan approach.</em> IEEE Transactions on Knowledge and Data Engineering
+  16(11), 1424-1440.</li>
+</ul></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../js/base.js"></script>
+        <script src="../../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

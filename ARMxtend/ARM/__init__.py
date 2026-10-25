@@ -26,6 +26,20 @@ from .gradual_rules import (
     format_gradual_itemset,
 )
 from .redundancy import prune_redundant_rules
+from .temporal_rules import (
+    temporal_association_rules,
+    fuzzy_temporal_association_rules,
+    format_lagged_item,
+    rule_profile,
+)
+from .rule_drift import (
+    crisp_rule_miner,
+    fuzzy_rule_miner,
+    window_rules,
+    rule_drift,
+    compare_rule_sets,
+)
+from .sequential_rules import sequential_rules, contains_rule
 
 
 __all__ = [
@@ -42,6 +56,17 @@ __all__ = [
     "format_gradual_item",
     "format_gradual_itemset",
     "prune_redundant_rules",
+    "temporal_association_rules",
+    "fuzzy_temporal_association_rules",
+    "format_lagged_item",
+    "rule_profile",
+    "crisp_rule_miner",
+    "fuzzy_rule_miner",
+    "window_rules",
+    "rule_drift",
+    "compare_rule_sets",
+    "sequential_rules",
+    "contains_rule",
     "rule_key",
     "mine_primary_rule_measures",
     "build_crisp_meta_database",

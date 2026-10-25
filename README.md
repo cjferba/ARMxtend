@@ -65,6 +65,13 @@ Spark y el nucleo sigue funcionando.
 * `FIM.condensed` (itemsets **cerrados/maximales**) y `ARM.redundancy` (**poda de reglas redundantes**)
 * `ARM.association_rules` / `FIM.FARE`: ademas de soporte, confianza, lift, leverage, conviccion y factor de certeza, Jaccard, cosine, Kulczynski, all/max-confidence, added value, Zhang y Yule's Q (en el caso difuso, agregadas por alpha-cortes)
 
+### Series temporales, sensores y secuencias
+
+* `preprocessing.timeseries`: de columnas numericas ordenadas en el tiempo a **items** (simbolos por cuantiles/uniforme/SAX, eventos, calendario, retardos, ventanas)
+* `ARM.temporal_rules`: reglas **temporales con retardo** ("puerta abierta hace 1 h y es de noche -> calefaccion encendida"), crisp y difusas, y perfil de una regla por hora/dia
+* `ARM.rule_drift`: **deriva de reglas** -- cuales son estables, emergentes, evanescentes o intermitentes en ventanas sucesivas
+* `FIM.sequential` y `ARM.sequential_rules`: **patrones secuenciales** (PrefixSpan, tambien en Spark) y **reglas secuenciales** ("si X, despues Y")
+
 ### Meta-reglas de asociacion
 
 * `ARM.meta_rules`: mineria de reglas de asociacion sobre reglas ya extraidas de **multiples** datasets

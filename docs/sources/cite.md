@@ -166,3 +166,20 @@ originals when you use them:
   Kumar, V., Srivastava, J. (2004), *Selecting the right objective measure for association analysis*,
   Information Systems 29(4); Wu, T., Chen, Y., Han, J. (2010), *Re-examination of interestingness
   measures in pattern mining: a unified framework*, Data Mining and Knowledge Discovery 21(3).
+- **Temporal (inter-transaction) rules** (`ARM.temporal_rules`): Lu, H., Han, J., Feng, L. (1998). *Stock
+  movement prediction and N-dimensional inter-transaction association rules.* ACM SIGMOD Workshop on
+  Research Issues in Data Mining and Knowledge Discovery; Tung, A.K.H., Lu, H., Han, J., Feng, L. (2003).
+  *Efficient mining of intertransaction association rules.* IEEE Transactions on Knowledge and Data
+  Engineering 15(1), 43-56.
+- **Symbolic time series** (`preprocessing.timeseries`, `method="sax"`): Lin, J., Keogh, E., Wei, L.,
+  Lonardi, S. (2007). *Experiencing SAX: a novel symbolic representation of time series.* Data Mining
+  and Knowledge Discovery 15, 107-144 (applied point-wise, without the PAA aggregation).
+- **Sequential patterns** (`FIM.sequential`): Pei, J., Han, J., Mortazavi-Asl, B., Wang, J., Pinto, H.,
+  Chen, Q., Dayal, U., Hsu, M.-C. (2004). *Mining sequential patterns by pattern-growth: the PrefixSpan
+  approach.* IEEE Transactions on Knowledge and Data Engineering 16(11), 1424-1440.
+- **Sequential rules** (`ARM.sequential_rules`): Fournier-Viger, P., Wu, C.-W., Tseng, V.S., Cao, L.,
+  Nkambou, R. (2015). *Mining partially-ordered sequential rules common to multiple sequences.* IEEE
+  Transactions on Knowledge and Data Engineering 27(8), 2203-2216 (definition of a valid rule; the
+  search is not the RuleGrowth algorithm).
+- **Rule drift** (`ARM.rule_drift`): the batch counterpart of the trends kept incrementally by FIMoTS
+  (Fernandez-Basso et al., 2019, see above).

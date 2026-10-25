@@ -112,6 +112,8 @@ over multiple datasets (2016) and the VizARE visualisation format (2026).
 | Sensors, IoT, smart buildings or homes | [`FuzzyLib`](user_guide/preprocessing/FuzzyLib.md) automatic fuzzification, [`FIM.BD_FARE`](user_guide/FIM/BD_FARE.md) (big data) or [`FIM.FARE`](user_guide/FIM/FARE.md), then [`VizARM`](user_guide/VizARM.md) |
 | Clinical, administrative or investigative records | discretise or fuzzify, [`FIM.FARE`](user_guide/FIM/FARE.md) / [`ARM.association_rules`](user_guide/ARM/association_rules.md), prune with [`ARM.redundancy`](user_guide/ARM/redundancy.md), explore in [`VizARM`](user_guide/VizARM.md) |
 | Massive transaction data | [`FIM.apriori`](user_guide/FIM/apriori.md) or [`FIM.Eclat`](user_guide/FIM/Eclat.md) on Spark, then [`FIM.BD_ARE`](user_guide/FIM/BD_ARE.md) (see [Scalability](user_guide/scalability.md)) |
+| Sensor time series where *when* matters (delays, daily cycles, behaviour that changes) | [`preprocessing.timeseries`](user_guide/preprocessing/timeseries.md) to turn series into items, [`ARM.temporal_rules`](user_guide/ARM/temporal_rules.md) for lagged rules, [`ARM.rule_drift`](user_guide/ARM/rule_drift.md) to see which rules emerge or vanish |
+| Event logs: routines, patient trajectories, sessions | [`FIM.sequential`](user_guide/FIM/sequential.md) (PrefixSpan) for frequent routines, [`ARM.sequential_rules`](user_guide/ARM/sequential_rules.md) for "if X, then later Y" |
 | Data streams | [`SFIM` / `SARE`](user_guide/SARE_SFIM.md) |
 | Rules from several datasets | [`ARM.meta_rules`](user_guide/ARM/meta_rules.md) |
 

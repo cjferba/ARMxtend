@@ -20,6 +20,8 @@ EXAMPLE_MODULES = [
     "example_preprocessing",
     "example_vizarm",
     "example_rule_types",
+    "example_temporal_rules",
+    "example_sequences",
 ]
 
 
@@ -74,3 +76,31 @@ def test_rule_types_example_finds_the_planted_patterns():
     assert set(maximal) == {"a-b-c", "d"} and len(pruned) == 5
     assert ((fuzzyRules["antecedents"] == frozenset(["age_low"]))
             & (fuzzyRules["consequents"] == frozenset(["cholesterol_low"]))).any()
+
+
+def test_temporal_example_recovers_the_planted_behaviour(capsys):
+    """La casa simulada tiene una regla de la tarde (puerta -> calefaccion) y una regla que emerge en la segunda mitad."""
+    module = importlib.import_module("example_temporal_rules")
+    _, rules, profile, drift = module.main()
+
+    evening = rules[rules["antecedents"].apply(lambda a: {"door_open@lag1", "part_of_day=evening"} <= set(a))]
+    assert len(evening) > 0 and evening["confidence"].max() > 0.9
+    assert profile.loc[10, "confidence"] == 0.0 and profile.loc[17:23, "confidence"].min() > 0.7
+    emerging = drift[(drift["antecedents"] == frozenset({"temp=low@lag1"}))
+                     & (drift["consequents"] == frozenset({"heater_on"}))]
+    assert len(emerging) == 1 and emerging.iloc[0]["status"] == "emerging" and emerging.iloc[0]["first_window"] == 2
+
+
+def test_sequences_example_recovers_the_planted_routine(capsys):
+    """Los dias tranquilos tienen cafe y luego television; el telefono es ruido y no genera reglas informativas."""
+    module = importlib.import_module("example_sequences")
+    sequences, patterns, rules = module.main()
+
+    assert len(sequences) == 120
+    kitchen = frozenset(["alarm"]), frozenset(["bathroom"]), frozenset(["kitchen"])
+    assert any(tuple(pattern[:3]) == kitchen for pattern in patterns["sequence"])
+    rule = rules[(rules["antecedents"] == frozenset(["coffee"])) & (rules["consequents"] == frozenset(["tv"]))].iloc[0]
+    assert rule["lift"] > 2 and rule["confidence"] > 0.7
+    assert rules[(rules["antecedents"] == frozenset(["tv"])) & (rules["consequents"] == frozenset(["coffee"]))].empty
+    informative = rules[(rules["confidence"] >= 0.7) & (rules["lift"] > 1.1)]
+    assert set(informative["consequents"].apply(lambda y: next(iter(y)))) == {"tv"}

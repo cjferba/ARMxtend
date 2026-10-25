@@ -13,7 +13,8 @@ license-files = ["LICENSE"]
 authors = [{ name = "Carlos Fernandez-Basso", email = "cjferba@decsai.ugr.es" }]
 keywords = [
     "association rules", "frequent itemsets", "data mining", "fuzzy logic", "fuzzy association rules",
-    "meta-association rules", "gradual rules", "apache spark", "big data", "streaming", "visualization",
+    "meta-association rules", "gradual rules", "temporal rules", "sequential patterns", "time series",
+    "apache spark", "big data", "streaming", "visualization",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",

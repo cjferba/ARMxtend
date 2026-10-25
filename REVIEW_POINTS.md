@@ -78,7 +78,43 @@ El código y los workflows están preparados, pero **no se ha publicado nada** (
 - [ ] Licencia: el paquete declara CC BY-NC 4.0 (no es una licencia aprobada por la OSI). PyPI la acepta, pero
   `pip` y las herramientas de cumplimiento la mostrarán como no libre.
 
-## 7. Documentación
+## 7. Series temporales, secuencias y deriva de reglas
+
+Módulos nuevos: `preprocessing.timeseries`, `ARM.temporal_rules`, `ARM.rule_drift`, `FIM.sequential`,
+`ARM.sequential_rules`. No tuve acceso a los papers (las editoriales bloquean la descarga), así que lo que sigue es
+lo que hay que contrastar antes de citarlos como implementaciones fieles.
+
+- [ ] **Referencias escritas de memoria** (en `cite.md` y en los docstrings): Lu, Han & Feng (1998); Tung, Lu, Han &
+  Feng (2003, TKDE 15(1), 43-56); Lin, Keogh, Wei & Lonardi (2007, DMKD 15, 107-144); Pei et al. (2004, TKDE 16(11),
+  1424-1440, con Jianyong Wang entre los autores); Fournier-Viger et al. (2015, TKDE 27(8), 2203-2216) y RuleGrowth
+  (2011, mencionado solo en el docstring de `sequential_rules.py`). Comprueba títulos, volúmenes, páginas y autores.
+- [ ] **Reglas temporales** (`ARM.temporal_rules`). Uso retardos **relativos al instante actual** y fuerzo que el
+  consecuente esté en el instante actual (lag 0); el soporte se mide sobre las `N - max_lag` filas con todos los
+  retardos. Lu et al. formulan reglas inter-transacción con dimensiones y ventanas más generales: la mía es la
+  especialización habitual para series y sensores. Decide si te vale o si quieres consecuentes en otros instantes.
+- [ ] **Coste y redundancia.** Con `max_lag` grande y muchos símbolos el número de itemsets crece mucho y salen muchas
+  variantes de una misma regla; en el ejemplo uso `prune_redundant_rules`. No hay poda específica de reglas
+  temporales (p. ej. por antecedente mínimo).
+- [ ] **SAX sin PAA.** `symbolize(method="sax")` normaliza y corta con cuantiles de la normal, punto a punto, sin la
+  agregación por tramos (PAA) del artículo original. Está documentado, pero no es SAX completo.
+- [ ] **Reglas secuenciales** (`ARM.sequential_rules`). Uso la definición de regla válida de Fournier-Viger et al.
+  (todos los ítems de X antes que todos los de Y, dentro de X y de Y el orden no cuenta) con soporte = secuencias
+  donde es válida / secuencias y confianza = válidas / secuencias que contienen X. **No es RuleGrowth**: enumero
+  itemsets frecuentes (FP-Growth sobre las secuencias como cestas) y pruebo sus particiones. Da el mismo resultado
+  (comprobado contra enumeración exhaustiva) pero no tiene la eficiencia de RuleGrowth. Confirma que el
+  denominador de la confianza es el del artículo.
+- [ ] **PrefixSpan** (`FIM.sequential.prefixspan`). Comprobado contra enumeración exhaustiva en datos aleatorios, y
+  `prefixspan_spark` (PrefixSpan de MLlib) contra la versión local en un Spark real, pero solo con bases pequeñas.
+  No hay benchmark de escalabilidad de las secuencias.
+- [ ] **Deriva de reglas** (`ARM.rule_drift`). Los estados `stable/emerging/vanishing/intermittent`, el umbral
+  `stable_fraction=0.8` y la pendiente (recta de mínimos cuadrados sobre las ventanas con la regla) son decisiones
+  mías, sin contraste estadístico: una regla "emergente" puede ser ruido de una ventana corta. No sustituye a las
+  tendencias de FIMoTS (incrementales sobre Spark): es la versión por lotes en una máquina.
+- [ ] **CLI** (`temporal-rules`, `rule-drift`, `sequences`, `sequential-rules`). Convenciones que he elegido: las
+  columnas con solo 0/1 son eventos, las demás numéricas se simbolizan en 3 símbolos por cuantiles, y el formato
+  de secuencias en texto es `a,b;c;d` (elementos separados por `;`). Compruébalas con tus datos reales.
+
+## 8. Documentación
 
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la

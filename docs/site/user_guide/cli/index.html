@@ -98,6 +98,32 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Time series, sensors and sequences</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../preprocessing/timeseries/" class="dropdown-item">preprocessing.timeseries (items from series)</a>
+</li>
+            
+<li>
+    <a href="../ARM/temporal_rules/" class="dropdown-item">ARM.temporal_rules (lagged rules)</a>
+</li>
+            
+<li>
+    <a href="../ARM/rule_drift/" class="dropdown-item">ARM.rule_drift (rules over time)</a>
+</li>
+            
+<li>
+    <a href="../FIM/sequential/" class="dropdown-item">FIM.sequential (PrefixSpan)</a>
+</li>
+            
+<li>
+    <a href="../ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Fuzzy association rules</a>
     <ul class="dropdown-menu">
             
@@ -274,7 +300,15 @@
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#options-shared-by-all-commands" class="nav-link">Options shared by all commands</a>
+            <li class="nav-item" data-bs-level="2"><a href="#temporal-rules-and-rule-drift-sensor-csv-files" class="nav-link">temporal-rules and rule-drift -- sensor CSV files</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#sequences-and-sequential-rules" class="nav-link">sequences and sequential-rules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#options-shared-by-the-commands" class="nav-link">Options shared by the commands</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -291,6 +325,10 @@ single machine, without Spark, and covers the most common one-shot tasks:</p>
 <pre><code class="language-bash">armxtend rules transactions.csv --min-supp 0.1 --min-threshold 0.7
 armxtend fuzzy-rules sensors.csv --labels 3 --alpha 10 --metric certainty_factor --min-threshold 0.5
 armxtend gradual-rules health.csv --min-supp 0.3 --min-threshold 0.9
+armxtend temporal-rules house.csv --time-column time --max-lag 2 --targets heater_on --exclude-persistence
+armxtend rule-drift house.csv --time-column time --window 15D --max-lag 1 --targets heater_on
+armxtend sequences routines.txt --min-supp 0.3 --min-len 3
+armxtend sequential-rules routines.txt --min-supp 0.3 --min-threshold 0.8
 armxtend --version
 </code></pre>
 <h2 id="rules-crisp-association-rules"><code>rules</code> -- crisp association rules</h2>
@@ -311,7 +349,60 @@ into rules with <a href="../FIM/FARE/"><code>FIM.FARE</code></a>. <code>--measur
 <h2 id="gradual-rules"><code>gradual-rules</code></h2>
 <p>"The more A, the more B" rules directly on the numeric columns (<a href="../ARM/gradual_rules/"><code>ARM.gradual_rules</code></a>);
 <code>--max-rows</code> works on a random sample for big tables.</p>
-<h2 id="options-shared-by-all-commands">Options shared by all commands</h2>
+<h2 id="temporal-rules-and-rule-drift-sensor-csv-files"><code>temporal-rules</code> and <code>rule-drift</code> -- sensor CSV files</h2>
+<p>A CSV with a header and one row per time step, for example:</p>
+<pre><code class="language-text">time,temp,door_open,heater_on
+2024-01-01 00:00:00,6.1,0,0
+2024-01-01 01:00:00,5.4,1,0
+2024-01-01 02:00:00,5.0,0,1
+</code></pre>
+<p><code>--time-column</code> makes that column the (sorted) time index. The columns are converted into items as in
+<a href="../preprocessing/timeseries/"><code>preprocessing.timeseries</code></a>: numeric columns are split into <code>--symbols</code> symbols
+(default 3; <code>--method quantile|uniform|sax</code>), columns containing only 0/1 (or booleans) are events, text columns give
+<code>column=value</code> items, and <code>--calendar hour weekday daytype month part_of_day</code> adds calendar items (needs
+<code>--time-column</code>). <code>--columns</code> restricts the columns used.</p>
+<p><strong><code>temporal-rules</code></strong> mines <a href="../ARM/temporal_rules/">lagged rules</a>: <code>--max-lag N</code> (default 1), <code>--lags</code> (a subset),
+<code>--targets</code> (items or variables allowed in the consequent), <code>--exclude-persistence</code>, <code>--allow-no-lag</code> and
+<code>--prune</code>. In the table format the items read <code>door_open (t-1)</code>, <code>heater_on (t)</code>; <code>csv</code> and <code>json</code> keep the raw
+names (<code>door_open@lag1</code>) and the <code>lags</code> / <code>max_lag</code> columns.</p>
+<pre><code class="language-text">$ armxtend temporal-rules house.csv --time-column time --calendar part_of_day --max-lag 1 --min-supp 0.02 \
+      --min-threshold 0.9 --targets heater_on --exclude-persistence --prune --top 2
+                                            antecedents   consequents  support  confidence   lift  certainty_factor
+door_open (t-1), part_of_day=evening (t), temp=high (t-1) heater_on (t)   0.0222      1.0000 4.3739            1.0000
+                 door_open (t-1), part_of_day=evening (t) heater_on (t)   0.0507      0.9481 4.1466            0.9327
+</code></pre>
+<p><strong><code>rule-drift</code></strong> mines the rules in consecutive windows and reports how each one evolves
+(<a href="../ARM/rule_drift/"><code>ARM.rule_drift</code></a>): <code>--window</code> (required: a number of rows such as <code>96</code>, or a duration such as
+<code>15D</code> or <code>12h</code> if there is a time column), <code>--step</code> (default: the window width), <code>--min-supp</code>,
+<code>--metric</code> / <code>--min-threshold</code> (measure that filters the rules and is tracked over time; default <code>confidence</code> &gt;= 0.8),
+<code>--max-lag N</code> (<code>0</code>, the default, mines plain rules in each window; <code>N &gt; 0</code> lagged rules, with <code>--targets</code> and
+<code>--exclude-persistence</code>) and <code>--stable-fraction</code>. The output has one row per rule with <code>status</code>
+(<code>stable</code>, <code>emerging</code>, <code>vanishing</code>, <code>intermittent</code>), <code>windows</code>, <code>persistence</code>, <code>first_window</code>, <code>last_window</code>,
+the mean of the measure and its <code>slope</code>; it is sorted by status and persistence unless <code>--sort-by</code> is given.</p>
+<h2 id="sequences-and-sequential-rules"><code>sequences</code> and <code>sequential-rules</code></h2>
+<p>Input for both: either a <strong>text file</strong> with one sequence per line, elements separated by <code>--element-delimiter</code>
+(default <code>;</code>) and the simultaneous items of an element by <code>--delimiter</code> (default <code>,</code>; <code>-</code> reads standard input):</p>
+<pre><code class="language-text">alarm;bathroom;kitchen;coffee;tv
+alarm;bathroom;kitchen;door
+alarm;bathroom,light;kitchen;coffee
+</code></pre>
+<p>or an <strong>event log</strong> in CSV with <code>--sequence-column</code> (what identifies a sequence: patient, user, day...),
+<code>--time-column</code> and <code>--item-column</code>; <code>--bin 5min</code> makes the events of a sequence within the same interval a single
+element.</p>
+<ul>
+<li><strong><code>sequences</code></strong> mines the <a href="../FIM/sequential/">frequent sequential patterns</a> (PrefixSpan): <code>--min-supp</code>,
+  <code>--min-len</code>, <code>--max-len</code>. Columns: <code>sequence</code> (such as <code>&lt;{alarm} {bathroom} {kitchen}&gt;</code>), <code>support</code>, <code>length</code>.</li>
+<li><strong><code>sequential-rules</code></strong> mines <a href="../ARM/sequential_rules/">sequential rules</a> <code>X =&gt; Y</code>: <code>--min-supp</code>, <code>--metric</code> /
+  <code>--min-threshold</code> (default <code>confidence</code> &gt;= 0.7; use <code>--metric lift --min-threshold 1.2</code> to keep informative
+  rules), <code>--max-antecedent</code> and <code>--max-consequent</code> (default 2).</li>
+</ul>
+<pre><code class="language-text">$ armxtend sequential-rules routines.txt --min-supp 0.4 --min-threshold 0.7 --max-antecedent 1 --max-consequent 1 --top 3
+antecedents consequents  support  confidence   lift  certainty_factor
+       door     kitchen   0.8000      1.0000 1.2500            1.0000
+    kitchen      coffee   0.6000      0.7500 1.2500            0.3750
+       door      coffee   0.6000      0.7500 1.2500            0.3750
+</code></pre>
+<h2 id="options-shared-by-the-commands">Options shared by the commands</h2>
 <table>
 <thead>
 <tr>
@@ -322,15 +413,19 @@ into rules with <a href="../FIM/FARE/"><code>FIM.FARE</code></a>. <code>--measur
 <tbody>
 <tr>
 <td><code>--min-supp</code></td>
-<td>minimum support (default 0.1)</td>
+<td>minimum support (default 0.1; per window in <code>rule-drift</code>)</td>
 </tr>
 <tr>
 <td><code>--metric</code>, <code>--min-threshold</code></td>
-<td>measure used to filter (and by default sort) the rules, and its minimum (default <code>confidence</code> &gt;= 0.7)</td>
+<td>measure used to filter (and by default sort) the rules, and its minimum (default <code>confidence</code> &gt;= 0.7; not in <code>sequences</code>)</td>
 </tr>
 <tr>
 <td><code>--sort-by</code>, <code>--top N</code></td>
 <td>sort column (descending) and keep the first N rules</td>
+</tr>
+<tr>
+<td><code>--time-column</code>, <code>--columns</code>, <code>--symbols</code>, <code>--method</code>, <code>--calendar</code></td>
+<td>(<code>temporal-rules</code>, <code>rule-drift</code>) how the CSV becomes items</td>
 </tr>
 <tr>
 <td><code>--format table\|csv\|json</code></td>
@@ -342,7 +437,7 @@ into rules with <a href="../FIM/FARE/"><code>FIM.FARE</code></a>. <code>--measur
 </tr>
 <tr>
 <td><code>--prune</code></td>
-<td>(<code>rules</code>, <code>fuzzy-rules</code>) drop <a href="../ARM/redundancy/">redundant rules</a></td>
+<td>(<code>rules</code>, <code>fuzzy-rules</code>, <code>temporal-rules</code>) drop <a href="../ARM/redundancy/">redundant rules</a></td>
 </tr>
 <tr>
 <td><code>--html FILE</code></td>

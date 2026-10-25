@@ -85,6 +85,18 @@
          <lastmod>2026-10-25</lastmod>
     </url>
     <url>
+         <loc>http://cjferba.github.io/ARMxtend/user_guide/ARM/rule_drift/</loc>
+         <lastmod>2026-10-25</lastmod>
+    </url>
+    <url>
+         <loc>http://cjferba.github.io/ARMxtend/user_guide/ARM/sequential_rules/</loc>
+         <lastmod>2026-10-25</lastmod>
+    </url>
+    <url>
+         <loc>http://cjferba.github.io/ARMxtend/user_guide/ARM/temporal_rules/</loc>
+         <lastmod>2026-10-25</lastmod>
+    </url>
+    <url>
          <loc>http://cjferba.github.io/ARMxtend/user_guide/FIM/BD_ARE/</loc>
          <lastmod>2026-10-25</lastmod>
     </url>
@@ -109,7 +121,15 @@
          <lastmod>2026-10-25</lastmod>
     </url>
     <url>
+         <loc>http://cjferba.github.io/ARMxtend/user_guide/FIM/sequential/</loc>
+         <lastmod>2026-10-25</lastmod>
+    </url>
+    <url>
          <loc>http://cjferba.github.io/ARMxtend/user_guide/preprocessing/FuzzyLib/</loc>
+         <lastmod>2026-10-25</lastmod>
+    </url>
+    <url>
+         <loc>http://cjferba.github.io/ARMxtend/user_guide/preprocessing/timeseries/</loc>
          <lastmod>2026-10-25</lastmod>
     </url>
 </urlset>
