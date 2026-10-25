@@ -65,6 +65,32 @@
 <li>
     <a href="../../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
 </li>
+            
+<li>
+    <a href="../condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
     </ul>
   </li>
                                     
@@ -121,11 +147,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../../ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -181,7 +227,7 @@
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a rel="prev" href="../../FFIM/" class="nav-link">
+                                <a rel="prev" href="../../ARM/gradual_rules/" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
@@ -263,7 +309,7 @@ level's confidence term is taken to be 1, following the "0/0" convention in Ruiz
 <p>For equidistant alpha-cuts, every weight equals <code>1/p</code>, so <code>FSupp</code>/<code>FConf</code>/<code>FCF</code> are simply the
 <em>average</em> of the crisp measure across the <code>p</code> alpha-cuts.</p>
 <h2 id="fuzzy_association_rules"><code>fuzzy_association_rules</code></h2>
-<pre><code class="language-python">fuzzy_association_rules(freq_itemsets, num_alpha, metric=&quot;confidence&quot;, min_threshold=0.8)
+<pre><code class="language-python">fuzzy_association_rules(freq_itemsets, num_alpha, metric=&quot;confidence&quot;, min_threshold=0.8, measures=None)
 </code></pre>
 <ul>
 <li><strong>freq_itemsets</strong> (<code>dict[str, numpy.ndarray]</code>): fuzzy frequent itemsets, mapping <code>'A-B-C'</code> to its
@@ -273,11 +319,16 @@ level's confidence term is taken to be 1, following the "0/0" convention in Ruiz
   every non-empty subset of each itemset -- guaranteed by the downward-closure property of those
   mining algorithms.</li>
 <li><strong>num_alpha</strong> (<code>int</code>): number of alpha-cuts used to mine <code>freq_itemsets</code> (must match).</li>
-<li><strong>metric</strong> (<code>str</code>): <code>"support"</code> (FSupp), <code>"confidence"</code> (FConf) or <code>"certainty_factor"</code> (FCF).</li>
+<li><strong>metric</strong> (<code>str</code>): <code>"support"</code> (FSupp), <code>"confidence"</code> (FConf), <code>"certainty_factor"</code> (FCF) or any
+  other measure of <a href="../../ARM/association_rules/#additional-interest-measures"><code>ARM.association_rules</code></a>
+  except <code>conviction</code> (unbounded level by level): <code>lift</code>, <code>leverage</code>, <code>jaccard</code>, <code>cosine</code>,
+  <code>kulczynski</code>, <code>all_confidence</code>, <code>max_confidence</code>, <code>added_value</code>, <code>zhangs_metric</code>, <code>yules_q</code>. Each is
+  computed at every alpha-cut and aggregated with the weights <code>(alpha_i - alpha_(i+1))</code>.</li>
 <li><strong>min_threshold</strong> (<code>float</code>): minimum value of <code>metric</code> for a rule to be kept.</li>
+<li><strong>measures</strong> (<code>list[str]</code>, optional): extra measures to add as columns of the result.</li>
 </ul>
 <p>Returns a <code>pandas.DataFrame</code> with columns <code>antecedents</code>, <code>consequents</code>, <code>support</code> (FSupp),
-<code>confidence</code> (FConf) and <code>certainty_factor</code> (FCF).</p>
+<code>confidence</code> (FConf) and <code>certainty_factor</code> (FCF), plus one column per entry of <code>measures</code>.</p>
 <h2 id="example">Example</h2>
 <p>Reproducing the numerical example of Ruiz et al. (2016), Section 4.4 (fuzzy database in their
 Table 2, itemset <code>A={i1,i3} -&gt; B={i4}</code>, alpha-cuts <code>{1, 0.8, 0.6, 0.4, 0.2}</code>):</p>

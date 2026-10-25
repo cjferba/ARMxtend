@@ -65,6 +65,32 @@
 <li>
     <a href="../../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
 </li>
+            
+<li>
+    <a href="../../FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
     </ul>
   </li>
                                     
@@ -121,11 +147,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -217,6 +263,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#additional-interest-measures" class="nav-link">Additional interest measures</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#certainty-factor" class="nav-link">Certainty factor</a>
               <ul class="nav flex-column">
               </ul>
@@ -242,15 +292,83 @@ on Spark).</p>
 <ul>
 <li><strong>df</strong> (<code>pandas.DataFrame</code>): frequent itemsets, with columns <code>support</code> (float) and <code>itemsets</code>
   (a <code>frozenset</code> of items).</li>
-<li><strong>metric</strong> (<code>str</code>): one of <code>"support"</code>, <code>"confidence"</code>, <code>"lift"</code>, <code>"leverage"</code>, <code>"conviction"</code> or
-  <code>"certainty_factor"</code>.</li>
+<li><strong>metric</strong> (<code>str</code>): one of <code>"support"</code>, <code>"confidence"</code>, <code>"lift"</code>, <code>"leverage"</code>, <code>"conviction"</code>,
+  <code>"certainty_factor"</code> or any of the <a href="#additional-interest-measures">additional measures</a> below.</li>
 <li><strong>min_threshold</strong> (<code>float</code>): minimum value of <code>metric</code> for a rule to be returned.</li>
 <li><strong>support_only</strong> (<code>bool</code>): if <code>True</code>, only computes <code>support</code> (useful when <code>df</code> does not contain
   the support of every antecedent/consequent needed for the other metrics).</li>
 </ul>
 <p>Returns a <code>pandas.DataFrame</code> with columns <code>antecedents</code>, <code>consequents</code>, <code>antecedent support</code>,
 <code>consequent support</code>, <code>support</code>, <code>confidence</code>, <code>lift</code>, <code>leverage</code>, <code>conviction</code>,
-<code>certainty_factor</code>.</p>
+<code>certainty_factor</code>, plus one column per additional measure.</p>
+<h2 id="additional-interest-measures">Additional interest measures</h2>
+<p>All are functions of <code>(supp(AB), supp(A), supp(B))</code> (equivalently of the 4-fold table
+<code>&lt;a, b, c, d&gt; = &lt;sAB, sA-sAB, sB-sAB, 1-sA-sB+sAB&gt;</code>), defined in <code>ARMxtend.ARM._measures</code>. They are
+neutral (<code>0</code>) when undefined (<code>0/0</code>), never <code>NaN</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Measure (<code>metric=</code>)</th>
+<th>Definition</th>
+<th>Range</th>
+<th>Symmetric</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jaccard</code></td>
+<td><code>sAB / (sA + sB - sAB)</code></td>
+<td>[0, 1]</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>cosine</code></td>
+<td><code>sAB / sqrt(sA sB)</code></td>
+<td>[0, 1]</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>kulczynski</code></td>
+<td><code>(Conf(A-&gt;B) + Conf(B-&gt;A)) / 2</code> -- robust to null transactions (Wu, Chen &amp; Han, 2010)</td>
+<td>[0, 1]</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>all_confidence</code></td>
+<td><code>sAB / max(sA, sB)</code> = <code>min(Conf(A-&gt;B), Conf(B-&gt;A))</code></td>
+<td>[0, 1]</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>max_confidence</code></td>
+<td><code>max(Conf(A-&gt;B), Conf(B-&gt;A))</code></td>
+<td>[0, 1]</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>added_value</code></td>
+<td><code>Conf(A-&gt;B) - supp(B)</code> (Tan, Kumar &amp; Srivastava, 2004)</td>
+<td>[-1, 1]</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>zhangs_metric</code></td>
+<td><code>(sAB - sA sB) / max(sAB(1-sA), sB(sA-sAB))</code> (Zhang, 2000)</td>
+<td>[-1, 1]</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>yules_q</code></td>
+<td><code>(ad - bc) / (ad + bc)</code></td>
+<td>[-1, 1]</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<p>For asymmetric-direction questions use <code>added_value</code>, <code>zhangs_metric</code> or <code>certainty_factor</code>; for
+"are A and B just co-occurring?" the symmetric ones. In the fuzzy case
+(<a href="../../FIM/FARE/"><code>FIM.FARE</code></a>) every one of them is evaluated at each alpha-cut and aggregated with
+the RL-theory weights, exactly like <code>FConf</code> and <code>FCF</code>.</p>
 <h2 id="certainty-factor">Certainty factor</h2>
 <p>Besides the classic confidence/lift/conviction, <code>metric="certainty_factor"</code> computes the
 Shortliffe &amp; Buchanan certainty factor (Delgado, Ruiz &amp; Sanchez):</p>

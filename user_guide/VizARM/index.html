@@ -65,6 +65,32 @@
 <li>
     <a href="../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
 </li>
+            
+<li>
+    <a href="../FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
     </ul>
   </li>
                                     
@@ -121,11 +147,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -181,7 +227,7 @@
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a rel="prev" href="../ARM/meta_rules/" class="nav-link">
+                                <a rel="prev" href="../cli/" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
@@ -218,6 +264,14 @@
               </ul>
             </li>
             <li class="nav-item" data-bs-level="2"><a href="#rule-summarization-optional" class="nav-link">Rule summarization (optional)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#interactive-viewer" class="nav-link">Interactive viewer</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#graph-and-document-databases" class="nav-link">Graph and document databases</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -288,6 +342,39 @@ either the full rule-level graph or the summarized one:</p>
     data = graph.graph.nodes[summaryId]
     print(data[&quot;rule_count&quot;], &quot;rules -&gt;&quot;, data[&quot;members&quot;])
 </code></pre>
+<h2 id="interactive-viewer">Interactive viewer</h2>
+<pre><code class="language-python">graph.to_html(&quot;rules.html&quot;, title=&quot;Smart office rules&quot;, max_rules=150, sort_by=&quot;lift&quot;, measure=&quot;lift&quot;)
+</code></pre>
+<p>Writes a <strong>single, self-contained HTML file</strong> -- no CDN, no server, no network access: it opens in any
+browser, can be e-mailed or archived, and embeds the graph itself in the paper's JGF format
+(<code>to_jgf_dict()</code>), so the viewer consumes exactly the intermediate representation.</p>
+<p><img alt="VizARE interactive viewer" src="../../img/vizare_viewer.jpg" /></p>
+<p>What you get:</p>
+<ul>
+<li>automatic force-directed layout; <strong>zoom</strong> (scroll), <strong>pan</strong> (drag the background), <strong>pin</strong> a node by
+  dragging it (double-click to release);</li>
+<li>hover <strong>tooltips</strong> and a <strong>details panel</strong> with the readable rule (<code>A, B -&gt; C</code>) and all its measures;
+  selecting or hovering a node highlights its neighbours and dims the rest;</li>
+<li><strong>search</strong> (Enter centres on the first match), <strong>minimum-value slider</strong> for any rule measure, and
+  <strong>size/colour of the rules by that measure</strong>;</li>
+<li>switches for the <strong>item / rule / summary layers</strong> (see <a href="#rule-summarization-optional">Rule summarization</a>);
+  summary nodes list their member rules as links.</li>
+</ul>
+<p>Arguments: <code>path</code> (write the file), <code>title</code>, <code>max_rules</code> + <code>sort_by</code> (keep only the best <code>max_rules</code>
+rules by that measure, with their items and the summaries they belong to), <code>measure</code> and <code>min_value</code>
+(initial measure and threshold). The layout uses a spatial grid for repulsion, so thousands of nodes
+stay interactive (about 3,300 nodes / 16,000 edges ran at roughly 48 fps in our test), but a graph with
+that many edges is a hairball for human eyes: use <code>max_rules</code>, the threshold slider or the summaries
+to explore large rule sets.</p>
+<h2 id="graph-and-document-databases">Graph and document databases</h2>
+<p>The paper (Section 4.3) stores the intermediate form natively in Neo4j or MongoDB:</p>
+<pre><code class="language-python">graph.to_cypher()      # CREATE (:Item {...}); CREATE (:Rule {...}); ... (:ANTECEDENT / :CONSEQUENT) relationships
+graph.to_documents()   # {'nodes': [{'_id': ..., 'kind': ..., 'confidence': ...}], 'edges': [...]}
+</code></pre>
+<p><code>to_cypher()</code> returns statements ready for <code>cypher-shell</code> or the Neo4j browser (strings are escaped);
+<code>to_documents()</code> returns flat documents with the measures as top-level fields so they can be indexed and
+queried (<code>{"kind": "rule", "confidence": {"$gte": 0.8}}</code>) after <code>collection.insert_many(...)</code>. Both
+accept <code>max_rules</code>/<code>sort_by</code>.</p>
 <h2 id="exporting">Exporting</h2>
 <pre><code class="language-python">graph.exportGraph(type=0)   # JGF (JSON Graph Format) -- the paper's proposed intermediate form
 graph.exportGraph(type=1)   # GraphML string (Gephi / Cytoscape / NetworkX)

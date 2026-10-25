@@ -65,6 +65,32 @@
 <li>
     <a href="../../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
 </li>
+            
+<li>
+    <a href="../condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
     </ul>
   </li>
                                     
@@ -121,11 +147,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../../ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -221,6 +267,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#scalability" class="nav-link">Scalability</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -269,7 +319,13 @@ fuzzy_transactions = sc.parallelize([
     [(&quot;warm&quot;, 0.7), (&quot;low_humidity&quot;, 0.9)],
 ])
 freq_itemsets = FuzzyDECLAT.run(sc, fuzzy_transactions, min_supp=0.3, num_alpha=10)
-</code></pre></div>
+</code></pre>
+<h2 id="scalability">Scalability</h2>
+<p><code>DECLAT</code> and <code>FuzzyDECLAT</code> collect all the TID-lists in the driver, so the amount of data they can handle is set by
+the driver's memory (<code>spark.driver.memory</code>), not by the size of the cluster. On a single machine <code>DECLAT</code> is the
+fastest crisp algorithm but its speed-up flattens after 2 to 4 cores, and <code>FuzzyDECLAT</code> grows faster than linearly
+with the data and does not speed up with more cores: for big fuzzy datasets prefer
+<a href="../BD_FARE/"><code>FuzzyDAprioriTID</code></a>. Measurements and how to reproduce them: <a href="../../scalability/">Scalability</a>.</p></div>
             </div>
         </div>
 

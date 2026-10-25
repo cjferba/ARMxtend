@@ -65,6 +65,32 @@
 <li>
     <a href="../../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
 </li>
+            
+<li>
+    <a href="../../FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
     </ul>
   </li>
                                     
@@ -121,11 +147,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../../ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -221,6 +267,14 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#automatic-fuzzification" class="nav-link">Automatic fuzzification</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#feeding-the-fuzzy-miners" class="nav-link">Feeding the fuzzy miners</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -241,15 +295,18 @@ fuzzy_lib.GetAtributes()   # column names
 fuzzy_lib.GetTypes()       # column dtypes
 </code></pre>
 <h2 id="fuzzification">Fuzzification</h2>
-<pre><code class="language-python">Fuzzification(Atri, thresholds, FuzzyLabel)
+<pre><code class="language-python">Fuzzification(Atri, thresholds, FuzzyLabel, membership=&quot;triangular&quot;)
 </code></pre>
 <ul>
 <li><strong>Atri</strong> (<code>list[str]</code>): names of the numeric attributes to fuzzify.</li>
-<li><strong>thresholds</strong> (<code>list[list[float]]</code>): for each attribute, one ascending <em>peak</em> per fuzzy label.</li>
+<li><strong>thresholds</strong> (<code>list[list]</code>): for each attribute, the parameters of its fuzzy sets, one per label:
+  ascending <em>peaks</em> (<code>membership="triangular"</code>), <code>(a, b, c, d)</code> vertices (<code>"trapezoidal"</code>) or
+  <code>(center, sigma)</code> pairs (<code>"gaussian"</code>).</li>
 <li><strong>FuzzyLabel</strong> (<code>list[list[str]]</code>): for each attribute, the name of each fuzzy label (same length
   as its <code>thresholds</code> entry).</li>
+<li><strong>membership</strong> (<code>str</code>): <code>"triangular"</code> (default), <code>"trapezoidal"</code> or <code>"gaussian"</code> -- see below.</li>
 </ul>
-<p>For each attribute, this computes a <strong>triangular Ruspini partition</strong>: given <code>n</code> ascending peaks
+<p>With the default <code>membership="triangular"</code>, this computes a <strong>triangular Ruspini partition</strong>: given <code>n</code> ascending peaks
 <code>p_1 &lt; ... &lt; p_n</code> (one per label), the two extreme labels are "shoulders" (full membership beyond
 their own peak) and the intermediate ones are triangles centered on their peak, so that the
 membership degrees of all <code>n</code> labels always sum to 1 for every row. It adds one new column
@@ -270,9 +327,69 @@ print(fuzzy_lib.data)
 # 4           28              0.00                 0.00              1.00
 </code></pre>
 <p>Each row's fuzzified columns for that attribute sum to 1: <code>fuzzy_lib.data[added_columns].sum(axis=1)</code>.</p>
-<p>To turn a fuzzified row into the <code>(item, degree)</code> pairs expected by the fuzzy mining algorithms,
-pair each added column name with its value, e.g.
-<code>[(col, row[col]) for col in added_columns if row[col] &gt; 0]</code>.</p></div>
+<h3 id="trapezoidal-and-gaussian-sets">Trapezoidal and Gaussian sets</h3>
+<pre><code class="language-python">fuzzy_lib.Fuzzification([&quot;temperature&quot;], [[(-float(&quot;inf&quot;), -float(&quot;inf&quot;), 15, 20),   # cold: 1 up to 15
+                                           (15, 20, 25, 30),                         # comfort: core 20-25
+                                           (25, 30, float(&quot;inf&quot;), float(&quot;inf&quot;))]],   # warm: 1 from 30
+                        [[&quot;cold&quot;, &quot;comfort&quot;, &quot;warm&quot;]], membership=&quot;trapezoidal&quot;)
+
+fuzzy_lib.Fuzzification([&quot;temperature&quot;], [[(15.0, 3.0), (22.0, 3.0)]], [[&quot;cold&quot;, &quot;warm&quot;]],
+                        membership=&quot;gaussian&quot;)        # exp(-(x-center)^2 / (2 sigma^2))
+</code></pre>
+<p>A trapezoid <code>(a, b, c, d)</code> is 0 up to <code>a</code>, rises to 1 at <code>b</code>, stays 1 until <code>c</code> and falls to 0 at <code>d</code>
+(<code>a == b</code> / <code>c == d</code> give vertical sides; <code>-inf</code>/<code>+inf</code> give shoulders). Trapezoids and Gaussians
+need not sum to 1 per row. The functions are also available on their own in
+<code>ARMxtend.preprocessing.membership</code>.</p>
+<h2 id="automatic-fuzzification">Automatic fuzzification</h2>
+<pre><code class="language-python">AutoFuzzification(Atri=None, n_labels=3, method=&quot;quantile&quot;, FuzzyLabel=None, membership=&quot;triangular&quot;)
+</code></pre>
+<p>Computes each attribute's partition <strong>from its data</strong> (all numeric columns if <code>Atri</code> is omitted), so
+you do not need to choose breakpoints by hand:</p>
+<table>
+<thead>
+<tr>
+<th><code>method</code></th>
+<th>Peaks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>"uniform"</code></td>
+<td>evenly spaced between the min and max</td>
+</tr>
+<tr>
+<td><code>"quantile"</code> (default)</td>
+<td>evenly spaced quantiles (min, ..., median, ..., max): every label covers about the same number of rows, which matters for skewed attributes</td>
+</tr>
+<tr>
+<td><code>"kmeans"</code></td>
+<td>centers of a 1-D k-means (deterministic, quantile-initialised): follows natural clusters</td>
+</tr>
+</tbody>
+</table>
+<p>and <code>membership</code> is <code>"triangular"</code> and <code>"trapezoidal"</code> (both Ruspini partitions, rows sum to 1) or
+<code>"gaussian"</code> (width chosen so neighbouring sets cross at degree 0.5). Default labels are <code>low/high</code>,
+<code>low/medium/high</code>, <code>low/medium_low/medium_high/high</code>, <code>very_low/.../very_high</code>, or <code>L1..Ln</code>. The
+resulting parameters are stored in <code>fuzzy_lib.partitions[attribute]["params"]</code> so you can reuse them
+with <code>Fuzzification</code> on new data. A constant attribute (not enough distinct values for <code>n_labels</code>
+peaks) raises a <code>ValueError</code> naming it.</p>
+<pre><code class="language-python">fuzzy_lib.AutoFuzzification([&quot;age&quot;, &quot;cholesterol&quot;], n_labels=3, method=&quot;quantile&quot;)
+# -&gt; ['age_low', 'age_medium', 'age_high', 'cholesterol_low', 'cholesterol_medium', 'cholesterol_high']
+</code></pre>
+<h2 id="feeding-the-fuzzy-miners">Feeding the fuzzy miners</h2>
+<pre><code class="language-python">GetFuzzyTransactions(columns=None, min_degree=0.0)
+</code></pre>
+<p>Returns one list of <code>(item, degree)</code> pairs per row -- the input format of
+<a href="../../FFIM/"><code>FFIM.fuzzy_fpgrowth</code></a> and of the fuzzy rule functions
+(<a href="../../ARM/negative_rules/"><code>ARM.negative_rules</code></a>, <a href="../../ARM/meta_rules/"><code>ARM.meta_rules</code></a>) -- using
+the columns added by <code>Fuzzification</code>/<code>AutoFuzzification</code> (or those in <code>columns</code>) and skipping items
+whose degree is not greater than <code>min_degree</code>:</p>
+<pre><code class="language-python">from ARMxtend.FFIM import fuzzy_fpgrowth
+from ARMxtend.FIM.FARE import fuzzy_association_rules
+
+itemsets = fuzzy_fpgrowth(fuzzy_lib.GetFuzzyTransactions(), min_supp=0.1, num_alpha=10)
+rules = fuzzy_association_rules(itemsets, 10, metric=&quot;certainty_factor&quot;, min_threshold=0.5)
+</code></pre></div>
             </div>
         </div>
 

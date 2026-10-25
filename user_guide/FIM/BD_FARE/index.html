@@ -65,6 +65,32 @@
 <li>
     <a href="../../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
 </li>
+            
+<li>
+    <a href="../condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
     </ul>
   </li>
                                     
@@ -121,11 +147,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../../ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -213,6 +259,10 @@
             
             <li class="nav-item" data-bs-level="1"><a href="#fimbd_fare-fuzzydaprioritid-spark" class="nav-link">FIM.BD_FARE -- FuzzyDAprioriTID (Spark)</a>
               <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#scalability" class="nav-link">Scalability</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -248,7 +298,12 @@ fuzzy_transactions = sc.parallelize([
     [(&quot;warm&quot;, 0.7), (&quot;low_humidity&quot;, 0.9)],
 ])
 freq_itemsets = FuzzyDAprioriTID.run(sc, fuzzy_transactions, min_supp=0.3, num_alpha=10)
-</code></pre></div>
+</code></pre>
+<h2 id="scalability">Scalability</h2>
+<p><code>FuzzyDAprioriTID</code> grows almost linearly with the number of transactions (fitted <code>t ~ N^0.93</code> between 25 000 and
+100 000 transactions on a local Spark), which makes it the recommended fuzzy algorithm for big data; the alternative
+<a href="../Eclat/"><code>FuzzyDECLAT</code></a> keeps all the membership vectors in the driver. Measurements, caveats (single machine, not
+a cluster) and how to reproduce them: <a href="../../scalability/">Scalability</a>.</p></div>
             </div>
         </div>
 

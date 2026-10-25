@@ -65,6 +65,32 @@
 <li>
     <a href="../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
 </li>
+            
+<li>
+    <a href="../user_guide/FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
     </ul>
   </li>
                                     
@@ -121,11 +147,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -238,6 +284,10 @@
               </ul>
             </li>
             <li class="nav-item" data-bs-level="2"><a href="#fuzzification-preprocessing-preprocessingfuzzylib" class="nav-link">Fuzzification / preprocessing (preprocessing.FuzzyLib)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#methods-implemented-from-the-wider-literature" class="nav-link">Methods implemented from the wider literature</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -354,7 +404,30 @@ IEEE Transactions on Fuzzy Systems.</p>
   publisher={IEEE}
 }
 </code></pre>
-<p><a href="https://doi.org/10.1109/TFUZZ.2020.2992180"><img alt="DOI" src="https://img.shields.io/badge/IEEETFS-2020.2992180-green" /></a></p></div>
+<p><a href="https://doi.org/10.1109/TFUZZ.2020.2992180"><img alt="DOI" src="https://img.shields.io/badge/IEEETFS-2020.2992180-green" /></a></p>
+<h2 id="methods-implemented-from-the-wider-literature">Methods implemented from the wider literature</h2>
+<p>Besides the papers above, some modules implement classic methods from other authors; please cite the
+originals when you use them:</p>
+<ul>
+<li><strong>Rules with absent items</strong> (<code>ARM.negative_rules</code>): Delgado, Ruiz, Sanchez &amp; Serrano (2011, see above);
+  restriction to items whose positive form is frequent: Han &amp; Beheshti, as cited in refs. [18, 19] of
+  that paper.</li>
+<li><strong>Exception rules</strong> (<code>ARM.exception_rules</code>): Suzuki, E. (1997). <em>Autonomous discovery of reliable
+  exception rules.</em> KDD-97. <strong>Anomalous rules</strong>: Delgado, M., Ruiz, M.D., Sanchez, D. (2011). <em>New
+  approaches for discovering exception and anomalous rules.</em> Int. J. Uncertainty, Fuzziness and
+  Knowledge-Based Systems, 19(2), 361-399.</li>
+<li><strong>Gradual rules</strong> (<code>ARM.gradual_rules</code>): Hullermeier, E. (2002). <em>Association rules for expressing
+  gradual dependencies.</em> PKDD 2002, LNCS 2431, 200-211.</li>
+<li><strong>Closed / maximal itemsets</strong> (<code>FIM.condensed</code>): Pasquier, N., Bastide, Y., Taouil, R., Lakhal, L.
+  (1999). <em>Discovering frequent closed itemsets for association rules.</em> ICDT'99; Bayardo, R. (1998).
+  <em>Efficiently mining long patterns from databases.</em> SIGMOD'98.</li>
+<li><strong>Redundant rules</strong> (<code>ARM.redundancy</code>): Bastide, Y., Taouil, R., Pasquier, N., Stumme, G., Lakhal, L.
+  (2000). <em>Mining minimal non-redundant association rules using frequent closed itemsets.</em> CL 2000.</li>
+<li><strong>Interest measures</strong> (<code>ARM.association_rules</code>): Zhang, T. (2000), <em>Association rules</em>, PAKDD; Tan, P.-N.,
+  Kumar, V., Srivastava, J. (2004), <em>Selecting the right objective measure for association analysis</em>,
+  Information Systems 29(4); Wu, T., Chen, Y., Han, J. (2010), <em>Re-examination of interestingness
+  measures in pattern mining: a unified framework</em>, Data Mining and Knowledge Discovery 21(3).</li>
+</ul></div>
             </div>
         </div>
 

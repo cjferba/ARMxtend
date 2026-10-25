@@ -65,6 +65,32 @@
 <li>
     <a href="../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
 </li>
+            
+<li>
+    <a href="../user_guide/FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
     </ul>
   </li>
                                     
@@ -121,11 +147,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -225,6 +271,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#releasing-a-new-version" class="nav-link">Releasing a new version</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -249,20 +299,25 @@ cd ARMxtend
 <ul>
 <li>Install the library in editable mode (see <a href="../installation/">Installation</a> for the <code>spark</code> extra):</li>
 </ul>
-<pre><code class="language-bash">pip install -e &quot;.[spark]&quot;
-pip install pytest mkdocs
+<pre><code class="language-bash">pip install -e &quot;.[spark,dev]&quot;   # pyspark + pytest, pytest-cov, ruff, mypy, build, twine, mkdocs...
 </code></pre>
+<p>The tests that run on a real local Spark need a JDK 17 or 21 (set <code>JAVA_HOME</code>; on macOS
+<code>brew install openjdk@21</code>); without one they are skipped automatically.</p>
 <h2 id="making-changes">Making changes</h2>
 <ol>
 <li>Create a new branch for your change: <code>git checkout -b my-feature</code>.</li>
 <li>Implement your change, following the style of the surrounding code.</li>
-<li>Add or update unit tests under <code>tests/</code> (or <code>ARMxtend/FIM/BD_ARE/TestFunctions.py</code>) covering it.
+<li>Add or update unit tests under <code>tests/</code> covering it.
    Tests for the Spark-based algorithms (<code>FIM.apriori</code>, <code>FIM.Eclat</code>, <code>FIM.BD_ARE</code>, <code>FIM.BD_FARE</code>,
    <code>SARE</code>, <code>SFIM</code>) should run against <code>tests/spark_stub.py</code> so they don't require a JVM/cluster.</li>
-<li>Run the test suite and make sure everything passes:</li>
+<li>Run the same checks as the CI and make sure everything passes:</li>
 </ol>
-<pre><code class="language-bash">pytest tests/ ARMxtend/FIM/BD_ARE/TestFunctions.py
+<pre><code class="language-bash">ruff check .                       # unused/undefined names, syntax errors
+mypy                               # type check (the public API is typed; the package ships py.typed)
+pytest --cov=ARMxtend              # tests + coverage (the CI requires &gt;= 80 %)
 </code></pre>
+<p><code>pytest</code> alone runs everything (<code>testpaths</code> is set in <code>pyproject.toml</code>). Without <code>pyspark</code> the Spark-related
+   tests are skipped, which is also how the CI checks that the core works without it.</p>
 <ol>
 <li>If your change affects the public API or adds a new module, update the relevant page under
    <code>docs/sources/user_guide/</code> and add it to <code>docs/mkdocs.yml</code>'s <code>nav</code>, then check it renders
@@ -279,7 +334,28 @@ mkdocs serve   # preview at http://127.0.0.1:8000
 <p>From the <code>docs</code> directory:</p>
 <pre><code class="language-bash">mkdocs build --strict   # builds the static site into docs/site/, failing on broken links
 mkdocs gh-deploy        # builds and publishes docs/site/ to the gh-pages branch
-</code></pre></div>
+</code></pre>
+<h2 id="releasing-a-new-version">Releasing a new version</h2>
+<p>Releases are published to PyPI by <code>.github/workflows/release.yml</code> using PyPI <em>trusted publishing</em> (OpenID
+Connect): no API token is stored in the repository or the CI.</p>
+<p><strong>One-time setup</strong> (needs the maintainer's PyPI account):</p>
+<ol>
+<li>On <a href="https://pypi.org/manage/account/publishing/">https://pypi.org/manage/account/publishing/</a> add a <em>pending publisher</em> for the project <code>ARMxtend</code>:
+   owner <code>cjferba</code>, repository <code>ARMxtend</code>, workflow <code>release.yml</code>, environment <code>pypi</code>.</li>
+<li>Optionally do the same on <a href="https://test.pypi.org">https://test.pypi.org</a> with environment <code>testpypi</code>, to rehearse a release
+   (Actions -&gt; <em>Release</em> -&gt; <em>Run workflow</em> publishes the current commit to TestPyPI).</li>
+<li>In the repository settings create the environments <code>pypi</code> and <code>testpypi</code> (a required reviewer on <code>pypi</code>
+   adds a manual approval before anything is uploaded).</li>
+</ol>
+<p><strong>For each release:</strong></p>
+<ol>
+<li>Update <code>__version__</code> in <code>ARMxtend/__init__.py</code> and move the entries of <code>CHANGELOG.md</code> from <em>unreleased</em> to the
+   new version.</li>
+<li>Commit, then create a GitHub release whose tag is <code>v&lt;version&gt;</code> (e.g. <code>v0.1.0</code>). The workflow refuses to publish
+   if the tag does not match <code>__version__</code>.</li>
+<li>The workflow builds the sdist and the wheel, runs <code>twine check --strict</code> and uploads them.</li>
+</ol>
+<p>Locally, <code>python -m build &amp;&amp; twine check --strict dist/*</code> does the same build and check without uploading.</p></div>
             </div>
         </div>
 
