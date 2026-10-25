@@ -46,6 +46,9 @@
                             <li class="nav-item">
                                 <a href="../examples/" class="nav-link">Examples</a>
                             </li>
+                            <li class="nav-item">
+                                <a href="../applications/" class="nav-link">Applications</a>
+                            </li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
                                 <ul class="dropdown-menu">
@@ -64,6 +67,32 @@
             
 <li>
     <a href="../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
 </li>
     </ul>
   </li>
@@ -121,11 +150,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -222,12 +271,16 @@
 
 <h1 id="installing-armxtend">Installing ARMxtend</h1>
 <hr />
-<p>ARMxtend is not yet published on PyPI. Install it directly from a local checkout of the
-<a href="https://github.com/cjferba/ARMxtend">GitHub repository</a>:</p>
-<pre><code class="language-bash">git clone https://github.com/cjferba/ARMxtend.git
+<p>ARMxtend is being prepared for its first release on PyPI (see the <a href="https://github.com/cjferba/ARMxtend/blob/master/CHANGELOG.md">changelog</a>).
+Until it is published, install it from the <a href="https://github.com/cjferba/ARMxtend">GitHub repository</a>:</p>
+<pre><code class="language-bash">pip install git+https://github.com/cjferba/ARMxtend.git
+# or, to work on it, from a local checkout:
+git clone https://github.com/cjferba/ARMxtend.git
 cd ARMxtend
 pip install -e .
 </code></pre>
+<p>Once published, <code>pip install armxtend</code> will be enough. It requires Python 3.9 or newer (tested on 3.9-3.12).
+The installation also provides the <a href="../user_guide/cli/"><code>armxtend</code> command</a>.</p>
 <p>This installs the core, single-machine part of the library: <code>ARM</code> (crisp association rules and
 meta-rules), <code>FIM.FARE</code> (fuzzy association rules), <code>FFIM</code> (crisp and fuzzy FP-Growth), <code>VizARM</code>
 and <code>preprocessing</code>. Its only dependencies are <code>numpy</code>, <code>pandas</code> and <code>networkx</code>.</p>
@@ -237,13 +290,15 @@ and <code>preprocessing</code>. Its only dependencies are <code>numpy</code>, <c
 <code>pyspark</code>. Install it with the <code>spark</code> extra:</p>
 <pre><code class="language-bash">pip install -e &quot;.[spark]&quot;
 </code></pre>
-<p><code>pyspark</code> itself requires a Java runtime (JDK 8/11/17) to be installed and on your <code>PATH</code>; see the
+<p><code>pyspark</code> itself requires a Java runtime (JDK 17 or 21 for PySpark 4) to be installed and on your <code>PATH</code>; see the
 <a href="https://spark.apache.org/docs/latest/api/python/getting_started/install.html">PySpark installation guide</a>
 if <code>pyspark</code> fails to start a <code>SparkContext</code>.</p>
 <h3 id="running-the-tests">Running the tests</h3>
-<pre><code class="language-bash">pip install pytest
-pytest tests/ ARMxtend/FIM/BD_ARE/TestFunctions.py
+<pre><code class="language-bash">pip install -e &quot;.[spark,dev]&quot;
+pytest
 </code></pre>
+<p>The tests that run the algorithms on a real local Spark (including the FIMoTS streaming driver) need a JDK; they are
+skipped when none is found.</p>
 <p>The tests covering the Spark-based algorithms run against <code>tests/spark_stub.py</code>, a local double of
 the small part of the Spark RDD/broadcast API these algorithms use, so they exercise the exact same
 production code without requiring a real cluster or a JVM.</p></div>

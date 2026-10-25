@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Carlos Fernandez-Basso">
+        <link rel="canonical" href="http://cjferba.github.io/ARMxtend/applications/">
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Applications - ARMxtend</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../css/brands.min.css" rel="stylesheet">
+        <link href="../css/solid.min.css" rel="stylesheet">
+        <link href="../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">ARMxtend</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href=".." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../examples/" class="nav-link">Examples</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="./" class="nav-link active" aria-current="page">Applications</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../USER_GUIDE_INDEX/" class="dropdown-item">User Guide Index</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crisp association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/cli/" class="dropdown-item">armxtend</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
+</li>
+                                    
+<li>
+    <a href="../contributors/" class="dropdown-item">Contributors</a>
+</li>
+                                    
+<li>
+    <a href="../license/" class="dropdown-item">License</a>
+</li>
+                                    
+<li>
+    <a href="../cite/" class="dropdown-item">Citing ARMxtend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../examples/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../USER_GUIDE_INDEX/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/applications.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#applications" class="nav-link">Applications</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#healthcare" class="nav-link">Healthcare</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#security-and-law-enforcement" class="nav-link">Security and law enforcement</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#energy-efficiency-of-buildings-iot" class="nav-link">Energy efficiency of buildings (IoT)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#the-methods-themselves" class="nav-link">The methods themselves</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#following-the-same-workflow-on-your-own-data" class="nav-link">Following the same workflow on your own data</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="applications">Applications</h1>
+<p>ARMxtend collects methods that the authors have developed and applied to real data, mostly in <strong>healthcare</strong>, in
+<strong>energy efficiency of buildings (IoT)</strong> and in <strong>law enforcement</strong>. This page summarises those studies and says which ARMxtend modules cover the
+methods they rely on, so you can follow the same workflow on your own data.</p>
+<blockquote>
+<p>The studies below were published before ARMxtend was released as a package. The "In ARMxtend" notes point to the
+modules that implement the same methods; they are not a claim that the published experiments were rerun with the
+package, and results obtained with it may differ in implementation details. Each study links to its DOI.</p>
+</blockquote>
+<h2 id="healthcare">Healthcare</h2>
+<h3 id="fuzzy-pattern-mining-of-medical-records-diagnostics-and-co-morbidity">Fuzzy pattern mining of medical records: diagnostics and co-morbidity</h3>
+<p>Fernandez-Basso, Gutierrez-Batista, Morcillo-Jimenez, Vila &amp; Martin-Bautista (2022),
+<a href="https://doi.org/10.1016/j.asoc.2022.108870"><em>Applied Soft Computing</em> 122, 108870</a>.</p>
+<p>Association rules and fuzzy logic are applied, in a distributed environment, to medical records, with the goal of
+making the discovered patterns <strong>understandable for end users</strong>, not only accurate. The system
+(a) preprocesses and enriches the database, (b) fuzzifies it to represent the uncertainty of real medical data,
+(c) discovers relations between features such as diagnostics and hospital discharge, and (d) visualises the result.
+It is shown on two health-related datasets.</p>
+<p><em>In ARMxtend:</em> the same four steps map to
+<a href="../user_guide/preprocessing/FuzzyLib/"><code>preprocessing.FuzzyLib</code></a> (fuzzification),
+<a href="../user_guide/FIM/BD_FARE/"><code>FIM.BD_FARE</code></a> and <a href="../user_guide/FIM/FARE/"><code>FIM.FARE</code></a> (distributed and sequential fuzzy
+rule mining), and <a href="../user_guide/VizARM/"><code>VizARM</code></a> (visualisation).</p>
+<h3 id="behavioural-patterns-of-patients-from-sensorised-homes">Behavioural patterns of patients from sensorised homes</h3>
+<p>Fernandez-Basso, Diaz-Jimenez, Lopez &amp; Espinilla (2025),
+<a href="https://doi.org/10.1016/j.inffus.2025.103307"><em>Information Fusion</em> 123, 103307</a>.</p>
+<p>An automatic <strong>fusion and fuzzification</strong> methodology integrates multi-source sensor data into coherent fuzzy
+variables, from which frequent behavioural patterns are discovered. It was validated in the sensorised homes of
+patients with type II diabetes in Cabra (Cordoba, Spain), where it helps health professionals monitor and optimise
+patient routines.</p>
+<p><em>In ARMxtend:</em> fuzzification with <a href="../user_guide/preprocessing/FuzzyLib/"><code>preprocessing.FuzzyLib</code></a> (including the
+automatic partitions), then fuzzy itemset and rule mining with <a href="../user_guide/FIM/FARE/"><code>FIM.FARE</code></a>.</p>
+<h3 id="aimdp-a-data-platform-for-hospital-data-silos">AIMDP: a data platform for hospital data silos</h3>
+<p>Ortega-Calvo, Morcillo-Jimenez, Fernandez-Basso, Gutierrez-Batista, Vila &amp; Martin-Bautista (2023),
+<a href="https://doi.org/10.1016/j.future.2023.02.002"><em>Future Generation Computer Systems</em> 143, 248-264</a>.</p>
+<p>AIMDP (Artificial Intelligence Modern Data Platform) is a Big Data platform with AI-driven management, designed so
+that users <strong>without data-science expertise</strong> can analyse their data, and with a layer for security and data
+governance. It was used with two Spanish hospitals to analyse historical records that had been isolated in data silos
+and never studied by researchers or clinicians. Among its analysis tools are the distributed association rule
+algorithms collected in ARMxtend.</p>
+<p><em>In ARMxtend:</em> <a href="../user_guide/FIM/apriori/"><code>FIM.apriori</code></a>, <a href="../user_guide/FIM/Eclat/"><code>FIM.Eclat</code></a> and
+<a href="../user_guide/FIM/BD_ARE/"><code>FIM.BD_ARE</code></a> for crisp data, <a href="../user_guide/FIM/BD_FARE/"><code>FIM.BD_FARE</code></a> for fuzzy data.</p>
+<h3 id="level-by-level-rule-mining-in-clinical-databases">Level-by-level rule mining in clinical databases</h3>
+<p>Ortiz-Viso, Fernandez-Basso, Ruiz &amp; Martin-Bautista (2025), <em>Lecture Notes in Networks and Systems</em> 1176, 143-154
+(<a href="https://doi.org/10.1007/978-3-031-73997-2_13">IPMU 2024</a>).</p>
+<p>A tiered, level-by-level approach to association rule mining on clinical databases, designed around their
+hierarchical structure to support clinical decision-making.</p>
+<h3 id="federated-fuzzy-association-rules-related-work-not-in-armxtend-yet">Federated fuzzy association rules <em>(related work, not in ARMxtend yet)</em></h3>
+<p>Fernandez-Basso, Ruiz &amp; Martin-Bautista (2025), <em>Lecture Notes in Networks and Systems</em> 1176, 131-142
+(<a href="https://doi.org/10.1007/978-3-031-73997-2_12">IPMU 2024</a>).</p>
+<p>A fuzzy association rule mining algorithm for <strong>federated</strong> settings, where each party keeps its data private. It aims
+at protecting privacy and limiting communication overhead, with healthcare as a key application area. The federated
+algorithm itself is not part of ARMxtend; the fuzzy rule mining it builds on is (<a href="../user_guide/FIM/FARE/"><code>FIM.FARE</code></a>).</p>
+<h2 id="security-and-law-enforcement">Security and law enforcement</h2>
+<h3 id="knowledge-extraction-for-police-investigations">Knowledge extraction for police investigations</h3>
+<p>Fernandez-Basso, Gutierrez-Batista, Gomez-Romero, Ruiz &amp; Martin-Bautista (2025),
+<a href="https://doi.org/10.1111/exsy.13524"><em>Expert Systems</em> 42, e13524</a>.</p>
+<p>An AI system that combines several tools to <strong>assist police and law enforcement agencies</strong> in an investigation: it
+helps to collect, process and analyse large volumes of data, such as criminal activity on the dark web, and works as
+an early warning and early action system that can point to possible crime hotspots. Association rule mining is one of
+its knowledge-extraction tools. Its functionality is illustrated with data collected from the dark web, namely
+advertisements offering firearms-related products.</p>
+<p><em>In ARMxtend:</em> <a href="../user_guide/ARM/association_rules/"><code>ARM.association_rules</code></a> and
+<a href="../user_guide/FIM/FARE/"><code>FIM.FARE</code></a> to extract and filter the rules, and <a href="../user_guide/VizARM/"><code>VizARM</code></a> to explore
+them.</p>
+<h2 id="energy-efficiency-of-buildings-iot">Energy efficiency of buildings (IoT)</h2>
+<p>Sensors in office buildings produce large volumes of consumption, occupancy and weather data. Several studies mine
+them with fuzzy and Big Data association rules:</p>
+<table>
+<thead>
+<tr>
+<th>Study</th>
+<th>What it does</th>
+<th>In ARMxtend</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fernandez-Basso, Ruiz &amp; Martin-Bautista (2020), <a href="https://doi.org/10.1109/TFUZZ.2020.2992180"><em>IEEE Trans. Fuzzy Systems</em></a></td>
+<td>An automatic fuzzification method implemented with Big Data tools, used to detect interrelations among sensor and weather data from an office building.</td>
+<td><a href="../user_guide/preprocessing/FuzzyLib/"><code>preprocessing.FuzzyLib</code></a></td>
+</tr>
+<tr>
+<td>Fernandez-Basso, Ruiz &amp; Martin-Bautista (2021), <a href="https://doi.org/10.1016/j.ijar.2021.07.004"><em>Int. J. Approximate Reasoning</em> 137</a></td>
+<td>Spark algorithms for fuzzy association rules; evaluated, among other data, on sensor measurements from an office building. It shows that 10 equidistributed alpha-cuts are enough to find all the significant fuzzy rules.</td>
+<td><a href="../user_guide/FIM/BD_FARE/"><code>FIM.BD_FARE</code></a>, <a href="../user_guide/FIM/Eclat/"><code>FIM.Eclat</code></a></td>
+</tr>
+<tr>
+<td>Ruiz, Gomez-Romero, Fernandez-Basso &amp; Martin-Bautista (2022), <a href="https://doi.org/10.1109/TII.2021.3130052"><em>IEEE Trans. Industrial Informatics</em> 18</a></td>
+<td>A Big Data architecture for building energy management, with components for data acquisition and for algorithms that analyse massive heterogeneous data; deployed in four buildings of different purposes.</td>
+<td>the Spark algorithms run on top of an architecture like this one</td>
+</tr>
+<tr>
+<td>Ruiz, Fernandez-Basso, Gomez-Romero &amp; Martin-Bautista (2023), <a href="https://doi.org/10.1038/s41598-023-47056-1"><em>Scientific Reports</em> 13, 19810</a></td>
+<td>An IoT system on a Big Data architecture with Spark association rule algorithms, which uncovered hidden patterns in the data of a building in Bucharest and helped improve its energy efficiency.</td>
+<td><a href="../user_guide/FIM/apriori/"><code>FIM.apriori</code></a>, <a href="../user_guide/FIM/Eclat/"><code>FIM.Eclat</code></a>, <a href="../user_guide/FIM/BD_ARE/"><code>FIM.BD_ARE</code></a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-methods-themselves">The methods themselves</h2>
+<p>The papers that introduce the algorithms are listed in <a href="../cite/">Citing ARMxtend</a>: streaming frequent itemsets in
+data streams (<code>SFIM</code>/<code>SARE</code>, 2019), Spark algorithms for crisp and fuzzy rules (2021, 2024), meta-association rules
+over multiple datasets (2016) and the VizARE visualisation format (2026).</p>
+<h2 id="following-the-same-workflow-on-your-own-data">Following the same workflow on your own data</h2>
+<table>
+<thead>
+<tr>
+<th>Your data</th>
+<th>Typical pipeline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sensors, IoT, smart buildings or homes</td>
+<td><a href="../user_guide/preprocessing/FuzzyLib/"><code>FuzzyLib</code></a> automatic fuzzification, <a href="../user_guide/FIM/BD_FARE/"><code>FIM.BD_FARE</code></a> (big data) or <a href="../user_guide/FIM/FARE/"><code>FIM.FARE</code></a>, then <a href="../user_guide/VizARM/"><code>VizARM</code></a></td>
+</tr>
+<tr>
+<td>Clinical, administrative or investigative records</td>
+<td>discretise or fuzzify, <a href="../user_guide/FIM/FARE/"><code>FIM.FARE</code></a> / <a href="../user_guide/ARM/association_rules/"><code>ARM.association_rules</code></a>, prune with <a href="../user_guide/ARM/redundancy/"><code>ARM.redundancy</code></a>, explore in <a href="../user_guide/VizARM/"><code>VizARM</code></a></td>
+</tr>
+<tr>
+<td>Massive transaction data</td>
+<td><a href="../user_guide/FIM/apriori/"><code>FIM.apriori</code></a> or <a href="../user_guide/FIM/Eclat/"><code>FIM.Eclat</code></a> on Spark, then <a href="../user_guide/FIM/BD_ARE/"><code>FIM.BD_ARE</code></a> (see <a href="../user_guide/scalability/">Scalability</a>)</td>
+</tr>
+<tr>
+<td>Data streams</td>
+<td><a href="../user_guide/SARE_SFIM/"><code>SFIM</code> / <code>SARE</code></a></td>
+</tr>
+<tr>
+<td>Rules from several datasets</td>
+<td><a href="../user_guide/ARM/meta_rules/"><code>ARM.meta_rules</code></a></td>
+</tr>
+</tbody>
+</table>
+<p>The <a href="../examples/">examples</a> include runnable scripts for each of these steps.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js"></script>
+        <script src="../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

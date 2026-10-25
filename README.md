@@ -16,6 +16,7 @@ Carlos Fernandez-Basso  2015-2026
 
 - **Documentation:** [https://cjferba.github.io/ARMxtend](https://cjferba.github.io/ARMxtend)
 - **Examples:** [https://cjferba.github.io/ARMxtend/examples](https://cjferba.github.io/ARMxtend/examples/) -- runnable, CI-tested scripts for every module (see [`examples/`](examples/))
+- **Applications:** [https://cjferba.github.io/ARMxtend/applications](https://cjferba.github.io/ARMxtend/applications/) -- published studies (healthcare, energy efficiency of buildings, law enforcement) that use these methods
 - **Citing ARMxtend:** [https://cjferba.github.io/ARMxtend/cite](https://cjferba.github.io/ARMxtend/cite/) -- the paper behind each module, with BibTeX
 - PyPI: not published yet (the release workflow and `pyproject.toml` are ready; see [CHANGELOG](CHANGELOG.md))
 

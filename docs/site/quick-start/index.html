@@ -46,6 +46,9 @@
                             <li class="nav-item">
                                 <a href="../examples/" class="nav-link">Examples</a>
                             </li>
+                            <li class="nav-item">
+                                <a href="../applications/" class="nav-link">Applications</a>
+                            </li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
                                 <ul class="dropdown-menu">
@@ -64,6 +67,32 @@
             
 <li>
     <a href="../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
 </li>
     </ul>
   </li>
@@ -121,11 +150,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -379,6 +428,7 @@ Cytoscape, Graphviz, NetworkX):</p>
 
 graph = AREtoGraph.from_dataframe(rules, rule_measures=(&quot;confidence&quot;, &quot;certainty_factor&quot;))
 jgf = graph.exportGraph(type=0)  # 0: JGF, 1: GraphML, 2: DOT, 3: the networkx.DiGraph itself
+graph.to_html(&quot;rules.html&quot;)      # interactive, self-contained viewer: open it in any browser
 </code></pre>
 <h2 id="7-fuzzifying-numeric-attributes">7. Fuzzifying numeric attributes</h2>
 <p><code>preprocessing.FuzzyLib</code> turns a numeric column into a set of overlapping fuzzy labels (a

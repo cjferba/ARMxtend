@@ -46,6 +46,9 @@
                             <li class="nav-item">
                                 <a href="./" class="nav-link active" aria-current="page">Examples</a>
                             </li>
+                            <li class="nav-item">
+                                <a href="../applications/" class="nav-link">Applications</a>
+                            </li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
                                 <ul class="dropdown-menu">
@@ -64,6 +67,32 @@
             
 <li>
     <a href="../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
 </li>
     </ul>
   </li>
@@ -121,11 +150,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -186,7 +235,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../USER_GUIDE_INDEX/" class="nav-link">
+                                <a rel="next" href="../applications/" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -230,6 +279,10 @@
               </ul>
             </li>
             <li class="nav-item" data-bs-level="2"><a href="#visualization-the-vizare-typed-graph-vizarmaretograph" class="nav-link">Visualization: the VizARE typed graph (VizARM.AREtoGraph)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#other-kinds-of-rules-and-tools" class="nav-link">Other kinds of rules and tools</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -497,6 +550,7 @@ def main():
     print(graph.to_jgf())
 
     summaryIds = graph.summarize(signature=&quot;consequent&quot;, measures=(&quot;confidence&quot;, &quot;lift&quot;))
+    graph.to_html(&quot;rules.html&quot;)    # interactive viewer, self-contained
     return graph, summaryIds
 
 
@@ -527,9 +581,83 @@ JGF (formato intermedio propuesto, primeras lineas):
 Resumen por consecuente (2 grupos):
   1 reglas -&gt; ['C']  confidence en [0.80, 0.80] (media 0.80)
   2 reglas -&gt; ['B']  confidence en [0.71, 0.83] (media 0.77)
+
+Visor HTML interactivo: 25950 bytes, grafo JGF embebido
 </code></pre>
+<p><code>graph.to_html("rules.html")</code> writes that interactive viewer to disk -- a single file you can open in any
+browser (see <a href="../user_guide/VizARM/#interactive-viewer"><code>VizARM.AREtoGraph</code></a>).</p>
 <p>GraphML (Gephi/Cytoscape/NetworkX) and DOT (Graphviz) exports are still available as
 <code>graph.exportGraph(type=1)</code>/<code>type=2</code>, for tools that don't consume JGF directly.</p>
+<h2 id="other-kinds-of-rules-and-tools">Other kinds of rules and tools</h2>
+<p>Rules with <strong>absent items</strong>, <strong>exception</strong> and <strong>anomalous</strong> rules, <strong>gradual</strong> rules, <strong>closed /
+maximal</strong> itemsets with <strong>redundant-rule pruning</strong>, and <strong>automatic fuzzification</strong> feeding the fuzzy
+miners with extra interest measures. See <a href="../user_guide/ARM/negative_rules/"><code>ARM.negative_rules</code></a>,
+<a href="../user_guide/ARM/exception_rules/"><code>ARM.exception_rules</code></a>,
+<a href="../user_guide/ARM/gradual_rules/"><code>ARM.gradual_rules</code></a>,
+<a href="../user_guide/FIM/condensed/"><code>FIM.condensed</code></a>, <a href="../user_guide/ARM/redundancy/"><code>ARM.redundancy</code></a> and
+<a href="../user_guide/preprocessing/FuzzyLib/"><code>preprocessing.FuzzyLib</code></a>.</p>
+<pre><code class="language-python">from ARMxtend.ARM import (
+    anomalous_rules, exception_rules, gradual_rules, negative_association_rules, prune_redundant_rules,
+)
+from ARMxtend.FFIM import fuzzy_fpgrowth
+from ARMxtend.FIM import closed_itemsets, maximal_itemsets
+from ARMxtend.FIM.FARE import fuzzy_association_rules
+from ARMxtend.preprocessing import FuzzyLib
+
+# quien toma cafe no toma te
+negative = negative_association_rules(drinks, min_supp=0.25, min_threshold=0.95)
+
+# &quot;fever -&gt; rest&quot; falla cuando ademas hay &quot;must_work&quot; (excepcion) o termina en &quot;hospital&quot; (anomalia)
+exceptions = exception_rules(sickness, min_supp=0.3, min_conf=0.8, min_exception_supp=0.03)
+anomalies = anomalous_rules(sickness, min_supp=0.3, min_conf=0.7, min_anomalous_supp=0.05,
+                            min_anomalous_conf=0.6)
+
+# cuanto mas edad y menos ejercicio, mas colesterol -- directamente sobre columnas numericas
+gradual = gradual_rules(health, min_supp=0.25, min_conf=0.8)
+
+# representaciones condensadas y poda
+closed, maximal = closed_itemsets(frequent), maximal_itemsets(frequent)
+pruned = prune_redundant_rules(all_rules)
+
+# fuzzificacion automatica (cuantiles) + reglas difusas con medidas adicionales
+fuzzy = FuzzyLib()
+fuzzy.data = health[[&quot;age&quot;, &quot;cholesterol&quot;]].copy()
+fuzzy.AutoFuzzification(n_labels=3, method=&quot;quantile&quot;)
+itemsets = fuzzy_fpgrowth(fuzzy.GetFuzzyTransactions(), min_supp=0.1, num_alpha=10)
+rules = fuzzy_association_rules(itemsets, 10, metric=&quot;zhangs_metric&quot;, min_threshold=0.4,
+                                measures=[&quot;zhangs_metric&quot;, &quot;kulczynski&quot;])
+</code></pre>
+<p>(full source, with the data of each case: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_rule_types.py"><code>examples/example_rule_types.py</code></a>)</p>
+<p>Output:</p>
+<pre><code class="language-text">Reglas con items ausentes:
+  {~coffee, ~sugar} -&gt; {tea}  support=0.36 confidence=1.00
+  {tea, ~sugar} -&gt; {~coffee}  support=0.36 confidence=1.00
+  {~coffee} -&gt; {tea}  support=0.43 confidence=1.00
+  {tea} -&gt; {~coffee}  support=0.43 confidence=1.00
+  {sugar, ~tea} -&gt; {coffee}  support=0.43 confidence=1.00
+  {coffee, sugar} -&gt; {~tea}  support=0.43 confidence=1.00
+  {~tea} -&gt; {coffee}  support=0.57 confidence=1.00
+  {coffee} -&gt; {~tea}  support=0.57 confidence=1.00
+
+Excepciones a reglas comunes fuertes:
+  {must_work} -&gt; rest (conf 0.88), pero con {fever} ocurre ~rest: confidence=1.00 (referencia 0.20)
+  {fever} -&gt; rest (conf 0.80), pero con {must_work} ocurre ~rest: confidence=1.00 (referencia 0.12)
+Anomalias (A y no b -&gt; C):
+  {fever} -&gt; rest: en 15 casos con ~rest, aparece {hospital} (confidence=0.67)
+
+Reglas graduales:
+  cuanto age↑, exercise↓ -&gt; cholesterol↑  support=0.51 confidence=0.98
+  cuanto cholesterol↑, exercise↑ -&gt; age↑  support=0.29 confidence=0.97
+  cuanto age↑ -&gt; cholesterol↑  support=0.80 confidence=0.80
+
+Itemsets frecuentes: 8, cerrados: ['a-b', 'a-b-c', 'd'], maximales: ['a-b-c', 'd']
+Reglas: 12 -&gt; 5 tras eliminar las redundantes
+
+Reglas difusas con Zhang &gt;= 0.4:
+  {age_low} -&gt; {cholesterol_low}  FSupp=0.12 FConf=0.37 zhang=0.74 kulczynski=0.55
+  {cholesterol_low} -&gt; {age_low}  FSupp=0.12 FConf=0.73 zhang=0.63 kulczynski=0.55
+  {age_high} -&gt; {cholesterol_high}  FSupp=0.12 FConf=0.48 zhang=0.49 kulczynski=0.51
+</code></pre>
 <h2 id="big-data-and-streaming-algorithms">Big Data and streaming algorithms</h2>
 <p>The Spark-based algorithms (<code>FIM.apriori</code>, <code>FIM.Eclat</code>, <code>FIM.BD_ARE</code>, <code>FIM.BD_FARE</code>, <code>SARE</code>,
 <code>SFIM</code>) are exercised in <code>tests/test_fim_apriori_eclat.py</code>, <code>tests/test_sare_association_rules.py</code>

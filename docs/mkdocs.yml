@@ -25,6 +25,7 @@ nav:
 - Installation: installation.md
 - Quick Start: quick-start.md
 - Examples: examples.md
+- Applications: applications.md
 - User Guide:
   - USER_GUIDE_INDEX.md
   - Crisp association rules:

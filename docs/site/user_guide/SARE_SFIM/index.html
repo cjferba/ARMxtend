@@ -46,6 +46,9 @@
                             <li class="nav-item">
                                 <a href="../../examples/" class="nav-link">Examples</a>
                             </li>
+                            <li class="nav-item">
+                                <a href="../../applications/" class="nav-link">Applications</a>
+                            </li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
                                 <ul class="dropdown-menu">
@@ -64,6 +67,32 @@
             
 <li>
     <a href="../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+            
+<li>
+    <a href="../FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
 </li>
     </ul>
   </li>
@@ -121,11 +150,31 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Meta-association rules</a>
     <ul class="dropdown-menu">
             
 <li>
     <a href="../ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../cli/" class="dropdown-item">armxtend</a>
 </li>
     </ul>
   </li>
@@ -186,7 +235,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../ARM/meta_rules/" class="nav-link">
+                                <a rel="next" href="../scalability/" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -218,6 +267,10 @@
               </ul>
             </li>
             <li class="nav-item" data-bs-level="2"><a href="#sareextractassociationrules" class="nav-link">SARE.extractAssociationRules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#correctness-verification-and-notes" class="nav-link">Correctness verification and notes</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -271,7 +324,27 @@ rules = extractAssociationRules(actual_fimots_structure, min_threshold=0.7)
 </code></pre>
 <p>See <code>tests/test_sare_association_rules.py</code> for a runnable example that builds a <code>FIMoTS_Structure</code>
 by hand (without running the full streaming algorithm) and verifies the extracted rules against
-<a href="../FIM/BD_ARE/"><code>FIM.BD_ARE.generate_rules</code></a>.</p></div>
+<a href="../FIM/BD_ARE/"><code>FIM.BD_ARE.generate_rules</code></a>.</p>
+<h2 id="correctness-verification-and-notes">Correctness verification and notes</h2>
+<p><code>tests/test_fimots_streaming.py</code> runs the algorithm on a <strong>real local Spark</strong> and, after <em>every</em>
+window slide, compares the frequent itemsets it maintains incrementally with a brute-force
+computation over the transactions currently in the window. The scenarios include concept drift (item
+frequencies change halfway through the stream), item names that are prefixes of each other
+(<code>milk</code>/<code>milkshake</code>), items that appear for the first time after the initial window, and several window
+sizes and support thresholds. Writing this check uncovered, and fixed, four defects in the incremental
+maintenance (a fresh initialization of the same window was always right; the incremental path was not):</p>
+<ul>
+<li>an itemset that became frequent was never added as a partner to its already-expanded left siblings
+  (e.g. <code>c_e</code> was lost when <code>e</code> became frequent), so frequent itemsets went missing;</li>
+<li>items that first appear after the initial window never got a node, and so were never detected;</li>
+<li>sibling and descendant lookups matched node keys with <code>startswith</code>, mixing up items whose names are
+  prefixes of other names, and pruning an infrequent itemset only removed its direct children, leaving
+  deeper descendants behind;</li>
+<li>when two sibling itemsets became frequent in the same window, their common child was created twice,
+  registered twice in the bounds lists and counted double.</li>
+</ul>
+<p>Notes: item names must not contain <code>_</code> (it is the key separator of the tree) nor be <code>-1</code> (the root key).
+<code>SFIM</code> now simply re-exports the implementation of <code>SARE</code>, so both always behave the same.</p></div>
             </div>
         </div>
 

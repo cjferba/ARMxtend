@@ -1,7 +1,8 @@
 # Citing ARMxtend
 
 If you use ARMxtend as part of your workflow in a scientific publication, please consider citing
-the paper(s) behind the specific module(s) you used.
+the paper(s) behind the specific module(s) you used. For studies that apply these methods to real data see
+[Applications](applications.md).
 
 ## Big Data / streaming frequent itemset mining (`SFIM`, `SARE`)
 
