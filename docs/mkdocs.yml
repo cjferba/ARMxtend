@@ -47,8 +47,12 @@ nav:
     - FIM.Eclat (FuzzyDECLAT): user_guide/FIM/Eclat.md
   - Streaming (Spark):
     - SFIM / SARE (FIMoTS): user_guide/SARE_SFIM.md
+  - Scalability:
+    - Spark benchmarks: user_guide/scalability.md
   - Meta-association rules:
     - ARM.meta_rules: user_guide/ARM/meta_rules.md
+  - Command line:
+    - armxtend: user_guide/cli.md
   - Visualization:
     - VizARM.AREtoGraph: user_guide/VizARM.md
   - Preprocessing:

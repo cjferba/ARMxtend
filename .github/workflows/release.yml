@@ -1,0 +1,52 @@
+name: Release
+
+# Publishes to PyPI when a GitHub release is published, using PyPI "trusted publishing" (OpenID Connect):
+# no API token is stored anywhere. One-time setup on pypi.org (see CONTRIBUTING.md > Releasing):
+#   Account settings > Publishing > add a (pending) publisher with
+#   owner "cjferba", repository "ARMxtend", workflow "release.yml", environment "pypi".
+# To try the whole process first, run this workflow manually (workflow_dispatch) to publish to TestPyPI
+# (environment "testpypi" with its own publisher on test.pypi.org).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'release' && 'pypi' || 'testpypi' }}
+    permissions:
+      id-token: write      # required for trusted publishing
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Check that the release tag matches the package version
+        if: github.event_name == 'release'
+        run: |
+          version=$(python -c "import re; print(re.search(r'__version__ = \"([^\"]+)\"', open('ARMxtend/__init__.py').read()).group(1))")
+          tag="${{ github.event.release.tag_name }}"
+          test "v$version" = "$tag" || { echo "Tag $tag does not match ARMxtend.__version__ = $version"; exit 1; }
+
+      - name: Build the sdist and the wheel
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          twine check --strict dist/*
+
+      - name: Publish to TestPyPI
+        if: github.event_name == 'workflow_dispatch'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+      - name: Publish to PyPI
+        if: github.event_name == 'release'
+        uses: pypa/gh-action-pypi-publish@release/v1

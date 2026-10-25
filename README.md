@@ -17,23 +17,34 @@ Carlos Fernandez-Basso  2015-2026
 - **Documentation:** [https://cjferba.github.io/ARMxtend](https://cjferba.github.io/ARMxtend)
 - **Examples:** [https://cjferba.github.io/ARMxtend/examples](https://cjferba.github.io/ARMxtend/examples/) -- runnable, CI-tested scripts for every module (see [`examples/`](examples/))
 - **Citing ARMxtend:** [https://cjferba.github.io/ARMxtend/cite](https://cjferba.github.io/ARMxtend/cite/) -- the paper behind each module, with BibTeX
-- PyPI: not published yet
+- PyPI: not published yet (the release workflow and `pyproject.toml` are ready; see [CHANGELOG](CHANGELOG.md))
 
 
 ## Installing ARMxtend
 
 ```bash
-pip install -e .            # nucleo: ARM, FIM.FARE, FFIM, VizARM, preprocessing
-pip install -e ".[spark]"   # + pyspark, necesario para los algoritmos de Big Data/streaming
+pip install git+https://github.com/cjferba/ARMxtend.git            # nucleo: ARM, FIM.FARE, FFIM, VizARM, preprocessing
+pip install "ARMxtend[spark] @ git+https://github.com/cjferba/ARMxtend.git"   # + pyspark (Big Data / streaming)
 ```
 
-Ejecutar los tests: `pip install -e ".[spark]" pytest && pytest tests/`
-(el paquete `pyspark` debe estar instalado para que los modulos de Spark se puedan *importar*,
-pero la mayoria de tests corren contra `tests/spark_stub.py`, un doble local de la API de Spark,
-por lo que no requieren cluster ni JVM). Ademas, `tests/test_spark_integration.py` ejecuta los
-algoritmos de Big Data sobre un Spark real en modo `local[2]` y comprueba que coinciden con el
-doble local y con las versiones secuenciales; requiere un JDK >= 17 (`JAVA_HOME`) y se omite
-automaticamente si no lo hay.
+Desde un clon del repositorio: `pip install -e .` o `pip install -e ".[spark,dev]"` (para desarrollar).
+Requiere Python >= 3.9. Instalado el paquete, tambien hay una linea de comandos (`armxtend rules datos.csv ...`,
+ver la [guia](https://cjferba.github.io/ARMxtend/user_guide/cli/)).
+
+Ejecutar los tests y las comprobaciones del CI:
+
+```bash
+pip install -e ".[spark,dev]"
+pytest --cov=ARMxtend     # tests + cobertura (el CI exige >= 80 %)
+ruff check . && mypy      # lint y tipos
+```
+
+Los algoritmos de Big Data se prueban de dos formas. La mayoria de tests corren contra `tests/spark_stub.py`, un
+doble local de la API de Spark que no necesita cluster ni JVM. Ademas, `tests/test_spark_integration.py`,
+`tests/test_fimots_streaming.py` y `tests/test_fimots_drivers.py` ejecutan los algoritmos (incluido FIMoTS tras
+cada deslizamiento de ventana, contra un oraculo de fuerza bruta) sobre un Spark real en modo local; requieren un
+JDK >= 17 (`JAVA_HOME`) y se omiten automaticamente si no lo hay. Sin `pyspark` se omiten tambien los tests de
+Spark y el nucleo sigue funcionando.
 
 ## Features
 

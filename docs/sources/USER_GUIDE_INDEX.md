@@ -27,8 +27,14 @@
 ## Streaming frequent itemsets and association rules (Spark)
 - [SFIM / SARE (FIMoTS)](user_guide/SARE_SFIM.md)
 
+## Scalability
+- [Spark benchmarks: data, cores, memory](user_guide/scalability.md)
+
 ## Meta-association rules
 - [ARM.meta_rules](user_guide/ARM/meta_rules.md)
+
+## Command line
+- [armxtend (rules, fuzzy-rules, gradual-rules)](user_guide/cli.md)
 
 ## Visualization
 - [VizARM.AREtoGraph](user_guide/VizARM.md)

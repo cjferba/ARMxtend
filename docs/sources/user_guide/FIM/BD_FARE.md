@@ -33,3 +33,10 @@ fuzzy_transactions = sc.parallelize([
 ])
 freq_itemsets = FuzzyDAprioriTID.run(sc, fuzzy_transactions, min_supp=0.3, num_alpha=10)
 ```
+
+## Scalability
+
+`FuzzyDAprioriTID` grows almost linearly with the number of transactions (fitted `t ~ N^0.93` between 25 000 and
+100 000 transactions on a local Spark), which makes it the recommended fuzzy algorithm for big data; the alternative
+[`FuzzyDECLAT`](Eclat.md) keeps all the membership vectors in the driver. Measurements, caveats (single machine, not
+a cluster) and how to reproduce them: [Scalability](../scalability.md).

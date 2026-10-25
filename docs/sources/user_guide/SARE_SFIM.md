@@ -54,3 +54,25 @@ rules = extractAssociationRules(actual_fimots_structure, min_threshold=0.7)
 See `tests/test_sare_association_rules.py` for a runnable example that builds a `FIMoTS_Structure`
 by hand (without running the full streaming algorithm) and verifies the extracted rules against
 [`FIM.BD_ARE.generate_rules`](FIM/BD_ARE.md).
+
+## Correctness verification and notes
+
+`tests/test_fimots_streaming.py` runs the algorithm on a **real local Spark** and, after *every*
+window slide, compares the frequent itemsets it maintains incrementally with a brute-force
+computation over the transactions currently in the window. The scenarios include concept drift (item
+frequencies change halfway through the stream), item names that are prefixes of each other
+(`milk`/`milkshake`), items that appear for the first time after the initial window, and several window
+sizes and support thresholds. Writing this check uncovered, and fixed, four defects in the incremental
+maintenance (a fresh initialization of the same window was always right; the incremental path was not):
+
+- an itemset that became frequent was never added as a partner to its already-expanded left siblings
+  (e.g. `c_e` was lost when `e` became frequent), so frequent itemsets went missing;
+- items that first appear after the initial window never got a node, and so were never detected;
+- sibling and descendant lookups matched node keys with `startswith`, mixing up items whose names are
+  prefixes of other names, and pruning an infrequent itemset only removed its direct children, leaving
+  deeper descendants behind;
+- when two sibling itemsets became frequent in the same window, their common child was created twice,
+  registered twice in the bounds lists and counted double.
+
+Notes: item names must not contain `_` (it is the key separator of the tree) nor be `-1` (the root key).
+`SFIM` now simply re-exports the implementation of `SARE`, so both always behave the same.

@@ -55,3 +55,11 @@ fuzzy_transactions = sc.parallelize([
 ])
 freq_itemsets = FuzzyDECLAT.run(sc, fuzzy_transactions, min_supp=0.3, num_alpha=10)
 ```
+
+## Scalability
+
+`DECLAT` and `FuzzyDECLAT` collect all the TID-lists in the driver, so the amount of data they can handle is set by
+the driver's memory (`spark.driver.memory`), not by the size of the cluster. On a single machine `DECLAT` is the
+fastest crisp algorithm but its speed-up flattens after 2 to 4 cores, and `FuzzyDECLAT` grows faster than linearly
+with the data and does not speed up with more cores: for big fuzzy datasets prefer
+[`FuzzyDAprioriTID`](BD_FARE.md). Measurements and how to reproduce them: [Scalability](../scalability.md).

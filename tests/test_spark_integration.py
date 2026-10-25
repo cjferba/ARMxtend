@@ -16,27 +16,12 @@ Se omiten automaticamente si no hay ``pyspark`` o un JDK (>= 17) disponible.
 En local: ``export JAVA_HOME=$(/usr/libexec/java_home)`` o equivalente.
 """
 import os
-import subprocess
 import sys
 
 import numpy as np
 import pytest
 
-pyspark = pytest.importorskip("pyspark")
-
-
-def _java_available():
-    # No basta con shutil.which("java"): macOS trae un /usr/bin/java que
-    # existe aunque no haya ningun JDK instalado y falla al ejecutarse.
-    java = os.path.join(os.environ["JAVA_HOME"], "bin", "java") if os.environ.get("JAVA_HOME") else "java"
-    try:
-        return subprocess.run([java, "-version"], capture_output=True).returncode == 0
-    except OSError:
-        return False
-
-
-if not _java_available():
-    pytest.skip("No hay JDK disponible (defina JAVA_HOME)", allow_module_level=True)
+pytest.importorskip("pyspark")
 
 sys.path.insert(0, os.path.dirname(__file__))
 from spark_stub import FakeSparkContext  # noqa: E402
@@ -65,15 +50,9 @@ NUM_ALPHA = 5
 PARTITIONS = 3  # varias particiones: fuerza la reduccion entre particiones
 
 
-@pytest.fixture(scope="module")
-def sc():
-    os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
-    conf = pyspark.SparkConf().setMaster("local[2]").setAppName("armxtend-integration") \
-        .set("spark.ui.enabled", "false")
-    context = pyspark.SparkContext(conf=conf)
-    context.setLogLevel("ERROR")
-    yield context
-    context.stop()
+@pytest.fixture
+def sc(real_sc):
+    return real_sc
 
 
 @pytest.mark.parametrize("algorithm", [DApriori, DAprioriTID, DECLAT])

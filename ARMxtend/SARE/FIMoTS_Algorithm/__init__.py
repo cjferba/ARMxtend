@@ -72,7 +72,7 @@ def FIMoTS_GetFirstLevelTree(slidingWindow, sparkContext):
     transacsTotal = transactions.count()
 
     # Dividir cada línea del RDD en palabras
-    items = transactions.flatMap(lambda transaction: transaction.split(" "))
+    items = transactions.flatMap(lambda transaction: transaction.split())
 
     # Contar cada palabra en cada subconjunto
     itemPairs = items.map(lambda item: (item, 1))
@@ -198,6 +198,11 @@ def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWin
 
         for itemsetCandidate in newLevelCandidates:
             newNode = FIMoTS_Node(itemsetCandidate, 0.0, None, currentItemNode.getItemsetKey(), 0, 0)
+            # Un hijo que ya existe (p.ej. creado por FIMoTS_ExtendLeftSiblings cuando dos itemsets
+            # hermanos pasan a ser frecuentes en la misma ventana) no se vuelve a crear: se
+            # registraria dos veces en las listas de cotas y su soporte se contaria por duplicado.
+            if not isTreeInitialization and newNode.getItemsetKey() in algStructure.itemsetsTree.nodeMap:
+                continue
             newNodes.append(newNode)
 
         itemsetsCounts = []
@@ -290,6 +295,59 @@ def FIMoTS_ExtendLeftSiblings(keyNode, node, algStructure, slidingWindow, minRel
         if child.relativeSupport >= minRelSupport:
             FIMoTS_ExtendLeftSiblings(child.getItemsetKey(), child, algStructure, slidingWindow, minRelSupportElems,
                                       sparkContext)
+
+
+def FIMoTS_AddNewItems(algStructure, slidingWindow, minRelSupportElems, sparkContext):
+    """
+    Incorporar al árbol los items que aparecen POR PRIMERA VEZ en el flujo de datos. El primer
+    nivel del árbol se construye con el vocabulario de la primera ventana, y los cambios de
+    soporte de los nodos existentes se detectan mediante las cotas de transformación; pero un
+    item que no estaba en esa primera ventana no tiene nodo, y sin este paso nunca llegaría a
+    detectarse (ni él ni los itemsets que lo contienen), por frecuente que se volviera.
+
+    Se buscan los items del último lote recibido que no tienen nodo de primer nivel, se calcula
+    su soporte sobre la ventana actual (un único trabajo Spark adicional, solo si hay items
+    nuevos) y se insertan como nodos del primer nivel. Si resultan frecuentes, se despliega su
+    descendencia y se incorporan como pareja a sus hermanos izquierdos frecuentes, igual que
+    cualquier otro itemset que pasa a ser frecuente.
+
+    Este paso se ejecuta al final de FIMoTS_Main: los soportes de los nodos nuevos ya se calculan
+    sobre la ventana actual, así que no deben pasar por la actualización de cotas por
+    desplazamiento de la ventana.
+
+    Argumentos:
+        algStructure (FIMoTS_Structure, obligatorio): estructura actual del algoritmo FIMoTS
+        slidingWindow (WindowData, obligatorio): ventana de tiempo ya actualizada
+        minRelSupportElems (DecimalFraction, obligatorio): mínimo soporte relativo
+        sparkContext(SparkContext): contexto distribuido de Spark
+    """
+    nodeMap = algStructure.itemsetsTree.nodeMap
+    minRelSupport = minRelSupportElems.numeratorFraction / float(minRelSupportElems.denominatorFraction)
+    newestBatch = slidingWindow.transactionIntervals[-1][0]
+
+    batchItems = set(newestBatch.flatMap(lambda transaction: transaction.split()).distinct().collect())
+    newItems = sorted(item for item in batchItems if item not in nodeMap)
+    if not newItems:
+        return
+
+    newItemsSet = set(newItems)
+    transactions = slidingWindow.getUnionTransactions(sparkContext)
+    transacTotal = slidingWindow.totalWindowTransacs
+    counts = dict(transactions.flatMap(lambda transaction: [(item, 1) for item in set(transaction.split())
+                                                            if item in newItemsSet])
+                  .reduceByKey(lambda x, y: x + y).collect())
+
+    for item in newItems:
+        count = counts.get(item, 0)
+        nodeMap[item] = FIMoTS_Node([item], count / float(transacTotal), DecimalFraction(count, transacTotal), '-1', 0,
+                                    slidingWindow.timeWindow)
+    nodeMap['-1'].totalChildNodes += len(newItems)
+
+    for item in newItems:
+        node = nodeMap[item]
+        FIMoTS_Initial(item, node, algStructure, slidingWindow, minRelSupportElems, True, False, sparkContext)
+        if node.relativeSupport >= minRelSupport:
+            FIMoTS_ExtendLeftSiblings(item, node, algStructure, slidingWindow, minRelSupportElems, sparkContext)
 
 
 def FIMoTS_UpdateBoundsList(currentItemNode, algStructure, minSupportElems, windowSize):
@@ -474,7 +532,7 @@ def FIMoTS_CalculateSupportLevelsTree(itemsetsCandidates, transactions):
         recibidos como argumentos.
     """
     # Dividir cada línea del RDD en palabras
-    transactionsAsList = transactions.map(lambda transaction: transaction.split(" "))
+    transactionsAsList = transactions.map(lambda transaction: transaction.split())
 
     # Contar cada palabra en cada subconjunto
     itemsetPairs = transactionsAsList.flatMap(
@@ -637,6 +695,8 @@ def FIMoTS_Main(deletedTransacSize, addedTransacSize, algStructure, slidingWindo
                        sparkContext)
         FIMoTS_ExtendLeftSiblings(newFreqItemKey, newFreqItemNode, algStructure, slidingWindow, minRelSupportElems,
                                   sparkContext)
+
+    FIMoTS_AddNewItems(algStructure, slidingWindow, minRelSupportElems, sparkContext)
 
     algStructure.frequentItemsetsBounds.clearEmptyBounds()
     algStructure.infrequentItemsetsBounds.clearEmptyBounds()

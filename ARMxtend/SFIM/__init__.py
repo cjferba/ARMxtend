@@ -215,7 +215,7 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
         # Buscar en Directorio Local
         fileList = os.walk(filesDir)
         for (dirPath, dirNames, fileNames) in fileList:
-            filesNames.extend([(dirPath + fileName) for fileName in fileNames])
+            filesNames.extend([os.path.join(dirPath, fileName) for fileName in sorted(fileNames)])
             break
 
         # Buscar en directorio HDFS (import diferido: 'sh' solo hace falta en este caso)
