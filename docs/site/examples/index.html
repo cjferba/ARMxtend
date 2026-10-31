@@ -76,6 +76,10 @@
 <li>
     <a href="../user_guide/ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
 </li>
+            
+<li>
+    <a href="../user_guide/ARM/significance/" class="dropdown-item">ARM.significance (p-values, FDR, permutation tests)</a>
+</li>
     </ul>
   </li>
                                     
@@ -317,6 +321,10 @@
               </ul>
             </li>
             <li class="nav-item" data-bs-level="2"><a href="#event-logs-sequential-patterns-and-rules-fimsequential-armsequential_rules" class="nav-link">Event logs: sequential patterns and rules (FIM.sequential, ARM.sequential_rules)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#statistical-significance-of-rules-armsignificance" class="nav-link">Statistical significance of rules (ARM.significance)</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -775,6 +783,34 @@ Reglas secuenciales con confianza &gt;= 0.7, por lift decreciente:
   alarm =&gt; bathroom  support=1.00 confidence=1.00 lift=1.00
 
 confianza de coffee =&gt; tv: 0.77; de tv =&gt; coffee: 0.00
+</code></pre>
+<h2 id="statistical-significance-of-rules-armsignificance">Statistical significance of rules (<code>ARM.significance</code>)</h2>
+<p>Which of the rules that pass the thresholds are real? 300 random baskets of 12 independent items with a single planted
+association (<code>i00 -&gt; i01</code>) give 100 rules with confidence &gt;= 0.45, more than half of them noise. The script keeps the real
+ones with an exact test plus a false-discovery-rate correction, and with a permutation test; it also shows why, with time
+series, the rows cannot be treated as independent. See <a href="../user_guide/ARM/significance/"><code>ARM.significance</code></a>.</p>
+<pre><code class="language-python">from ARMxtend.ARM import (
+    confidence_intervals, crisp_rule_miner, permutation_null, permutation_p_values, significant_rules,
+)
+
+fisher = significant_rules(rules, alpha=0.05, correction=&quot;fdr_bh&quot;, n_transactions=len(table))
+
+miner = crisp_rule_miner(0.03, &quot;confidence&quot;, 0.45)                       # el mismo minero de las reglas reales
+null = permutation_null(table, miner, n_permutations=50, null=&quot;permute&quot;)   # re-minar sobre copias barajadas
+permuted = permutation_p_values(rules, null, n_transactions=len(table))
+
+# series temporales: se baraja con desplazamientos circulares, que conservan la autocorrelacion de cada serie
+null = permutation_null(series, miner, n_permutations=60, null=&quot;shift&quot;)
+</code></pre>
+<p>(full source: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_significance.py"><code>examples/example_significance.py</code></a>)</p>
+<p>Output:</p>
+<pre><code class="language-text">Cestas: 300 | reglas con confianza &gt;= 0.45: 100 | sin i00 e i01 juntos (ruido): 54
+Con test de Fisher y FDR (alpha=0.05): 22 reglas, 2 de ruido
+Con permutacion (50 copias barajadas): 5 reglas, 0 de ruido; en los datos barajados salen 56 reglas de media
+
+i00 -&gt; i01: support=0.213 confidence=0.71 [0.61, 0.79] lift=1.79 p=3.9e-13
+
+11 pares de series independientes: Fisher (supone filas independientes) da 6 falsas alarmas (p &lt; 0.01); el test de permutacion circular, 1 (p &lt; 0.05)
 </code></pre>
 <h2 id="big-data-and-streaming-algorithms">Big Data and streaming algorithms</h2>
 <p>The Spark-based algorithms (<code>FIM.apriori</code>, <code>FIM.Eclat</code>, <code>FIM.BD_ARE</code>, <code>FIM.BD_FARE</code>, <code>SARE</code>,

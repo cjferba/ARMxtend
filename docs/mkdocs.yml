@@ -33,6 +33,7 @@ nav:
     - FFIM (FP-Growth): user_guide/FFIM.md
     - FIM.condensed (closed / maximal): user_guide/FIM/condensed.md
     - ARM.redundancy: user_guide/ARM/redundancy.md
+    - ARM.significance (p-values, FDR, permutation tests): user_guide/ARM/significance.md
   - Other kinds of rules:
     - ARM.negative_rules (absent items): user_guide/ARM/negative_rules.md
     - ARM.exception_rules (exceptions / anomalies): user_guide/ARM/exception_rules.md

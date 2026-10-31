@@ -22,6 +22,7 @@ EXAMPLE_MODULES = [
     "example_rule_types",
     "example_temporal_rules",
     "example_sequences",
+    "example_significance",
 ]
 
 
@@ -104,3 +105,17 @@ def test_sequences_example_recovers_the_planted_routine(capsys):
     assert rules[(rules["antecedents"] == frozenset(["tv"])) & (rules["consequents"] == frozenset(["coffee"]))].empty
     informative = rules[(rules["confidence"] >= 0.7) & (rules["lift"] > 1.1)]
     assert set(informative["consequents"].apply(lambda y: next(iter(y)))) == {"tv"}
+
+
+def test_significance_example_removes_the_noise_rules(capsys):
+    """Casi todas las reglas que pasan los umbrales son ruido; tras corregir quedan las de la asociacion real."""
+    module = importlib.import_module("example_significance")
+    rules, fisher, permuted, (pairs, fisher_alarms, shift_alarms) = module.main()
+
+    union = lambda frame: [a | c for a, c in zip(frame["antecedents"], frame["consequents"])]   # noqa: E731
+    noise = lambda frame: sum(not {"i00", "i01"} <= items for items in union(frame))              # noqa: E731
+    assert len(rules) == 100 and noise(rules) > 40
+    assert 0 < len(fisher) < len(rules) / 2 and noise(fisher) <= 3
+    best = permuted[permuted["p_permutation"] <= 0.05]
+    assert len(best) > 0 and noise(best) == 0
+    assert pairs >= 10 and fisher_alarms >= 5 and shift_alarms <= 2

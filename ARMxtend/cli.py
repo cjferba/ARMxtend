@@ -9,6 +9,8 @@ Interfaz de linea de comandos de ARMxtend::
     armxtend rule-drift sensores.csv --time-column hora --window 15D --max-lag 1
     armxtend sequences rutinas.txt --min-supp 0.3
     armxtend sequential-rules rutinas.txt --min-supp 0.3 --min-threshold 0.8
+    armxtend rules transacciones.csv --min-supp 0.05 --alpha 0.05      # solo reglas significativas
+    armxtend temporal-rules sensores.csv --time-column hora --permutations 200 --alpha 0.05
 
 Tambien se puede invocar como ``python -m ARMxtend``. Todos los comandos
 trabajan en una sola maquina (sin Spark) y escriben el resultado en una tabla
@@ -137,7 +139,8 @@ def _emit(rules: pd.DataFrame, args: argparse.Namespace) -> None:
     else:
         if not args.all_measures:
             core = getattr(args, "table_columns", None) or (
-                list(_ITEM_COLUMNS) + ["support", "confidence", "lift", "certainty_factor", args.metric])
+                list(_ITEM_COLUMNS) + ["support", "confidence", "lift", "certainty_factor", args.metric,
+                                       "p_adjusted", "p_permutation"])
             flat = flat[[c for c in dict.fromkeys(core) if c in flat.columns]]
         text = flat.to_string(index=False, float_format=lambda value: "{:.4f}".format(value)) if len(flat) \
             else "(no rules found)"
@@ -161,11 +164,16 @@ def _run_rules(args: argparse.Namespace) -> pd.DataFrame:
     from .FFIM import fpgrowth
     from .FIM._shared import key_to_itemset
 
+    from .ARM import significant_rules
+
     transactions = _read_transactions(args.input, args.delimiter)
     frequent = fpgrowth(transactions, args.min_supp)
     itemsets = pd.DataFrame({"support": list(frequent.values()),
                              "itemsets": [key_to_itemset(key) for key in frequent]})
     rules = association_rules(itemsets, metric=args.metric, min_threshold=args.min_threshold)
+    if args.alpha is not None and len(rules):
+        rules = significant_rules(rules, args.alpha, args.correction, n_transactions=len(transactions),
+                                  method=args.test)
     return prune_redundant_rules(rules) if args.prune and len(rules) else rules
 
 
@@ -195,13 +203,28 @@ def _run_gradual_rules(args: argparse.Namespace) -> pd.DataFrame:
 
 
 def _run_temporal_rules(args: argparse.Namespace) -> pd.DataFrame:
-    from .ARM import prune_redundant_rules, temporal_association_rules
+    from .ARM import (
+        permutation_null, permutation_p_values, prune_redundant_rules, significant_rules, temporal_association_rules,
+    )
 
     args.pretty_lags = True
-    rules = temporal_association_rules(
-        _read_items(args), args.max_lag, args.min_supp, metric=args.metric, min_threshold=args.min_threshold,
-        lags=args.lags, targets=args.targets, require_lagged_antecedent=not args.allow_no_lag,
-        exclude_persistence=args.exclude_persistence)
+    items = _read_items(args)
+
+    def miner(table):
+        return temporal_association_rules(
+            table, args.max_lag, args.min_supp, metric=args.metric, min_threshold=args.min_threshold,
+            lags=args.lags, targets=args.targets, require_lagged_antecedent=not args.allow_no_lag,
+            exclude_persistence=args.exclude_persistence)
+
+    rules = miner(items)
+    if args.permutations and len(rules):
+        null = permutation_null(items, miner, n_permutations=args.permutations, null=args.null,
+                                random_state=args.seed, test=args.test)
+        rules = permutation_p_values(rules, null)
+        if args.alpha is not None:
+            rules = rules[rules["p_permutation"] <= args.alpha].sort_values("p_permutation", kind="mergesort")
+    elif args.alpha is not None and len(rules):
+        rules = significant_rules(rules, args.alpha, args.correction, method=args.test)
     return prune_redundant_rules(rules) if args.prune and len(rules) else rules
 
 
@@ -211,18 +234,20 @@ def _window_size(text: str):
 
 
 def _run_rule_drift(args: argparse.Namespace) -> pd.DataFrame:
-    from .ARM import rule_drift, temporal_association_rules, window_rules
+    from .ARM import crisp_rule_miner, rule_drift, significant_miner, temporal_association_rules, window_rules
 
-    miner = None
     if args.max_lag > 0:
         def miner(window):
             return temporal_association_rules(window, args.max_lag, args.min_supp, metric=args.metric,
                                               min_threshold=args.min_threshold, targets=args.targets,
                                               exclude_persistence=args.exclude_persistence)
+    else:
+        miner = crisp_rule_miner(args.min_supp, args.metric, args.min_threshold)
+    if args.alpha is not None:
+        miner = significant_miner(miner, args.alpha, args.correction, args.test)
 
     windows = window_rules(_read_items(args), _window_size(args.window),
-                           _window_size(args.step) if args.step else None, min_supp=args.min_supp,
-                           metric=args.metric, min_threshold=args.min_threshold, miner=miner)
+                           _window_size(args.step) if args.step else None, miner=miner)
     drift = rule_drift(windows, measure=args.metric, stable_fraction=args.stable_fraction)
     args.pretty_lags = args.max_lag > 0
     args.table_columns = ["antecedents", "consequents", "status", "windows", "persistence", "first_window",
@@ -261,6 +286,25 @@ def _common_output_options(parser: argparse.ArgumentParser, metric: str) -> None
     parser.add_argument("--min-threshold", type=float, default=0.7,
                         help="minimum value of --metric (default: 0.7)")
     _output_options(parser)
+
+
+def _significance_options(parser: argparse.ArgumentParser, permutations: bool = False, what: str = "rules") -> None:
+    """Opciones de significacion estadistica (ver ARM.significance)."""
+    parser.add_argument("--alpha", type=float,
+                        help="keep only the {} that are statistically significant at this level, after "
+                             "correcting for multiple tests".format(what))
+    parser.add_argument("--correction", choices=("bonferroni", "holm", "fdr_bh", "fdr_by"), default="fdr_bh",
+                        help="multiple-testing correction (default: fdr_bh)")
+    parser.add_argument("--test", choices=("fisher", "chi2"), default="fisher",
+                        help="test of independence of antecedent and consequent (default: fisher)")
+    if permutations:
+        parser.add_argument("--permutations", type=int, metavar="N",
+                            help="instead of Fisher + correction, test every rule against N shuffled copies of the "
+                                 "data (min p-value over their rules); adds p_permutation, keeps p_permutation <= --alpha")
+        parser.add_argument("--null", choices=("shift", "permute"), default="shift",
+                            help="how the data are shuffled: circular shifts keep each series' autocorrelation "
+                                 "(default) or independent permutations of the rows")
+        parser.add_argument("--seed", type=int, default=0, help="random seed of the shuffles (default: 0)")
 
 
 def _series_options(parser: argparse.ArgumentParser) -> None:
@@ -302,6 +346,7 @@ def build_parser() -> argparse.ArgumentParser:
     rules.add_argument("input", help="file with one transaction per line, items separated by --delimiter ('-' = stdin)")
     _common_output_options(rules, "confidence")
     rules.add_argument("--prune", action="store_true", help="drop redundant rules")
+    _significance_options(rules)
     rules.add_argument("--html", metavar="FILE", help="also write the interactive VizARE viewer to FILE")
     rules.set_defaults(run=_run_rules)
 
@@ -339,6 +384,7 @@ def build_parser() -> argparse.ArgumentParser:
     temporal.add_argument("--exclude-persistence", action="store_true",
                           help="drop rules that merely say a state persists (x at t-k => x at t)")
     temporal.add_argument("--prune", action="store_true", help="drop redundant rules")
+    _significance_options(temporal, permutations=True)
     temporal.set_defaults(run=_run_temporal_rules)
 
     drift = commands.add_parser(
@@ -356,6 +402,7 @@ def build_parser() -> argparse.ArgumentParser:
     drift.add_argument("--exclude-persistence", action="store_true", help="with --max-lag: drop persistence rules")
     drift.add_argument("--stable-fraction", type=float, default=0.8,
                        help="share of windows a rule must appear in to be 'stable' (default: 0.8)")
+    _significance_options(drift, what="rules of each window")
     _output_options(drift)
     drift.set_defaults(run=_run_rule_drift, keep_order=True)
 

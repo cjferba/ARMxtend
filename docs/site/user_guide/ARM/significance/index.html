@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Carlos Fernandez-Basso">
+        <link rel="canonical" href="http://cjferba.github.io/ARMxtend/user_guide/ARM/significance/">
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>ARM.significance (p-values, FDR, permutation tests) - ARMxtend</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">ARMxtend</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../examples/" class="nav-link">Examples</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../applications/" class="nav-link">Applications</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../USER_GUIDE_INDEX/" class="dropdown-item">User Guide Index</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crisp association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+            
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">ARM.significance (p-values, FDR, permutation tests)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Time series, sensors and sequences</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../preprocessing/timeseries/" class="dropdown-item">preprocessing.timeseries (items from series)</a>
+</li>
+            
+<li>
+    <a href="../temporal_rules/" class="dropdown-item">ARM.temporal_rules (lagged rules)</a>
+</li>
+            
+<li>
+    <a href="../rule_drift/" class="dropdown-item">ARM.rule_drift (rules over time)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/sequential/" class="dropdown-item">FIM.sequential (PrefixSpan)</a>
+</li>
+            
+<li>
+    <a href="../sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../cli/" class="dropdown-item">armxtend</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
+</li>
+                                    
+<li>
+    <a href="../../../contributors/" class="dropdown-item">Contributors</a>
+</li>
+                                    
+<li>
+    <a href="../../../license/" class="dropdown-item">License</a>
+</li>
+                                    
+<li>
+    <a href="../../../cite/" class="dropdown-item">Citing ARMxtend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../redundancy/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../negative_rules/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/user_guide/ARM/significance.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#armsignificance-are-the-rules-real" class="nav-link">ARM.significance -- are the rules real?</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#1-a-test-for-each-rule" class="nav-link">1. A test for each rule</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#2-multiple-testing" class="nav-link">2. Multiple testing</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#3-confidence-intervals" class="nav-link">3. Confidence intervals</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#4-permutation-tests" class="nav-link">4. Permutation tests</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#choosing" class="nav-link">Choosing</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#references" class="nav-link">References</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="armsignificance-are-the-rules-real"><code>ARM.significance</code> -- are the rules real?</h1>
+<p>Mining with thresholds on support and confidence finds the rules that <em>pass the thresholds</em>, not the rules that are
+<em>stronger than chance</em>. The more rules are examined, the more of them appear by accident -- and in time series, where
+consecutive rows are not independent, even more. This module attaches p-values to rules, corrects them for multiple
+testing, and offers permutation tests that stay valid when the usual assumptions fail.</p>
+<pre><code class="language-python">from ARMxtend.ARM import association_rules, significant_rules, confidence_intervals
+
+rules = association_rules(itemsets, metric=&quot;confidence&quot;, min_threshold=0.45)   # 100 rules in the demo data
+real = significant_rules(rules, alpha=0.05, correction=&quot;fdr_bh&quot;, n_transactions=300)   # 22
+real[[&quot;antecedents&quot;, &quot;consequents&quot;, &quot;confidence&quot;, &quot;p_value&quot;, &quot;p_adjusted&quot;]]
+</code></pre>
+<p>In the <a href="../../../examples/#statistical-significance-of-rules-armsignificance">example</a> 300 random baskets, with a single
+planted association, give 100 rules with confidence &gt;= 0.45, of which 54 do not involve the real association.</p>
+<h2 id="1-a-test-for-each-rule">1. A test for each rule</h2>
+<p>For <code>A =&gt; C</code> over <code>n</code> transactions, the 2x2 table (A / not A) x (C / not C) is rebuilt from the supports, and the null
+hypothesis is that A and C are independent.</p>
+<pre><code class="language-python">rule_significance(rules, n_transactions=None, method=&quot;fisher&quot;, alternative=&quot;greater&quot;)
+</code></pre>
+<ul>
+<li><code>method="fisher"</code> (default): exact test. The p-value is the tail of the hypergeometric distribution: the
+  probability of seeing at least <code>n(A and C)</code> joint occurrences if A and C were independent. It is computed by
+  summing the probabilities from the observed value outwards and stopping once the terms stop counting, so it is
+  exact (checked against integer enumeration) and fast even with millions of transactions.</li>
+<li><code>method="chi2"</code>: Pearson's chi-squared (without continuity correction); good when the expected counts are &gt;= 5.</li>
+<li><code>alternative="greater"</code> (default) tests <em>positive</em> association, which is what a rule claims; <code>"less"</code> and
+  <code>"two-sided"</code> (twice the smaller one-sided p-value) are available.</li>
+<li><code>n_transactions</code> is needed to turn supports into counts. Rules from
+  <a href="../temporal_rules/"><code>temporal_association_rules</code></a> carry it in <code>rules.attrs["n_transactions"]</code>. If the supports are not
+  multiples of <code>1/n</code> a <code>ValueError</code> is raised (wrong <code>n</code>, or fuzzy rules).</li>
+</ul>
+<p>The result is a copy of the rules with a <code>p_value</code> column. These tests assume <strong>independent transactions</strong> (see
+section 4 for time series) and need <strong>crisp</strong> rules.</p>
+<h2 id="2-multiple-testing">2. Multiple testing</h2>
+<pre><code class="language-python">adjust_pvalues(p_values, method=&quot;fdr_bh&quot;, n_tests=None)
+significant_rules(rules, alpha=0.05, correction=&quot;fdr_bh&quot;, n_transactions=None, method=&quot;fisher&quot;, n_tests=None)
+candidate_rule_count(itemsets)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th><code>correction</code></th>
+<th>Controls</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bonferroni</code></td>
+<td>probability of any false positive (FWER)</td>
+<td>simplest, most conservative</td>
+</tr>
+<tr>
+<td><code>holm</code></td>
+<td>FWER</td>
+<td>uniformly more powerful than Bonferroni (Holm, 1979)</td>
+</tr>
+<tr>
+<td><code>fdr_bh</code></td>
+<td>expected share of false discoveries (FDR)</td>
+<td>Benjamini-Hochberg (1995); the usual choice when you accept a few false rules among many; independent or positively dependent tests</td>
+</tr>
+<tr>
+<td><code>fdr_by</code></td>
+<td>FDR</td>
+<td>Benjamini-Yekutieli (2001); valid under any dependence, more conservative</td>
+</tr>
+</tbody>
+</table>
+<p><strong>How many hypotheses?</strong> Correcting only for the rules you <em>see</em> understates the problem: they were selected for having
+high confidence. The right family is every rule that was <em>tested</em>. <code>association_rules</code> and <code>temporal_association_rules</code>
+record it in <code>rules.attrs["n_candidates"]</code> (all the ways of splitting the frequent itemsets into antecedent and
+consequent; for temporal rules, the structurally valid ones), and <code>significant_rules</code> uses it by default. Pass
+<code>n_tests=</code> to override it, or <code>candidate_rule_count(itemsets)</code> to compute it from the itemsets. <code>significant_rules</code>
+returns the rules with <code>p_adjusted &lt;= alpha</code>, sorted by <code>p_adjusted</code>.</p>
+<p>Many of the surviving rules are usually variants of one real rule with irrelevant extra items; combine with
+<a href="../redundancy/"><code>prune_redundant_rules</code></a>.</p>
+<h2 id="3-confidence-intervals">3. Confidence intervals</h2>
+<pre><code class="language-python">confidence_intervals(rules, n_transactions=None, level=0.95, method=&quot;wilson&quot;, n_resamples=1000, random_state=0)
+</code></pre>
+<p>Adds <code>support_low/high</code>, <code>confidence_low/high</code> and <code>lift_low/high</code>. <code>"wilson"</code> is the Wilson score interval of a
+proportion (the support over <code>n</code>, the confidence over the transactions that satisfy the antecedent; no interval for
+the lift). <code>"bootstrap"</code> resamples the transactions with replacement and takes percentiles; for a rule it is enough to
+resample its four 2x2 cells (a multinomial draw), which is equivalent to resampling the rows and needs no transaction
+table. Both assume independent transactions.</p>
+<h2 id="4-permutation-tests">4. Permutation tests</h2>
+<p>A test of independence between rows does not hold for sensor data: two <em>independent</em> slowly-varying series (a heater
+on for hours, a window open for days) overlap by chance far more than independent rows would, and Fisher reports absurd
+p-values. Permutation tests compare the real rules with what the <strong>same miner</strong> finds in data where the relations
+between items have been destroyed but each item keeps its frequency (and, optionally, its own autocorrelation):</p>
+<pre><code class="language-python">from ARMxtend.ARM import crisp_rule_miner, permutation_null, permutation_p_values
+
+miner = crisp_rule_miner(min_supp=0.05, metric=&quot;confidence&quot;, min_threshold=0.5)   # or any `table -&gt; rules` function
+rules = miner(items)
+null = permutation_null(items, miner, n_permutations=200, null=&quot;shift&quot;, random_state=0)
+rules = permutation_p_values(rules, null)          # adds p_permutation
+</code></pre>
+<ul>
+<li><code>shuffled_items(items, null)</code>: <code>null="permute"</code> permutes every column independently (independent rows);
+  <code>null="shift"</code> (default) rotates every column circularly by a random amount, which keeps each series' autocorrelation and
+  cycles and only breaks the alignment between series. <strong>Use <code>shift</code> for time series and lagged rules.</strong></li>
+<li><code>permutation_null</code> re-mines each shuffled copy and records the <em>best</em> value of a statistic among its rules.
+  With <code>measure="p_value"</code> (default) the statistic is the smallest Fisher p-value (Westfall and Young's minP: it accounts for
+  rules with little support reaching extreme confidences by chance); with any other column of the rules (<code>"lift"</code>,
+  <code>"confidence"</code>, <code>"zhangs_metric"</code>, ...) it is the maximum, which is the only option for <strong>fuzzy</strong> rules.</li>
+<li><code>p_permutation = (1 + #{shuffled copies whose best rule is at least as good}) / (1 + B)</code>. Because each rule is
+  compared with the best of <em>all</em> the rules of every copy, it already controls the family-wise error rate and the
+  selection of rules by their own values; no further correction is needed. The smallest possible value is <code>1/(B+1)</code>.</li>
+<li><code>significant_miner(miner, alpha, ...)</code> wraps a miner so that it returns only significant rules; use it as the <code>miner=</code>
+  of <a href="../rule_drift/"><code>window_rules</code></a> to check which rules of each time window are real before following them over time.</li>
+</ul>
+<p>In the <a href="../../../examples/#statistical-significance-of-rules-armsignificance">example</a>, 12 pairs of independent regime-switching series give 6 false alarms with
+Fisher (p &lt; 0.01, some with p ~ 1e-100) and 1 with the circular-shift test (p &lt; 0.05, the nominal rate).</p>
+<h2 id="choosing">Choosing</h2>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Independent transactions (baskets, records) and crisp rules</td>
+<td><code>significant_rules</code> (Fisher + <code>fdr_bh</code>)</td>
+</tr>
+<tr>
+<td>You want few false rules at the price of power</td>
+<td><code>correction="holm"</code> or the permutation test</td>
+</tr>
+<tr>
+<td>Time series, sensors, lagged rules</td>
+<td>permutation test with <code>null="shift"</code></td>
+</tr>
+<tr>
+<td>Fuzzy rules</td>
+<td>permutation test with <code>measure="lift"</code> (or another measure)</td>
+</tr>
+<tr>
+<td>Sequential rules</td>
+<td>not covered (the contingency table is different); use a permutation test with your own miner</td>
+</tr>
+</tbody>
+</table>
+<p>Command line: <code>--alpha</code>, <code>--correction</code> and <code>--test</code> in <a href="../../cli/#significance-of-the-rules"><code>armxtend rules</code></a>,
+<code>temporal-rules</code> (also <code>--permutations</code>, <code>--null</code>, <code>--seed</code>) and <code>rule-drift</code>.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>R. A. Fisher (1922, 1935) and K. Pearson (1900): the exact test and the chi-squared test of independence.</li>
+<li>S. Holm (1979). <em>A simple sequentially rejective multiple test procedure.</em> Scandinavian Journal of Statistics 6, 65-70.</li>
+<li>Y. Benjamini, Y. Hochberg (1995). <em>Controlling the false discovery rate.</em> J. Royal Statistical Society B 57, 289-300.</li>
+<li>Y. Benjamini, D. Yekutieli (2001). <em>The control of the false discovery rate in multiple testing under dependency.</em>
+  Annals of Statistics 29, 1165-1188.</li>
+<li>P. H. Westfall, S. S. Young (1993). <em>Resampling-based multiple testing.</em> Wiley.</li>
+<li>G. I. Webb (2007). <em>Discovering significant patterns.</em> Machine Learning 68, 1-33.</li>
+<li>E. B. Wilson (1927). <em>Probable inference, the law of succession, and statistical inference.</em> JASA 22, 209-212.</li>
+</ul></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../js/base.js"></script>
+        <script src="../../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

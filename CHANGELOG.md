@@ -16,6 +16,11 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
   crisp and fuzzy, and per-group rule profiles (`ARM.temporal_rules`); rule drift over time windows with
   stable / emerging / vanishing / intermittent status (`ARM.rule_drift`); PrefixSpan sequential patterns, with
   a Spark MLlib version (`FIM.sequential`); sequential rules (`ARM.sequential_rules`).
+- **Statistical significance** (`ARM.significance`): per-rule Fisher / chi-squared p-values, Bonferroni / Holm /
+  Benjamini-Hochberg / Benjamini-Yekutieli corrections over the family of candidate rules, Wilson and bootstrap
+  intervals, and minP / maxT permutation tests with circular-shift nulls for time series; `--alpha`,
+  `--correction`, `--test`, `--permutations` in the command line. `association_rules` and
+  `temporal_association_rules` record `n_candidates` (and `n_transactions`) in `rules.attrs`.
 - **Measures:** Jaccard, cosine, Kulczynski, all/max confidence, added value, Zhang's metric and Yule's Q in
   `ARM.association_rules` and, aggregated level by level (RL-theory), in `FIM.FARE`.
 - **Fuzzification:** trapezoidal and Gaussian sets, automatic partitions (uniform, quantile, k-means) and

@@ -76,6 +76,10 @@
 <li>
     <a href="../ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
 </li>
+            
+<li>
+    <a href="../ARM/significance/" class="dropdown-item">ARM.significance (p-values, FDR, permutation tests)</a>
+</li>
     </ul>
   </li>
                                     
@@ -308,6 +312,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#significance-of-the-rules" class="nav-link">Significance of the rules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#options-shared-by-the-commands" class="nav-link">Options shared by the commands</a>
               <ul class="nav flex-column">
               </ul>
@@ -402,6 +410,46 @@ antecedents consequents  support  confidence   lift  certainty_factor
     kitchen      coffee   0.6000      0.7500 1.2500            0.3750
        door      coffee   0.6000      0.7500 1.2500            0.3750
 </code></pre>
+<h2 id="significance-of-the-rules">Significance of the rules</h2>
+<p><code>rules</code>, <code>temporal-rules</code> and <code>rule-drift</code> can drop the rules that are not statistically significant
+(<a href="../ARM/significance/"><code>ARM.significance</code></a>):</p>
+<pre><code class="language-bash">armxtend rules baskets.csv --min-supp 0.03 --min-threshold 0.45 --alpha 0.05                 # Fisher + FDR
+armxtend rules baskets.csv --alpha 0.05 --correction holm --test chi2
+armxtend temporal-rules house.csv --time-column time --max-lag 1 --alpha 0.05                # Fisher + FDR
+armxtend temporal-rules house.csv --time-column time --max-lag 1 --permutations 200 --alpha 0.05   # circular shifts
+armxtend rule-drift house.csv --time-column time --window 15D --alpha 0.05                    # per window
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--alpha A</code></td>
+<td>keep only the rules significant at level <code>A</code> after correcting for multiple tests (adds <code>p_value</code> and <code>p_adjusted</code>)</td>
+</tr>
+<tr>
+<td><code>--correction</code></td>
+<td><code>bonferroni</code>, <code>holm</code>, <code>fdr_bh</code> (default) or <code>fdr_by</code></td>
+</tr>
+<tr>
+<td><code>--test</code></td>
+<td><code>fisher</code> (default, exact) or <code>chi2</code></td>
+</tr>
+<tr>
+<td><code>--permutations N</code></td>
+<td>(<code>temporal-rules</code>) test every rule against <code>N</code> shuffled copies of the series instead (adds <code>p_permutation</code>; keeps <code>p_permutation &lt;= --alpha</code> if given); the right choice for time series</td>
+</tr>
+<tr>
+<td><code>--null</code>, <code>--seed</code></td>
+<td>how the series are shuffled (<code>shift</code>, the default, keeps each series' autocorrelation; or <code>permute</code>) and the random seed</td>
+</tr>
+</tbody>
+</table>
+<p><code>fuzzy-rules</code> and the sequence commands have no significance test.</p>
 <h2 id="options-shared-by-the-commands">Options shared by the commands</h2>
 <table>
 <thead>

@@ -108,6 +108,29 @@ antecedents consequents  support  confidence   lift  certainty_factor
        door      coffee   0.6000      0.7500 1.2500            0.3750
 ```
 
+## Significance of the rules
+
+`rules`, `temporal-rules` and `rule-drift` can drop the rules that are not statistically significant
+([`ARM.significance`](ARM/significance.md)):
+
+```bash
+armxtend rules baskets.csv --min-supp 0.03 --min-threshold 0.45 --alpha 0.05                 # Fisher + FDR
+armxtend rules baskets.csv --alpha 0.05 --correction holm --test chi2
+armxtend temporal-rules house.csv --time-column time --max-lag 1 --alpha 0.05                # Fisher + FDR
+armxtend temporal-rules house.csv --time-column time --max-lag 1 --permutations 200 --alpha 0.05   # circular shifts
+armxtend rule-drift house.csv --time-column time --window 15D --alpha 0.05                    # per window
+```
+
+| Option | Meaning |
+|---|---|
+| `--alpha A` | keep only the rules significant at level `A` after correcting for multiple tests (adds `p_value` and `p_adjusted`) |
+| `--correction` | `bonferroni`, `holm`, `fdr_bh` (default) or `fdr_by` |
+| `--test` | `fisher` (default, exact) or `chi2` |
+| `--permutations N` | (`temporal-rules`) test every rule against `N` shuffled copies of the series instead (adds `p_permutation`; keeps `p_permutation <= --alpha` if given); the right choice for time series |
+| `--null`, `--seed` | how the series are shuffled (`shift`, the default, keeps each series' autocorrelation; or `permute`) and the random seed |
+
+`fuzzy-rules` and the sequence commands have no significance test.
+
 ## Options shared by the commands
 
 | Option | Meaning |

@@ -66,7 +66,9 @@ def association_rules(df: pd.DataFrame, metric: str = "confidence",
       "leverage", "conviction", "certainty_factor" and the additional
       measures listed above
       of all rules for which
-      metric(rule) >= min_threshold.
+      metric(rule) >= min_threshold. The number of candidate rules examined
+      is stored in ``result.attrs["n_candidates"]`` (see
+      ``ARMxtend.ARM.significance``).
       Each entry in the "antecedents" and "consequents" columns are
       of type `frozenset`, which is a Python built-in type that
       behaves similarly to sets except that it is immutable
@@ -135,6 +137,7 @@ def association_rules(df: pd.DataFrame, metric: str = "confidence",
     rule_antecedents = []
     rule_consequents = []
     rule_supports = []
+    n_candidates = 0
 
     # iterate over all frequent itemsets
     for k in frequent_items_dict.keys():
@@ -145,6 +148,7 @@ def association_rules(df: pd.DataFrame, metric: str = "confidence",
             for c in combinations(k, r=idx):
                 antecedent = frozenset(c)
                 consequent = k.difference(antecedent)
+                n_candidates += 1
 
                 if support_only:
                     # support doesn't need these,
@@ -174,8 +178,10 @@ def association_rules(df: pd.DataFrame, metric: str = "confidence",
 
     # check if frequent rule was generated
     if not rule_supports:
-        return pd.DataFrame(
+        empty = pd.DataFrame(
             columns=["antecedents", "consequents"] + columns_ordered)
+        empty.attrs["n_candidates"] = n_candidates
+        return empty
 
     else:
         # generate metrics
@@ -197,4 +203,6 @@ def association_rules(df: pd.DataFrame, metric: str = "confidence",
             for m in columns_ordered:
                 df_res[m] = metric_dict[m](sAC, sA, sC)
 
+        # numero de reglas candidatas probadas: la familia de hipotesis de ARM.significance
+        df_res.attrs["n_candidates"] = n_candidates
         return df_res

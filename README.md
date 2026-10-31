@@ -63,6 +63,7 @@ Spark y el nucleo sigue funcionando.
 * `ARM.exception_rules`: reglas de **excepcion** y **anomalas** (cuando falla una regla fuerte)
 * `ARM.gradual_rules`: reglas **graduales** ("cuanto mas A, mas B") sobre columnas numericas
 * `FIM.condensed` (itemsets **cerrados/maximales**) y `ARM.redundancy` (**poda de reglas redundantes**)
+* `ARM.significance`: **significacion estadistica** de las reglas -- test exacto de Fisher / chi-cuadrado, correccion por pruebas multiples (Bonferroni, Holm, FDR), intervalos de confianza y tests de permutacion (con desplazamientos circulares para series temporales)
 * `ARM.association_rules` / `FIM.FARE`: ademas de soporte, confianza, lift, leverage, conviccion y factor de certeza, Jaccard, cosine, Kulczynski, all/max-confidence, added value, Zhang y Yule's Q (en el caso difuso, agregadas por alpha-cortes)
 
 ### Series temporales, sensores y secuencias

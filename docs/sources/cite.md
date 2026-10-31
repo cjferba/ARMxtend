@@ -183,3 +183,9 @@ originals when you use them:
   search is not the RuleGrowth algorithm).
 - **Rule drift** (`ARM.rule_drift`): the batch counterpart of the trends kept incrementally by FIMoTS
   (Fernandez-Basso et al., 2019, see above).
+- **Statistical significance of rules** (`ARM.significance`): Fisher's exact test; Holm, S. (1979), *A simple
+  sequentially rejective multiple test procedure*, Scandinavian Journal of Statistics 6, 65-70; Benjamini, Y.,
+  Hochberg, Y. (1995), *Controlling the false discovery rate*, J. Royal Statistical Society B 57, 289-300;
+  Benjamini, Y., Yekutieli, D. (2001), Annals of Statistics 29, 1165-1188; Westfall, P.H., Young, S.S. (1993),
+  *Resampling-based multiple testing*; Webb, G.I. (2007), *Discovering significant patterns*, Machine Learning 68,
+  1-33; Wilson, E.B. (1927), JASA 22, 209-212.

@@ -5,6 +5,7 @@
 - [FFIM.fpgrowth](user_guide/FFIM.md)
 - [FIM.condensed (closed and maximal itemsets)](user_guide/FIM/condensed.md)
 - [ARM.redundancy (pruning redundant rules)](user_guide/ARM/redundancy.md)
+- [ARM.significance (p-values, multiple-testing correction, confidence intervals, permutation tests)](user_guide/ARM/significance.md)
 
 ## Other kinds of rules (single machine)
 - [ARM.negative_rules (rules with absent items, crisp and fuzzy)](user_guide/ARM/negative_rules.md)

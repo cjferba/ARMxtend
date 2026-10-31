@@ -40,6 +40,17 @@ from .rule_drift import (
     compare_rule_sets,
 )
 from .sequential_rules import sequential_rules, contains_rule
+from .significance import (
+    rule_significance,
+    adjust_pvalues,
+    candidate_rule_count,
+    significant_rules,
+    significant_miner,
+    confidence_intervals,
+    shuffled_items,
+    permutation_null,
+    permutation_p_values,
+)
 
 
 __all__ = [
@@ -67,6 +78,15 @@ __all__ = [
     "compare_rule_sets",
     "sequential_rules",
     "contains_rule",
+    "rule_significance",
+    "adjust_pvalues",
+    "candidate_rule_count",
+    "significant_rules",
+    "significant_miner",
+    "confidence_intervals",
+    "shuffled_items",
+    "permutation_null",
+    "permutation_p_values",
     "rule_key",
     "mine_primary_rule_measures",
     "build_crisp_meta_database",

@@ -114,7 +114,25 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
   columnas con solo 0/1 son eventos, las demás numéricas se simbolizan en 3 símbolos por cuantiles, y el formato
   de secuencias en texto es `a,b;c;d` (elementos separados por `;`). Compruébalas con tus datos reales.
 
-## 8. Documentación
+## 8. Significación estadística (`ARM.significance`)
+
+- [ ] **Referencias de memoria**: Holm (1979), Benjamini–Hochberg (1995), Benjamini–Yekutieli (2001), Westfall–Young
+  (1993), Webb (2007), Wilson (1927). Verifica volúmenes y páginas antes de citar.
+- [ ] **Tamaño de la familia de hipótesis.** Por defecto la corrección usa `rules.attrs["n_candidates"]`: todas las
+  particiones antecedente/consecuente de los itemsets frecuentes (en las reglas temporales, solo las que cumplen la
+  estructura temporal). Es una elección razonable y conservadora, pero no es exactamente la de Webb (2007), que cuenta
+  el espacio de búsqueda completo; con `n_tests=` se puede cambiar. Decide si quieres otro valor por defecto.
+- [ ] **FDR frente a FWER.** `fdr_bh` (por defecto) deja pasar en promedio hasta un 5 % de reglas falsas (en el ejemplo
+  quedan 2 de 22). Para evitar cualquier falso positivo use `holm` o el test de permutación.
+- [ ] **Test de dos colas** = doble del menor p-valor unilateral (no la definición de Fisher por probabilidades); la
+  cola relevante para una regla es `greater`.
+- [ ] **Permutación circular** (`null="shift"`): válida para dependencia temporal de cada serie, pero rompe también la
+  relación de los items de calendario con las series (a propósito: es lo que se contrasta). No cubre tendencias
+  comunes ni estacionalidad compartida si las series se generan de la misma fuente.
+- [ ] **Reglas difusas y secuenciales**: no tienen test por regla; solo permutación con una medida (`lift`, ...) para las
+  difusas. No hay test para reglas secuenciales.
+
+## 9. Documentación
 
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la

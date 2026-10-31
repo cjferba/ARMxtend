@@ -238,3 +238,56 @@ def test_sequential_rules_command(sequences_file, capsys):
     assert len(capsys.readouterr().out.strip().splitlines()) == 2
     assert main(["sequential-rules", sequences_file, "--min-supp", "0.4", "--metric", "magic"]) == 1
     assert "metric" in capsys.readouterr().err
+
+
+# ------------------------------------------------------ significacion estadistica
+
+@pytest.fixture
+def noisy_transactions(tmp_path):
+    """300 cestas aleatorias de 12 items (p = 0.3) con una asociacion plantada i00 -> i01."""
+    rng = np.random.RandomState(1)
+    table = rng.rand(300, 12) < 0.3
+    table[:, 1] |= table[:, 0] & (rng.rand(300) < 0.6)
+    path = tmp_path / "noise.csv"
+    path.write_text("\n".join(",".join("i{:02d}".format(i) for i in np.flatnonzero(row)) for row in table if row.any()) + "\n")
+    return str(path)
+
+
+def test_rules_alpha_keeps_only_significant_rules(noisy_transactions, capsys):
+    common = ["rules", noisy_transactions, "--min-supp", "0.03", "--min-threshold", "0.45", "--format", "csv"]
+    assert main(common) == 0
+    naive = pd.read_csv(io.StringIO(capsys.readouterr().out))
+    assert main(common + ["--alpha", "0.05"]) == 0
+    kept = pd.read_csv(io.StringIO(capsys.readouterr().out))
+    assert 0 < len(kept) < len(naive) and (kept["p_adjusted"] <= 0.05).all()
+    assert ((kept["antecedents"] == "i00") & (kept["consequents"] == "i01")).any()
+    assert main(common + ["--alpha", "0.05", "--correction", "bonferroni", "--test", "chi2"]) == 0
+    assert len(pd.read_csv(io.StringIO(capsys.readouterr().out))) <= len(kept) + 2
+    assert main(common + ["--alpha", "1.5"]) == 1
+    assert "alpha" in capsys.readouterr().err
+
+
+def test_temporal_rules_alpha_and_permutations(sensors_file, capsys):
+    common = ["temporal-rules", sensors_file, "--time-column", "time", "--min-supp", "0.05", "--min-threshold", "0.95",
+              "--targets", "heater", "--exclude-persistence", "--format", "csv"]
+    assert main(common + ["--alpha", "0.05"]) == 0
+    frame = pd.read_csv(io.StringIO(capsys.readouterr().out))
+    assert "door@lag1" in set(frame["antecedents"]) and (frame["p_adjusted"] <= 0.05).all()
+
+    assert main(common + ["--permutations", "15", "--alpha", "0.1", "--seed", "3"]) == 0
+    permuted = pd.read_csv(io.StringIO(capsys.readouterr().out))
+    assert len(permuted) > 0 and (permuted["p_permutation"] <= 0.1).all() and "door@lag1" in set(permuted["antecedents"])
+    assert permuted["p_permutation"].min() == pytest.approx(1 / 16)
+
+    assert main(["temporal-rules", sensors_file, "--time-column", "time", "--min-supp", "0.05", "--min-threshold", "0.95",
+                 "--targets", "heater", "--permutations", "5", "--format", "csv"]) == 0         # sin alpha: no filtra
+    assert "p_permutation" in pd.read_csv(io.StringIO(capsys.readouterr().out)).columns
+
+
+def test_rule_drift_with_alpha(sensors_file, capsys):
+    base = ["rule-drift", sensors_file, "--time-column", "time", "--window", "10D", "--max-lag", "1", "--min-supp", "0.05",
+            "--min-threshold", "0.95", "--targets", "heater", "--exclude-persistence", "--format", "csv"]
+    assert main(base + ["--alpha", "0.05"]) == 0
+    frame = pd.read_csv(io.StringIO(capsys.readouterr().out))
+    row = frame[(frame["antecedents"] == "door@lag1") & (frame["consequents"] == "heater")].iloc[0]
+    assert row["status"] == "stable" and row["windows"] == 4

@@ -46,6 +46,7 @@ from ..preprocessing.timeseries import (
     check_item_names, item_variable, lag_items, split_lag, to_fuzzy_transactions, to_transactions,
 )
 from .association_rules import association_rules
+from .significance import count_candidates
 
 def _lag_set(max_lag: int, lags: Optional[Iterable[int]]) -> List[int]:
     if max_lag < 1:
@@ -79,8 +80,14 @@ def _keep_rules(rules: pd.DataFrame, targets: Optional[Iterable[str]], require_l
 
 def _passes(rule: Any, wanted: Optional[FrozenSet[str]], require_lagged_antecedent: bool,
             same_time_antecedent: bool, exclude_persistence: bool) -> bool:
-    consequent = [split_lag(item) for item in rule["consequents"]]
-    antecedent = [split_lag(item) for item in rule["antecedents"]]
+    return _valid_split(rule["antecedents"], rule["consequents"], wanted, require_lagged_antecedent,
+                        same_time_antecedent, exclude_persistence)
+
+
+def _valid_split(antecedents: Iterable[str], consequents: Iterable[str], wanted: Optional[FrozenSet[str]],
+                 require_lagged_antecedent: bool, same_time_antecedent: bool, exclude_persistence: bool) -> bool:
+    consequent = [split_lag(item) for item in consequents]
+    antecedent = [split_lag(item) for item in antecedents]
     if any(lag != 0 for _, lag in consequent):
         return False
     if wanted is not None and not all(_is_target(item, wanted) for item, _ in consequent):
@@ -94,6 +101,16 @@ def _passes(rule: Any, wanted: Optional[FrozenSet[str]], require_lagged_antecede
         if any(lag > 0 and item_variable(item) in consequentVariables for item, lag in antecedent):
             return False
     return True
+
+
+def _count_candidates(itemsets: pd.DataFrame, targets: Optional[Iterable[str]], require_lagged_antecedent: bool,
+                      same_time_antecedent: bool, exclude_persistence: bool) -> int:
+    """Reglas candidatas con estructura temporal valida que salen de los itemsets frecuentes (la familia de hipotesis)."""
+    wanted = None if targets is None else frozenset(targets)
+    return count_candidates(
+        itemsets["itemsets"],
+        lambda a, c: _valid_split(a, c, wanted, require_lagged_antecedent, same_time_antecedent, exclude_persistence),
+        lambda item: split_lag(item)[1] == 0 and _is_target(item, wanted))
 
 
 def temporal_association_rules(items: pd.DataFrame, max_lag: int, min_supp: float, metric: str = "confidence",
@@ -130,7 +147,9 @@ def temporal_association_rules(items: pd.DataFrame, max_lag: int, min_supp: floa
     Retorna:
         pandas.DataFrame con el formato de `ARM.association_rules` y dos
         columnas mas: 'lags' (tupla de retardos distintos del antecedente) y
-        'max_lag' (el mayor de ellos)
+        'max_lag' (el mayor de ellos). Anota en ``rules.attrs`` el numero de
+        transacciones ('n_transactions') y el de reglas candidatas con estructura
+        temporal valida ('n_candidates'), que usa ``ARM.significance``
     """
     check_item_names(items.columns)
     lagged = lag_items(items, _lag_set(max_lag, lags))
@@ -138,7 +157,11 @@ def temporal_association_rules(items: pd.DataFrame, max_lag: int, min_supp: floa
     itemsets = pd.DataFrame({"support": list(frequent.values()),
                              "itemsets": [key_to_itemset(key) for key in frequent]})
     rules = association_rules(itemsets, metric=metric, min_threshold=min_threshold)
-    return _keep_rules(rules, targets, require_lagged_antecedent, same_time_antecedent, exclude_persistence)
+    kept = _keep_rules(rules, targets, require_lagged_antecedent, same_time_antecedent, exclude_persistence)
+    kept.attrs["n_transactions"] = len(lagged)
+    kept.attrs["n_candidates"] = _count_candidates(itemsets, targets, require_lagged_antecedent,
+                                                   same_time_antecedent, exclude_persistence)
+    return kept
 
 
 def fuzzy_temporal_association_rules(memberships: pd.DataFrame, max_lag: int, min_supp: float, num_alpha: int = 10,
@@ -172,7 +195,9 @@ def fuzzy_temporal_association_rules(memberships: pd.DataFrame, max_lag: int, mi
     frequent = fuzzy_fpgrowth(to_fuzzy_transactions(lagged), min_supp, num_alpha)
     rules = fuzzy_association_rules(frequent, num_alpha, metric=metric, min_threshold=min_threshold,
                                     measures=measures)
-    return _keep_rules(rules, targets, require_lagged_antecedent, same_time_antecedent, exclude_persistence)
+    kept = _keep_rules(rules, targets, require_lagged_antecedent, same_time_antecedent, exclude_persistence)
+    kept.attrs["n_transactions"] = len(lagged)
+    return kept
 
 
 def format_lagged_item(item: str) -> str:

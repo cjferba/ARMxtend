@@ -515,6 +515,42 @@ Reglas secuenciales con confianza >= 0.7, por lift decreciente:
 confianza de coffee => tv: 0.77; de tv => coffee: 0.00
 ```
 
+## Statistical significance of rules (`ARM.significance`)
+
+Which of the rules that pass the thresholds are real? 300 random baskets of 12 independent items with a single planted
+association (`i00 -> i01`) give 100 rules with confidence >= 0.45, more than half of them noise. The script keeps the real
+ones with an exact test plus a false-discovery-rate correction, and with a permutation test; it also shows why, with time
+series, the rows cannot be treated as independent. See [`ARM.significance`](user_guide/ARM/significance.md).
+
+```python
+from ARMxtend.ARM import (
+    confidence_intervals, crisp_rule_miner, permutation_null, permutation_p_values, significant_rules,
+)
+
+fisher = significant_rules(rules, alpha=0.05, correction="fdr_bh", n_transactions=len(table))
+
+miner = crisp_rule_miner(0.03, "confidence", 0.45)                       # el mismo minero de las reglas reales
+null = permutation_null(table, miner, n_permutations=50, null="permute")   # re-minar sobre copias barajadas
+permuted = permutation_p_values(rules, null, n_transactions=len(table))
+
+# series temporales: se baraja con desplazamientos circulares, que conservan la autocorrelacion de cada serie
+null = permutation_null(series, miner, n_permutations=60, null="shift")
+```
+
+(full source: [`examples/example_significance.py`](https://github.com/cjferba/ARMxtend/blob/master/examples/example_significance.py))
+
+Output:
+
+```text
+Cestas: 300 | reglas con confianza >= 0.45: 100 | sin i00 e i01 juntos (ruido): 54
+Con test de Fisher y FDR (alpha=0.05): 22 reglas, 2 de ruido
+Con permutacion (50 copias barajadas): 5 reglas, 0 de ruido; en los datos barajados salen 56 reglas de media
+
+i00 -> i01: support=0.213 confidence=0.71 [0.61, 0.79] lift=1.79 p=3.9e-13
+
+11 pares de series independientes: Fisher (supone filas independientes) da 6 falsas alarmas (p < 0.01); el test de permutacion circular, 1 (p < 0.05)
+```
+
 ## Big Data and streaming algorithms
 
 The Spark-based algorithms (`FIM.apriori`, `FIM.Eclat`, `FIM.BD_ARE`, `FIM.BD_FARE`, `SARE`,
