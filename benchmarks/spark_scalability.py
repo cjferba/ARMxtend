@@ -12,10 +12,12 @@ se cachee):
 * ``cores`` -- aceleracion S = T1/Tn y eficiencia E = S/n frente al numero de nucleos (a N fijo).
 * ``items`` -- tiempo frente al numero de items distintos (a N fijo).
 * ``cache`` -- efecto de cachear el RDD de entrada.
+* ``sequences`` -- PrefixSpan sobre secuencias: ``prefixspan`` (una maquina, Python) frente a
+               ``prefixspan_spark`` (MLlib) con la entrada como lista, como RDD y como DataFrame.
 
 Uso (desde la raiz del repositorio, con un JDK 17+ en JAVA_HOME)::
 
-    python benchmarks/spark_scalability.py data cores items cache --output results.json
+    python benchmarks/spark_scalability.py data cores items cache sequences --output results.json
 
 Es un benchmark en UNA maquina (``local[n]``): mide como se reparte el trabajo entre nucleos y como
 crece el coste con los datos, no la red ni el reparto entre nodos de un cluster real.
@@ -34,6 +36,7 @@ import numpy as np
 from ARMxtend.FIM.apriori import DApriori, DAprioriTID
 from ARMxtend.FIM.BD_FARE import FuzzyDAprioriTID
 from ARMxtend.FIM.Eclat import DECLAT, FuzzyDECLAT
+from ARMxtend.FIM.sequential import prefixspan, prefixspan_spark
 
 CRISP = {"DApriori": DApriori, "DAprioriTID": DAprioriTID, "DECLAT": DECLAT}
 FUZZY = {"FuzzyDAprioriTID": FuzzyDAprioriTID, "FuzzyDECLAT": FuzzyDECLAT}
@@ -59,6 +62,33 @@ def generate(path, n_transactions, n_items, mean_basket=10, seed=0, shards=8):
 def parse_fuzzy(line):
     """'i3,i17' -> [('i3', degree), ('i17', degree)] con grados deterministas en {0.3, ..., 1.0}."""
     return [(item, 0.3 + 0.7 * ((zlib.crc32(item.encode()) + len(line)) % 8) / 7.0) for item in line.split(",")]
+
+
+def generate_sequences(path, n_sequences, n_items, mean_elements=6, seed=0, shards=8):
+    """
+    Escribe `shards` ficheros con una secuencia por linea: elementos separados por ';' e items de un elemento por ','.
+    Items con popularidad tipo Zipf; cada secuencia tiene unos `mean_elements` elementos de 1 o 2 items.
+    """
+    rng = np.random.RandomState(seed)
+    popularity = 1.0 / np.arange(1, n_items + 1) ** 0.9
+    probabilities = popularity / popularity.sum()
+    names = np.array(["s{}".format(i) for i in range(n_items)])
+    os.makedirs(path, exist_ok=True)
+    per_shard = n_sequences // shards
+    for shard in range(shards):
+        with open(os.path.join(path, "part-{:03d}.txt".format(shard)), "w") as handle:
+            for _ in range(per_shard):
+                elements = []
+                for _ in range(max(1, rng.poisson(mean_elements))):
+                    size = 1 + int(rng.rand() < 0.3)
+                    elements.append(",".join(sorted(set(rng.choice(names, size=size, p=probabilities)))))
+                handle.write(";".join(elements) + "\n")
+    return per_shard * shards
+
+
+def parse_sequence(line):
+    """'s1,s3;s2' -> [['s1', 's3'], ['s2']]"""
+    return [element.split(",") for element in line.split(";")]
 
 
 def timed(function):
@@ -192,6 +222,48 @@ def experiment_cache(args, tmp):
     return rows
 
 
+def experiment_sequences(args, tmp):
+    from pyspark.sql import SparkSession
+
+    sc = new_context(args.cores)
+    session = SparkSession.builder.getOrCreate()
+    rows = []
+    try:
+        warm = os.path.join(tmp, "seq_warmup")
+        generate_sequences(warm, 800, args.seq_items)
+        prefixspan_spark(session, sc.textFile(warm).map(parse_sequence), 0.1)
+        for n in [int(x) for x in args.seq_sizes.split(",")]:
+            data_dir = os.path.join(tmp, "seq_{}".format(n))
+            real_n = generate_sequences(data_dir, n, args.seq_items)
+            local = [parse_sequence(line) for part in sorted(os.listdir(data_dir))
+                     for line in open(os.path.join(data_dir, part)).read().splitlines()]
+            runs = {
+                "prefixspan (local)": lambda: prefixspan(local, args.seq_min_supp),
+                "prefixspan_spark (list)": lambda: prefixspan_spark(session, local, args.seq_min_supp),
+                "prefixspan_spark (RDD)": lambda: prefixspan_spark(
+                    session, sc.textFile(data_dir, minPartitions=8).map(parse_sequence), args.seq_min_supp),
+            }
+            if args.seq_dataframe:                                              # solo si la libreria ya acepta DataFrames
+                def from_dataframe():
+                    frame = session.createDataFrame(sc.parallelize(local, 8).map(lambda s: (s,)), ["sequence"])
+                    return prefixspan_spark(session, frame, args.seq_min_supp)
+                runs["prefixspan_spark (DataFrame)"] = from_dataframe
+            for name, run in runs.items():
+                before = driver_rss_mb()
+                best, patterns = None, None
+                for _ in range(2):
+                    seconds, result = timed(run)
+                    best = seconds if best is None else min(best, seconds)
+                    patterns = len(result)
+                rows.append({"experiment": "sequences", "algorithm": name, "transactions": real_n, "seconds": round(best, 3),
+                             "itemsets": patterns, "driver_rss_mb": round(driver_rss_mb(), 1),
+                             "driver_rss_growth_mb": round(driver_rss_mb() - before, 1)})
+                print(rows[-1], flush=True)
+    finally:
+        sc.stop()
+    return rows
+
+
 def summarize(rows):
     """Exponente de escalado t ~ N^alfa, y aceleracion/eficiencia por nucleos."""
     lines = []
@@ -201,6 +273,13 @@ def summarize(rows):
         if len(points) >= 3:
             alpha = np.polyfit(np.log([p[0] for p in points]), np.log([p[1] for p in points]), 1)[0]
             lines.append("{:<18} t ~ N^{:.2f}  ({} puntos, de {:,} a {:,} transacciones)".format(
+                name, alpha, len(points), points[0][0], points[-1][0]))
+    sequences = [r for r in rows if r["experiment"] == "sequences"]
+    for name in sorted({r["algorithm"] for r in sequences}):
+        points = sorted((r["transactions"], r["seconds"]) for r in sequences if r["algorithm"] == name)
+        if len(points) >= 3:
+            alpha = np.polyfit(np.log([p[0] for p in points]), np.log([p[1] for p in points]), 1)[0]
+            lines.append("{:<30} t ~ N^{:.2f}  ({} puntos, de {:,} a {:,} secuencias)".format(
                 name, alpha, len(points), points[0][0], points[-1][0]))
     cores = [r for r in rows if r["experiment"] == "cores"]
     for name in sorted({r["algorithm"] for r in cores}):
@@ -213,7 +292,7 @@ def summarize(rows):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("experiments", nargs="+", choices=["data", "cores", "items", "cache", "all"])
+    parser.add_argument("experiments", nargs="+", choices=["data", "cores", "items", "cache", "sequences", "all"])
     parser.add_argument("--output", help="fichero JSON donde guardar las mediciones")
     parser.add_argument("--min-supp", type=float, default=0.05)
     parser.add_argument("--cores", type=int, default=8, help="nucleos de los experimentos data/items/cache")
@@ -224,15 +303,21 @@ def main(argv=None):
     parser.add_argument("--cores-n", type=int, default=200000, help="N del experimento cores")
     parser.add_argument("--item-list", default="50,100,200,400", help="items del experimento items")
     parser.add_argument("--items-n", type=int, default=100000, help="N de los experimentos items/cache")
+    parser.add_argument("--seq-sizes", default="5000,10000,20000,40000", help="numero de secuencias del experimento sequences")
+    parser.add_argument("--seq-items", type=int, default=60, help="items distintos de las secuencias")
+    parser.add_argument("--seq-min-supp", type=float, default=0.05, help="soporte minimo del experimento sequences")
+    parser.add_argument("--seq-dataframe", action="store_true",
+                        help="incluir la entrada como DataFrame de Spark (si prefixspan_spark ya la acepta)")
     args = parser.parse_args(argv)
 
-    experiments = ["data", "cores", "items", "cache"] if "all" in args.experiments else args.experiments
+    experiments = ["data", "cores", "items", "cache", "sequences"] if "all" in args.experiments else args.experiments
     rows = []
     with tempfile.TemporaryDirectory(prefix="armxtend-bench-") as tmp:
         for experiment in experiments:
             print("== experimento: {} ==".format(experiment), flush=True)
             rows += {"data": experiment_data, "cores": experiment_cores,
-                     "items": experiment_items, "cache": experiment_cache}[experiment](args, tmp)
+                     "items": experiment_items, "cache": experiment_cache,
+                                  "sequences": experiment_sequences}[experiment](args, tmp)
 
     print("\nResumen\n-------\n" + summarize(rows))
     if args.output:

@@ -32,7 +32,7 @@ for _, p in patterns.head(3).iterrows():
 
 ```python
 prefixspan(sequences, min_supp, max_len=None, min_len=1)
-prefixspan_spark(spark, sequences, min_supp, max_pattern_length=10)
+prefixspan_spark(spark, sequences, min_supp, max_pattern_length=10, sequence_column="sequence")
 sequences_from_events(events, sequence_column, time_column, item_column, bin=None)
 sequences_from_items(items, by=None)
 contains_sequence(sequence, pattern)
@@ -45,7 +45,9 @@ format_sequence(pattern)       # ({'a','b'}, {'c'}) -> '<{a, b} {c}>'
   of items), sorted by decreasing support. `max_len` / `min_len` bound the number of items of a pattern.
 - **`prefixspan_spark`** runs the same computation with Spark MLlib's `PrefixSpan` (`pyspark.ml.fpm`), for
   sequence databases that do not fit in a machine. It accepts a `SparkSession` or a `SparkContext`, and the
-  sequences as a Python list or an RDD, and returns the same `DataFrame`. It needs the `spark` extra
+  sequences as a Python list, an RDD or a Spark `DataFrame` (for example read from Parquet) with an
+  `array<array<string>>` column named `sequence_column`. An RDD or a DataFrame is normalised in the executors and
+  never collected in the driver. It returns the same `DataFrame`. It needs the `spark` extra
   (`pip install "ARMxtend[spark]"`); `pyspark` is imported only when the function is called.
 - **`sequences_from_events`** builds sequences from an **event log** (one row per event): one sequence per value of
   `sequence_column` (patient, user, day...), events ordered by `time_column`. Events with exactly the same time

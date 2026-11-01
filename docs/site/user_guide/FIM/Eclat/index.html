@@ -354,6 +354,14 @@
             
             <li class="nav-item" data-bs-level="1"><a href="#fimeclat-declat-fuzzydeclat-spark" class="nav-link">FIM.Eclat -- DECLAT / FuzzyDECLAT (Spark)</a>
               <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#input-from-dataframes-and-parquet" class="nav-link">Input from DataFrames and Parquet</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#memory" class="nav-link">Memory</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#declat-crisp" class="nav-link">DECLAT (crisp)</a>
               <ul class="nav flex-column">
               </ul>
@@ -378,6 +386,20 @@
 <p>Frequent itemset mining on Apache Spark inspired by the sequential ECLAT algorithm (Zaki, 2000),
 which represents each item by its list of transaction identifiers (TID-list) and computes an
 itemset's support by intersecting the TID-lists of its items.</p>
+<h2 id="input-from-dataframes-and-parquet">Input from DataFrames and Parquet</h2>
+<p>The Spark algorithms take RDDs. <code>FIM.spark_io</code> builds them from a DataFrame without collecting anything in the driver:</p>
+<pre><code class="language-python">from ARMxtend.FIM import read_transactions, transactions_from_dataframe, fuzzy_transactions_from_dataframe
+
+rdd = read_transactions(spark, &quot;baskets.parquet&quot;, column=&quot;items&quot;)             # array&lt;string&gt; column
+rdd = transactions_from_dataframe(frame, &quot;line&quot;, sep=&quot;,&quot;)                      # text column with a separator
+fuzzy = read_transactions(spark, &quot;memberships.parquet&quot;, fuzzy=True)            # array&lt;struct&lt;item,degree&gt;&gt;
+fuzzy = fuzzy_transactions_from_dataframe(frame, &quot;items&quot;, degrees_column=&quot;degrees&quot;)   # two parallel arrays
+DECLAT.run(sc, rdd, 0.05)
+</code></pre>
+<p>Item names cannot contain <code>,</code> or <code>-</code>. Rows with a null items column become empty transactions (they still count in the total).</p>
+<h2 id="memory">Memory</h2>
+<p>The TID-lists are built in the executors as numpy arrays, collected in the driver and broadcast once; see
+<a href="../../scalability/#memory-of-the-driver">Scalability</a>.</p>
 <h2 id="declat-crisp"><code>DECLAT</code> (crisp)</h2>
 <p>Implements Algorithm 3 of Fernandez-Basso, Ruiz &amp; Martin-Bautista (2024) -- see
 <a href="../../../cite/">Citing ARMxtend</a>.</p>

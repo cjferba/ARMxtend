@@ -265,7 +265,15 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
   `--alpha` y las demás opciones de significación. Un `n_candidates` pequeño (reglas examinadas) hace la corrección por pruebas
   múltiples más laxa de lo que sería sobre todas las reglas posibles.
 
-## 14. Documentación
+## 14. Spark (DECLAT, entrada DataFrame, secuencias)
+
+- [ ] **Reescritura de `DECLAT`/`FuzzyDECLAT`**: resultado idéntico al anterior en 100 000 transacciones (comparado clave a clave y valor a valor) y a FP-Growth en tests aleatorios. Cambio de comportamiento menor: un item repetido en una transacción difusa cuenta con su mayor grado (antes, uno arbitrario). Los TIDs son int32 si caben.
+- [ ] **Sigue acotado por el driver**: las TID-lists se recogen y se difunden; ahora ocupan ~4 (+8) bytes por aparición. No es un Eclat distribuido.
+- [ ] **Todas las medidas son `local[n]`** en una sola máquina, una ejecución mejor de dos; la tabla de `scalability.md` se regeneró solo para data, cores y sequences (items y cache conservan las cifras anteriores).
+- [ ] **Secuencias**: el PrefixSpan local gana por debajo de ~100 000 secuencias; el de Spark solo compensa con datos mayores. Entrada DataFrame con `array<array<string>>`; los items se ordenan y deduplican por elemento.
+- [ ] **`FIM.spark_io`**: los items no pueden contener `,` ni `-`; una fila nula es una transacción vacía.
+
+## 15. Documentación
 
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la

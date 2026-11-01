@@ -6,6 +6,27 @@ Frequent itemset mining on Apache Spark inspired by the sequential ECLAT algorit
 which represents each item by its list of transaction identifiers (TID-list) and computes an
 itemset's support by intersecting the TID-lists of its items.
 
+## Input from DataFrames and Parquet
+
+The Spark algorithms take RDDs. `FIM.spark_io` builds them from a DataFrame without collecting anything in the driver:
+
+```python
+from ARMxtend.FIM import read_transactions, transactions_from_dataframe, fuzzy_transactions_from_dataframe
+
+rdd = read_transactions(spark, "baskets.parquet", column="items")             # array<string> column
+rdd = transactions_from_dataframe(frame, "line", sep=",")                      # text column with a separator
+fuzzy = read_transactions(spark, "memberships.parquet", fuzzy=True)            # array<struct<item,degree>>
+fuzzy = fuzzy_transactions_from_dataframe(frame, "items", degrees_column="degrees")   # two parallel arrays
+DECLAT.run(sc, rdd, 0.05)
+```
+
+Item names cannot contain `,` or `-`. Rows with a null items column become empty transactions (they still count in the total).
+
+## Memory
+
+The TID-lists are built in the executors as numpy arrays, collected in the driver and broadcast once; see
+[Scalability](../scalability.md#memory-of-the-driver).
+
 ## `DECLAT` (crisp)
 
 Implements Algorithm 3 of Fernandez-Basso, Ruiz & Martin-Bautista (2024) -- see

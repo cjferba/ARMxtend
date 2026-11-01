@@ -140,37 +140,56 @@ def prefixspan(sequences: Iterable[Iterable[Union[str, Iterable[str]]]], min_sup
     return result.sort_values(["support", "length"], ascending=[False, True], kind="mergesort").reset_index(drop=True)
 
 
-def prefixspan_spark(spark: Any, sequences: Any, min_supp: float, max_pattern_length: int = 10) -> pd.DataFrame:
+def _sorted_elements(sequence: Iterable[Union[str, Iterable[str]]]) -> List[List[str]]:
+    """Una secuencia como lista de elementos (listas de items ordenadas y sin repetidos), sin elementos vacios."""
+    result = []
+    for element in sequence:
+        items = sorted({element} if isinstance(element, str) else set(element))
+        if items:
+            result.append(items)
+    return result
+
+
+def prefixspan_spark(spark: Any, sequences: Any, min_supp: float, max_pattern_length: int = 10,
+                     sequence_column: str = "sequence") -> pd.DataFrame:
     """
     Patrones secuenciales frecuentes en Spark: usa el PrefixSpan de MLlib
     (``pyspark.ml.fpm.PrefixSpan``). Requiere el extra ``spark``.
 
     Argumentos:
         spark: un ``SparkSession`` o un ``SparkContext``
-        sequences: las secuencias, en el mismo formato que `prefixspan`, como
-            lista de Python o como RDD
+        sequences: las secuencias, en el mismo formato que `prefixspan`, como lista de Python, como RDD o como
+            ``DataFrame`` de Spark con una columna `sequence_column` de tipo ``array<array<string>>`` (por ejemplo
+            leido de Parquet). El RDD y el DataFrame NO se recogen en el driver: se normalizan en los ejecutores
         min_supp (float): soporte minimo relativo, en (0, 1]
         max_pattern_length (int): numero maximo de items de un patron
+        sequence_column (str): columna con las secuencias cuando `sequences` es un DataFrame
 
     Retorna:
-        pandas.DataFrame con las columnas 'support', 'sequence' y 'length',
-        como `prefixspan`.
+        pandas.DataFrame con las columnas 'support', 'sequence' y 'length', como `prefixspan`.
     """
     from pyspark.ml.fpm import PrefixSpan
-    from pyspark.sql import SparkSession
+    from pyspark.sql import DataFrame, SparkSession
+    from pyspark.sql import functions as F
 
     session = spark if isinstance(spark, SparkSession) else SparkSession.builder.getOrCreate()
-    local = sequences.collect() if hasattr(sequences, "collect") else list(sequences)
-    database = _normalize(local)
-    if not database:
+    if isinstance(sequences, DataFrame):
+        column = F.col(sequence_column)
+        frame = sequences.select(F.filter(F.transform(column, lambda element: F.array_sort(F.array_distinct(element))),
+                                          lambda element: F.size(element) > 0).alias("sequence"))
+    elif hasattr(sequences, "map") and hasattr(sequences, "collect"):
+        frame = session.createDataFrame(sequences.map(lambda sequence: (_sorted_elements(sequence),)),
+                                        "sequence array<array<string>>")
+    else:
+        rows = [(_sorted_elements(sequence),) for sequence in sequences]
+        frame = session.createDataFrame(rows, "sequence array<array<string>>")
+    total = frame.count()
+    if total == 0:
         return pd.DataFrame({"support": [], "sequence": [], "length": []})
 
-    rows = [([sorted(element) for element in sequence],) for sequence in database]
-    frame = session.createDataFrame(rows, ["sequence"])
     patterns = PrefixSpan(minSupport=min_supp, maxPatternLength=max_pattern_length,
                           sequenceCol="sequence").findFrequentSequentialPatterns(frame).collect()
 
-    total = len(database)
     table = [(row["freq"] / total, tuple(frozenset(element) for element in row["sequence"]),
               sum(len(element) for element in row["sequence"])) for row in patterns]
     result = pd.DataFrame(table, columns=["support", "sequence", "length"])

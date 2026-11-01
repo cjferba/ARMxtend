@@ -409,7 +409,7 @@ for _, p in patterns.head(3).iterrows():
 </ul>
 <h2 id="functions">Functions</h2>
 <pre><code class="language-python">prefixspan(sequences, min_supp, max_len=None, min_len=1)
-prefixspan_spark(spark, sequences, min_supp, max_pattern_length=10)
+prefixspan_spark(spark, sequences, min_supp, max_pattern_length=10, sequence_column=&quot;sequence&quot;)
 sequences_from_events(events, sequence_column, time_column, item_column, bin=None)
 sequences_from_items(items, by=None)
 contains_sequence(sequence, pattern)
@@ -422,7 +422,9 @@ format_sequence(pattern)       # ({'a','b'}, {'c'}) -&gt; '&lt;{a, b} {c}&gt;'
   of items), sorted by decreasing support. <code>max_len</code> / <code>min_len</code> bound the number of items of a pattern.</li>
 <li><strong><code>prefixspan_spark</code></strong> runs the same computation with Spark MLlib's <code>PrefixSpan</code> (<code>pyspark.ml.fpm</code>), for
   sequence databases that do not fit in a machine. It accepts a <code>SparkSession</code> or a <code>SparkContext</code>, and the
-  sequences as a Python list or an RDD, and returns the same <code>DataFrame</code>. It needs the <code>spark</code> extra
+  sequences as a Python list, an RDD or a Spark <code>DataFrame</code> (for example read from Parquet) with an
+  <code>array&lt;array&lt;string&gt;&gt;</code> column named <code>sequence_column</code>. An RDD or a DataFrame is normalised in the executors and
+  never collected in the driver. It returns the same <code>DataFrame</code>. It needs the <code>spark</code> extra
   (<code>pip install "ARMxtend[spark]"</code>); <code>pyspark</code> is imported only when the function is called.</li>
 <li><strong><code>sequences_from_events</code></strong> builds sequences from an <strong>event log</strong> (one row per event): one sequence per value of
   <code>sequence_column</code> (patient, user, day...), events ordered by <code>time_column</code>. Events with exactly the same time

@@ -16,7 +16,7 @@ trabajar** (anomalías, predicción, clasificación), después **nuevos tipos de
 | 4 | **Reglas multinivel / con taxonomía** (`FIM.taxonomy`, `ARM.generalized_rules`): jerarquías de ítems, soporte por nivel, reglas R-interesantes que podan las redundantes entre niveles | hecho |
 | 5 | **Reglas cuantitativas** (`ARM.quantitative_rules`): discretización por intervalos con fusión (Srikant–Agrawal) frente a la difusa | hecho |
 | 6 | **Reglas raras, de alta utilidad y top-k** (`FIM.topk`, `FIM.rare`, `FIM.utility`, `ARM.topk_rules`, `ARM.rare_rules`, `ARM.utility_rules`): las k mejores sin umbral, itemsets raros minimales, itemsets y reglas de alta utilidad | hecho |
-| 7 | **Spark**: entrada DataFrame/Parquet; reescritura de FuzzyDECLAT/DECLAT sin recoger en el driver; benchmark de secuencias | pendiente |
+| 7 | **Spark**: entrada DataFrame/Parquet; DECLAT/FuzzyDECLAT con TID-lists compactas; benchmark de secuencias | hecho |
 | 8 | **API estilo scikit-learn**, generadores sintéticos y conjuntos de datos de ejemplo | pendiente |
 | 9 | **Proyecto**: `CITATION.cff` / Zenodo, cuadernos, comparativas con SPMF y mlxtend, idioma de la documentación | pendiente |
 
@@ -58,7 +58,10 @@ comandos `top-k-rules`, `rare-rules` y `high-utility-rules`. Todas las salidas s
 confianza de utilidad, algoritmos de utilidad más rápidos (HUI-Miner, EFIM), top-k con medidas distintas del soporte y
 reglas con ítems raros sueltos.
 
-**7. Spark.** Antes de tocar nada, medir con `benchmarks/spark_scalability.py` para no optimizar a ciegas.
+**7. Spark.** Medido antes con `benchmarks/spark_scalability.py`. Entregado: TID-lists como arrays numpy (resultado idéntico bit a bit), difusión única,
+`FIM.spark_io` (DataFrame/Parquet), `prefixspan_spark` sin `collect` y el experimento `sequences`. Sigue siendo un diseño acotado por la
+memoria del driver (se recogen las TID-lists), solo que unas 100 veces menor; un Eclat realmente distribuido (por clases de equivalencia) queda fuera, así
+como medir en un cluster real.
 
 **9. Proyecto.** Las decisiones abiertas de publicación (entornos `pypi`/`testpypi`, fecha del 0.1.0, licencia CC BY-NC
 frente a una OSI) están en `REVIEW_POINTS.md`, sección 6.

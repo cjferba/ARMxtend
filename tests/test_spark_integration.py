@@ -90,3 +90,100 @@ def test_fuzzy_algorithms_on_real_spark_match_stub_and_fuzzy_fpgrowth(sc, algori
     for key, vector in realResult.items():
         assert np.allclose(vector, stubResult[key])
         assert np.allclose(vector, sequentialResult[key])
+
+
+def test_declat_vertical_arrays_on_real_spark_match_fpgrowth_on_many_partitions(sc):
+    """Los arrays numpy se construyen en los ejecutores, viajan al driver y se difunden: mismo resultado que FP-Growth."""
+    rng = np.random.RandomState(7)
+    probability = rng.uniform(0.4, 0.85, 9)
+    lines = [",".join("i{}".format(k) for k in range(9) if rng.rand() < probability[k]) for _ in range(400)]
+
+    result = DECLAT.run(sc, sc.parallelize(lines, 6), min_supp=0.1)
+    expected = fpgrowth([line.split(",") if line else [] for line in lines], min_supp=0.1)
+
+    assert max(len(key.split("-")) for key in result) >= 4
+    assert set(result) == set(expected) and result == pytest.approx(expected)
+
+
+def test_fuzzy_declat_vertical_arrays_on_real_spark_match_fuzzy_fpgrowth_on_many_partitions(sc):
+    rng = np.random.RandomState(8)
+    grid = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 0.33, 0.97])
+    transactions = [[("i{}".format(k), float(rng.choice(grid))) for k in range(7) if rng.rand() < 0.8] for _ in range(300)]
+
+    result = FuzzyDECLAT.run(sc, sc.parallelize(transactions, 6), min_supp=0.05, num_alpha=5)
+    expected = fuzzy_fpgrowth(transactions, min_supp=0.05, num_alpha=5)
+
+    assert set(result) == set(expected) and max(len(key.split("-")) for key in result) >= 3
+    for key, vector in result.items():
+        assert np.allclose(vector, expected[key], atol=1e-12)
+
+
+def test_fuzzy_declat_on_real_spark_rejects_degrees_outside_the_unit_interval(sc):
+    with pytest.raises(Exception, match="grado de pertenencia"):
+        FuzzyDECLAT.run(sc, sc.parallelize([[("a", 0.5), ("b", 1.5)]] * 4, 2), min_supp=0.1, num_alpha=3)
+
+
+# ------------------------------------------------------------ entrada desde DataFrames / Parquet
+
+def test_crisp_algorithms_read_parquet_and_dataframes(sc, tmp_path):
+    from pyspark.sql import SparkSession
+
+    from ARMxtend.FIM import read_transactions, transactions_from_dataframe
+
+    session = SparkSession.builder.getOrCreate()
+    baskets = [line.split(",") for line in TABLE2_TRANSACTIONS]
+    path = str(tmp_path / "baskets.parquet")
+    session.createDataFrame([(b,) for b in baskets], "items array<string>").repartition(3).write.parquet(path)
+    expected = fpgrowth(baskets, min_supp=0.3)
+
+    assert DECLAT.run(sc, read_transactions(session, path), 0.3) == pytest.approx(expected)
+    text = session.createDataFrame([(" , ".join(b) + ",",) for b in baskets] + [(None,)], "line string")
+    assert sorted(transactions_from_dataframe(text, "line", sep=",").collect())[:2] == ["", "A,B,C"]
+    assert DApriori.run(sc, transactions_from_dataframe(text.na.drop(), "line", sep=","), 0.3) == pytest.approx(expected)
+    for call in (lambda: transactions_from_dataframe(text, "line"), lambda: transactions_from_dataframe(text, "nope"),
+                 lambda: transactions_from_dataframe(session.createDataFrame([(["a"],)], "x array<string>"), "x", sep=",")):
+        with pytest.raises(ValueError):
+            call()
+
+
+def test_fuzzy_algorithms_read_struct_and_parallel_columns(sc, tmp_path):
+    from pyspark.sql import SparkSession
+
+    from ARMxtend.FIM import fuzzy_transactions_from_dataframe, read_transactions
+
+    session = SparkSession.builder.getOrCreate()
+    expected = fuzzy_fpgrowth(FUZZY_TRANSACTIONS, min_supp=0.1, num_alpha=NUM_ALPHA)
+    structs = session.createDataFrame([([{"item": i, "degree": float(d)} for i, d in t],) for t in FUZZY_TRANSACTIONS],
+                                      "items array<struct<item:string,degree:double>>")
+    path = str(tmp_path / "fuzzy.parquet")
+    structs.write.parquet(path)
+    parallel = session.createDataFrame([([i for i, _ in t], [float(d) for _, d in t]) for t in FUZZY_TRANSACTIONS],
+                                       "items array<string>, degrees array<double>")
+    for rdd in (read_transactions(session, path, fuzzy=True), fuzzy_transactions_from_dataframe(parallel, "items", "degrees")):
+        result = FuzzyDECLAT.run(sc, rdd, 0.1, NUM_ALPHA)
+        assert set(result) == set(expected)
+        for key, vector in result.items():
+            assert np.allclose(vector, expected[key])
+    with pytest.raises(ValueError):
+        fuzzy_transactions_from_dataframe(parallel, "nope")
+    bad = session.createDataFrame([(["a", "b"], [0.5])], "items array<string>, degrees array<double>")
+    with pytest.raises(Exception, match="mismo tamano"):
+        fuzzy_transactions_from_dataframe(bad, "items", "degrees").collect()
+
+
+def test_prefixspan_spark_accepts_dataframes_without_collecting(sc, tmp_path):
+    from pyspark.sql import SparkSession
+
+    from ARMxtend.FIM.sequential import prefixspan, prefixspan_spark
+
+    session = SparkSession.builder.getOrCreate()
+    database = [[["a"], ["b", "c"], ["a"]], [["a"], ["c"]], [["b"], ["a", "a"], []], [["a", "b"], ["c"]], [[], ["c"]]]
+    path = str(tmp_path / "seq.parquet")
+    session.createDataFrame([(s,) for s in database], "events array<array<string>>").write.parquet(path)
+
+    expected = prefixspan(database, 0.4, max_len=4)
+    for result in (prefixspan_spark(session, session.read.parquet(path), 0.4, 4, sequence_column="events"),
+                   prefixspan_spark(session, sc.parallelize(database, 2), 0.4, 4)):
+        assert dict(zip(result["sequence"], result["support"])) == pytest.approx(dict(zip(expected["sequence"], expected["support"])))
+    empty = session.createDataFrame([], "events array<array<string>>")
+    assert len(prefixspan_spark(session, empty, 0.4, sequence_column="events")) == 0

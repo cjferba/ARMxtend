@@ -28,10 +28,12 @@ from .taxonomy import Taxonomy, extend_transactions, generalize_transactions, ge
 from .topk import top_k_itemsets
 from .rare import minimal_rare_itemsets
 from .utility import high_utility_itemsets
+from .spark_io import fuzzy_transactions_from_dataframe, read_transactions, transactions_from_dataframe
 
 __all__ = ["FARE", "closed_itemsets", "maximal_itemsets", "support_from_closed", "prefixspan", "prefixspan_spark",
            "contains_sequence", "format_sequence", "sequences_from_events", "sequences_from_items",
            "fuzzy_prefixspan", "fuzzy_pattern_degree", "fuzzy_sequences_from_memberships",
            "Taxonomy", "extend_transactions", "generalize_transactions", "generalized_itemsets",
            "top_k_itemsets", "minimal_rare_itemsets", "high_utility_itemsets",
+           "transactions_from_dataframe", "fuzzy_transactions_from_dataframe", "read_transactions",
            "apriori", "Eclat", "BD_ARE", "BD_FARE"]

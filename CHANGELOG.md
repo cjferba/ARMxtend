@@ -22,6 +22,9 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
   rare together (`FIM.rare`, `ARM.rare_rules`); high-utility itemsets (two-phase algorithm over quantities and unit profits)
   and rules with `utility` and `utility_share` (`FIM.utility`, `ARM.utility_rules`); `armxtend top-k-rules | rare-rules |
   high-utility-rules`.
+- **Spark:** `DECLAT` / `FuzzyDECLAT` keep numpy TID-lists and broadcast them once (same results; `FuzzyDECLAT` 19.6 s to
+  0.8 s and 1.1 GB to 23 MB of driver memory at 100 000 transactions); input from DataFrames and Parquet
+  (`FIM.spark_io`); `prefixspan_spark` accepts DataFrames and no longer collects an RDD; sequence benchmark.
 - **Time series, sensors and sequences:** `preprocessing.timeseries` (symbolic discretization -- quantile,
   uniform, SAX-like --, event and calendar items, lagged items, window items); lagged (inter-transaction) rules,
   crisp and fuzzy, and per-group rule profiles (`ARM.temporal_rules`); rule drift over time windows with

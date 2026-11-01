@@ -32,18 +32,22 @@ Seconds per run:
 
 | Transactions | `DApriori` | `DAprioriTID` | `DECLAT` | `FuzzyDAprioriTID` | `FuzzyDECLAT` |
 |---:|---:|---:|---:|---:|---:|
-| 25 000 | 0.89 | 1.05 | 0.49 | 1.8 | 3.8 |
-| 50 000 | 1.19 | 1.43 | 0.70 | 3.2 | 9.6 |
-| 100 000 | 1.84 | 2.39 | 1.15 | 6.6 | 20.2 |
-| 200 000 | 3.21 | 3.64 | 1.74 | - | - |
-| 400 000 | 5.84 | 7.25 | 3.52 | - | - |
+| 25 000 | 1.08 | 1.28 | 0.49 | 2.1 | 0.44 |
+| 50 000 | 1.37 | 1.62 | 0.47 | 3.9 | 0.61 |
+| 100 000 | 2.20 | 2.66 | 0.67 | 7.3 | 0.81 |
+| 200 000 | 3.57 | 4.70 | 0.73 | 14.2 | 1.14 |
+| 400 000 | 6.20 | 8.70 | 1.17 | 27.5 | 2.18 |
 
-Fitting `t ~ N^a` gives `a = 0.69` (`DApriori`, `DAprioriTID`), `0.70` (`DECLAT`), `0.93` (`FuzzyDAprioriTID`) and
-**`1.20` (`FuzzyDECLAT`)**. The crisp exponents are below 1 because each Spark job has a fixed cost of a few
-tenths of a second; the last doubling (200 000 to 400 000) multiplies the time by 1.8 to 2.0, so the crisp
-algorithms are **linear in the number of transactions** once the data are big enough to hide that fixed cost.
-`FuzzyDAprioriTID` is also close to linear. `FuzzyDECLAT` grows faster than the data (see below), and the fuzzy
-algorithms were only run up to 100 000 transactions.
+Fitting `t ~ N^a` gives `a = 0.64` (`DApriori`), `0.71` (`DAprioriTID`), `0.32` (`DECLAT`), `0.93` (`FuzzyDAprioriTID`) and
+`0.55` (`FuzzyDECLAT`). Exponents below 1 mostly reflect the fixed cost of a few tenths of a second per Spark job; at these
+sizes the Eclat variants are dominated by it. `FuzzyDAprioriTID` is the only one close to linear.
+
+> **Before and after.** Earlier versions of `DECLAT` and `FuzzyDECLAT` kept one Python dictionary and one vector per TID and
+> counted candidates with Python loops: `FuzzyDECLAT` took 19.6 s at 100 000 transactions (exponent 1.20, no speed-up with
+> cores) and 1.3 GB of driver memory. They now store each item's TID-list as numpy arrays (sorted TIDs and, for the fuzzy
+> case, the degrees), intersect them with vectorised searches and broadcast them once instead of once per level. The result
+> is bit-identical (checked against the previous implementation and FP-Growth); `FuzzyDECLAT` takes 0.81 s at 100 000 and
+> `DECLAT` 0.67 s (1.07 s before).
 
 ## Speed-up with the number of cores (200 000 transactions)
 
@@ -51,37 +55,48 @@ Seconds, with speed-up `S = T1 / Tn` and efficiency `E = S / n`:
 
 | Cores | `DApriori` | `DAprioriTID` | `DECLAT` | `FuzzyDECLAT` |
 |---:|---:|---:|---:|---:|
-| 1 | 14.4 | 17.9 | 3.5 | 61.1 |
-| 2 | 7.4 (S 1.95, E 98 %) | 9.2 (S 1.94, E 97 %) | 2.3 (S 1.53, E 77 %) | 37.2 (S 1.64, E 82 %) |
-| 4 | 4.0 (S 3.61, E 90 %) | 5.0 (S 3.57, E 89 %) | 1.7 (S 2.00, E 50 %) | 37.5 (S 1.63, E 41 %) |
-| 8 | 3.4 (S 4.20, E 52 %) | 4.2 (S 4.29, E 54 %) | 1.8 (S 1.97, E 25 %) | 44.4 (S 1.38, E 17 %) |
+| 1 | 14.5 | 18.2 | 2.0 | 3.1 |
+| 2 | 7.6 (S 1.91, E 95 %) | 9.5 (S 1.91, E 96 %) | 1.1 (S 1.72, E 86 %) | 1.7 (S 1.78, E 89 %) |
+| 4 | 4.2 (S 3.48, E 87 %) | 5.2 (S 3.52, E 88 %) | 0.8 (S 2.54, E 63 %) | 1.0 (S 2.94, E 74 %) |
+| 8 | 3.5 (S 4.18, E 52 %) | 4.3 (S 4.27, E 53 %) | 0.8 (S 2.36, E 29 %) | 1.1 (S 2.93, E 37 %) |
 
-* `DApriori` and `DAprioriTID` scale almost ideally up to 4 cores. At 8 cores the efficiency drops to about 50 %:
-  eight Python workers and the driver compete for 10 cores, four of which are slow efficiency cores, and the fixed
-  per-job cost is now a large share of a 3-second run. Take the 8-core figure as a property of this machine.
-* `DECLAT` is the fastest algorithm on one core but stops improving after 2 to 4 cores, because the TID-lists are
-  collected and processed in the driver (see below).
-* `FuzzyDECLAT` **does not scale with more cores** and is even slower with 8 than with 2.
-  `FuzzyDAprioriTID` was not part of this experiment.
+* `DApriori` and `DAprioriTID` scale almost ideally up to 4 cores. At 8 cores eight Python workers and the driver compete
+  for 10 cores, four of them slow efficiency cores, so take the 8-core figure as a property of this machine.
+* `DECLAT` and `FuzzyDECLAT` are now the fastest, but stop improving after about 4 cores: building and collecting the
+  TID-lists is a fixed, mostly serial part.
 
 ## Memory of the driver
 
-`DECLAT` and `FuzzyDECLAT` build the TID-lists with `groupByKey().collectAsMap()`, so **all of them end up in the
-driver process**, and then broadcast them. This is the algorithm's design (the DECLAT paper already notes it is the
-most memory-hungry), and it sets the size of the data they can handle by the memory of the driver, not by the size
-of the cluster. Peak resident memory of the Python driver process at 400 000 transactions, each algorithm measured
-in a fresh process:
+`DECLAT` and `FuzzyDECLAT` build the TID-lists in the executors, **collect them in the driver and broadcast them**. That is
+the design of the algorithm (the DECLAT paper already notes it is the most memory-hungry) and it still bounds the data they
+can handle by the memory of the driver. What changed is the size of the representation: 4 bytes per item occurrence
+(8 more in the fuzzy case) instead of Python objects. Growth of the driver's resident memory at 100 000 transactions, in a
+fresh process:
 
-| Algorithm | Driver memory before / peak |
-|---|---|
-| `DApriori` | 120 MB / 121 MB |
-| `DECLAT` | 120 MB / **402 MB** (about 0.7 KB per transaction) |
+| Algorithm | Before | Now |
+|---|---:|---:|
+| `DECLAT` | +63 MB | +8 MB |
+| `FuzzyDECLAT` | +1 083 MB | +23 MB |
 
-`FuzzyDECLAT` needs much more because every TID carries a vector with one value per alpha-cut: the peak resident
-memory of the driver process was 411, 708 and 1 303 MB at 25 000, 50 000 and 100 000 transactions (roughly 12 MB per
-1 000 transactions with 5 alpha-cuts; these peaks come from the general benchmark run, where the process had
-already executed the smaller sizes, so they are upper bounds). That vector is also shipped to every worker in a broadcast and its supports are computed with Python loops, which
-explains the super-linear time and the lack of speed-up.
+The vertical database is of the order of the data themselves (about 12 bytes per occurrence in the fuzzy case), so the
+limit is the memory of the driver, not an overhead of 100 times the data. Beyond that, use `DApriori` / `DAprioriTID`.
+
+## Sequences (PrefixSpan)
+
+`FIM.sequential.prefixspan` (pure Python, one machine) against `prefixspan_spark` (MLlib) on synthetic sequences of about 6
+elements over 60 items, `min_supp = 0.05` (about 105 patterns). Seconds, 8 cores:
+
+| Sequences | `prefixspan` | Spark, list | Spark, RDD | Spark, DataFrame |
+|---:|---:|---:|---:|---:|
+| 10 000 | 0.23 | 0.71 | 0.57 | 0.67 |
+| 40 000 | 1.00 | 1.16 | 1.04 | 1.11 |
+| 160 000 | 4.54 | 4.04 | 2.95 | 3.45 |
+| 640 000 | 22.4 (+1 167 MB) | 18.6 | 10.3 | 11.1 |
+
+On one machine the local implementation wins below about 100 000 sequences and Spark starts to pay off above that, mainly
+with an RDD or DataFrame input, which `prefixspan_spark` no longer collects in the driver. The local version needs about
+1.8 MB of memory per 1 000 sequences; Spark is the way out when the sequences do not fit in one machine. As with everything
+here, this is `local[n]`, not a cluster.
 
 ## Number of items and caching of the input
 
@@ -97,8 +112,10 @@ explains the super-linear time and the lack of speed-up.
 ## Recommendations
 
 * For big **crisp** data use `DApriori` or `DAprioriTID`: they are linear in the data and the only ones whose speed-up
-  was close to ideal. `DECLAT` is faster for moderate data, as long as all the TID-lists fit in the driver.
-* For big **fuzzy** data use `FuzzyDAprioriTID`. Avoid `FuzzyDECLAT` beyond a few tens of thousands of transactions.
+  was close to ideal. `DECLAT` is faster, as long as all the TID-lists fit in the driver.
+* For fuzzy data `FuzzyDECLAT` is now much faster than `FuzzyDAprioriTID` (2.2 s against 27.5 s at 400 000 transactions) with
+  the same driver-memory condition; `FuzzyDAprioriTID` does not need to hold the data in the driver.
+* For sequences use the local `prefixspan` unless they do not fit in memory.
 * A low `min_supp` multiplies the number of frequent itemsets and hence the work, much more than extra items do.
 * Give the driver enough memory (`spark.driver.memory`) when you use the Eclat variants.
 

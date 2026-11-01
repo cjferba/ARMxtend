@@ -18,7 +18,27 @@ consistente con el resto de algoritmos difusos de ARMxtend (FIM.BD_FARE).
 """
 import numpy as np
 
-from ._shared import generate_candidates, alpha_cuts, alpha_levels, alpha_weights, weighted_alpha_aggregate
+from ._shared import generate_candidates, alpha_levels, alpha_weights, weighted_alpha_aggregate
+
+
+def _intersect_positions(first, second):
+    """
+    Posiciones, en `first` y en `second`, de los elementos comunes de dos arrays ORDENADOS y sin repetidos
+    (TID-lists). Busca cada elemento de `first` en `second` con ``searchsorted``: O(|first| log |second|), sin
+    concatenar ni reordenar; conviene que `first` sea el mas corto.
+    """
+    if len(first) == 0 or len(second) == 0:
+        empty = np.zeros(0, dtype=np.intp)
+        return empty, empty
+    where = np.searchsorted(second, first)
+    where[where == len(second)] = len(second) - 1
+    hit = np.flatnonzero(second[where] == first)
+    return hit, where[hit]
+
+
+def _tid_dtype(total):
+    """int32 si los identificadores caben (la mitad de memoria que int64), int64 si no."""
+    return np.int32 if total < 2 ** 31 else np.int64
 
 
 class DECLAT(object):
@@ -46,16 +66,23 @@ class DECLAT(object):
         totalTransacs = indexedTransacs.count()
         if totalTransacs == 0:
             return {}
+        dtype = _tid_dtype(totalTransacs)
 
         # Preprocesado (lineas 4-7 Algoritmo 3): transformar a formato vertical
-        # <item, TID-list> agrupando por item las transacciones en que aparece
+        # <item, TID-list> agrupando por item las transacciones en que aparece.
+        # Cada TID-list se compacta EN LOS EJECUTORES a un array numpy ordenado
+        # (4 bytes por aparicion): lo que viaja al driver y se difunde es del
+        # orden de los datos, no de los objetos Python que los representan
         def emitItemTid(pair):
             line, tid = pair
             return [(item, tid) for item in cls._split(line)]
 
+        def compact(tids):
+            return np.sort(np.fromiter(tids, dtype=dtype))
+
         itemTidLists = indexedTransacs.flatMap(emitItemTid) \
                                        .groupByKey() \
-                                       .mapValues(frozenset) \
+                                       .mapValues(compact) \
                                        .collectAsMap()
 
         # Fase 1: FreqItems() -- soporte de itemsets de longitud 1
@@ -66,32 +93,39 @@ class DECLAT(object):
         globalFreqItemsets = dict(freqItemsets)
         currentLevelKeys = sorted(freqItemsets.keys())
 
-        # Fase 2: generacion iterativa de candidatos por interseccion de TID-lists
-        while len(currentLevelKeys) > 1:
-            candidateKeys = generate_candidates(currentLevelKeys)
-            if not candidateKeys:
-                break
+        # Fase 2: generacion iterativa de candidatos por interseccion de TID-lists.
+        # Las TID-lists se difunden UNA vez para todos los niveles
+        broadcastTidLists = sc.broadcast(itemTidLists)
 
-            broadcastTidLists = sc.broadcast(itemTidLists)
+        def countCandidate(key):
+            # se empieza por la lista mas corta: cada interseccion cuesta lo que ella
+            tidLists = sorted((broadcastTidLists.value[item] for item in key.split("-")), key=len)
+            common = tidLists[0]
+            for tidList in tidLists[1:]:
+                mine, _ = _intersect_positions(common, tidList)
+                common = common[mine]
+                if len(common) == 0:
+                    break
+            return (key, len(common))
 
-            def countCandidate(key):
-                tidLists = [broadcastTidLists.value[item] for item in key.split("-")]
-                intersection = tidLists[0]
-                for tidList in tidLists[1:]:
-                    intersection = intersection & tidList
-                return (key, len(intersection))
+        try:
+            while len(currentLevelKeys) > 1:
+                candidateKeys = generate_candidates(currentLevelKeys)
+                if not candidateKeys:
+                    break
 
-            itemsetCounts = dict(sc.parallelize(candidateKeys).map(countCandidate).collect())
+                itemsetCounts = dict(sc.parallelize(candidateKeys).map(countCandidate).collect())
+
+                freqItemsets = {key: count / totalTransacs
+                                for key, count in itemsetCounts.items()
+                                if count / totalTransacs >= min_supp}
+                if not freqItemsets:
+                    break
+
+                globalFreqItemsets.update(freqItemsets)
+                currentLevelKeys = sorted(freqItemsets.keys())
+        finally:
             broadcastTidLists.unpersist()
-
-            freqItemsets = {key: count / totalTransacs
-                            for key, count in itemsetCounts.items()
-                            if count / totalTransacs >= min_supp}
-            if not freqItemsets:
-                break
-
-            globalFreqItemsets.update(freqItemsets)
-            currentLevelKeys = sorted(freqItemsets.keys())
 
         return globalFreqItemsets
 
@@ -125,68 +159,85 @@ class FuzzyDECLAT(object):
             nivel (Ecs. (2)-(4) de Fernandez-Basso, Ruiz & Martin-Bautista,
             2021).
         """
-        weights = alpha_weights(alpha_levels(num_alpha))
+        levels = alpha_levels(num_alpha)
+        weights = alpha_weights(levels)
 
         indexedTransacs = transactions.zipWithIndex()
         totalTransacs = indexedTransacs.count()
         if totalTransacs == 0:
             return {}
+        dtype = _tid_dtype(totalTransacs)
 
+        # Formato vertical <item, (TIDs, grados)>: dos arrays numpy por item, construidos EN LOS EJECUTORES
+        # (TIDs ordenados de 4 bytes y grados de 8). El alpha-corte del minimo de varios grados es el minimo de
+        # sus alpha-cortes (``value >= alpha`` es monotona), asi que basta guardar el grado y contar a cada
+        # nivel al final: el resultado es el mismo que llevando un vector de alpha-cortes por TID, con una
+        # fraccion de la memoria y sin bucles de Python por TID
         def emitItemTid(pair):
             memberships, tid = pair
-            return [(item, (tid, alpha_cuts(degree, num_alpha))) for item, degree in memberships]
+            for _, degree in memberships:
+                if not 0.0 <= degree <= 1.0:
+                    raise ValueError("El grado de pertenencia difuso debe estar en [0, 1], recibido: {}".format(degree))
+            return [(item, (tid, float(degree))) for item, degree in memberships]
+
+        def compact(pairs):
+            pairs = list(pairs)
+            tids = np.fromiter((tid for tid, _ in pairs), dtype=dtype, count=len(pairs))
+            degrees = np.fromiter((degree for _, degree in pairs), dtype=float, count=len(pairs))
+            order = np.argsort(tids, kind="stable")
+            tids, degrees = tids[order], degrees[order]
+            if len(tids) > 1 and (tids[1:] == tids[:-1]).any():           # un item repetido en la transaccion: el mayor grado
+                unique, inverse = np.unique(tids, return_inverse=True)
+                best = np.zeros(len(unique))
+                np.maximum.at(best, inverse, degrees)
+                tids, degrees = unique, best
+            return tids, degrees
+
+        def supportVector(degrees):
+            return (degrees[:, None] >= levels).sum(axis=0) / totalTransacs
 
         itemTidVectors = indexedTransacs.flatMap(emitItemTid) \
                                          .groupByKey() \
-                                         .mapValues(dict) \
+                                         .mapValues(compact) \
                                          .collectAsMap()
 
-        def supportVector(tidVectorMap):
-            total = np.zeros(num_alpha, dtype=float)
-            for vector in tidVectorMap.values():
-                total = total + vector
-            return total / totalTransacs
-
         freqItemsets = {}
-        for item, tidVectorMap in itemTidVectors.items():
-            support = supportVector(tidVectorMap)
+        for item, (_, degrees) in itemTidVectors.items():
+            support = supportVector(degrees)
             if weighted_alpha_aggregate(support, weights) >= min_supp:
                 freqItemsets[item] = support
 
         globalFreqItemsets = dict(freqItemsets)
         currentLevelKeys = sorted(freqItemsets.keys())
 
-        while len(currentLevelKeys) > 1:
-            candidateKeys = generate_candidates(currentLevelKeys)
-            if not candidateKeys:
-                break
+        broadcastTidVectors = sc.broadcast(itemTidVectors)
 
-            broadcastTidVectors = sc.broadcast(itemTidVectors)
+        def countCandidate(key):
+            vectors = sorted((broadcastTidVectors.value[item] for item in key.split("-")), key=lambda v: len(v[0]))
+            tids, degrees = vectors[0]
+            for otherTids, otherDegrees in vectors[1:]:
+                mine, theirs = _intersect_positions(tids, otherTids)
+                tids, degrees = tids[mine], np.minimum(degrees[mine], otherDegrees[theirs])
+                if len(tids) == 0:
+                    break
+            return (key, supportVector(degrees))
 
-            def countCandidate(key):
-                tidVectorMaps = [broadcastTidVectors.value[item] for item in key.split("-")]
-                commonTids = set(tidVectorMaps[0].keys())
-                for tidVectorMap in tidVectorMaps[1:]:
-                    commonTids &= set(tidVectorMap.keys())
+        try:
+            while len(currentLevelKeys) > 1:
+                candidateKeys = generate_candidates(currentLevelKeys)
+                if not candidateKeys:
+                    break
 
-                total = np.zeros(num_alpha, dtype=float)
-                for tid in commonTids:
-                    membership = np.ones(num_alpha, dtype=float)
-                    for tidVectorMap in tidVectorMaps:
-                        membership = np.minimum(membership, tidVectorMap[tid])
-                    total = total + membership
+                supports = dict(sc.parallelize(candidateKeys).map(countCandidate).collect())
 
-                return (key, total / totalTransacs)
+                freqItemsets = {key: support for key, support in supports.items()
+                                if weighted_alpha_aggregate(support, weights) >= min_supp}
+                if not freqItemsets:
+                    break
 
-            supports = dict(sc.parallelize(candidateKeys).map(countCandidate).collect())
+                globalFreqItemsets.update(freqItemsets)
+                currentLevelKeys = sorted(freqItemsets.keys())
+        finally:
             broadcastTidVectors.unpersist()
-
-            freqItemsets = {key: support for key, support in supports.items()
-                            if weighted_alpha_aggregate(support, weights) >= min_supp}
-            if not freqItemsets:
-                break
-
-            globalFreqItemsets.update(freqItemsets)
-            currentLevelKeys = sorted(freqItemsets.keys())
 
         return globalFreqItemsets

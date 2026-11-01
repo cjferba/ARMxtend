@@ -370,6 +370,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#sequences-prefixspan" class="nav-link">Sequences (PrefixSpan)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#number-of-items-and-caching-of-the-input" class="nav-link">Number of items and caching of the input</a>
               <ul class="nav flex-column">
               </ul>
@@ -444,52 +448,57 @@ python benchmarks/spark_scalability.py all --output results.json
 <tbody>
 <tr>
 <td style="text-align: right;">25 000</td>
-<td style="text-align: right;">0.89</td>
-<td style="text-align: right;">1.05</td>
+<td style="text-align: right;">1.08</td>
+<td style="text-align: right;">1.28</td>
 <td style="text-align: right;">0.49</td>
-<td style="text-align: right;">1.8</td>
-<td style="text-align: right;">3.8</td>
+<td style="text-align: right;">2.1</td>
+<td style="text-align: right;">0.44</td>
 </tr>
 <tr>
 <td style="text-align: right;">50 000</td>
-<td style="text-align: right;">1.19</td>
-<td style="text-align: right;">1.43</td>
-<td style="text-align: right;">0.70</td>
-<td style="text-align: right;">3.2</td>
-<td style="text-align: right;">9.6</td>
+<td style="text-align: right;">1.37</td>
+<td style="text-align: right;">1.62</td>
+<td style="text-align: right;">0.47</td>
+<td style="text-align: right;">3.9</td>
+<td style="text-align: right;">0.61</td>
 </tr>
 <tr>
 <td style="text-align: right;">100 000</td>
-<td style="text-align: right;">1.84</td>
-<td style="text-align: right;">2.39</td>
-<td style="text-align: right;">1.15</td>
-<td style="text-align: right;">6.6</td>
-<td style="text-align: right;">20.2</td>
+<td style="text-align: right;">2.20</td>
+<td style="text-align: right;">2.66</td>
+<td style="text-align: right;">0.67</td>
+<td style="text-align: right;">7.3</td>
+<td style="text-align: right;">0.81</td>
 </tr>
 <tr>
 <td style="text-align: right;">200 000</td>
-<td style="text-align: right;">3.21</td>
-<td style="text-align: right;">3.64</td>
-<td style="text-align: right;">1.74</td>
-<td style="text-align: right;">-</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">3.57</td>
+<td style="text-align: right;">4.70</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: right;">14.2</td>
+<td style="text-align: right;">1.14</td>
 </tr>
 <tr>
 <td style="text-align: right;">400 000</td>
-<td style="text-align: right;">5.84</td>
-<td style="text-align: right;">7.25</td>
-<td style="text-align: right;">3.52</td>
-<td style="text-align: right;">-</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">6.20</td>
+<td style="text-align: right;">8.70</td>
+<td style="text-align: right;">1.17</td>
+<td style="text-align: right;">27.5</td>
+<td style="text-align: right;">2.18</td>
 </tr>
 </tbody>
 </table>
-<p>Fitting <code>t ~ N^a</code> gives <code>a = 0.69</code> (<code>DApriori</code>, <code>DAprioriTID</code>), <code>0.70</code> (<code>DECLAT</code>), <code>0.93</code> (<code>FuzzyDAprioriTID</code>) and
-<strong><code>1.20</code> (<code>FuzzyDECLAT</code>)</strong>. The crisp exponents are below 1 because each Spark job has a fixed cost of a few
-tenths of a second; the last doubling (200 000 to 400 000) multiplies the time by 1.8 to 2.0, so the crisp
-algorithms are <strong>linear in the number of transactions</strong> once the data are big enough to hide that fixed cost.
-<code>FuzzyDAprioriTID</code> is also close to linear. <code>FuzzyDECLAT</code> grows faster than the data (see below), and the fuzzy
-algorithms were only run up to 100 000 transactions.</p>
+<p>Fitting <code>t ~ N^a</code> gives <code>a = 0.64</code> (<code>DApriori</code>), <code>0.71</code> (<code>DAprioriTID</code>), <code>0.32</code> (<code>DECLAT</code>), <code>0.93</code> (<code>FuzzyDAprioriTID</code>) and
+<code>0.55</code> (<code>FuzzyDECLAT</code>). Exponents below 1 mostly reflect the fixed cost of a few tenths of a second per Spark job; at these
+sizes the Eclat variants are dominated by it. <code>FuzzyDAprioriTID</code> is the only one close to linear.</p>
+<blockquote>
+<p><strong>Before and after.</strong> Earlier versions of <code>DECLAT</code> and <code>FuzzyDECLAT</code> kept one Python dictionary and one vector per TID and
+counted candidates with Python loops: <code>FuzzyDECLAT</code> took 19.6 s at 100 000 transactions (exponent 1.20, no speed-up with
+cores) and 1.3 GB of driver memory. They now store each item's TID-list as numpy arrays (sorted TIDs and, for the fuzzy
+case, the degrees), intersect them with vectorised searches and broadcast them once instead of once per level. The result
+is bit-identical (checked against the previous implementation and FP-Growth); <code>FuzzyDECLAT</code> takes 0.81 s at 100 000 and
+<code>DECLAT</code> 0.67 s (1.07 s before).</p>
+</blockquote>
 <h2 id="speed-up-with-the-number-of-cores-200-000-transactions">Speed-up with the number of cores (200 000 transactions)</h2>
 <p>Seconds, with speed-up <code>S = T1 / Tn</code> and efficiency <code>E = S / n</code>:</p>
 <table>
@@ -505,72 +514,117 @@ algorithms were only run up to 100 000 transactions.</p>
 <tbody>
 <tr>
 <td style="text-align: right;">1</td>
-<td style="text-align: right;">14.4</td>
-<td style="text-align: right;">17.9</td>
-<td style="text-align: right;">3.5</td>
-<td style="text-align: right;">61.1</td>
+<td style="text-align: right;">14.5</td>
+<td style="text-align: right;">18.2</td>
+<td style="text-align: right;">2.0</td>
+<td style="text-align: right;">3.1</td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
-<td style="text-align: right;">7.4 (S 1.95, E 98 %)</td>
-<td style="text-align: right;">9.2 (S 1.94, E 97 %)</td>
-<td style="text-align: right;">2.3 (S 1.53, E 77 %)</td>
-<td style="text-align: right;">37.2 (S 1.64, E 82 %)</td>
+<td style="text-align: right;">7.6 (S 1.91, E 95 %)</td>
+<td style="text-align: right;">9.5 (S 1.91, E 96 %)</td>
+<td style="text-align: right;">1.1 (S 1.72, E 86 %)</td>
+<td style="text-align: right;">1.7 (S 1.78, E 89 %)</td>
 </tr>
 <tr>
 <td style="text-align: right;">4</td>
-<td style="text-align: right;">4.0 (S 3.61, E 90 %)</td>
-<td style="text-align: right;">5.0 (S 3.57, E 89 %)</td>
-<td style="text-align: right;">1.7 (S 2.00, E 50 %)</td>
-<td style="text-align: right;">37.5 (S 1.63, E 41 %)</td>
+<td style="text-align: right;">4.2 (S 3.48, E 87 %)</td>
+<td style="text-align: right;">5.2 (S 3.52, E 88 %)</td>
+<td style="text-align: right;">0.8 (S 2.54, E 63 %)</td>
+<td style="text-align: right;">1.0 (S 2.94, E 74 %)</td>
 </tr>
 <tr>
 <td style="text-align: right;">8</td>
-<td style="text-align: right;">3.4 (S 4.20, E 52 %)</td>
-<td style="text-align: right;">4.2 (S 4.29, E 54 %)</td>
-<td style="text-align: right;">1.8 (S 1.97, E 25 %)</td>
-<td style="text-align: right;">44.4 (S 1.38, E 17 %)</td>
+<td style="text-align: right;">3.5 (S 4.18, E 52 %)</td>
+<td style="text-align: right;">4.3 (S 4.27, E 53 %)</td>
+<td style="text-align: right;">0.8 (S 2.36, E 29 %)</td>
+<td style="text-align: right;">1.1 (S 2.93, E 37 %)</td>
 </tr>
 </tbody>
 </table>
 <ul>
-<li><code>DApriori</code> and <code>DAprioriTID</code> scale almost ideally up to 4 cores. At 8 cores the efficiency drops to about 50 %:
-  eight Python workers and the driver compete for 10 cores, four of which are slow efficiency cores, and the fixed
-  per-job cost is now a large share of a 3-second run. Take the 8-core figure as a property of this machine.</li>
-<li><code>DECLAT</code> is the fastest algorithm on one core but stops improving after 2 to 4 cores, because the TID-lists are
-  collected and processed in the driver (see below).</li>
-<li><code>FuzzyDECLAT</code> <strong>does not scale with more cores</strong> and is even slower with 8 than with 2.
-  <code>FuzzyDAprioriTID</code> was not part of this experiment.</li>
+<li><code>DApriori</code> and <code>DAprioriTID</code> scale almost ideally up to 4 cores. At 8 cores eight Python workers and the driver compete
+  for 10 cores, four of them slow efficiency cores, so take the 8-core figure as a property of this machine.</li>
+<li><code>DECLAT</code> and <code>FuzzyDECLAT</code> are now the fastest, but stop improving after about 4 cores: building and collecting the
+  TID-lists is a fixed, mostly serial part.</li>
 </ul>
 <h2 id="memory-of-the-driver">Memory of the driver</h2>
-<p><code>DECLAT</code> and <code>FuzzyDECLAT</code> build the TID-lists with <code>groupByKey().collectAsMap()</code>, so <strong>all of them end up in the
-driver process</strong>, and then broadcast them. This is the algorithm's design (the DECLAT paper already notes it is the
-most memory-hungry), and it sets the size of the data they can handle by the memory of the driver, not by the size
-of the cluster. Peak resident memory of the Python driver process at 400 000 transactions, each algorithm measured
-in a fresh process:</p>
+<p><code>DECLAT</code> and <code>FuzzyDECLAT</code> build the TID-lists in the executors, <strong>collect them in the driver and broadcast them</strong>. That is
+the design of the algorithm (the DECLAT paper already notes it is the most memory-hungry) and it still bounds the data they
+can handle by the memory of the driver. What changed is the size of the representation: 4 bytes per item occurrence
+(8 more in the fuzzy case) instead of Python objects. Growth of the driver's resident memory at 100 000 transactions, in a
+fresh process:</p>
 <table>
 <thead>
 <tr>
 <th>Algorithm</th>
-<th>Driver memory before / peak</th>
+<th style="text-align: right;">Before</th>
+<th style="text-align: right;">Now</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>DApriori</code></td>
-<td>120 MB / 121 MB</td>
+<td><code>DECLAT</code></td>
+<td style="text-align: right;">+63 MB</td>
+<td style="text-align: right;">+8 MB</td>
 </tr>
 <tr>
-<td><code>DECLAT</code></td>
-<td>120 MB / <strong>402 MB</strong> (about 0.7 KB per transaction)</td>
+<td><code>FuzzyDECLAT</code></td>
+<td style="text-align: right;">+1 083 MB</td>
+<td style="text-align: right;">+23 MB</td>
 </tr>
 </tbody>
 </table>
-<p><code>FuzzyDECLAT</code> needs much more because every TID carries a vector with one value per alpha-cut: the peak resident
-memory of the driver process was 411, 708 and 1 303 MB at 25 000, 50 000 and 100 000 transactions (roughly 12 MB per
-1 000 transactions with 5 alpha-cuts; these peaks come from the general benchmark run, where the process had
-already executed the smaller sizes, so they are upper bounds). That vector is also shipped to every worker in a broadcast and its supports are computed with Python loops, which
-explains the super-linear time and the lack of speed-up.</p>
+<p>The vertical database is of the order of the data themselves (about 12 bytes per occurrence in the fuzzy case), so the
+limit is the memory of the driver, not an overhead of 100 times the data. Beyond that, use <code>DApriori</code> / <code>DAprioriTID</code>.</p>
+<h2 id="sequences-prefixspan">Sequences (PrefixSpan)</h2>
+<p><code>FIM.sequential.prefixspan</code> (pure Python, one machine) against <code>prefixspan_spark</code> (MLlib) on synthetic sequences of about 6
+elements over 60 items, <code>min_supp = 0.05</code> (about 105 patterns). Seconds, 8 cores:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Sequences</th>
+<th style="text-align: right;"><code>prefixspan</code></th>
+<th style="text-align: right;">Spark, list</th>
+<th style="text-align: right;">Spark, RDD</th>
+<th style="text-align: right;">Spark, DataFrame</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">10 000</td>
+<td style="text-align: right;">0.23</td>
+<td style="text-align: right;">0.71</td>
+<td style="text-align: right;">0.57</td>
+<td style="text-align: right;">0.67</td>
+</tr>
+<tr>
+<td style="text-align: right;">40 000</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.16</td>
+<td style="text-align: right;">1.04</td>
+<td style="text-align: right;">1.11</td>
+</tr>
+<tr>
+<td style="text-align: right;">160 000</td>
+<td style="text-align: right;">4.54</td>
+<td style="text-align: right;">4.04</td>
+<td style="text-align: right;">2.95</td>
+<td style="text-align: right;">3.45</td>
+</tr>
+<tr>
+<td style="text-align: right;">640 000</td>
+<td style="text-align: right;">22.4 (+1 167 MB)</td>
+<td style="text-align: right;">18.6</td>
+<td style="text-align: right;">10.3</td>
+<td style="text-align: right;">11.1</td>
+</tr>
+</tbody>
+</table>
+<p>On one machine the local implementation wins below about 100 000 sequences and Spark starts to pay off above that, mainly
+with an RDD or DataFrame input, which <code>prefixspan_spark</code> no longer collects in the driver. The local version needs about
+1.8 MB of memory per 1 000 sequences; Spark is the way out when the sequences do not fit in one machine. As with everything
+here, this is <code>local[n]</code>, not a cluster.</p>
 <h2 id="number-of-items-and-caching-of-the-input">Number of items and caching of the input</h2>
 <ul>
 <li><strong>Distinct items</strong> (100 000 transactions, 50 to 400 items): the time <em>decreases</em> (for <code>DApriori</code>, 2.3 s with 50
@@ -585,8 +639,10 @@ explains the super-linear time and the lack of speed-up.</p>
 <h2 id="recommendations">Recommendations</h2>
 <ul>
 <li>For big <strong>crisp</strong> data use <code>DApriori</code> or <code>DAprioriTID</code>: they are linear in the data and the only ones whose speed-up
-  was close to ideal. <code>DECLAT</code> is faster for moderate data, as long as all the TID-lists fit in the driver.</li>
-<li>For big <strong>fuzzy</strong> data use <code>FuzzyDAprioriTID</code>. Avoid <code>FuzzyDECLAT</code> beyond a few tens of thousands of transactions.</li>
+  was close to ideal. <code>DECLAT</code> is faster, as long as all the TID-lists fit in the driver.</li>
+<li>For fuzzy data <code>FuzzyDECLAT</code> is now much faster than <code>FuzzyDAprioriTID</code> (2.2 s against 27.5 s at 400 000 transactions) with
+  the same driver-memory condition; <code>FuzzyDAprioriTID</code> does not need to hold the data in the driver.</li>
+<li>For sequences use the local <code>prefixspan</code> unless they do not fit in memory.</li>
 <li>A low <code>min_supp</code> multiplies the number of frequent itemsets and hence the work, much more than extra items do.</li>
 <li>Give the driver enough memory (<code>spark.driver.memory</code>) when you use the Eclat variants.</li>
 </ul>
