@@ -13,7 +13,7 @@ trabajar** (anomalías, predicción, clasificación), después **nuevos tipos de
 | 1 | **Significación estadística** (`ARM.significance`): test de Fisher / chi², Bonferroni / Holm / FDR, intervalos de confianza, permutación (minP) con desplazamientos circulares para series | hecho |
 | 2 | **Reglas en acción** (`ARM.anomaly`, `ARM.prediction`, `ARM.classification`): detección de anomalías por violación de reglas; predicción del siguiente instante/evento con reglas temporales y secuenciales; reglas de asociación de clase (CBA); poda de reglas improductivas | hecho |
 | 3 | **Patrones y reglas secuenciales difusos** (`FIM.fuzzy_sequential`, `ARM.fuzzy_sequential_rules`): eventos con grado de pertenencia, t-normas `min` / producto | hecho |
-| 4 | **Reglas multinivel / con taxonomía** (jerarquías de ítems, poda de reglas redundantes entre niveles) | pendiente |
+| 4 | **Reglas multinivel / con taxonomía** (`FIM.taxonomy`, `ARM.generalized_rules`): jerarquías de ítems, soporte por nivel, reglas R-interesantes que podan las redundantes entre niveles | hecho |
 | 5 | **Reglas cuantitativas**: discretización por intervalos con fusión (Srikant–Agrawal) frente a la difusa | pendiente |
 | 6 | **Reglas raras, de alta utilidad y top-k** | pendiente |
 | 7 | **Spark**: entrada DataFrame/Parquet; reescritura de FuzzyDECLAT/DECLAT sin recoger en el driver; benchmark de secuencias | pendiente |
@@ -37,7 +37,12 @@ grados), `fuzzy_pattern_degree`, `fuzzy_sequences_from_memberships` (de una tabl
 `fuzzy-sequential-rules`. Queda fuera: elementos con varios ítems simultáneos, versión Spark, fuzzificar también el
 tiempo (Fiot et al.) y tests de significación para reglas difusas.
 
-**4–6.** Cada uno es un módulo nuevo en `ARM/` o `FIM/` con el mismo patrón que los existentes: función pura sobre
+**4. Taxonomías.** Entregado: `Taxonomy` (varios padres, niveles, `at_level`), `extend_transactions`,
+`generalize_transactions`, `generalized_itemsets` (sin itemsets con un ítem y su antecesor, soporte por nivel),
+`generalized_rules`, `interesting_rules` (R-interesantes) y el comando `generalized-rules`. Queda fuera: taxonomías
+difusas (pertenencia parcial a una categoría), reglas multinivel sobre datos difusos o secuencias, y una versión Spark.
+
+**5–6.** Cada uno es un módulo nuevo en `ARM/` o `FIM/` con el mismo patrón que los existentes: función pura sobre
 `DataFrame`, columnas de medidas estándar y `attrs` con el contexto (`n_transactions`, ...), de modo que las reglas
 resultantes pasen por `significant_rules`, `prune_redundant_rules` y la CLI sin cambios.
 

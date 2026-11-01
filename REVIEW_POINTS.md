@@ -173,7 +173,37 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
   3 etiquetas por cuantiles y triangulares por defecto, y `--min-degree 0` (con triangulares casi toda lectura tiene
   algún grado en la etiqueta vecina: usa 0.1-0.3). Sin `--sequence-column` todo el fichero es una sola secuencia.
 
-## 11. Documentación
+## 11. Taxonomías y reglas multinivel (`FIM.taxonomy`, `ARM.generalized_rules`)
+
+- [ ] **Referencias de memoria**: Srikant & Agrawal (1995), *Mining generalized association rules*, VLDB, pp. 407–419, y
+  Han & Fu (1995), *Discovery of multiple-level association rules from large databases*, VLDB, pp. 420–431. Comprueba
+  títulos y páginas. No tuve acceso a los textos.
+- [ ] **Definición de regla R-interesante reconstruida de memoria.** Implemento: sin antecesoras, o, respecto a **todas**
+  sus antecesoras *cercanas* que a su vez sean interesantes, soporte **o** confianza reales >= R veces los esperados
+  (fórmulas en el docstring). Dudo de dos matices del artículo: (a) si exige estar por encima de *cada* antecesora cercana o
+  solo de una; (b) si además pide que el itemset sea R-interesante. Las antecesoras se buscan **solo en el conjunto de
+  reglas dado**: si la regla general no pasó `min_threshold`, la específica se considera sin antecesoras (y se queda).
+  Contrástalo con el artículo antes de decir que es "el" criterio de Srikant–Agrawal.
+- [ ] **Soporte por nivel: elección propia.** Un itemset necesita el MAYOR de los mínimos de los niveles de sus items
+  (el del item más general). Es lo que conserva la propiedad antimonótona con la poda de Apriori, pero **no** es el
+  esquema de Han & Fu (que minan cada nivel por separado, con el umbral de ese nivel, y cruzan niveles con otras
+  variantes). Consecuencia a decidir: una regla `Jacket => Footwear` necesita el umbral del nivel 1 aunque `Jacket` sea
+  del nivel 3, así que con `{1: 0.2, 3: 0.04}` no salen reglas producto→categoría de soporte intermedio.
+- [ ] **No es Cumulate completo.** Solo aplico la poda de itemsets con un item y su antecesor; no filtro los antecesores
+  añadidos a las transacciones a los que aparecen en algún candidato (otra optimización del artículo). El minero es
+  por niveles con vectores booleanos por itemset (memoria ~ transacciones x itemsets frecuentes del nivel más ancho);
+  para bases grandes con muchos itemsets frecuentes puede consumir mucha memoria. No hay versión Spark.
+- [ ] **Niveles en taxonomías con varios padres.** El nivel de un item es 1 + el mayor nivel de sus padres (así un
+  antecesor siempre tiene nivel menor, que es lo que usa el orden de proceso de `interesting_rules`); con caminos de
+  longitud distinta, dos antecesores al mismo "nivel" pueden estar a distancias distintas de la raíz. `at_level` devuelve el
+  antecesor más profundo de nivel <= L en cada camino.
+- [ ] **Significación.** `significant_rules` funciona (la familia es `n_candidates`), pero las reglas generalizadas están
+  muy correlacionadas (una regla y las de sus categorías), así que la corrección BH/Holm es conservadora o laxa según el
+  caso; no está estudiado.
+- [ ] **CLI** (`generalized-rules`): la taxonomía es un CSV `hijo,padre` con cabecera y el mismo `--delimiter` que las
+  cestas; `--level-supp` fija el soporte de los niveles >= 2 (`--min-supp` es el del nivel 1).
+
+## 12. Documentación
 
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la

@@ -84,6 +84,20 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Taxonomies and multilevel rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/taxonomy/" class="dropdown-item">FIM.taxonomy (item hierarchies, generalized itemsets)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/generalized_rules/" class="dropdown-item">ARM.generalized_rules (multilevel rules, R-interesting)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Rules in action</a>
     <ul class="dropdown-menu">
             
@@ -502,6 +516,11 @@ originals when you use them:</p>
   Nkambou, R. (2015). <em>Mining partially-ordered sequential rules common to multiple sequences.</em> IEEE
   Transactions on Knowledge and Data Engineering 27(8), 2203-2216 (definition of a valid rule; the
   search is not the RuleGrowth algorithm).</li>
+<li><strong>Multilevel / generalized rules</strong> (<code>FIM.taxonomy</code>, <code>ARM.generalized_rules</code>): Srikant, R., Agrawal, R. (1995).
+  <em>Mining generalized association rules.</em> Proceedings of the 21st VLDB Conference, 407-419 (extended baskets,
+  pruning of itemsets with an item and its ancestor, R-interesting rules); Han, J., Fu, Y. (1995). <em>Discovery of
+  multiple-level association rules from large databases.</em> Proceedings of the 21st VLDB Conference, 420-431 (a support
+  threshold per level; here an itemset takes the threshold of its most general item).</li>
 <li><strong>Fuzzy sequential patterns and rules</strong> (<code>FIM.fuzzy_sequential</code>, <code>ARM.fuzzy_sequential_rules</code>): inspired by Fiot,
   C., Laurent, A., Teisseire, M. (2007). <em>From crispness to fuzziness: three algorithms for soft sequential pattern
   mining.</em> IEEE Transactions on Fuzzy Systems 15(6), 1263-1277; the definitions (best embedding, t-norm, mean over

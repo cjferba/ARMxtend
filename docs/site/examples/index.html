@@ -84,6 +84,20 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Taxonomies and multilevel rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/taxonomy/" class="dropdown-item">FIM.taxonomy (item hierarchies, generalized itemsets)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/generalized_rules/" class="dropdown-item">ARM.generalized_rules (multilevel rules, R-interesting)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Rules in action</a>
     <ul class="dropdown-menu">
             
@@ -351,6 +365,10 @@
               </ul>
             </li>
             <li class="nav-item" data-bs-level="2"><a href="#fuzzy-sequential-patterns-and-rules-fimfuzzy_sequential-armfuzzy_sequential_rules" class="nav-link">Fuzzy sequential patterns and rules (FIM.fuzzy_sequential, ARM.fuzzy_sequential_rules)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#multilevel-rules-over-a-taxonomy-fimtaxonomy-armgeneralized_rules" class="nav-link">Multilevel rules over a taxonomy (FIM.taxonomy, ARM.generalized_rules)</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -857,6 +875,40 @@ Con umbral temp &lt;  8:      cold =&gt; peak           support=0.21 confidence=
 Con umbral temp &lt; 10:      cold =&gt; peak           support=0.39 confidence=1.00 lift=1.60
 Con umbral temp &lt; 12:      cold =&gt; peak           support=0.60 confidence=0.96 lift=1.54
 Con umbral temp &lt; 14:      cold =&gt; peak           support=0.62 confidence=0.82 lift=1.31
+</code></pre>
+<h2 id="multilevel-rules-over-a-taxonomy-fimtaxonomy-armgeneralized_rules">Multilevel rules over a taxonomy (<code>FIM.taxonomy</code>, <code>ARM.generalized_rules</code>)</h2>
+<p>A supermarket sells 12 products grouped in categories (<code>Food/Dairy/milk</code>, <code>Drinks/Juice/apple_juice</code>...). Whoever buys bread
+usually buys some dairy product, but the purchases are spread over many products and none reaches a high support on its
+own; and the croissant goes with juice much more than the rest of the bread. <a href="../user_guide/ARM/generalized_rules/">Generalized rules</a>
+see the categories, with a lower minimum support at the deeper levels; the R-interesting ones drop the rules that only repeat,
+with one product, what the category already says.</p>
+<pre><code class="language-python">from ARMxtend.ARM import generalized_rules, interesting_rules
+from ARMxtend.FIM import Taxonomy
+
+taxonomy = Taxonomy.from_paths([&quot;Food/Dairy/milk&quot;, &quot;Food/Bakery/croissant&quot;, &quot;Drinks/Juice/orange_juice&quot;, ...])
+rules = generalized_rules(baskets, taxonomy, {1: 0.2, 2: 0.1, 3: 0.04}, min_threshold=0.4)   # support per level
+kept = interesting_rules(rules, interest=1.2)                                                  # drop the echoes
+</code></pre>
+<p>(full source: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_generalized_rules.py"><code>examples/example_generalized_rules.py</code></a>)</p>
+<p>Output:</p>
+<pre><code class="language-text">2639 cestas; taxonomia: 19 items en 3 niveles (Drinks, Food)
+
+Sin taxonomia (soporte 0.04, confianza 0.4, lift 1.2): 4 reglas, todas entre productos concretos
+Con taxonomia (soporte 0.2 / 0.1 / 0.04 por nivel): 31 reglas, 12 de ellas entre categorias (nivel 1 o 2)
+
+R-interesantes (R=1.2): quedan 14 de 31. Por lift:
+  Dairy, Juice =&gt; croissant  support=0.14 confidence=0.63 lift=3.26
+  croissant =&gt; Dairy, Juice  support=0.14 confidence=0.71 lift=3.26
+  Dairy, croissant =&gt; Juice  support=0.14 confidence=0.89 lift=2.57
+  croissant =&gt; Juice  support=0.17 confidence=0.88 lift=2.55
+  Juice =&gt; croissant  support=0.17 confidence=0.50 lift=2.55
+  Dairy, Drinks =&gt; Bakery  support=0.27 confidence=0.79 lift=1.38
+
+Descartadas por repetir lo que ya dicen sus antecesoras, por ejemplo:
+  orange_juice =&gt; croissant  support=0.08 confidence=0.50 lift=2.57
+  croissant =&gt; orange_juice  support=0.08 confidence=0.43 lift=2.57
+  croissant =&gt; apple_juice  support=0.09 confidence=0.46 lift=2.54
+  apple_juice =&gt; croissant  support=0.09 confidence=0.49 lift=2.54
 </code></pre>
 <h2 id="statistical-significance-of-rules-armsignificance">Statistical significance of rules (<code>ARM.significance</code>)</h2>
 <p>Which of the rules that pass the thresholds are real? 300 random baskets of 12 independent items with a single planted

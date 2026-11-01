@@ -181,6 +181,11 @@ originals when you use them:
   Nkambou, R. (2015). *Mining partially-ordered sequential rules common to multiple sequences.* IEEE
   Transactions on Knowledge and Data Engineering 27(8), 2203-2216 (definition of a valid rule; the
   search is not the RuleGrowth algorithm).
+- **Multilevel / generalized rules** (`FIM.taxonomy`, `ARM.generalized_rules`): Srikant, R., Agrawal, R. (1995).
+  *Mining generalized association rules.* Proceedings of the 21st VLDB Conference, 407-419 (extended baskets,
+  pruning of itemsets with an item and its ancestor, R-interesting rules); Han, J., Fu, Y. (1995). *Discovery of
+  multiple-level association rules from large databases.* Proceedings of the 21st VLDB Conference, 420-431 (a support
+  threshold per level; here an itemset takes the threshold of its most general item).
 - **Fuzzy sequential patterns and rules** (`FIM.fuzzy_sequential`, `ARM.fuzzy_sequential_rules`): inspired by Fiot,
   C., Laurent, A., Teisseire, M. (2007). *From crispness to fuzziness: three algorithms for soft sequential pattern
   mining.* IEEE Transactions on Fuzzy Systems 15(6), 1263-1277; the definitions (best embedding, t-norm, mean over

@@ -11,6 +11,7 @@ Interfaz de linea de comandos de ARMxtend::
     armxtend sequential-rules rutinas.txt --min-supp 0.3 --min-threshold 0.8
     armxtend rules transacciones.csv --min-supp 0.05 --alpha 0.05      # solo reglas significativas
     armxtend temporal-rules sensores.csv --time-column hora --permutations 200 --alpha 0.05
+    armxtend generalized-rules cesta.txt --taxonomy jerarquia.csv --min-supp 0.2 --level-supp 3=0.05 --interest 1.1
     armxtend fuzzy-sequences sensores.csv --sequence-column dia --time-column hora --min-supp 0.3
     armxtend fuzzy-sequential-rules sensores.csv --sequence-column dia --time-column hora --min-threshold 0.8
     armxtend anomalies sensores.csv --time-column hora --train-fraction 0.5 --max-lag 1 --min-threshold 0.95
@@ -186,6 +187,32 @@ def _run_rules(args: argparse.Namespace) -> pd.DataFrame:
         rules = significant_rules(rules, args.alpha, args.correction, n_transactions=len(transactions),
                                   method=args.test)
     return prune_redundant_rules(rules) if args.prune and len(rules) else rules
+
+
+def _run_generalized_rules(args: argparse.Namespace) -> pd.DataFrame:
+    from .ARM import generalized_rules, prune_redundant_rules, significant_rules
+    from .FIM.taxonomy import Taxonomy
+
+    transactions = _read_transactions(args.input, args.delimiter)
+    taxonomy = Taxonomy(pd.read_csv(args.taxonomy, sep=args.delimiter))
+    min_supp = args.min_supp
+    if args.level_supp:
+        min_supp = {1: args.min_supp}
+        for entry in args.level_supp:
+            level, _, value = entry.partition("=")
+            if not value:
+                raise ValueError("--level-supp espera NIVEL=SOPORTE, recibido '{}'".format(entry))
+            min_supp[int(level)] = float(value)
+    rules = generalized_rules(transactions, taxonomy, min_supp, metric=args.metric, min_threshold=args.min_threshold,
+                              max_len=args.max_len, interest=args.interest)
+    if args.alpha is not None and len(rules):
+        rules = significant_rules(rules, args.alpha, args.correction, n_transactions=len(transactions),
+                                  method=args.test)
+    if args.prune and len(rules):
+        rules = prune_redundant_rules(rules)
+    args.table_columns = (list(_ITEM_COLUMNS) + ["support", "confidence", "lift", "certainty_factor", args.metric, "level"]
+                          + (["interest"] if args.interest is not None else []) + ["p_adjusted"])
+    return rules
 
 
 def _run_fuzzy_rules(args: argparse.Namespace) -> pd.DataFrame:
@@ -551,6 +578,23 @@ def build_parser() -> argparse.ArgumentParser:
     _significance_options(rules)
     rules.add_argument("--html", metavar="FILE", help="also write the interactive VizARE viewer to FILE")
     rules.set_defaults(run=_run_rules)
+
+    generalized = commands.add_parser(
+        "generalized-rules", help="multilevel rules over a taxonomy of items (products and categories)")
+    generalized.add_argument("input", help="file with one transaction per line, items separated by --delimiter ('-' = stdin)")
+    generalized.add_argument("--taxonomy", required=True, metavar="FILE",
+                             help="CSV with a header and two columns, child and parent (the same --delimiter)")
+    _common_output_options(generalized, "confidence", 0.7)
+    generalized.add_argument("--level-supp", nargs="+", metavar="LEVEL=SUPPORT",
+                             help="minimum support of the deeper levels (levels start at 1; --min-supp is level 1 "
+                                  "and the default of the unlisted ones), for example: 2=0.1 3=0.04")
+    generalized.add_argument("--max-len", type=int, help="maximum number of items in a rule")
+    generalized.add_argument("--interest", type=float, metavar="R",
+                             help="keep only the R-interesting rules (R >= 1): those that beat what their ancestor rules "
+                                  "predict by a factor R")
+    generalized.add_argument("--prune", action="store_true", help="drop redundant rules")
+    _significance_options(generalized)
+    generalized.set_defaults(run=_run_generalized_rules)
 
     fuzzy = commands.add_parser(
         "fuzzy-rules", help="fuzzy association rules from a CSV of numeric columns (automatic fuzzification)")

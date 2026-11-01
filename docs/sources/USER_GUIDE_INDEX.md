@@ -12,6 +12,10 @@
 - [ARM.prediction (forecasting the next step and the next events with rules)](user_guide/ARM/prediction.md)
 - [ARM.classification (class association rules, CBA classifier)](user_guide/ARM/classification.md)
 
+## Taxonomies and multilevel rules (single machine)
+- [FIM.taxonomy (item hierarchies, generalized itemsets, a support per level)](user_guide/FIM/taxonomy.md)
+- [ARM.generalized_rules (rules over products and categories, R-interesting rules)](user_guide/ARM/generalized_rules.md)
+
 ## Other kinds of rules (single machine)
 - [ARM.negative_rules (rules with absent items, crisp and fuzzy)](user_guide/ARM/negative_rules.md)
 - [ARM.exception_rules (exception and anomalous rules)](user_guide/ARM/exception_rules.md)
@@ -49,7 +53,7 @@
 - [ARM.meta_rules](user_guide/ARM/meta_rules.md)
 
 ## Command line
-- [armxtend (rules, fuzzy-rules, gradual-rules, temporal-rules, rule-drift, sequences, sequential-rules, fuzzy-sequences, fuzzy-sequential-rules, anomalies, forecast, next-events, classify)](user_guide/cli.md)
+- [armxtend (rules, generalized-rules, fuzzy-rules, gradual-rules, temporal-rules, rule-drift, sequences, sequential-rules, fuzzy-sequences, fuzzy-sequential-rules, anomalies, forecast, next-events, classify)](user_guide/cli.md)
 
 ## Visualization
 - [VizARM.AREtoGraph](user_guide/VizARM.md)

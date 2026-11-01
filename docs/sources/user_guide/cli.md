@@ -5,6 +5,7 @@ single machine, without Spark, and covers the most common one-shot tasks:
 
 ```bash
 armxtend rules transactions.csv --min-supp 0.1 --min-threshold 0.7
+armxtend generalized-rules basket.txt --taxonomy taxonomy.csv --min-supp 0.2 --level-supp 2=0.1 3=0.04 --interest 1.2
 armxtend fuzzy-rules sensors.csv --labels 3 --alpha 10 --metric certainty_factor --min-threshold 0.5
 armxtend gradual-rules health.csv --min-supp 0.3 --min-threshold 0.9
 armxtend temporal-rules house.csv --time-column time --max-lag 2 --targets heater_on --exclude-persistence
@@ -32,6 +33,27 @@ antecedents consequents  support  confidence   lift  certainty_factor
           D           B   0.5000      0.8333 1.0417            0.1667
           A           C   0.4000      0.8000 1.1429            0.3333
           C           B   0.5000      0.7143 0.8929           -0.1071
+```
+
+## `generalized-rules`
+
+Multilevel rules over a [taxonomy](FIM/taxonomy.md): the same transaction file as `rules` (one transaction per line) plus
+`--taxonomy FILE`, a CSV with a header and two columns, `child` and `parent` (the same `--delimiter`). The options
+`--min-supp`, `--metric`, `--min-threshold` and `--prune` are those of `rules`, and the [significance options](#significance-of-the-rules)
+work too. Besides:
+
+- `--level-supp LEVEL=SUPPORT ...` sets a minimum support for the deeper levels (`--min-supp` is level 1 and the default of the
+  levels not listed), for example `--level-supp 2=0.1 3=0.04`;
+- `--interest R` keeps only the [R-interesting rules](ARM/generalized_rules.md#rules-that-only-echo-their-category-interesting_rules)
+  and adds the `interest` column; `--max-len N` bounds the size of a rule.
+
+```text
+$ armxtend generalized-rules shop.txt --taxonomy taxonomy.csv --min-supp 0.3 --min-threshold 0.6 --interest 1.1
+ antecedents  consequents  support  confidence   lift  certainty_factor  level  interest
+Hiking Boots      Clothes   0.3333      1.0000 1.5000            1.0000      2       NaN
+Hiking Boots    Outerwear   0.3333      1.0000 2.0000            1.0000      2    1.3333
+   Outerwear     Footwear   0.3333      0.6667 1.0000            0.0000      2       NaN
+   Outerwear Hiking Boots   0.3333      0.6667 2.0000            0.5000      2    2.0000
 ```
 
 ## `fuzzy-rules` -- fuzzy association rules from numeric columns

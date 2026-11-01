@@ -446,3 +446,55 @@ def test_fuzzy_sequences_one_sequence_and_errors(daily_file, capsys):
     assert "'nope'" in capsys.readouterr().err
     assert main(["fuzzy-sequences", daily_file, "--columns", "temp", "--min-supp", "2"]) == 1
     assert "min_supp" in capsys.readouterr().err
+
+
+# --------------------------------------------------- reglas generalizadas (taxonomia)
+
+@pytest.fixture
+def shop_files(tmp_path):
+    """El ejemplo de Srikant y Agrawal: seis cestas y una taxonomia de ropa y calzado."""
+    baskets = tmp_path / "shop.txt"
+    baskets.write_text("Shirts\nJacket,Hiking Boots\nSki Pants,Hiking Boots\nShoes\nShoes\nJacket\n")
+    taxonomy = tmp_path / "taxonomy.csv"
+    taxonomy.write_text("child,parent\nOuterwear,Clothes\nShirts,Clothes\nJacket,Outerwear\nSki Pants,Outerwear\n"
+                        "Shoes,Footwear\nHiking Boots,Footwear\n")
+    return str(baskets), str(taxonomy)
+
+
+def test_generalized_rules_command(shop_files, capsys):
+    baskets, taxonomy = shop_files
+    base = ["generalized-rules", baskets, "--taxonomy", taxonomy, "--min-supp", "0.3", "--min-threshold", "0.6"]
+    assert main(base + ["--format", "json"]) == 0
+    rules = {(r["antecedents"], r["consequents"]): r for r in json.loads(capsys.readouterr().out)}
+    assert set(rules) == {("Outerwear", "Hiking Boots"), ("Outerwear", "Footwear"), ("Hiking Boots", "Outerwear"),
+                          ("Hiking Boots", "Clothes")}
+    assert rules[("Outerwear", "Hiking Boots")]["confidence"] == pytest.approx(2 / 3) and rules[("Hiking Boots", "Clothes")]["level"] == 2
+
+    assert main(base + ["--interest", "1.5", "--format", "json"]) == 0           # Hiking Boots => Outerwear no supera lo esperado por 1.5
+    kept = {(r["antecedents"], r["consequents"]): r for r in json.loads(capsys.readouterr().out)}
+    assert set(kept) == set(rules) - {("Hiking Boots", "Outerwear")}
+    assert kept[("Outerwear", "Hiking Boots")]["interest"] == pytest.approx(2.0)
+
+    assert main(base + ["--interest", "1.1", "--top", "1", "--sort-by", "lift"]) == 0
+    table = capsys.readouterr().out.strip().splitlines()
+    assert len(table) == 2 and "interest" in table[0] and "level" in table[0]
+
+
+def test_generalized_rules_levels_alpha_and_errors(shop_files, capsys):
+    baskets, taxonomy = shop_files
+    assert main(["generalized-rules", baskets, "--taxonomy", taxonomy, "--min-supp", "0.6", "--level-supp", "2=0.3", "3=0.3",
+                 "--min-threshold", "0.6", "--max-len", "2", "--format", "json"]) == 0
+    rules = json.loads(capsys.readouterr().out)
+    # con 0.6 solo en el nivel 1, solo sobreviven las reglas entre items de los niveles 2-3 (umbral 0.3)
+    assert {(r["antecedents"], r["consequents"]) for r in rules} == {("Hiking Boots", "Outerwear"), ("Outerwear", "Hiking Boots")}
+    assert main(["generalized-rules", baskets, "--taxonomy", taxonomy, "--alpha", "0.5", "--min-supp", "0.3",
+                 "--min-threshold", "0.6", "--prune"]) == 0
+    capsys.readouterr()
+    assert main(["generalized-rules", baskets, "--taxonomy", taxonomy, "--level-supp", "2:0.1"]) == 1
+    assert "NIVEL=SOPORTE" in capsys.readouterr().err
+    assert main(["generalized-rules", baskets, "--taxonomy", taxonomy, "--interest", "0.5"]) == 1
+    assert "interest" in capsys.readouterr().err
+    assert main(["generalized-rules", baskets, "--taxonomy", baskets + ".missing"]) == 1
+    with pytest.raises(SystemExit):                                              # --taxonomy es obligatorio
+        main(["generalized-rules", baskets])
+    capsys.readouterr()

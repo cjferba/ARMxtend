@@ -26,6 +26,7 @@ EXAMPLE_MODULES = [
     "example_significance",
     "example_rules_in_action",
     "example_fuzzy_sequences",
+    "example_generalized_rules",
 ]
 
 
@@ -151,3 +152,17 @@ def test_fuzzy_sequences_example_orders_events_and_grades_the_rule(capsys):
     assert float(np.corrcoef(cold, degrees)[0, 1]) > 0.8 and 0 < degrees.max() < 1 and (degrees == 0).sum() > 20
     supports = [rule["support"] for rule in crisp_rules.values()]                       # el corte cambia mucho el soporte
     assert max(supports) > 2.5 * min(supports)
+
+
+def test_generalized_rules_example_sees_categories_and_drops_their_echoes(capsys):
+    """Sin taxonomia solo salen reglas de productos; con ella, las de categoria, y las R-interesantes quitan las que las repiten."""
+    module = importlib.import_module("example_generalized_rules")
+    taxonomy, flat, rules, kept, dropped = module.main()
+
+    categories = {item for item in taxonomy.items if taxonomy.descendants(item)}
+    assert not any((a | c) & categories for a, c in zip(flat["antecedents"], flat["consequents"]))
+    keys = lambda frame: {(tuple(sorted(a)), tuple(sorted(c))) for a, c in zip(frame["antecedents"], frame["consequents"])}   # noqa: E731
+    assert (("Bakery",), ("Dairy",)) in keys(rules) and (("Bakery",), ("Dairy",)) in keys(kept)
+    assert (("croissant",), ("Juice",)) in keys(kept) and (("croissant",), ("orange_juice",)) in keys(dropped)
+    assert (("white_bread",), ("Dairy",)) in keys(dropped) and (("milk",), ("Bakery",)) in keys(dropped)
+    assert len(kept) + len(dropped) == len(rules) and 0 < len(kept) < len(rules)

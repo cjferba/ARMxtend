@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Carlos Fernandez-Basso">
+        <link rel="canonical" href="http://cjferba.github.io/ARMxtend/user_guide/FIM/taxonomy/">
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>FIM.taxonomy (item hierarchies, generalized itemsets) - ARMxtend</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">ARMxtend</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../examples/" class="nav-link">Examples</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../applications/" class="nav-link">Applications</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../USER_GUIDE_INDEX/" class="dropdown-item">User Guide Index</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crisp association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+            
+<li>
+    <a href="../condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+            
+<li>
+    <a href="../../ARM/significance/" class="dropdown-item">ARM.significance (p-values, FDR, permutation tests)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Taxonomies and multilevel rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">FIM.taxonomy (item hierarchies, generalized itemsets)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/generalized_rules/" class="dropdown-item">ARM.generalized_rules (multilevel rules, R-interesting)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Rules in action</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/anomaly_detection/" class="dropdown-item">ARM.anomaly (anomalies as rule violations)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/prediction/" class="dropdown-item">ARM.prediction (next step / next events)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/classification/" class="dropdown-item">ARM.classification (class rules, CBA)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Time series, sensors and sequences</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../preprocessing/timeseries/" class="dropdown-item">preprocessing.timeseries (items from series)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/temporal_rules/" class="dropdown-item">ARM.temporal_rules (lagged rules)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/rule_drift/" class="dropdown-item">ARM.rule_drift (rules over time)</a>
+</li>
+            
+<li>
+    <a href="../sequential/" class="dropdown-item">FIM.sequential (PrefixSpan)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
+</li>
+            
+<li>
+    <a href="../fuzzy_sequential/" class="dropdown-item">FIM.fuzzy_sequential (fuzzy patterns)</a>
+</li>
+            
+<li>
+    <a href="../../ARM/fuzzy_sequential_rules/" class="dropdown-item">ARM.fuzzy_sequential_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../cli/" class="dropdown-item">armxtend</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
+</li>
+                                    
+<li>
+    <a href="../../../contributors/" class="dropdown-item">Contributors</a>
+</li>
+                                    
+<li>
+    <a href="../../../license/" class="dropdown-item">License</a>
+</li>
+                                    
+<li>
+    <a href="../../../cite/" class="dropdown-item">Citing ARMxtend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../../ARM/significance/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../../ARM/generalized_rules/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/user_guide/FIM/taxonomy.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#fimtaxonomy-item-hierarchies-and-generalized-itemsets" class="nav-link">FIM.taxonomy -- item hierarchies and generalized itemsets</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#taxonomy" class="nav-link">Taxonomy</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#functions" class="nav-link">Functions</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#one-minimum-support-per-level" class="nav-link">One minimum support per level</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#references" class="nav-link">References</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="fimtaxonomy-item-hierarchies-and-generalized-itemsets"><code>FIM.taxonomy</code> -- item hierarchies and generalized itemsets</h1>
+<p>Products come in categories (<code>Jacket -&gt; Outerwear -&gt; Clothes</code>), diagnoses in chapters, sensors in rooms. A
+<strong>taxonomy</strong> states those "is-a" relations so that patterns can be found at <strong>every level</strong>: nobody buys <em>exactly</em> the
+same jacket and boots, but "outerwear goes with footwear" can be a strong pattern. This page covers the hierarchy and
+the frequent itemsets over it; the rules are built in <a href="../../ARM/generalized_rules/"><code>ARM.generalized_rules</code></a>.</p>
+<pre><code class="language-python">from ARMxtend.FIM import Taxonomy, generalized_itemsets
+
+taxonomy = Taxonomy.from_paths([&quot;Clothes/Outerwear/Jacket&quot;, &quot;Clothes/Outerwear/Ski Pants&quot;, &quot;Clothes/Shirts&quot;,
+                                &quot;Footwear/Shoes&quot;, &quot;Footwear/Hiking Boots&quot;])
+baskets = [[&quot;Shirts&quot;], [&quot;Jacket&quot;, &quot;Hiking Boots&quot;], [&quot;Ski Pants&quot;, &quot;Hiking Boots&quot;], [&quot;Shoes&quot;], [&quot;Shoes&quot;], [&quot;Jacket&quot;]]
+
+generalized_itemsets(baskets, taxonomy, min_supp=0.3)
+# {Clothes} 0.67   {Footwear} 0.67   {Outerwear} 0.50   {Outerwear, Footwear} 0.33   {Outerwear, Hiking Boots} 0.33 ...
+</code></pre>
+<h2 id="taxonomy"><code>Taxonomy</code></h2>
+<p>A directed acyclic graph child -&gt; parent; an item may have <strong>several parents</strong>. It can be built from</p>
+<pre><code class="language-python">Taxonomy({&quot;Jacket&quot;: &quot;Outerwear&quot;, &quot;Outerwear&quot;: &quot;Clothes&quot;})        # {child: parent} or {child: [parents]}
+Taxonomy([(&quot;Jacket&quot;, &quot;Outerwear&quot;), (&quot;Outerwear&quot;, &quot;Clothes&quot;)])    # pairs (child, parent)
+Taxonomy(frame)                                                  # DataFrame: first column child, second parent
+Taxonomy.from_paths([&quot;Clothes/Outerwear/Jacket&quot;], sep=&quot;/&quot;)       # paths from the root to the leaf
+</code></pre>
+<p>Cycles and self-parents are rejected. Items that only appear as parents are roots, and <strong>items that are not in the
+taxonomy</strong> are treated as roots with no descendants, so a taxonomy can cover just part of the catalogue.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>parents(i)</code>, <code>children(i)</code></td>
+<td>direct relatives</td>
+</tr>
+<tr>
+<td><code>ancestors(i)</code>, <code>descendants(i)</code></td>
+<td>all of them, without the item itself</td>
+</tr>
+<tr>
+<td><code>is_ancestor(a, i)</code></td>
+<td>is <code>a</code> a (strict) ancestor of <code>i</code>?</td>
+</tr>
+<tr>
+<td><code>level(i)</code></td>
+<td>1 for the roots; otherwise 1 + the highest level among its parents, so an ancestor always has a <em>lower</em> level</td>
+</tr>
+<tr>
+<td><code>at_level(i, L)</code></td>
+<td>the item seen from level <code>L</code>: itself if <code>level(i) &lt;= L</code>, else its deepest ancestors of level <code>&lt;= L</code></td>
+</tr>
+<tr>
+<td><code>roots()</code>, <code>leaves()</code>, <code>items</code>, <code>depth</code>, <code>to_frame()</code></td>
+<td>the structure</td>
+</tr>
+</tbody>
+</table>
+<h2 id="functions">Functions</h2>
+<pre><code class="language-python">extend_transactions(transactions, taxonomy)                  # each basket + the ancestors of its items
+generalize_transactions(transactions, taxonomy, level)       # each item replaced by its ancestor at `level`
+generalized_itemsets(transactions, taxonomy, min_supp, max_len=None)
+</code></pre>
+<ul>
+<li><strong><code>extend_transactions</code></strong> is the base of generalized mining (Srikant and Agrawal, 1995): a basket with <code>Jacket</code> also
+  "contains" <code>Outerwear</code> and <code>Clothes</code>.</li>
+<li><strong><code>generalize_transactions</code></strong> is the one-level-at-a-time approach (Han and Fu, 1995): mine the baskets rolled up to
+  level 2, then to level 3, with the usual tools (<code>fpgrowth</code>, <code>association_rules</code>).</li>
+<li><strong><code>generalized_itemsets</code></strong> mines all the levels at once on the extended baskets and returns the usual
+  <code>support</code> / <code>itemsets</code> frame (so <code>ARM.association_rules</code> takes it). It never builds an itemset that contains an item
+  <strong>and one of its ancestors</strong> (<code>{Jacket, Outerwear}</code>): its support equals that of the itemset without the ancestor,
+  so it only adds noise and an exponential number of useless itemsets (the optimization of Srikant and Agrawal's
+  <em>Cumulate</em> algorithm). The candidates are counted with one boolean column per item; memory is proportional to
+  <em>transactions x frequent itemsets of the widest level</em>.</li>
+</ul>
+<h2 id="one-minimum-support-per-level">One minimum support per level</h2>
+<p>Categories are far more frequent than the products below them, so a single threshold either drowns you in
+category-level itemsets or hides every product-level one. <code>min_supp</code> can be a dictionary <strong>level -&gt; support</strong>:</p>
+<pre><code class="language-python">generalized_itemsets(baskets, taxonomy, min_supp={1: 0.6, 2: 0.3, 3: 0.1})
+</code></pre>
+<p>A level that is not listed uses the value of the deepest listed level above it (<code>{1: 0.6, 3: 0.1}</code> gives level 2 the
+value 0.6). <strong>An itemset must reach the highest threshold among the levels of its items</strong>, i.e. the one of its most
+general item: <code>{Jacket, Footwear}</code> needs the level-1 support even though <code>Jacket</code> is level 3. This keeps the
+anti-monotone property (adding an item never lowers the threshold, so every subset of a frequent itemset is
+frequent) and therefore the search is exact; it is this library's choice and not the only possible one (see the notes
+in <a href="../../ARM/generalized_rules/#choosing-the-supports"><code>ARM.generalized_rules</code></a>).</p>
+<h2 id="references">References</h2>
+<ul>
+<li>R. Srikant, R. Agrawal (1995). <em>Mining generalized association rules.</em> Proceedings of the 21st VLDB Conference,
+  407-419.</li>
+<li>J. Han, Y. Fu (1995). <em>Discovery of multiple-level association rules from large databases.</em> Proceedings of the 21st
+  VLDB Conference, 420-431.</li>
+</ul></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../js/base.js"></script>
+        <script src="../../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
