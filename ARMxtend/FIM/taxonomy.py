@@ -23,6 +23,8 @@ from large databases").
   alcanzar el MAYOR de los minimos de los niveles de sus items, lo que mantiene la
   propiedad antimonotona (anadir un item no baja el umbral).
 
+Opcionalmente, ``exclusive`` declara grupos de items que no pueden aparecer juntos en un itemset.
+
 NOTA: los nombres de item no deben contener '-'.
 
 @author Carlos Fernandez-Basso
@@ -222,7 +224,7 @@ def _level_thresholds(min_supp: MinSupp, levels: Sequence[int]) -> Dict[int, flo
 
 
 def generalized_itemsets(transactions: Iterable[Iterable[Any]], taxonomy: Taxonomy, min_supp: MinSupp,
-                         max_len: Optional[int] = None) -> pd.DataFrame:
+                         max_len: Optional[int] = None, exclusive: Optional[Mapping[str, Any]] = None) -> pd.DataFrame:
     """
     Itemsets frecuentes generalizados (ver el docstring del modulo).
 
@@ -233,6 +235,8 @@ def generalized_itemsets(transactions: Iterable[Iterable[Any]], taxonomy: Taxono
             niveles profundos es lo habitual: "soporte reducido" de Han y Fu). Un nivel no listado usa
             el del mayor nivel listado por debajo; uno anterior al primero listado, el del primero
         max_len (int, opcional): maximo de items de un itemset
+        exclusive (dict, opcional): ``{item: grupo}``; dos items del mismo grupo no aparecen juntos en un
+            itemset (p. ej. dos rangos del mismo atributo, ver ``ARM.quantitative_rules``)
 
     Retorna:
         pandas.DataFrame con las columnas 'support' e 'itemsets' (``frozenset``), por soporte decreciente
@@ -267,6 +271,13 @@ def generalized_itemsets(transactions: Iterable[Iterable[Any]], taxonomy: Taxono
         for ancestor in taxonomy.ancestors(item):
             if ancestor in column:
                 related[column[item], column[ancestor]] = related[column[ancestor], column[item]] = True
+    members: Dict[Any, List[int]] = {}
+    for item, group in (exclusive or {}).items():
+        if item in column:
+            members.setdefault(group, []).append(column[item])
+    for columns in members.values():
+        related[np.ix_(columns, columns)] = True
+        related[columns, columns] = False
 
     counts = present.sum(axis=0)
     needed = np.ceil(threshold * total - _EPS)
@@ -308,7 +319,10 @@ def generalized_itemsets(transactions: Iterable[Iterable[Any]], taxonomy: Taxono
     return result
 
 
-def ancestor_replacements(items: Sequence[str], taxonomy: Taxonomy) -> List[Tuple[str, ...]]:
-    """Todas las tuplas que resultan de sustituir cada item por si mismo o por un antecesor, salvo la identidad."""
-    options = [[item] + sorted(taxonomy.ancestors(item)) for item in items]
+def ancestor_replacements(items: Sequence[str], taxonomy: Taxonomy, only: Optional[Set[str]] = None) -> List[Tuple[str, ...]]:
+    """
+    Todas las tuplas que resultan de sustituir cada item por si mismo o por un antecesor, salvo la identidad. Con
+    `only`, solo se consideran los antecesores de ese conjunto (los que aparecen en alguna regla).
+    """
+    options = [[item] + sorted(a for a in taxonomy.ancestors(item) if only is None or a in only) for item in items]
     return [combination for combination in product(*options) if combination != tuple(items)]

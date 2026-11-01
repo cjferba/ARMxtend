@@ -67,9 +67,10 @@ Spark y el nucleo sigue funcionando.
 * `ARM.anomaly`, `ARM.prediction`, `ARM.classification`: **reglas en accion** -- detectar anomalias como violaciones de reglas (tambien temporales), prever el siguiente instante o los siguientes eventos, y clasificar con reglas de asociacion de clase (CBA); `ARM.redundancy` anade la poda de reglas improductivas
 * `ARM.association_rules` / `FIM.FARE`: ademas de soporte, confianza, lift, leverage, conviccion y factor de certeza, Jaccard, cosine, Kulczynski, all/max-confidence, added value, Zhang y Yule's Q (en el caso difuso, agregadas por alpha-cortes)
 
-### Taxonomias y reglas multinivel
+### Taxonomias, reglas multinivel y cuantitativas
 
 * `FIM.taxonomy` y `ARM.generalized_rules`: **jerarquias de items** (productos y categorias) y **reglas generalizadas** ("ropa de abrigo -> calzado"), con un soporte minimo por nivel y las reglas **R-interesantes** que descartan las que solo repiten a su categoria
+* `ARM.quantitative_rules`: **reglas cuantitativas** sobre tablas con columnas numericas y categoricas -- intervalos base de igual frecuencia fundidos en rangos (Srikant y Agrawal), con poda R-interesante; la alternativa nitida a las reglas difusas
 
 ### Series temporales, sensores y secuencias
 

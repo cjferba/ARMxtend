@@ -498,3 +498,41 @@ def test_generalized_rules_levels_alpha_and_errors(shop_files, capsys):
     with pytest.raises(SystemExit):                                              # --taxonomy es obligatorio
         main(["generalized-rules", baskets])
     capsys.readouterr()
+
+
+# ----------------------------------------------- reglas cuantitativas (intervalos)
+
+@pytest.fixture
+def customers_file(tmp_path):
+    """La edad entre 30 y 45 anos marca los ingresos altos; las mujeres con ingresos altos compran."""
+    rng = np.random.RandomState(0)
+    rows = 2000
+    age = rng.uniform(18, 70, rows)
+    income = np.where((age >= 30) & (age < 45), rng.normal(70, 8, rows), rng.normal(35, 10, rows)).clip(5)
+    sex = rng.choice(["F", "M"], rows)
+    buys = np.where((income > 60) & (sex == "F"), rng.rand(rows) < 0.9, rng.rand(rows) < 0.1)
+    path = tmp_path / "customers.csv"
+    pd.DataFrame({"age": age, "income": income, "sex": sex, "buys": np.where(buys, "yes", "no")}).to_csv(path, index=False)
+    return str(path)
+
+
+def test_quantitative_rules_command(customers_file, capsys):
+    base = ["quantitative-rules", customers_file, "--intervals", "10", "--max-supp", "0.4", "--min-supp", "0.05",
+            "--min-threshold", "0.7", "--max-len", "3"]
+    assert main(base + ["--format", "json"]) == 0
+    rules = json.loads(capsys.readouterr().out)
+    assert any(r["consequents"] == "buys=yes" and set(r["antecedents"].split(", ")) >= {"sex=F"} and r["confidence"] > 0.85 for r in rules)
+
+    assert main(base + ["--interest", "1.3", "--format", "json"]) == 0
+    kept = json.loads(capsys.readouterr().out)
+    assert 0 < len(kept) < len(rules) / 2 and all("interest" in r for r in kept)
+    assert main(base + ["--interest", "1.3", "--top", "2", "--sort-by", "lift"]) == 0
+    table = capsys.readouterr().out.strip().splitlines()
+    assert len(table) == 3 and "interest" in table[0]
+
+    assert main(base + ["--columns", "age", "income", "--method", "uniform", "--quantitative", "age", "income", "--prune",
+                        "--alpha", "0.05"]) == 0
+    capsys.readouterr()
+    assert main(base + ["--columns", "nope"]) == 1
+    assert "inexistentes" in capsys.readouterr().err
+    assert main(base + ["--interest", "0.5"]) == 1

@@ -14,6 +14,9 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
 - **Taxonomies and multilevel rules:** item hierarchies with several parents (`FIM.taxonomy.Taxonomy`), extended and
   rolled-up transactions, generalized itemsets that never pair an item with its ancestor and accept a minimum support
   per level, generalized rules and Srikant-Agrawal R-interesting rules (`ARM.generalized_rules`); `armxtend generalized-rules`.
+- **Quantitative rules:** equal-frequency intervals merged into ranges up to a maximum support, rules over numeric and
+  categorical columns with R-interesting pruning, reusable `IntervalPartition` and the partial-completeness interval count
+  (`ARM.quantitative_rules`); `armxtend quantitative-rules`.
 - **Time series, sensors and sequences:** `preprocessing.timeseries` (symbolic discretization -- quantile,
   uniform, SAX-like --, event and calendar items, lagged items, window items); lagged (inter-transaction) rules,
   crisp and fuzzy, and per-group rule profiles (`ARM.temporal_rules`); rule drift over time windows with
@@ -39,7 +42,7 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
 - **VizARM:** the VizARE typed item/rule graph (Fernandez-Basso et al., 2026), JSON Graph Format export, rule
   summaries, a self-contained interactive HTML viewer (`AREtoGraph.to_html`) and Neo4j/MongoDB exports
   (`to_cypher`, `to_documents`).
-- **Command line:** `armxtend rules | generalized-rules | fuzzy-rules | gradual-rules | temporal-rules | rule-drift | sequences |
+- **Command line:** `armxtend rules | generalized-rules | quantitative-rules | fuzzy-rules | gradual-rules | temporal-rules | rule-drift | sequences |
   sequential-rules | fuzzy-sequences | fuzzy-sequential-rules | anomalies | forecast | next-events | classify` (also `python -m ARMxtend`).
 - **Tooling:** `pyproject.toml` packaging, type hints and `py.typed`, ruff, mypy, coverage, a release workflow with
   PyPI trusted publishing, runnable examples tested in CI, and a benchmark of the Spark algorithms

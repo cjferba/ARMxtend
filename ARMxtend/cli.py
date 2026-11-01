@@ -11,6 +11,7 @@ Interfaz de linea de comandos de ARMxtend::
     armxtend sequential-rules rutinas.txt --min-supp 0.3 --min-threshold 0.8
     armxtend rules transacciones.csv --min-supp 0.05 --alpha 0.05      # solo reglas significativas
     armxtend temporal-rules sensores.csv --time-column hora --permutations 200 --alpha 0.05
+    armxtend quantitative-rules clientes.csv --intervals 10 --max-supp 0.4 --min-supp 0.05 --interest 1.3
     armxtend generalized-rules cesta.txt --taxonomy jerarquia.csv --min-supp 0.2 --level-supp 3=0.05 --interest 1.1
     armxtend fuzzy-sequences sensores.csv --sequence-column dia --time-column hora --min-supp 0.3
     armxtend fuzzy-sequential-rules sensores.csv --sequence-column dia --time-column hora --min-threshold 0.8
@@ -211,6 +212,23 @@ def _run_generalized_rules(args: argparse.Namespace) -> pd.DataFrame:
     if args.prune and len(rules):
         rules = prune_redundant_rules(rules)
     args.table_columns = (list(_ITEM_COLUMNS) + ["support", "confidence", "lift", "certainty_factor", args.metric, "level"]
+                          + (["interest"] if args.interest is not None else []) + ["p_adjusted"])
+    return rules
+
+
+def _run_quantitative_rules(args: argparse.Namespace) -> pd.DataFrame:
+    from .ARM import prune_redundant_rules, quantitative_rules, significant_rules
+
+    table = pd.read_csv(args.input, sep=args.delimiter)
+    rules = quantitative_rules(table, args.min_supp, n_intervals=args.intervals, max_supp=args.max_supp,
+                               columns=args.columns, quantitative=args.quantitative, method=args.method,
+                               metric=args.metric, min_threshold=args.min_threshold, max_len=args.max_len,
+                               interest=args.interest)
+    if args.alpha is not None and len(rules):
+        rules = significant_rules(rules, args.alpha, args.correction, n_transactions=len(table), method=args.test)
+    if args.prune and len(rules):
+        rules = prune_redundant_rules(rules)
+    args.table_columns = (list(_ITEM_COLUMNS) + ["support", "confidence", "lift", "certainty_factor", args.metric]
                           + (["interest"] if args.interest is not None else []) + ["p_adjusted"])
     return rules
 
@@ -595,6 +613,27 @@ def build_parser() -> argparse.ArgumentParser:
     generalized.add_argument("--prune", action="store_true", help="drop redundant rules")
     _significance_options(generalized)
     generalized.set_defaults(run=_run_generalized_rules)
+
+    quantitative = commands.add_parser(
+        "quantitative-rules", help="rules over numeric and categorical columns with merged intervals (Srikant-Agrawal)")
+    quantitative.add_argument("input", help="CSV file with a header")
+    _common_output_options(quantitative, "confidence", 0.8)
+    quantitative.add_argument("--columns", nargs="+", help="columns to use (default: all)")
+    quantitative.add_argument("--quantitative", nargs="+",
+                              help="columns treated as numeric (default: the numeric ones with more distinct values "
+                                   "than --intervals; the rest give column=value items)")
+    quantitative.add_argument("--intervals", type=int, default=8, help="base intervals per numeric column (default: 8)")
+    quantitative.add_argument("--method", choices=("quantile", "uniform"), default="quantile",
+                              help="equal-frequency or equal-width base intervals (default: quantile)")
+    quantitative.add_argument("--max-supp", type=float, default=0.5,
+                              help="largest support of a range of several base intervals (default: 0.5)")
+    quantitative.add_argument("--max-len", type=int, help="maximum number of items in a rule")
+    quantitative.add_argument("--interest", type=float, metavar="R",
+                              help="keep only the R-interesting rules (R >= 1): those that beat what the rules with wider "
+                                   "ranges predict by a factor R")
+    quantitative.add_argument("--prune", action="store_true", help="drop redundant rules")
+    _significance_options(quantitative)
+    quantitative.set_defaults(run=_run_quantitative_rules)
 
     fuzzy = commands.add_parser(
         "fuzzy-rules", help="fuzzy association rules from a CSV of numeric columns (automatic fuzzification)")

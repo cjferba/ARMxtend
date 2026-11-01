@@ -27,6 +27,7 @@ EXAMPLE_MODULES = [
     "example_rules_in_action",
     "example_fuzzy_sequences",
     "example_generalized_rules",
+    "example_quantitative_rules",
 ]
 
 
@@ -166,3 +167,16 @@ def test_generalized_rules_example_sees_categories_and_drops_their_echoes(capsys
     assert (("croissant",), ("Juice",)) in keys(kept) and (("croissant",), ("orange_juice",)) in keys(dropped)
     assert (("white_bread",), ("Dairy",)) in keys(dropped) and (("milk",), ("Bakery",)) in keys(dropped)
     assert len(kept) + len(dropped) == len(rules) and 0 < len(kept) < len(rules)
+
+
+def test_quantitative_rules_example_recovers_the_region_and_beats_fixed_labels(capsys):
+    """El rango fundido recupera la region plantada [30, 45); las etiquetas difusas fijas la parten en dos y pierden confianza."""
+    module = importlib.import_module("example_quantitative_rules")
+    table, partition, rules, kept, region, fuzzy = module.main()
+
+    bounds = partition.intervals_.set_index("item").loc[next(iter(region.iloc[0]["antecedents"])), ["low", "high"]]
+    assert 27 <= bounds["low"] <= 36 and 40 <= bounds["high"] <= 50 and region.iloc[0]["confidence"] >= 0.85
+    assert 0 < len(kept) < len(rules) / 2
+    women = rules[(rules["consequents"] == frozenset({"buys=yes"})) & rules["antecedents"].map(lambda items: "sex=F" in items)]
+    assert women["confidence"].max() > 0.85 and women["lift"].max() > 3.5
+    assert fuzzy.iloc[0]["confidence"] < 0.6 < region.iloc[0]["confidence"]

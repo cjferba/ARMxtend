@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Carlos Fernandez-Basso">
+        <link rel="canonical" href="http://cjferba.github.io/ARMxtend/user_guide/ARM/quantitative_rules/">
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>ARM.quantitative_rules (merged intervals) - ARMxtend</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">ARMxtend</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../examples/" class="nav-link">Examples</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../applications/" class="nav-link">Applications</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../USER_GUIDE_INDEX/" class="dropdown-item">User Guide Index</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crisp association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../../FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+            
+<li>
+    <a href="../significance/" class="dropdown-item">ARM.significance (p-values, FDR, permutation tests)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Taxonomies, multilevel and quantitative rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/taxonomy/" class="dropdown-item">FIM.taxonomy (item hierarchies, generalized itemsets)</a>
+</li>
+            
+<li>
+    <a href="../generalized_rules/" class="dropdown-item">ARM.generalized_rules (multilevel rules, R-interesting)</a>
+</li>
+            
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">ARM.quantitative_rules (merged intervals)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Rules in action</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../anomaly_detection/" class="dropdown-item">ARM.anomaly (anomalies as rule violations)</a>
+</li>
+            
+<li>
+    <a href="../prediction/" class="dropdown-item">ARM.prediction (next step / next events)</a>
+</li>
+            
+<li>
+    <a href="../classification/" class="dropdown-item">ARM.classification (class rules, CBA)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Time series, sensors and sequences</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../preprocessing/timeseries/" class="dropdown-item">preprocessing.timeseries (items from series)</a>
+</li>
+            
+<li>
+    <a href="../temporal_rules/" class="dropdown-item">ARM.temporal_rules (lagged rules)</a>
+</li>
+            
+<li>
+    <a href="../rule_drift/" class="dropdown-item">ARM.rule_drift (rules over time)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/sequential/" class="dropdown-item">FIM.sequential (PrefixSpan)</a>
+</li>
+            
+<li>
+    <a href="../sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
+</li>
+            
+<li>
+    <a href="../../FIM/fuzzy_sequential/" class="dropdown-item">FIM.fuzzy_sequential (fuzzy patterns)</a>
+</li>
+            
+<li>
+    <a href="../fuzzy_sequential_rules/" class="dropdown-item">ARM.fuzzy_sequential_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../../FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../cli/" class="dropdown-item">armxtend</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
+</li>
+                                    
+<li>
+    <a href="../../../contributors/" class="dropdown-item">Contributors</a>
+</li>
+                                    
+<li>
+    <a href="../../../license/" class="dropdown-item">License</a>
+</li>
+                                    
+<li>
+    <a href="../../../cite/" class="dropdown-item">Citing ARMxtend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../generalized_rules/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../anomaly_detection/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/user_guide/ARM/quantitative_rules.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#armquantitative_rules-rules-over-numeric-and-categorical-columns-with-merged-intervals" class="nav-link">ARM.quantitative_rules -- rules over numeric and categorical columns with merged intervals</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#how-it-works" class="nav-link">How it works</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#signature" class="nav-link">Signature</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#intervals-or-fuzzy-sets" class="nav-link">Intervals or fuzzy sets?</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#notes" class="nav-link">Notes</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#reference" class="nav-link">Reference</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="armquantitative_rules-rules-over-numeric-and-categorical-columns-with-merged-intervals"><code>ARM.quantitative_rules</code> -- rules over numeric and categorical columns with merged intervals</h1>
+<p>Rules for tables that mix numbers and categories, such as <code>age in [30, 45) =&gt; income in [45, 96)</code> or
+<code>sex=F &amp; income in [56, 96] =&gt; buys=yes</code>. Every numeric column is split into <strong>equal-frequency base intervals</strong>, and
+adjacent intervals are <strong>merged into ranges</strong> as long as the range does not become too frequent (a range that is almost
+always true says nothing). This is the approach of Srikant and Agrawal (1996); the fuzzy alternative, which keeps
+the boundaries soft, is <a href="../../FIM/FARE/"><code>FIM.FARE</code></a>.</p>
+<pre><code class="language-python">from ARMxtend.ARM import quantitative_rules
+
+rules = quantitative_rules(customers, min_supp=0.05, n_intervals=10, max_supp=0.4, min_threshold=0.8, interest=1.3)
+rules[[&quot;antecedents&quot;, &quot;consequents&quot;, &quot;support&quot;, &quot;confidence&quot;, &quot;lift&quot;]]
+# {income=[56.302,96.45], sex=F}  =&gt; {buys=yes}              support=0.12 confidence=0.83 lift=3.84
+# {age=[33.654,44.04), sex=F}     =&gt; {buys=yes}              support=0.08 confidence=0.82 lift=3.79
+# {age=[33.654,44.04), buys=yes}  =&gt; {income=[56.302,96.45]} support=0.09 confidence=1.00 lift=3.32
+</code></pre>
+<p><code>customers</code> is a <code>DataFrame</code> with columns <code>age</code>, <code>income</code>, <code>sex</code> and <code>buys</code> (see
+<a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_quantitative_rules.py"><code>examples/example_quantitative_rules.py</code></a>).</p>
+<h2 id="how-it-works">How it works</h2>
+<ol>
+<li><strong>Items.</strong> A numeric column with more than <code>n_intervals</code> distinct values is <em>quantitative</em>; the others (text,
+   booleans, numbers with few values) give categorical items <code>column=value</code>. Missing values give no item.</li>
+<li><strong>Base intervals.</strong> A quantitative column is split with <code>n_intervals</code> quantiles (<code>method="quantile"</code>; fewer if there
+   are ties) or equal widths (<code>method="uniform"</code>). The items are named <code>column=[low,high)</code> (<code>]</code> in the last interval),
+   with a true minus sign (U+2212) for negative bounds, because item names cannot contain <code>-</code>.</li>
+<li><strong>Ranges.</strong> Every run of adjacent base intervals whose support is at most <code>max_supp</code> becomes an item; a single base
+   interval always does. A record has, for each column, its base interval <em>and</em> every range that contains it.</li>
+<li><strong>Frequent itemsets and rules.</strong> The ranges form a hierarchy by inclusion (<code>[30,40)</code> is inside <code>[30,50)</code>), so the
+   machinery is that of <a href="../generalized_rules/"><code>ARM.generalized_rules</code></a>, with a taxonomy of ranges and the restriction that a
+   rule never mentions two ranges of the same column. Itemsets are counted with the exact support, and the test suite checks them
+   against an exhaustive enumeration.</li>
+<li><strong>Interest.</strong> With <code>interest=R</code>, the rules whose range could be widened or narrowed without changing the rule are
+   dropped: <code>interesting_rules</code> keeps those whose support or confidence is at least <code>R</code> times what the rule with the wider
+   range predicts (<a href="../generalized_rules/#rules-that-only-echo-their-category-interesting_rules">R-interesting rules</a>).</li>
+</ol>
+<h2 id="signature">Signature</h2>
+<pre><code class="language-python">quantitative_rules(table, min_supp=0.1, n_intervals=8, max_supp=0.5, columns=None, quantitative=None,
+                   method=&quot;quantile&quot;, metric=&quot;confidence&quot;, min_threshold=0.8, max_len=None, interest=None,
+                   partition=None)
+
+IntervalPartition(n_intervals=8, method=&quot;quantile&quot;, max_supp=0.5, columns=None, quantitative=None)
+    .fit(table)            # intervals_, edges_, taxonomy_, groups_, categorical_
+    .transform(table)      # the base items of each row (also for new rows)
+partial_completeness_intervals(n_quantitative, min_supp, completeness=1.5)
+</code></pre>
+<ul>
+<li>The output has the columns of <a href="../association_rules/"><code>association_rules</code></a> plus <code>level</code> and (with <code>interest</code>) <code>interest</code>;
+  <code>attrs</code> keeps <code>n_transactions</code>, <code>n_candidates</code> (so <a href="../significance/"><code>significant_rules</code></a> works), <code>taxonomy</code>,
+  <code>supports</code> and <code>partition</code>.</li>
+<li><strong><code>IntervalPartition</code></strong> can be fitted on one table and applied to another (<code>partition=</code>): the rules of a new period use
+  the <em>same</em> intervals as the old ones. New values outside the fitted range fall into the first or last interval.
+  <code>intervals_</code> is a <code>DataFrame</code> with the <code>item</code>, <code>column</code>, <code>low</code>, <code>high</code>, <code>support</code> and <code>n_base</code> of every range.</li>
+<li><strong><code>partial_completeness_intervals</code></strong> returns <code>2n / (m (K - 1))</code>, the number of base intervals per column that
+  Srikant and Agrawal derive to lose at most a "partial completeness" <code>K</code> of the rules (<code>n</code> numeric columns per rule,
+  <code>m</code> the minimum support). The result is often large (160 for <code>n=2</code>, <code>m=0.05</code>, <code>K=1.5</code>); in practice 8-20 intervals plus merging work well.</li>
+</ul>
+<h2 id="intervals-or-fuzzy-sets">Intervals or fuzzy sets?</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Merged intervals</th>
+<th>Fuzzy sets (<a href="../../FIM/FARE/"><code>FIM.FARE</code></a>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Boundaries</td>
+<td>sharp, learned from the data by merging</td>
+<td>soft, fixed by the partition (<code>FuzzyLib</code>)</td>
+</tr>
+<tr>
+<td>A region that does not match the labels</td>
+<td>found (the range adapts)</td>
+<td>split over two labels</td>
+</tr>
+<tr>
+<td>Values near a boundary</td>
+<td>all or nothing</td>
+<td>partial membership</td>
+</tr>
+<tr>
+<td>Reading</td>
+<td><code>age in [28.5, 44)</code></td>
+<td><code>age is medium</code></td>
+</tr>
+</tbody>
+</table>
+<p>In the example the region <code>[30, 45)</code> is recovered by one range with confidence 0.93, while the fuzzy rules <code>age_low =&gt; income_high</code>
+and <code>age_medium =&gt; income_high</code> get 0.55 and 0.52 because each covers half of it. The fuzzy version wins when
+the boundaries are not sharp and the labels have a meaning of their own (a <em>warm</em> day).</p>
+<h2 id="notes">Notes</h2>
+<ul>
+<li><code>max_supp</code> and the number of intervals are the main knobs: the larger the ranges allowed, the more redundant rules.
+  Use <code>interest</code> to prune them.</li>
+<li>Rules like <code>age in [20, 30) =&gt; age in [30, 40)</code> are never generated: one column, one range per rule.</li>
+<li>Keep <code>max_len</code> small (2-4); the number of range combinations grows quickly.</li>
+</ul>
+<p>Command line: <a href="../../cli/#quantitative-rules"><code>armxtend quantitative-rules</code></a>.</p>
+<h2 id="reference">Reference</h2>
+<ul>
+<li>R. Srikant, R. Agrawal (1996). <em>Mining quantitative association rules in large relational tables.</em> Proceedings of
+  the 1996 ACM SIGMOD International Conference on Management of Data, 1-12.</li>
+</ul></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../js/base.js"></script>
+        <script src="../../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

@@ -605,6 +605,46 @@ Descartadas por repetir lo que ya dicen sus antecesoras, por ejemplo:
   apple_juice => croissant  support=0.09 confidence=0.49 lift=2.54
 ```
 
+## Quantitative rules with merged intervals (`ARM.quantitative_rules`)
+
+A shop knows the age, income and sex of its customers and whether they bought a product. Income is high only between 30 and 45
+years of age, and women with a high income almost always buy. [`quantitative_rules`](user_guide/ARM/quantitative_rules.md) splits
+the numeric columns into equal-frequency intervals, merges adjacent ones into ranges and recovers the region; the same data
+mined with five fixed fuzzy labels per column splits the region over two labels.
+
+```python
+from ARMxtend.ARM import IntervalPartition, quantitative_rules
+
+partition = IntervalPartition(n_intervals=10, max_supp=0.4).fit(customers)
+rules = quantitative_rules(customers, min_supp=0.05, partition=partition, min_threshold=0.7, max_len=3)
+kept = quantitative_rules(customers, min_supp=0.05, partition=partition, min_threshold=0.7, max_len=3, interest=1.3)
+```
+
+(full source: [`examples/example_quantitative_rules.py`](https://github.com/cjferba/ARMxtend/blob/master/examples/example_quantitative_rules.py))
+
+Output:
+
+```text
+3000 clientes. Con completitud parcial K=1.5 y soporte 0.05 el articulo pide 160 intervalos por atributo; aqui bastan 10 y rangos de hasta el 40 %.
+Particion: 68 items de rango (20 intervalos base + 48 rangos de varios); edad en 10 intervalos de ~5.2 anos
+
+631 reglas (soporte 0.05, confianza 0.7); R-interesantes con R=1.3: 152
+
+La region plantada [30, 45), con el mayor soporte con confianza >= 0.85:
+  age=[28.5368,44.0395) => income=[44.7127,96.4526]  support=0.28 confidence=0.93 lift=2.33
+
+Quien compra (mujeres, por lift):
+  income=[66.5424,96.4526] & sex=F => buys=yes  support=0.09 confidence=0.89 lift=4.12
+  income=[56.3001,96.4526] & sex=F => buys=yes  support=0.12 confidence=0.83 lift=3.84
+  age=[33.6534,44.0395) & sex=F => buys=yes  support=0.08 confidence=0.82 lift=3.80
+
+Reglas difusas edad => ingresos (5 etiquetas fijas), por confianza:
+  age_low => income_high  support=0.13 confidence=0.55 lift=1.84
+  age_medium => income_high  support=0.12 confidence=0.52 lift=1.64
+  age_high => income_low  support=0.12 confidence=0.50 lift=1.26
+La region [30, 45) cae a caballo de dos etiquetas y ninguna llega a la confianza del rango fundido.
+```
+
 ## Statistical significance of rules (`ARM.significance`)
 
 Which of the rules that pass the thresholds are real? 300 random baskets of 12 independent items with a single planted

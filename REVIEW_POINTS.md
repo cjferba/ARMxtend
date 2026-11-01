@@ -203,7 +203,37 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
 - [ ] **CLI** (`generalized-rules`): la taxonomía es un CSV `hijo,padre` con cabecera y el mismo `--delimiter` que las
   cestas; `--level-supp` fija el soporte de los niveles >= 2 (`--min-supp` es el del nivel 1).
 
-## 12. Documentación
+## 12. Reglas cuantitativas (`ARM.quantitative_rules`)
+
+- [ ] **Referencia de memoria**: Srikant & Agrawal (1996), *Mining quantitative association rules in large relational
+  tables*, SIGMOD, pp. 1–12. Comprueba título y páginas. **La fórmula de `partial_completeness_intervals`**
+  (`2n / (m (K - 1))` intervalos por atributo) también es de memoria: verifícala en el artículo (el valor que da, 160 para
+  `n=2, m=0.05, K=1.5`, es muy alto y el ejemplo usa 10).
+- [ ] **No es el algoritmo del artículo.** Fijo los rangos de antemano (todas las secuencias de intervalos base contiguos
+  con soporte <= `max_supp`) y los trato como una taxonomía por inclusión, de modo que todo el minado y la poda
+  R-interesante son los de `generalized_rules`; el artículo los combina sobre la marcha. El conjunto de rangos y los
+  soportes son los mismos (comprobado contra enumeración exhaustiva), pero el coste es O(intervalos²) ítems por columna y
+  una fila pertenece a todos los rangos que contienen su valor: con 20+ intervalos y muchas columnas la matriz booleana
+  de ítems crece rápido.
+- [ ] **Poda R-interesante**: valen las dudas de la sección 11 (antecesoras cercanas, "soporte o confianza"). En el
+  artículo cuantitativo la definición tiene matices propios (p. ej. exigir que también el itemset sea interesante) que no
+  recuerdo; contrástala antes de citar "el criterio de Srikant–Agrawal".
+- [ ] **`max_supp`** descarta los rangos de varios intervalos con soporte mayor, pero un intervalo base se queda aunque
+  lo supere (empates en los valores). **Intervalos base de igual frecuencia** (`quantile`): con valores repetidos salen
+  menos de `n_intervals`; los límites se escriben con 6 cifras significativas (`{:g}`), así que dos límites que difieran
+  más allá de la sexta cifra darían la misma etiqueta (improbable).
+- [ ] **Qué es numérico.** Una columna numérica con <= `n_intervals` valores distintos (p. ej. una valoración de 1 a 5)
+  se trata como categórica (`col=3`) y pierde el orden; fuerza el tratamiento con `quantitative=[...]`. Los valores
+  ausentes no generan ítem. El signo menos de los límites es U+2212 (los nombres de ítem no admiten `-`), lo que puede
+  sorprender al exportar o filtrar por texto.
+- [ ] **`quantitative_rules` ajusta la partición con los mismos datos que mina** (los intervalos dependen de los datos
+  completos). Para validar fuera de muestra, ajusta un `IntervalPartition` con un periodo y pásalo con `partition=`.
+- [ ] **Comparación con las reglas difusas**: el ejemplo usa un solo conjunto de datos sintéticos con una región plantada
+  que no coincide con las etiquetas difusas; no es una comparación general (con límites suaves o etiquetas con significado
+  propio, las difusas pueden ser mejores). Mide con tus datos.
+- [ ] **CLI** (`quantitative-rules`): umbral de confianza por defecto 0.8, `--max-supp` 0.5, 8 intervalos.
+
+## 13. Documentación
 
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la

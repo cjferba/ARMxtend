@@ -24,7 +24,7 @@ cada item se comportase como su categoria.
 
 @author Carlos Fernandez-Basso
 """
-from typing import Any, Dict, FrozenSet, Iterable, List, Optional, Tuple
+from typing import Any, Dict, FrozenSet, Iterable, List, Mapping, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -37,7 +37,7 @@ _EPS = 1e-9
 
 def generalized_rules(transactions: Iterable[Iterable[Any]], taxonomy: Taxonomy, min_supp: MinSupp,
                       metric: str = "confidence", min_threshold: float = 0.8, max_len: Optional[int] = None,
-                      interest: Optional[float] = None) -> pd.DataFrame:
+                      interest: Optional[float] = None, exclusive: Optional[Mapping[str, Any]] = None) -> pd.DataFrame:
     """
     Minera reglas generalizadas (ver el docstring del modulo).
 
@@ -48,6 +48,8 @@ def generalized_rules(transactions: Iterable[Iterable[Any]], taxonomy: Taxonomy,
         metric, min_threshold: medida de ``ARM.association_rules`` y su umbral minimo
         max_len (int, opcional): maximo de items de una regla
         interest (float, opcional): si se da (>= 1), se aplica ``interesting_rules`` con ese R
+        exclusive (dict, opcional): ``{item: grupo}``, items de un mismo grupo que no pueden ir juntos (ver
+            ``FIM.taxonomy.generalized_itemsets``)
 
     Retorna:
         pandas.DataFrame con el formato de ``ARM.association_rules`` mas la columna 'level' (el nivel
@@ -55,7 +57,7 @@ def generalized_rules(transactions: Iterable[Iterable[Any]], taxonomy: Taxonomy,
         ``ARM.significance``), 'taxonomy' y 'supports' (soporte de cada itemset frecuente, que usa
         ``interesting_rules``)
     """
-    itemsets = generalized_itemsets(transactions, taxonomy, min_supp, max_len=max_len)
+    itemsets = generalized_itemsets(transactions, taxonomy, min_supp, max_len=max_len, exclusive=exclusive)
     total = itemsets.attrs["n_transactions"]
     rules = association_rules(itemsets, metric=metric, min_threshold=min_threshold) if len(itemsets) \
         else pd.DataFrame(columns=["antecedents", "consequents", "antecedent support", "consequent support", "support",
@@ -108,12 +110,13 @@ def interesting_rules(rules: pd.DataFrame, taxonomy: Optional[Taxonomy] = None, 
     def single(item: str) -> float:
         return supports[frozenset([item])]
 
+    used = {item for combination in items for item in combination}
     keep = np.zeros(len(rules), dtype=bool)
     ratios = np.full(len(rules), np.nan)
     for row in sorted(range(len(rules)), key=lambda r: sum(taxonomy.level(item) for item in items[r])):
         size = sizes[row]
         ancestors = []
-        for combination in ancestor_replacements(items[row], taxonomy):
+        for combination in ancestor_replacements(items[row], taxonomy, used):
             antecedent, consequent = frozenset(combination[:size]), frozenset(combination[size:])
             if len(antecedent) != size or len(consequent) != len(items[row]) - size or antecedent & consequent:
                 continue

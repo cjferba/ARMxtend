@@ -14,7 +14,7 @@ trabajar** (anomalías, predicción, clasificación), después **nuevos tipos de
 | 2 | **Reglas en acción** (`ARM.anomaly`, `ARM.prediction`, `ARM.classification`): detección de anomalías por violación de reglas; predicción del siguiente instante/evento con reglas temporales y secuenciales; reglas de asociación de clase (CBA); poda de reglas improductivas | hecho |
 | 3 | **Patrones y reglas secuenciales difusos** (`FIM.fuzzy_sequential`, `ARM.fuzzy_sequential_rules`): eventos con grado de pertenencia, t-normas `min` / producto | hecho |
 | 4 | **Reglas multinivel / con taxonomía** (`FIM.taxonomy`, `ARM.generalized_rules`): jerarquías de ítems, soporte por nivel, reglas R-interesantes que podan las redundantes entre niveles | hecho |
-| 5 | **Reglas cuantitativas**: discretización por intervalos con fusión (Srikant–Agrawal) frente a la difusa | pendiente |
+| 5 | **Reglas cuantitativas** (`ARM.quantitative_rules`): discretización por intervalos con fusión (Srikant–Agrawal) frente a la difusa | hecho |
 | 6 | **Reglas raras, de alta utilidad y top-k** | pendiente |
 | 7 | **Spark**: entrada DataFrame/Parquet; reescritura de FuzzyDECLAT/DECLAT sin recoger en el driver; benchmark de secuencias | pendiente |
 | 8 | **API estilo scikit-learn**, generadores sintéticos y conjuntos de datos de ejemplo | pendiente |
@@ -42,7 +42,13 @@ tiempo (Fiot et al.) y tests de significación para reglas difusas.
 `generalized_rules`, `interesting_rules` (R-interesantes) y el comando `generalized-rules`. Queda fuera: taxonomías
 difusas (pertenencia parcial a una categoría), reglas multinivel sobre datos difusos o secuencias, y una versión Spark.
 
-**5–6.** Cada uno es un módulo nuevo en `ARM/` o `FIM/` con el mismo patrón que los existentes: función pura sobre
+**5. Cuantitativas.** Entregado: `IntervalPartition` (intervalos base de igual frecuencia o anchura, rangos hasta `max_supp`,
+`transform` para datos nuevos), `quantitative_rules` (sobre la maquinaria de taxonomías, con grupos excluyentes por columna),
+`partial_completeness_intervals` y el comando `quantitative-rules`. Queda fuera: el algoritmo original de combinación sobre la
+marcha, reglas con rangos disjuntos (p. ej. dos tramos de edad), selección automática de `n_intervals`, y la comparación
+sistemática con las difusas en conjuntos reales.
+
+**6. Raras, alta utilidad, top-k.** Serán módulos nuevos en `ARM/` o `FIM/` con el mismo patrón que los existentes: función pura sobre
 `DataFrame`, columnas de medidas estándar y `attrs` con el contexto (`n_transactions`, ...), de modo que las reglas
 resultantes pasen por `significant_rules`, `prune_redundant_rules` y la CLI sin cambios.
 

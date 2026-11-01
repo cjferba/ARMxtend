@@ -186,6 +186,10 @@ originals when you use them:
   pruning of itemsets with an item and its ancestor, R-interesting rules); Han, J., Fu, Y. (1995). *Discovery of
   multiple-level association rules from large databases.* Proceedings of the 21st VLDB Conference, 420-431 (a support
   threshold per level; here an itemset takes the threshold of its most general item).
+- **Quantitative rules** (`ARM.quantitative_rules`): Srikant, R., Agrawal, R. (1996). *Mining quantitative association rules in
+  large relational tables.* Proceedings of the 1996 ACM SIGMOD International Conference on Management of Data, 1-12 (equal-frequency
+  base intervals merged into ranges up to a maximum support, partial completeness, R-interesting rules); the implementation reduces the
+  ranges to the hierarchy of `ARM.generalized_rules`.
 - **Fuzzy sequential patterns and rules** (`FIM.fuzzy_sequential`, `ARM.fuzzy_sequential_rules`): inspired by Fiot,
   C., Laurent, A., Teisseire, M. (2007). *From crispness to fuzziness: three algorithms for soft sequential pattern
   mining.* IEEE Transactions on Fuzzy Systems 15(6), 1263-1277; the definitions (best embedding, t-norm, mean over

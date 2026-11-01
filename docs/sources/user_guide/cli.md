@@ -5,6 +5,7 @@ single machine, without Spark, and covers the most common one-shot tasks:
 
 ```bash
 armxtend rules transactions.csv --min-supp 0.1 --min-threshold 0.7
+armxtend quantitative-rules customers.csv --intervals 10 --max-supp 0.4 --min-supp 0.05 --interest 1.3
 armxtend generalized-rules basket.txt --taxonomy taxonomy.csv --min-supp 0.2 --level-supp 2=0.1 3=0.04 --interest 1.2
 armxtend fuzzy-rules sensors.csv --labels 3 --alpha 10 --metric certainty_factor --min-threshold 0.5
 armxtend gradual-rules health.csv --min-supp 0.3 --min-threshold 0.9
@@ -33,6 +34,25 @@ antecedents consequents  support  confidence   lift  certainty_factor
           D           B   0.5000      0.8333 1.0417            0.1667
           A           C   0.4000      0.8000 1.1429            0.3333
           C           B   0.5000      0.7143 0.8929           -0.1071
+```
+
+## `quantitative-rules`
+
+[Rules with merged intervals](ARM/quantitative_rules.md) over a CSV with a header (numeric and categorical columns). Numeric columns
+with more than `--intervals` distinct values are split into that many equal-frequency intervals (`--method uniform` for equal widths)
+and adjacent ones are merged into ranges up to `--max-supp` (default 0.5); `--columns` restricts the columns and
+`--quantitative` forces some to be numeric. `--min-supp`, `--metric`, `--min-threshold` (default 0.8), `--max-len`, `--prune` and the
+[significance options](#significance-of-the-rules) are as in `rules`, and `--interest R` keeps only the R-interesting rules (adds the
+`interest` column).
+
+```text
+$ armxtend quantitative-rules customers.csv --intervals 10 --max-supp 0.4 --min-supp 0.05 --min-threshold 0.8 --max-len 3 \
+      --interest 1.3 --sort-by lift --top 4
+                    antecedents           consequents  support  confidence   lift  certainty_factor  interest
+   income=[56.302,96.45], sex=F              buys=yes   0.1203      0.8299 3.8361            0.7829       NaN
+      age=[33.654,44.04), sex=F              buys=yes   0.0777      0.8204 3.7924            0.7708       NaN
+   age=[33.654,44.04), buys=yes income=[56.302,96.45]   0.0893      0.9963 3.3209            0.9947    1.3246
+buys=yes, income=[66.542,96.45]     age=[28.54,44.04)   0.0923      0.9358 3.1263            0.9084    1.3676
 ```
 
 ## `generalized-rules`
