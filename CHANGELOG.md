@@ -15,7 +15,9 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
   uniform, SAX-like --, event and calendar items, lagged items, window items); lagged (inter-transaction) rules,
   crisp and fuzzy, and per-group rule profiles (`ARM.temporal_rules`); rule drift over time windows with
   stable / emerging / vanishing / intermittent status (`ARM.rule_drift`); PrefixSpan sequential patterns, with
-  a Spark MLlib version (`FIM.sequential`); sequential rules (`ARM.sequential_rules`).
+  a Spark MLlib version (`FIM.sequential`); sequential rules (`ARM.sequential_rules`); fuzzy sequential patterns and
+  rules, whose events carry a degree of membership, with min / product t-norms (`FIM.fuzzy_sequential`,
+  `ARM.fuzzy_sequential_rules`).
 - **Statistical significance** (`ARM.significance`): per-rule Fisher / chi-squared p-values, Bonferroni / Holm /
   Benjamini-Hochberg / Benjamini-Yekutieli corrections over the family of candidate rules, Wilson and bootstrap
   intervals, and minP / maxT permutation tests with circular-shift nulls for time series; `--alpha`,
@@ -35,7 +37,7 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
   summaries, a self-contained interactive HTML viewer (`AREtoGraph.to_html`) and Neo4j/MongoDB exports
   (`to_cypher`, `to_documents`).
 - **Command line:** `armxtend rules | fuzzy-rules | gradual-rules | temporal-rules | rule-drift | sequences |
-  sequential-rules | anomalies | forecast | next-events | classify` (also `python -m ARMxtend`).
+  sequential-rules | fuzzy-sequences | fuzzy-sequential-rules | anomalies | forecast | next-events | classify` (also `python -m ARMxtend`).
 - **Tooling:** `pyproject.toml` packaging, type hints and `py.typed`, ruff, mypy, coverage, a release workflow with
   PyPI trusted publishing, runnable examples tested in CI, and a benchmark of the Spark algorithms
   (`benchmarks/spark_scalability.py`).

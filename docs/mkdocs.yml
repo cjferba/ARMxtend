@@ -48,6 +48,8 @@ nav:
     - ARM.rule_drift (rules over time): user_guide/ARM/rule_drift.md
     - FIM.sequential (PrefixSpan): user_guide/FIM/sequential.md
     - ARM.sequential_rules: user_guide/ARM/sequential_rules.md
+    - FIM.fuzzy_sequential (fuzzy patterns): user_guide/FIM/fuzzy_sequential.md
+    - ARM.fuzzy_sequential_rules: user_guide/ARM/fuzzy_sequential_rules.md
   - Fuzzy association rules:
     - FIM.FARE: user_guide/FIM/FARE.md
   - Big Data (Spark) - crisp:

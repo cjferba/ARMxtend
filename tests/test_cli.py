@@ -384,3 +384,65 @@ def test_classify_command_learns_the_class_rules(patients_file, capsys):
     assert main(["classify", patients_file, "--class-column", "nope"]) == 1
     assert "columna de clase" in capsys.readouterr().err
     assert main(["classify", patients_file, "--class-column", "diagnosis", "--test-fraction", "1.5"]) == 1
+
+
+# ---------------------------------------------------- secuencias difusas
+
+@pytest.fixture
+def daily_file(tmp_path):
+    """40 dias de 6 lecturas cada 4 h: los dias calurosos la temperatura sube por la manana y el consumo despues; filas desordenadas."""
+    rng = np.random.RandomState(3)
+    rows = []
+    for day in range(40):
+        hot = rng.rand() < 0.5
+        for hour in range(6):
+            moment = pd.Timestamp("2024-01-01") + pd.Timedelta(days=day, hours=hour * 4)
+            temp = (28 if hour < 2 else 18) if hot else 18
+            power = (9 if hour >= 3 else 2) if hot else 2
+            rows.append((moment.strftime("%Y-%m-%d %H:%M:%S"), moment.strftime("%Y-%m-%d"), temp + rng.normal(0, 1),
+                         power + rng.normal(0, 0.5)))
+    path = tmp_path / "daily.csv"
+    pd.DataFrame(rows, columns=["time", "day", "temp", "power"]).sample(frac=1, random_state=0).to_csv(path, index=False)
+    return str(path)
+
+
+def test_fuzzy_sequences_command_finds_the_ordered_pattern(daily_file, capsys):
+    base = ["fuzzy-sequences", daily_file, "--columns", "temp", "power", "--sequence-column", "day", "--time-column",
+            "time", "--min-degree", "0.2", "--format", "json"]
+    assert main(base + ["--min-supp", "0.3", "--min-len", "2", "--max-len", "2"]) == 0
+    patterns = {r["sequence"]: r for r in json.loads(capsys.readouterr().out)}
+    assert patterns["<{temp_high} {power_high}>"]["support"] > 0.4 and patterns["<{temp_high} {power_high}>"]["length"] == 2
+    assert "<{power_high} {temp_high}>" not in patterns                      # el orden importa
+
+    assert main(base + ["--min-supp", "0.3", "--tnorm", "product", "--max-len", "1"]) == 0
+    product = {r["sequence"]: r["support"] for r in json.loads(capsys.readouterr().out)}
+    assert 0.4 < product["<{temp_high}>"] < patterns["<{temp_high} {power_high}>"]["support"] + 0.1
+    with pytest.raises(SystemExit):                                          # argparse rechaza t-normas desconocidas
+        main(base + ["--tnorm", "lukasiewicz"])
+    capsys.readouterr()
+
+
+def test_fuzzy_sequential_rules_command(daily_file, capsys):
+    base = ["fuzzy-sequential-rules", daily_file, "--columns", "temp", "power", "--sequence-column", "day",
+            "--time-column", "time", "--min-degree", "0.2", "--min-supp", "0.2", "--min-threshold", "0.9",
+            "--format", "json"]
+    assert main(base) == 0
+    rules = json.loads(capsys.readouterr().out)
+    rule = next(r for r in rules if r["antecedents"] == "temp_high" and r["consequents"] == "power_high")
+    assert rule["confidence"] > 0.9 and rule["lift"] > 1.5
+    assert not any(r["antecedents"] == "power_high" and r["consequents"] == "temp_high" for r in rules)
+
+    assert main(base + ["--metric", "lift", "--min-threshold", "1.5", "--max-antecedent", "1", "--max-consequent", "1"]) == 0
+    rules = json.loads(capsys.readouterr().out)
+    assert rules and all("," not in r["antecedents"] and "," not in r["consequents"] for r in rules)
+    assert all(r["lift"] >= 1.5 for r in rules)
+
+
+def test_fuzzy_sequences_one_sequence_and_errors(daily_file, capsys):
+    assert main(["fuzzy-sequences", daily_file, "--columns", "temp", "--time-column", "time", "--min-supp", "0.5",
+                 "--max-len", "1", "--top", "2"]) == 0                      # sin --sequence-column: una sola secuencia
+    assert len(capsys.readouterr().out.strip().splitlines()) == 3
+    assert main(["fuzzy-sequences", daily_file, "--sequence-column", "nope"]) == 1
+    assert "'nope'" in capsys.readouterr().err
+    assert main(["fuzzy-sequences", daily_file, "--columns", "temp", "--min-supp", "2"]) == 1
+    assert "min_supp" in capsys.readouterr().err

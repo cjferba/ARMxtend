@@ -142,6 +142,14 @@
 <li>
     <a href="../user_guide/ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
 </li>
+            
+<li>
+    <a href="../user_guide/FIM/fuzzy_sequential/" class="dropdown-item">FIM.fuzzy_sequential (fuzzy patterns)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/fuzzy_sequential_rules/" class="dropdown-item">ARM.fuzzy_sequential_rules</a>
+</li>
     </ul>
   </li>
                                     
@@ -494,6 +502,11 @@ originals when you use them:</p>
   Nkambou, R. (2015). <em>Mining partially-ordered sequential rules common to multiple sequences.</em> IEEE
   Transactions on Knowledge and Data Engineering 27(8), 2203-2216 (definition of a valid rule; the
   search is not the RuleGrowth algorithm).</li>
+<li><strong>Fuzzy sequential patterns and rules</strong> (<code>FIM.fuzzy_sequential</code>, <code>ARM.fuzzy_sequential_rules</code>): inspired by Fiot,
+  C., Laurent, A., Teisseire, M. (2007). <em>From crispness to fuzziness: three algorithms for soft sequential pattern
+  mining.</em> IEEE Transactions on Fuzzy Systems 15(6), 1263-1277; the definitions (best embedding, t-norm, mean over
+  the sequences) are the library's own. Triangular norms: Klement, E.P., Mesiar, R., Pap, E. (2000), <em>Triangular
+  Norms</em>, Kluwer.</li>
 <li><strong>Rule drift</strong> (<code>ARM.rule_drift</code>): the batch counterpart of the trends kept incrementally by FIMoTS
   (Fernandez-Basso et al., 2019, see above).</li>
 <li><strong>Statistical significance of rules</strong> (<code>ARM.significance</code>): Fisher's exact test; Holm, S. (1979), <em>A simple

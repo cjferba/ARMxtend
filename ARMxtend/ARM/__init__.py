@@ -51,6 +51,7 @@ from .significance import (
     permutation_null,
     permutation_p_values,
 )
+from .fuzzy_sequential_rules import fuzzy_sequential_rules, fuzzy_rule_degree
 from .anomaly import rule_violations, anomaly_scores, detect_anomalies
 from .prediction import rule_scores, forecast_next, evaluate_forecast, predict_next_events, evaluate_next_events
 from .classification import class_association_rules, select_rules, RuleClassifier
@@ -82,6 +83,8 @@ __all__ = [
     "compare_rule_sets",
     "sequential_rules",
     "contains_rule",
+    "fuzzy_sequential_rules",
+    "fuzzy_rule_degree",
     "rule_significance",
     "adjust_pvalues",
     "candidate_rule_count",

@@ -181,6 +181,11 @@ originals when you use them:
   Nkambou, R. (2015). *Mining partially-ordered sequential rules common to multiple sequences.* IEEE
   Transactions on Knowledge and Data Engineering 27(8), 2203-2216 (definition of a valid rule; the
   search is not the RuleGrowth algorithm).
+- **Fuzzy sequential patterns and rules** (`FIM.fuzzy_sequential`, `ARM.fuzzy_sequential_rules`): inspired by Fiot,
+  C., Laurent, A., Teisseire, M. (2007). *From crispness to fuzziness: three algorithms for soft sequential pattern
+  mining.* IEEE Transactions on Fuzzy Systems 15(6), 1263-1277; the definitions (best embedding, t-norm, mean over
+  the sequences) are the library's own. Triangular norms: Klement, E.P., Mesiar, R., Pap, E. (2000), *Triangular
+  Norms*, Kluwer.
 - **Rule drift** (`ARM.rule_drift`): the batch counterpart of the trends kept incrementally by FIMoTS
   (Fernandez-Basso et al., 2019, see above).
 - **Statistical significance of rules** (`ARM.significance`): Fisher's exact test; Holm, S. (1979), *A simple

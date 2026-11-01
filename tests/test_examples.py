@@ -9,6 +9,7 @@ import importlib
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 EXAMPLES_DIR = Path(__file__).resolve().parent.parent / "examples"
@@ -24,6 +25,7 @@ EXAMPLE_MODULES = [
     "example_sequences",
     "example_significance",
     "example_rules_in_action",
+    "example_fuzzy_sequences",
 ]
 
 
@@ -134,3 +136,18 @@ def test_rules_in_action_example_finds_predicts_and_classifies(capsys):
     assert "light" in upcoming.index
     assert after_coffee.index[0] == "tv" and hits["hit_rate"] > hits["baseline_hit_rate"] + 0.05
     assert accuracy > majority + 0.3 and len(classifier.rules_) <= 4
+
+
+def test_fuzzy_sequences_example_orders_events_and_grades_the_rule(capsys):
+    """La regla difusa 'frio por la manana => consumo por la tarde' destaca, solo en ese orden, y cada dia la cumple en su grado."""
+    module = importlib.import_module("example_fuzzy_sequences")
+    patterns, rules, degrees, cold, (crisp_rules, fuzzy_rule) = module.main()
+
+    pairs = {tuple(next(iter(element)) for element in pattern): value for pattern, value in zip(patterns["sequence"], patterns["support"])}
+    assert pairs[("temp_low", "power_high")] > 0.2 and ("power_high", "temp_low") not in pairs
+    assert (rules.iloc[0]["antecedents"], rules.iloc[0]["consequents"]) == (frozenset({"temp_low"}), frozenset({"power_high"}))
+    assert rules.iloc[0]["lift"] > 2 > rules.iloc[1]["lift"]
+    assert fuzzy_rule["lift"] == pytest.approx(rules.iloc[0]["lift"])
+    assert float(np.corrcoef(cold, degrees)[0, 1]) > 0.8 and 0 < degrees.max() < 1 and (degrees == 0).sum() > 20
+    supports = [rule["support"] for rule in crisp_rules.values()]                       # el corte cambia mucho el soporte
+    assert max(supports) > 2.5 * min(supports)

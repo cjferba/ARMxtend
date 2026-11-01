@@ -23,6 +23,8 @@
 - [ARM.rule_drift (emerging, stable and vanishing rules over time windows)](user_guide/ARM/rule_drift.md)
 - [FIM.sequential (frequent sequential patterns, PrefixSpan; Spark version)](user_guide/FIM/sequential.md)
 - [ARM.sequential_rules ("if X, then later Y")](user_guide/ARM/sequential_rules.md)
+- [FIM.fuzzy_sequential (sequential patterns with degrees of membership)](user_guide/FIM/fuzzy_sequential.md)
+- [ARM.fuzzy_sequential_rules (fuzzy "if X, then later Y")](user_guide/ARM/fuzzy_sequential_rules.md)
 
 ## Fuzzy association rule mining (single machine)
 - [FIM.FARE](user_guide/FIM/FARE.md)
@@ -47,7 +49,7 @@
 - [ARM.meta_rules](user_guide/ARM/meta_rules.md)
 
 ## Command line
-- [armxtend (rules, fuzzy-rules, gradual-rules, temporal-rules, rule-drift, sequences, sequential-rules)](user_guide/cli.md)
+- [armxtend (rules, fuzzy-rules, gradual-rules, temporal-rules, rule-drift, sequences, sequential-rules, fuzzy-sequences, fuzzy-sequential-rules, anomalies, forecast, next-events, classify)](user_guide/cli.md)
 
 ## Visualization
 - [VizARM.AREtoGraph](user_guide/VizARM.md)

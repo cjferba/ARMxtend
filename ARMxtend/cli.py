@@ -11,6 +11,8 @@ Interfaz de linea de comandos de ARMxtend::
     armxtend sequential-rules rutinas.txt --min-supp 0.3 --min-threshold 0.8
     armxtend rules transacciones.csv --min-supp 0.05 --alpha 0.05      # solo reglas significativas
     armxtend temporal-rules sensores.csv --time-column hora --permutations 200 --alpha 0.05
+    armxtend fuzzy-sequences sensores.csv --sequence-column dia --time-column hora --min-supp 0.3
+    armxtend fuzzy-sequential-rules sensores.csv --sequence-column dia --time-column hora --min-threshold 0.8
     armxtend anomalies sensores.csv --time-column hora --train-fraction 0.5 --max-lag 1 --min-threshold 0.95
     armxtend forecast sensores.csv --time-column hora --train-fraction 0.7 --max-lag 2 --targets calefaccion
     armxtend next-events rutinas.txt --min-supp 0.2 --min-threshold 0.3 --history "alarma;bano"
@@ -237,6 +239,46 @@ def _run_temporal_rules(args: argparse.Namespace) -> pd.DataFrame:
     return prune_redundant_rules(rules) if args.prune and len(rules) else rules
 
 
+def _read_fuzzy_sequences(args: argparse.Namespace) -> list:
+    """
+    Secuencias difusas desde un CSV de series: las columnas numericas se fuzzifican
+    (`--labels`, `--method`, `--membership`), cada fila es un elemento y `--sequence-column`
+    (por ejemplo el dia) agrupa las filas en secuencias, ordenadas por `--time-column`.
+    """
+    from .FIM.fuzzy_sequential import fuzzy_sequences_from_memberships
+    from .preprocessing import FuzzyLib
+
+    table = pd.read_csv(args.input, sep=args.delimiter)
+    for name in [args.time_column, args.sequence_column]:
+        if name and name not in table.columns:
+            raise ValueError("la columna '{}' no existe".format(name))
+    if args.time_column:
+        table[args.time_column] = pd.to_datetime(table[args.time_column])
+        table = table.sort_values([c for c in [args.sequence_column, args.time_column] if c], kind="mergesort")
+    library = FuzzyLib()
+    library.data = table.reset_index(drop=True)
+    names = library.AutoFuzzification(Atri=args.columns, n_labels=args.labels, method=args.method,
+                                      membership=args.membership)
+    groups = library.data[args.sequence_column] if args.sequence_column else None
+    return fuzzy_sequences_from_memberships(library.data[names], by=groups, min_degree=args.min_degree)
+
+
+def _run_fuzzy_sequences(args: argparse.Namespace) -> pd.DataFrame:
+    from .FIM.fuzzy_sequential import fuzzy_prefixspan
+
+    return fuzzy_prefixspan(_read_fuzzy_sequences(args), args.min_supp, max_len=args.max_len, min_len=args.min_len,
+                            tnorm=args.tnorm)
+
+
+def _run_fuzzy_sequential_rules(args: argparse.Namespace) -> pd.DataFrame:
+    from .ARM import fuzzy_sequential_rules
+
+    return fuzzy_sequential_rules(_read_fuzzy_sequences(args), args.min_supp,
+                                  min_conf=args.min_threshold if args.metric == "confidence" else 0.0,
+                                  max_antecedent=args.max_antecedent, max_consequent=args.max_consequent,
+                                  metric=args.metric, min_threshold=args.min_threshold, tnorm=args.tnorm)
+
+
 def _train_cut(rows: int, fraction: float) -> int:
     """Primera fila de la parte de prueba cuando las `fraction` primeras filas son de entrenamiento."""
     if not 0 < fraction < 1:
@@ -445,6 +487,25 @@ def _series_options(parser: argparse.ArgumentParser) -> None:
                         help="add calendar items (needs --time-column)")
 
 
+def _fuzzy_sequence_options(parser: argparse.ArgumentParser) -> None:
+    """Opciones de entrada de fuzzy-sequences y fuzzy-sequential-rules."""
+    parser.add_argument("input", help="CSV file with a header; numeric columns are fuzzified, one row per time step")
+    parser.add_argument("-d", "--delimiter", default=",", help="CSV delimiter (default: ',')")
+    parser.add_argument("--sequence-column",
+                        help="column that groups the rows into sequences (day, patient...); default: one sequence")
+    parser.add_argument("--time-column", help="column with the timestamps (rows are sorted by it within a sequence)")
+    parser.add_argument("--columns", nargs="+", help="columns to fuzzify (default: all numeric columns)")
+    parser.add_argument("--labels", type=int, default=3, help="fuzzy labels per column (default: 3)")
+    parser.add_argument("--method", choices=("uniform", "quantile", "kmeans"), default="quantile",
+                        help="how the partition is computed (default: quantile)")
+    parser.add_argument("--membership", choices=("triangular", "trapezoidal", "gaussian"), default="triangular")
+    parser.add_argument("--min-degree", type=float, default=0.0,
+                        help="ignore memberships up to this degree (default: 0)")
+    parser.add_argument("--min-supp", type=float, default=0.1, help="minimum fuzzy support (default: 0.1)")
+    parser.add_argument("--tnorm", choices=("min", "product"), default="min",
+                        help="t-norm that combines the degrees of the events of a pattern (default: min)")
+
+
 def _normal_rules_options(parser: argparse.ArgumentParser) -> None:
     """Opciones de las reglas del funcionamiento normal (anomalies y forecast)."""
     parser.add_argument("--train-fraction", type=float, default=0.5,
@@ -564,6 +625,26 @@ def build_parser() -> argparse.ArgumentParser:
     sequential.add_argument("--max-consequent", type=int, default=2, help="maximum items in Y (default: 2)")
     _output_options(sequential)
     sequential.set_defaults(run=_run_sequential_rules)
+
+    fuzzySequences = commands.add_parser(
+        "fuzzy-sequences", help="frequent fuzzy sequential patterns from a CSV of numeric time series")
+    _fuzzy_sequence_options(fuzzySequences)
+    fuzzySequences.add_argument("--max-len", type=int, help="maximum number of items in a pattern")
+    fuzzySequences.add_argument("--min-len", type=int, default=1, help="minimum number of items in a pattern (default: 1)")
+    _output_options(fuzzySequences, "patterns")
+    fuzzySequences.set_defaults(run=_run_fuzzy_sequences, metric=None, keep_order=True,
+                                table_columns=["sequence", "support", "length"])
+
+    fuzzySequential = commands.add_parser(
+        "fuzzy-sequential-rules", help="fuzzy sequential rules ('if X happens, Y happens afterwards') from numeric time series")
+    _fuzzy_sequence_options(fuzzySequential)
+    fuzzySequential.add_argument("--metric", default="confidence", help="measure used to filter and sort (default: %(default)s)")
+    fuzzySequential.add_argument("--min-threshold", type=float, default=0.7,
+                                 help="minimum value of --metric (default: 0.7)")
+    fuzzySequential.add_argument("--max-antecedent", type=int, default=2, help="maximum items in X (default: 2)")
+    fuzzySequential.add_argument("--max-consequent", type=int, default=2, help="maximum items in Y (default: 2)")
+    _output_options(fuzzySequential)
+    fuzzySequential.set_defaults(run=_run_fuzzy_sequential_rules)
 
     anomalies = commands.add_parser(
         "anomalies", help="rows that break the rules learned from the normal behaviour (rule violation)")

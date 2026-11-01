@@ -142,6 +142,14 @@
 <li>
     <a href="../user_guide/ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
 </li>
+            
+<li>
+    <a href="../user_guide/FIM/fuzzy_sequential/" class="dropdown-item">FIM.fuzzy_sequential (fuzzy patterns)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/fuzzy_sequential_rules/" class="dropdown-item">ARM.fuzzy_sequential_rules</a>
+</li>
     </ul>
   </li>
                                     
@@ -339,6 +347,10 @@
               </ul>
             </li>
             <li class="nav-item" data-bs-level="2"><a href="#event-logs-sequential-patterns-and-rules-fimsequential-armsequential_rules" class="nav-link">Event logs: sequential patterns and rules (FIM.sequential, ARM.sequential_rules)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#fuzzy-sequential-patterns-and-rules-fimfuzzy_sequential-armfuzzy_sequential_rules" class="nav-link">Fuzzy sequential patterns and rules (FIM.fuzzy_sequential, ARM.fuzzy_sequential_rules)</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -805,6 +817,46 @@ Reglas secuenciales con confianza &gt;= 0.7, por lift decreciente:
   alarm =&gt; bathroom  support=1.00 confidence=1.00 lift=1.00
 
 confianza de coffee =&gt; tv: 0.77; de tv =&gt; coffee: 0.00
+</code></pre>
+<h2 id="fuzzy-sequential-patterns-and-rules-fimfuzzy_sequential-armfuzzy_sequential_rules">Fuzzy sequential patterns and rules (<code>FIM.fuzzy_sequential</code>, <code>ARM.fuzzy_sequential_rules</code>)</h2>
+<p>Eighty days of a house, eight readings of temperature and heating power per day. The colder the morning, the more
+power is used in the evening, and the relation is gradual. The readings are fuzzified (<code>FuzzyLib.AutoFuzzification</code>),
+each day becomes a fuzzy sequence, and <a href="../user_guide/FIM/fuzzy_sequential/"><code>fuzzy_prefixspan</code></a> and
+<a href="../user_guide/ARM/fuzzy_sequential_rules/"><code>fuzzy_sequential_rules</code></a> mine the patterns and the rules; each day fulfils
+the rule <code>temp_low =&gt; power_high</code> to its own degree, and fixed thresholds are compared with the fuzzy sets.</p>
+<pre><code class="language-python">from ARMxtend.ARM import fuzzy_rule_degree, fuzzy_sequential_rules
+from ARMxtend.FIM import fuzzy_prefixspan, fuzzy_sequences_from_memberships
+from ARMxtend.preprocessing import FuzzyLib
+
+library = FuzzyLib()
+library.data = readings
+names = library.AutoFuzzification(Atri=[&quot;temp&quot;, &quot;power&quot;], n_labels=3, method=&quot;uniform&quot;)
+sequences = fuzzy_sequences_from_memberships(library.data[names], by=library.data[&quot;day&quot;], min_degree=0.2)
+
+patterns = fuzzy_prefixspan(sequences, 0.2, max_len=2, min_len=2)                 # &lt;temp_low -&gt; power_high&gt;, ...
+rules = fuzzy_sequential_rules(sequences, 0.1, min_conf=0.5, max_antecedent=1, max_consequent=1)
+degrees = [fuzzy_rule_degree(day, [&quot;temp_low&quot;], [&quot;power_high&quot;]) for day in sequences]
+</code></pre>
+<p>(full source: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_fuzzy_sequences.py"><code>examples/example_fuzzy_sequences.py</code></a>)</p>
+<p>Output:</p>
+<pre><code class="language-text">80 dias; etiquetas difusas: temp_low, temp_medium, temp_high, power_low, power_medium, power_high
+
+Patrones de dos eventos (soporte difuso, 26 en total):
+  &lt;temp_low -&gt; power_high&gt;  support=0.22
+  &lt;power_high -&gt; temp_low&gt;  support=&lt; 0.20 (no frecuente)
+
+Reglas difusas mas llamativas (por lift):
+  temp_low =&gt; power_high  support=0.22 confidence=0.63 lift=2.76
+  temp_medium =&gt; power_medium  support=0.68 confidence=0.92 lift=1.25
+  temp_low =&gt; temp_high  support=0.34 confidence=0.94 lift=1.19
+
+temp_low =&gt; power_high por dia: grado 0 en 45 dias suaves, hasta 0.93 los mas frios; correlacion con la intensidad del frio 0.86
+
+Con conjuntos difusos: temp_low =&gt; power_high  support=0.22 confidence=0.63 lift=2.76
+Con umbral temp &lt;  8:      cold =&gt; peak           support=0.21 confidence=1.00 lift=1.60
+Con umbral temp &lt; 10:      cold =&gt; peak           support=0.39 confidence=1.00 lift=1.60
+Con umbral temp &lt; 12:      cold =&gt; peak           support=0.60 confidence=0.96 lift=1.54
+Con umbral temp &lt; 14:      cold =&gt; peak           support=0.62 confidence=0.82 lift=1.31
 </code></pre>
 <h2 id="statistical-significance-of-rules-armsignificance">Statistical significance of rules (<code>ARM.significance</code>)</h2>
 <p>Which of the rules that pass the thresholds are real? 300 random baskets of 12 independent items with a single planted

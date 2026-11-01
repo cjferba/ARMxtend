@@ -73,6 +73,7 @@ Spark y el nucleo sigue funcionando.
 * `ARM.temporal_rules`: reglas **temporales con retardo** ("puerta abierta hace 1 h y es de noche -> calefaccion encendida"), crisp y difusas, y perfil de una regla por hora/dia
 * `ARM.rule_drift`: **deriva de reglas** -- cuales son estables, emergentes, evanescentes o intermitentes en ventanas sucesivas
 * `FIM.sequential` y `ARM.sequential_rules`: **patrones secuenciales** (PrefixSpan, tambien en Spark) y **reglas secuenciales** ("si X, despues Y")
+* `FIM.fuzzy_sequential` y `ARM.fuzzy_sequential_rules`: **patrones y reglas secuenciales difusos** -- los eventos llevan un grado de pertenencia y cada secuencia cumple el patron o la regla en su grado
 
 ### Meta-reglas de asociacion
 

@@ -23,7 +23,9 @@ from .sequential import (
     sequences_from_events,
     sequences_from_items,
 )
+from .fuzzy_sequential import fuzzy_pattern_degree, fuzzy_prefixspan, fuzzy_sequences_from_memberships
 
 __all__ = ["FARE", "closed_itemsets", "maximal_itemsets", "support_from_closed", "prefixspan", "prefixspan_spark",
            "contains_sequence", "format_sequence", "sequences_from_events", "sequences_from_items",
+           "fuzzy_prefixspan", "fuzzy_pattern_degree", "fuzzy_sequences_from_memberships",
            "apriori", "Eclat", "BD_ARE", "BD_FARE"]

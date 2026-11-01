@@ -12,7 +12,7 @@ trabajar** (anomalías, predicción, clasificación), después **nuevos tipos de
 |---|---|---|
 | 1 | **Significación estadística** (`ARM.significance`): test de Fisher / chi², Bonferroni / Holm / FDR, intervalos de confianza, permutación (minP) con desplazamientos circulares para series | hecho |
 | 2 | **Reglas en acción** (`ARM.anomaly`, `ARM.prediction`, `ARM.classification`): detección de anomalías por violación de reglas; predicción del siguiente instante/evento con reglas temporales y secuenciales; reglas de asociación de clase (CBA); poda de reglas improductivas | hecho |
-| 3 | **Patrones y reglas secuenciales difusos** (cantidades/intensidades en los eventos) | pendiente |
+| 3 | **Patrones y reglas secuenciales difusos** (`FIM.fuzzy_sequential`, `ARM.fuzzy_sequential_rules`): eventos con grado de pertenencia, t-normas `min` / producto | hecho |
 | 4 | **Reglas multinivel / con taxonomía** (jerarquías de ítems, poda de reglas redundantes entre niveles) | pendiente |
 | 5 | **Reglas cuantitativas**: discretización por intervalos con fusión (Srikant–Agrawal) frente a la difusa | pendiente |
 | 6 | **Reglas raras, de alta utilidad y top-k** | pendiente |
@@ -31,7 +31,13 @@ que viola; (b) `rule_scores` / `forecast_next` / `predict_next_events` anticipan
 secuenciales con veto (una regla que descarte eventos), CBA con soportes mínimos múltiples completos, y clasificación
 con reglas difusas.
 
-**3–6.** Cada uno es un módulo nuevo en `ARM/` o `FIM/` con el mismo patrón que los existentes: función pura sobre
+**3. Secuencias difusas.** Entregado: `fuzzy_prefixspan` (PrefixSpan con poda antimonótona exacta sobre un tensor de
+grados), `fuzzy_pattern_degree`, `fuzzy_sequences_from_memberships` (de una tabla de pertenencias, p. ej. la de
+`FuzzyLib`, a secuencias), `fuzzy_sequential_rules` / `fuzzy_rule_degree` y los comandos `fuzzy-sequences` /
+`fuzzy-sequential-rules`. Queda fuera: elementos con varios ítems simultáneos, versión Spark, fuzzificar también el
+tiempo (Fiot et al.) y tests de significación para reglas difusas.
+
+**4–6.** Cada uno es un módulo nuevo en `ARM/` o `FIM/` con el mismo patrón que los existentes: función pura sobre
 `DataFrame`, columnas de medidas estándar y `attrs` con el contexto (`n_transactions`, ...), de modo que las reglas
 resultantes pasen por `significant_rules`, `prune_redundant_rules` y la CLI sin cambios.
 

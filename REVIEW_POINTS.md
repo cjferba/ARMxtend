@@ -151,7 +151,29 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
 - [ ] **CLI**: `anomalies`/`forecast` reservan por filas (`--train-fraction`), no por fechas; `classify` baraja con semilla.
   El JSON de fechas pasó a ISO (antes, milisegundos desde 1970) para evitar el aviso de pandas 4.
 
-## 10. Documentación
+## 10. Secuencias difusas (`FIM.fuzzy_sequential`, `ARM.fuzzy_sequential_rules`)
+
+- [ ] **Referencia de memoria**: Fiot, Laurent & Teisseire (2007), *From crispness to fuzziness: three algorithms for
+  soft sequential pattern mining*, IEEE Trans. Fuzzy Systems 15(6), 1263-1277, y Klement, Mesiar & Pap (2000),
+  *Triangular Norms*. Comprueba autores, título, volumen y páginas. **No implemento sus algoritmos**: la definición
+  (grado de un patrón = mejor encaje, con t-norma `min` o producto; soporte = media sobre las secuencias) es mía, y
+  así lo dice la documentación. Decide si te vale o si prefieres la definición de ese artículo (que fuzzifica también
+  el tiempo).
+- [ ] **Solo elementos de un ítem.** Los patrones son listas de ítems sueltos (`<x1 x2 ...>`); no hay elementos con
+  varios ítems simultáneos como en `FIM.sequential`. Con grados 0/1 coinciden con los patrones de `prefixspan` de un
+  ítem por elemento (comprobado en los tests).
+- [ ] **Grado de una regla** = `max_k T(mu_X(k), mu_Y(k))` con `mu_X`/`mu_Y` como t-norma de los mejores grados de
+  cada ítem hasta / después de `k`. Con grados 0/1 reproduce `sequential_rules` (comprobado). Es la extensión más
+  natural que se me ocurre, pero no hay una definición canónica; contrástala con tu criterio.
+- [ ] **La confianza difusa no es comparable con la nítida** (en el ejemplo, 0.63 frente a 0.82-1.00 según el umbral
+  nítido): cuenta los días parcialmente. Para ordenar reglas, `lift`. No hay test de significación para estas reglas.
+- [ ] **Coste.** Se construye un tensor denso secuencias x posición x ítems (los grados 0 no se ahorran): para bases muy
+  grandes o con muchas etiquetas hay que bajar `max_len`, subir `min_supp` o usar `min_degree`. No hay versión Spark.
+- [ ] **CLI** (`fuzzy-sequences`, `fuzzy-sequential-rules`): la fuzzificación usa `FuzzyLib.AutoFuzzification` con
+  3 etiquetas por cuantiles y triangulares por defecto, y `--min-degree 0` (con triangulares casi toda lectura tiene
+  algún grado en la etiqueta vecina: usa 0.1-0.3). Sin `--sequence-column` todo el fichero es una sola secuencia.
+
+## 11. Documentación
 
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la

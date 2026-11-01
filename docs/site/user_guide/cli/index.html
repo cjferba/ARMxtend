@@ -142,6 +142,14 @@
 <li>
     <a href="../ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
 </li>
+            
+<li>
+    <a href="../FIM/fuzzy_sequential/" class="dropdown-item">FIM.fuzzy_sequential (fuzzy patterns)</a>
+</li>
+            
+<li>
+    <a href="../ARM/fuzzy_sequential_rules/" class="dropdown-item">ARM.fuzzy_sequential_rules</a>
+</li>
     </ul>
   </li>
                                     
@@ -330,6 +338,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#fuzzy-sequences-and-fuzzy-sequential-rules" class="nav-link">fuzzy-sequences and fuzzy-sequential-rules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#rules-in-action-anomalies-forecast-next-events-and-classify" class="nav-link">Rules in action: anomalies, forecast, next-events and classify</a>
               <ul class="nav flex-column">
               </ul>
@@ -359,6 +371,8 @@ armxtend temporal-rules house.csv --time-column time --max-lag 2 --targets heate
 armxtend rule-drift house.csv --time-column time --window 15D --max-lag 1 --targets heater_on
 armxtend sequences routines.txt --min-supp 0.3 --min-len 3
 armxtend sequential-rules routines.txt --min-supp 0.3 --min-threshold 0.8
+armxtend fuzzy-sequences readings.csv --sequence-column day --time-column time --min-degree 0.2 --min-supp 0.3
+armxtend fuzzy-sequential-rules readings.csv --sequence-column day --time-column time --min-degree 0.2 --metric lift --min-threshold 1.5
 armxtend anomalies house.csv --time-column time --train-fraction 0.6 --max-lag 1 --min-threshold 0.95
 armxtend forecast house.csv --time-column time --train-fraction 0.6 --max-lag 1 --targets heater_on
 armxtend next-events routines.txt --min-supp 0.2 --min-threshold 0.3 --history &quot;alarm;bathroom&quot;
@@ -435,6 +449,26 @@ antecedents consequents  support  confidence   lift  certainty_factor
        door     kitchen   0.8000      1.0000 1.2500            1.0000
     kitchen      coffee   0.6000      0.7500 1.2500            0.3750
        door      coffee   0.6000      0.7500 1.2500            0.3750
+</code></pre>
+<h2 id="fuzzy-sequences-and-fuzzy-sequential-rules"><code>fuzzy-sequences</code> and <code>fuzzy-sequential-rules</code></h2>
+<p>The same two tasks as <code>sequences</code> and <code>sequential-rules</code>, for <strong>numeric</strong> readings. The input is a CSV with a header
+and one row per time step, for example <code>time,day,temp,power</code>. The numeric columns (or those in <code>--columns</code>) are fuzzified
+with <a href="../preprocessing/FuzzyLib/"><code>FuzzyLib.AutoFuzzification</code></a> (<code>--labels</code>, <code>--method uniform|quantile|kmeans</code>,
+<code>--membership triangular|trapezoidal|gaussian</code>), each row becomes an event with the labels whose membership is above
+<code>--min-degree</code> (default 0; <code>0.2</code> removes the noise of tiny memberships), and <code>--sequence-column</code> groups the rows into
+sequences (the day, the patient; without it the whole file is one sequence). <code>--time-column</code> sorts the rows inside each
+sequence; without it the file order is used. <code>--tnorm min|product</code> chooses how the degrees of a pattern are combined.</p>
+<ul>
+<li><strong><code>fuzzy-sequences</code></strong> mines the <a href="../FIM/fuzzy_sequential/">fuzzy sequential patterns</a>: <code>--min-supp</code> (the fuzzy support),
+  <code>--min-len</code>, <code>--max-len</code>. Columns: <code>sequence</code>, <code>support</code>, <code>length</code>.</li>
+<li><strong><code>fuzzy-sequential-rules</code></strong> mines the <a href="../ARM/fuzzy_sequential_rules/">fuzzy sequential rules</a> <code>X =&gt; Y</code>: <code>--min-supp</code>,
+  <code>--metric</code> / <code>--min-threshold</code> (default <code>confidence</code> &gt;= 0.7; fuzzy confidences are usually lower than crisp ones, so
+  <code>--metric lift --min-threshold 1.5</code> is often a better filter), <code>--max-antecedent</code> and <code>--max-consequent</code> (default 2).</li>
+</ul>
+<pre><code class="language-text">$ armxtend fuzzy-sequential-rules readings.csv --columns temp power --sequence-column day --time-column time \
+      --min-degree 0.2 --min-supp 0.2 --metric lift --min-threshold 1.5 --max-antecedent 1 --max-consequent 1
+antecedents consequents  support  confidence   lift  certainty_factor
+  temp_high  power_high   0.4343      0.9759 2.1261            0.9554
 </code></pre>
 <h2 id="rules-in-action-anomalies-forecast-next-events-and-classify">Rules in action: <code>anomalies</code>, <code>forecast</code>, <code>next-events</code> and <code>classify</code></h2>
 <p>These four commands learn rules and apply them straight away (<a href="../ARM/anomaly_detection/"><code>ARM.anomaly</code></a>,

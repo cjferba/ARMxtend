@@ -11,6 +11,8 @@ armxtend temporal-rules house.csv --time-column time --max-lag 2 --targets heate
 armxtend rule-drift house.csv --time-column time --window 15D --max-lag 1 --targets heater_on
 armxtend sequences routines.txt --min-supp 0.3 --min-len 3
 armxtend sequential-rules routines.txt --min-supp 0.3 --min-threshold 0.8
+armxtend fuzzy-sequences readings.csv --sequence-column day --time-column time --min-degree 0.2 --min-supp 0.3
+armxtend fuzzy-sequential-rules readings.csv --sequence-column day --time-column time --min-degree 0.2 --metric lift --min-threshold 1.5
 armxtend anomalies house.csv --time-column time --train-fraction 0.6 --max-lag 1 --min-threshold 0.95
 armxtend forecast house.csv --time-column time --train-fraction 0.6 --max-lag 1 --targets heater_on
 armxtend next-events routines.txt --min-supp 0.2 --min-threshold 0.3 --history "alarm;bathroom"
@@ -110,6 +112,29 @@ antecedents consequents  support  confidence   lift  certainty_factor
        door     kitchen   0.8000      1.0000 1.2500            1.0000
     kitchen      coffee   0.6000      0.7500 1.2500            0.3750
        door      coffee   0.6000      0.7500 1.2500            0.3750
+```
+
+## `fuzzy-sequences` and `fuzzy-sequential-rules`
+
+The same two tasks as `sequences` and `sequential-rules`, for **numeric** readings. The input is a CSV with a header
+and one row per time step, for example `time,day,temp,power`. The numeric columns (or those in `--columns`) are fuzzified
+with [`FuzzyLib.AutoFuzzification`](preprocessing/FuzzyLib.md) (`--labels`, `--method uniform|quantile|kmeans`,
+`--membership triangular|trapezoidal|gaussian`), each row becomes an event with the labels whose membership is above
+`--min-degree` (default 0; `0.2` removes the noise of tiny memberships), and `--sequence-column` groups the rows into
+sequences (the day, the patient; without it the whole file is one sequence). `--time-column` sorts the rows inside each
+sequence; without it the file order is used. `--tnorm min|product` chooses how the degrees of a pattern are combined.
+
+- **`fuzzy-sequences`** mines the [fuzzy sequential patterns](FIM/fuzzy_sequential.md): `--min-supp` (the fuzzy support),
+  `--min-len`, `--max-len`. Columns: `sequence`, `support`, `length`.
+- **`fuzzy-sequential-rules`** mines the [fuzzy sequential rules](ARM/fuzzy_sequential_rules.md) `X => Y`: `--min-supp`,
+  `--metric` / `--min-threshold` (default `confidence` >= 0.7; fuzzy confidences are usually lower than crisp ones, so
+  `--metric lift --min-threshold 1.5` is often a better filter), `--max-antecedent` and `--max-consequent` (default 2).
+
+```text
+$ armxtend fuzzy-sequential-rules readings.csv --columns temp power --sequence-column day --time-column time \
+      --min-degree 0.2 --min-supp 0.2 --metric lift --min-threshold 1.5 --max-antecedent 1 --max-consequent 1
+antecedents consequents  support  confidence   lift  certainty_factor
+  temp_high  power_high   0.4343      0.9759 2.1261            0.9554
 ```
 
 ## Rules in action: `anomalies`, `forecast`, `next-events` and `classify`

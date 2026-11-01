@@ -515,6 +515,54 @@ Reglas secuenciales con confianza >= 0.7, por lift decreciente:
 confianza de coffee => tv: 0.77; de tv => coffee: 0.00
 ```
 
+## Fuzzy sequential patterns and rules (`FIM.fuzzy_sequential`, `ARM.fuzzy_sequential_rules`)
+
+Eighty days of a house, eight readings of temperature and heating power per day. The colder the morning, the more
+power is used in the evening, and the relation is gradual. The readings are fuzzified (`FuzzyLib.AutoFuzzification`),
+each day becomes a fuzzy sequence, and [`fuzzy_prefixspan`](user_guide/FIM/fuzzy_sequential.md) and
+[`fuzzy_sequential_rules`](user_guide/ARM/fuzzy_sequential_rules.md) mine the patterns and the rules; each day fulfils
+the rule `temp_low => power_high` to its own degree, and fixed thresholds are compared with the fuzzy sets.
+
+```python
+from ARMxtend.ARM import fuzzy_rule_degree, fuzzy_sequential_rules
+from ARMxtend.FIM import fuzzy_prefixspan, fuzzy_sequences_from_memberships
+from ARMxtend.preprocessing import FuzzyLib
+
+library = FuzzyLib()
+library.data = readings
+names = library.AutoFuzzification(Atri=["temp", "power"], n_labels=3, method="uniform")
+sequences = fuzzy_sequences_from_memberships(library.data[names], by=library.data["day"], min_degree=0.2)
+
+patterns = fuzzy_prefixspan(sequences, 0.2, max_len=2, min_len=2)                 # <temp_low -> power_high>, ...
+rules = fuzzy_sequential_rules(sequences, 0.1, min_conf=0.5, max_antecedent=1, max_consequent=1)
+degrees = [fuzzy_rule_degree(day, ["temp_low"], ["power_high"]) for day in sequences]
+```
+
+(full source: [`examples/example_fuzzy_sequences.py`](https://github.com/cjferba/ARMxtend/blob/master/examples/example_fuzzy_sequences.py))
+
+Output:
+
+```text
+80 dias; etiquetas difusas: temp_low, temp_medium, temp_high, power_low, power_medium, power_high
+
+Patrones de dos eventos (soporte difuso, 26 en total):
+  <temp_low -> power_high>  support=0.22
+  <power_high -> temp_low>  support=< 0.20 (no frecuente)
+
+Reglas difusas mas llamativas (por lift):
+  temp_low => power_high  support=0.22 confidence=0.63 lift=2.76
+  temp_medium => power_medium  support=0.68 confidence=0.92 lift=1.25
+  temp_low => temp_high  support=0.34 confidence=0.94 lift=1.19
+
+temp_low => power_high por dia: grado 0 en 45 dias suaves, hasta 0.93 los mas frios; correlacion con la intensidad del frio 0.86
+
+Con conjuntos difusos: temp_low => power_high  support=0.22 confidence=0.63 lift=2.76
+Con umbral temp <  8:      cold => peak           support=0.21 confidence=1.00 lift=1.60
+Con umbral temp < 10:      cold => peak           support=0.39 confidence=1.00 lift=1.60
+Con umbral temp < 12:      cold => peak           support=0.60 confidence=0.96 lift=1.54
+Con umbral temp < 14:      cold => peak           support=0.62 confidence=0.82 lift=1.31
+```
+
 ## Statistical significance of rules (`ARM.significance`)
 
 Which of the rules that pass the thresholds are real? 300 random baskets of 12 independent items with a single planted
