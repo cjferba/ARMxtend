@@ -13,6 +13,9 @@ Interfaz de linea de comandos de ARMxtend::
     armxtend temporal-rules sensores.csv --time-column hora --permutations 200 --alpha 0.05
     armxtend quantitative-rules clientes.csv --intervals 10 --max-supp 0.4 --min-supp 0.05 --interest 1.3
     armxtend generalized-rules cesta.txt --taxonomy jerarquia.csv --min-supp 0.2 --level-supp 3=0.05 --interest 1.1
+    armxtend top-k-rules cesta.txt -k 20 --min-conf 0.7
+    armxtend rare-rules cesta.txt --max-supp 0.1 --min-count 3 --min-conf 0.6 --alpha 0.05
+    armxtend high-utility-rules ventas.csv --profits beneficios.csv --min-utility 0.05 --min-conf 0.5
     armxtend fuzzy-sequences sensores.csv --sequence-column dia --time-column hora --min-supp 0.3
     armxtend fuzzy-sequential-rules sensores.csv --sequence-column dia --time-column hora --min-threshold 0.8
     armxtend anomalies sensores.csv --time-column hora --train-fraction 0.5 --max-lag 1 --min-threshold 0.95
@@ -231,6 +234,52 @@ def _run_quantitative_rules(args: argparse.Namespace) -> pd.DataFrame:
     args.table_columns = (list(_ITEM_COLUMNS) + ["support", "confidence", "lift", "certainty_factor", args.metric]
                           + (["interest"] if args.interest is not None else []) + ["p_adjusted"])
     return rules
+
+
+def _special_rules(rules: pd.DataFrame, args: argparse.Namespace, n_transactions: int, extra: Sequence[str] = ()) -> pd.DataFrame:
+    """Significacion opcional y columnas de la tabla de las reglas top-k, raras y de utilidad (ya vienen ordenadas)."""
+    from .ARM import significant_rules
+
+    if args.alpha is not None and len(rules):
+        rules = significant_rules(rules, args.alpha, args.correction, n_transactions=n_transactions, method=args.test)
+    args.table_columns = list(_ITEM_COLUMNS) + ["support", "confidence", "lift"] + list(extra) + ["p_adjusted"]
+    return rules
+
+
+def _run_top_k_rules(args: argparse.Namespace) -> pd.DataFrame:
+    from .ARM import top_k_rules
+
+    transactions = _read_transactions(args.input, args.delimiter)
+    rules = top_k_rules(transactions, args.k, min_conf=args.min_conf, min_lift=args.min_lift,
+                        max_antecedent=args.max_antecedent, max_consequent=args.max_consequent,
+                        max_len=args.max_len or None, min_supp=args.min_supp)
+    return _special_rules(rules, args, len(transactions))
+
+
+def _run_rare_rules(args: argparse.Namespace) -> pd.DataFrame:
+    from .ARM import rare_rules
+
+    transactions = _read_transactions(args.input, args.delimiter)
+    rules = rare_rules(transactions, args.max_supp, min_supp=args.min_supp, min_count=args.min_count,
+                       min_conf=args.min_conf, min_lift=args.min_lift, max_antecedent=args.max_antecedent,
+                       max_consequent=args.max_consequent, max_len=args.max_len)
+    return _special_rules(rules, args, len(transactions))
+
+
+def _run_high_utility_rules(args: argparse.Namespace) -> pd.DataFrame:
+    from .ARM import high_utility_rules
+
+    quantities = pd.read_csv(args.input, sep=args.delimiter)
+    profits = None
+    if args.profits:
+        table = pd.read_csv(args.profits, sep=args.delimiter)
+        if table.shape[1] < 2:
+            raise ValueError("--profits espera un CSV con el item en la primera columna y su beneficio en la segunda")
+        profits = dict(zip(table.iloc[:, 0].astype(str), table.iloc[:, 1]))
+    rules = high_utility_rules(quantities, profits, args.min_utility, absolute=args.absolute, min_conf=args.min_conf,
+                               min_lift=args.min_lift, max_antecedent=args.max_antecedent,
+                               max_consequent=args.max_consequent, max_len=args.max_len)
+    return _special_rules(rules, args, len(quantities), extra=("utility", "utility_share"))
 
 
 def _run_fuzzy_rules(args: argparse.Namespace) -> pd.DataFrame:
@@ -519,6 +568,17 @@ def _significance_options(parser: argparse.ArgumentParser, permutations: bool = 
         parser.add_argument("--seed", type=int, default=0, help="random seed of the shuffles (default: 0)")
 
 
+def _rule_filters(parser: argparse.ArgumentParser, min_conf: float) -> None:
+    """Opciones de las reglas top-k, raras y de alta utilidad: filtros, significacion y salida."""
+    parser.add_argument("-d", "--delimiter", default=",", help="field/item delimiter (default: ',')")
+    parser.add_argument("--min-conf", type=float, default=min_conf, help="minimum confidence (default: %(default)s)")
+    parser.add_argument("--min-lift", type=float, help="minimum lift")
+    parser.add_argument("--max-antecedent", type=int, help="maximum items in the antecedent")
+    parser.add_argument("--max-consequent", type=int, help="maximum items in the consequent")
+    _significance_options(parser)
+    _output_options(parser)
+
+
 def _series_options(parser: argparse.ArgumentParser) -> None:
     """Opciones para convertir un CSV de sensores en items (temporal-rules y rule-drift)."""
     parser.add_argument("input", help="CSV file with a header, one row per time step")
@@ -634,6 +694,42 @@ def build_parser() -> argparse.ArgumentParser:
     quantitative.add_argument("--prune", action="store_true", help="drop redundant rules")
     _significance_options(quantitative)
     quantitative.set_defaults(run=_run_quantitative_rules)
+
+    topK = commands.add_parser(
+        "top-k-rules", help="the k rules with the highest support, with no support threshold to guess")
+    topK.add_argument("input", help="file with one transaction per line, items separated by --delimiter ('-' = stdin)")
+    topK.add_argument("-k", type=int, required=True, help="number of rules to return")
+    topK.add_argument("--min-supp", type=float, default=0.0, help="optional support floor (default: 0)")
+    topK.add_argument("--max-len", type=int, default=6,
+                      help="maximum items in a rule (default: 6; 0 = no limit, can be very slow on dense data)")
+    _rule_filters(topK, 0.6)
+    topK.set_defaults(run=_run_top_k_rules, metric=None, keep_order=True)
+
+    rare = commands.add_parser(
+        "rare-rules", help="rules among items that are frequent separately and rare together (minimal rare itemsets)")
+    rare.add_argument("input", help="file with one transaction per line, items separated by --delimiter ('-' = stdin)")
+    rare.add_argument("--max-supp", type=float, required=True,
+                      help="an itemset is frequent from this support up and rare below it")
+    rare.add_argument("--min-supp", type=float, default=0.0, help="minimum support of a rare itemset (default: 0)")
+    rare.add_argument("--min-count", type=int, default=2,
+                      help="minimum number of transactions of a rare itemset (default: 2; 1 keeps what happened once)")
+    rare.add_argument("--max-len", type=int, help="maximum items in a rule")
+    _rule_filters(rare, 0.6)
+    rare.set_defaults(run=_run_rare_rules, metric=None, keep_order=True)
+
+    utility = commands.add_parser(
+        "high-utility-rules", help="rules from the itemsets that bring the most profit (not the most frequent)")
+    utility.add_argument("input", help="CSV file with a header: one row per transaction, one column per item (quantity bought)")
+    utility.add_argument("--profits", metavar="FILE",
+                         help="CSV with a header: item in the first column, unit profit (>= 0) in the second "
+                              "(default: profit 1 for every item)")
+    utility.add_argument("--min-utility", type=float, default=0.1,
+                         help="minimum utility of an itemset: a fraction of the total utility (default: 0.1) or, with "
+                              "--absolute, a value")
+    utility.add_argument("--absolute", action="store_true", help="read --min-utility as an absolute value")
+    utility.add_argument("--max-len", type=int, help="maximum items in a rule")
+    _rule_filters(utility, 0.6)
+    utility.set_defaults(run=_run_high_utility_rules, metric=None, keep_order=True)
 
     fuzzy = commands.add_parser(
         "fuzzy-rules", help="fuzzy association rules from a CSV of numeric columns (automatic fuzzification)")

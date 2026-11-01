@@ -15,7 +15,7 @@ trabajar** (anomalías, predicción, clasificación), después **nuevos tipos de
 | 3 | **Patrones y reglas secuenciales difusos** (`FIM.fuzzy_sequential`, `ARM.fuzzy_sequential_rules`): eventos con grado de pertenencia, t-normas `min` / producto | hecho |
 | 4 | **Reglas multinivel / con taxonomía** (`FIM.taxonomy`, `ARM.generalized_rules`): jerarquías de ítems, soporte por nivel, reglas R-interesantes que podan las redundantes entre niveles | hecho |
 | 5 | **Reglas cuantitativas** (`ARM.quantitative_rules`): discretización por intervalos con fusión (Srikant–Agrawal) frente a la difusa | hecho |
-| 6 | **Reglas raras, de alta utilidad y top-k** | pendiente |
+| 6 | **Reglas raras, de alta utilidad y top-k** (`FIM.topk`, `FIM.rare`, `FIM.utility`, `ARM.topk_rules`, `ARM.rare_rules`, `ARM.utility_rules`): las k mejores sin umbral, itemsets raros minimales, itemsets y reglas de alta utilidad | hecho |
 | 7 | **Spark**: entrada DataFrame/Parquet; reescritura de FuzzyDECLAT/DECLAT sin recoger en el driver; benchmark de secuencias | pendiente |
 | 8 | **API estilo scikit-learn**, generadores sintéticos y conjuntos de datos de ejemplo | pendiente |
 | 9 | **Proyecto**: `CITATION.cff` / Zenodo, cuadernos, comparativas con SPMF y mlxtend, idioma de la documentación | pendiente |
@@ -48,9 +48,15 @@ difusas (pertenencia parcial a una categoría), reglas multinivel sobre datos di
 marcha, reglas con rangos disjuntos (p. ej. dos tramos de edad), selección automática de `n_intervals`, y la comparación
 sistemática con las difusas en conjuntos reales.
 
-**6. Raras, alta utilidad, top-k.** Serán módulos nuevos en `ARM/` o `FIM/` con el mismo patrón que los existentes: función pura sobre
-`DataFrame`, columnas de medidas estándar y `attrs` con el contexto (`n_transactions`, ...), de modo que las reglas
-resultantes pasen por `significant_rules`, `prune_redundant_rules` y la CLI sin cambios.
+**6. Raras, alta utilidad, top-k.** Entregado: `top_k_itemsets` / `top_k_rules` (búsqueda el mejor primero sobre el árbol de
+enumeración, exacta, con parada perezosa), `minimal_rare_itemsets` / `rare_rules` (Apriori por niveles sobre los
+frecuentes, con la base compacta de los raros minimales), `high_utility_itemsets` / `high_utility_rules` (dos fases con
+la utilidad ponderada por transacción), la representación vertical en bits compartida (`FIM/_vertical.py`) y los
+comandos `top-k-rules`, `rare-rules` y `high-utility-rules`. Todas las salidas siguen el formato de `association_rules`
+(más `utility` / `utility_share`) y llevan `attrs` (`n_transactions`, `n_candidates`), de modo que pasan por
+`significant_rules` y por la CLI sin cambios. Queda fuera: versión Spark, beneficios negativos, otras definiciones de
+confianza de utilidad, algoritmos de utilidad más rápidos (HUI-Miner, EFIM), top-k con medidas distintas del soporte y
+reglas con ítems raros sueltos.
 
 **7. Spark.** Antes de tocar nada, medir con `benchmarks/spark_scalability.py` para no optimizar a ciegas.
 

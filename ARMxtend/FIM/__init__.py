@@ -25,9 +25,13 @@ from .sequential import (
 )
 from .fuzzy_sequential import fuzzy_pattern_degree, fuzzy_prefixspan, fuzzy_sequences_from_memberships
 from .taxonomy import Taxonomy, extend_transactions, generalize_transactions, generalized_itemsets
+from .topk import top_k_itemsets
+from .rare import minimal_rare_itemsets
+from .utility import high_utility_itemsets
 
 __all__ = ["FARE", "closed_itemsets", "maximal_itemsets", "support_from_closed", "prefixspan", "prefixspan_spark",
            "contains_sequence", "format_sequence", "sequences_from_events", "sequences_from_items",
            "fuzzy_prefixspan", "fuzzy_pattern_degree", "fuzzy_sequences_from_memberships",
            "Taxonomy", "extend_transactions", "generalize_transactions", "generalized_itemsets",
+           "top_k_itemsets", "minimal_rare_itemsets", "high_utility_itemsets",
            "apriori", "Eclat", "BD_ARE", "BD_FARE"]

@@ -102,6 +102,24 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Top-k, rare and high-utility rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/topk_rules/" class="dropdown-item">ARM.top_k_rules (the k best, no threshold)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/rare_rules/" class="dropdown-item">ARM.rare_rules (rare combinations of frequent items)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/utility_rules/" class="dropdown-item">ARM.high_utility_rules (value, not frequency)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Rules in action</a>
     <ul class="dropdown-menu">
             
@@ -529,6 +547,16 @@ originals when you use them:</p>
   large relational tables.</em> Proceedings of the 1996 ACM SIGMOD International Conference on Management of Data, 1-12 (equal-frequency
   base intervals merged into ranges up to a maximum support, partial completeness, R-interesting rules); the implementation reduces the
   ranges to the hierarchy of <code>ARM.generalized_rules</code>.</li>
+<li><strong>Top-k rules</strong> (<code>FIM.topk</code>, <code>ARM.topk_rules</code>): Fournier-Viger, P., Tseng, V.S. (2012). <em>Mining top-k association rules.</em>
+  Proceedings of the 25th Canadian Conference on Artificial Intelligence, 61-73 (the problem; the best-first search over
+  itemsets used here is the library's own, not their algorithm).</li>
+<li><strong>Rare itemsets and rules</strong> (<code>FIM.rare</code>, <code>ARM.rare_rules</code>): Szathmary, L., Napoli, A., Valtchev, P. (2007). <em>Towards rare
+  itemset mining.</em> Proceedings of the 19th IEEE International Conference on Tools with Artificial Intelligence, 305-312
+  (minimal rare itemsets).</li>
+<li><strong>High-utility itemsets and rules</strong> (<code>FIM.utility</code>, <code>ARM.utility_rules</code>): Yao, H., Hamilton, H.J., Butz, C.J. (2004). <em>A
+  foundational approach to mining itemset utilities from databases.</em> Proceedings of the 4th SIAM International Conference on
+  Data Mining, 482-486; Liu, Y., Liao, W., Choudhary, A. (2005). <em>A two-phase algorithm for fast discovery of high utility
+  itemsets.</em> PAKDD 2005, 689-695 (transaction-weighted utility).</li>
 <li><strong>Fuzzy sequential patterns and rules</strong> (<code>FIM.fuzzy_sequential</code>, <code>ARM.fuzzy_sequential_rules</code>): inspired by Fiot,
   C., Laurent, A., Teisseire, M. (2007). <em>From crispness to fuzziness: three algorithms for soft sequential pattern
   mining.</em> IEEE Transactions on Fuzzy Systems 15(6), 1263-1277; the definitions (best embedding, t-norm, mean over

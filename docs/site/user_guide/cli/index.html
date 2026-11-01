@@ -102,6 +102,24 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Top-k, rare and high-utility rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../ARM/topk_rules/" class="dropdown-item">ARM.top_k_rules (the k best, no threshold)</a>
+</li>
+            
+<li>
+    <a href="../ARM/rare_rules/" class="dropdown-item">ARM.rare_rules (rare combinations of frequent items)</a>
+</li>
+            
+<li>
+    <a href="../ARM/utility_rules/" class="dropdown-item">ARM.high_utility_rules (value, not frequency)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Rules in action</a>
     <ul class="dropdown-menu">
             
@@ -348,6 +366,18 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#top-k-rules" class="nav-link">top-k-rules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#rare-rules" class="nav-link">rare-rules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#high-utility-rules" class="nav-link">high-utility-rules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#fuzzy-rules-fuzzy-association-rules-from-numeric-columns" class="nav-link">fuzzy-rules -- fuzzy association rules from numeric columns</a>
               <ul class="nav flex-column">
               </ul>
@@ -393,6 +423,9 @@ single machine, without Spark, and covers the most common one-shot tasks:</p>
 <pre><code class="language-bash">armxtend rules transactions.csv --min-supp 0.1 --min-threshold 0.7
 armxtend quantitative-rules customers.csv --intervals 10 --max-supp 0.4 --min-supp 0.05 --interest 1.3
 armxtend generalized-rules basket.txt --taxonomy taxonomy.csv --min-supp 0.2 --level-supp 2=0.1 3=0.04 --interest 1.2
+armxtend top-k-rules basket.txt -k 20 --min-conf 0.7 --min-lift 1.5
+armxtend rare-rules basket.txt --max-supp 0.1 --min-count 3 --min-conf 0.6 --min-lift 2
+armxtend high-utility-rules sales.csv --profits profits.csv --min-utility 0.05 --min-conf 0.5 --min-lift 1.5
 armxtend fuzzy-rules sensors.csv --labels 3 --alpha 10 --metric certainty_factor --min-threshold 0.5
 armxtend gradual-rules health.csv --min-supp 0.3 --min-threshold 0.9
 armxtend temporal-rules house.csv --time-column time --max-lag 2 --targets heater_on --exclude-persistence
@@ -449,6 +482,32 @@ Hiking Boots      Clothes   0.3333      1.0000 1.5000            1.0000      2  
 Hiking Boots    Outerwear   0.3333      1.0000 2.0000            1.0000      2    1.3333
    Outerwear     Footwear   0.3333      0.6667 1.0000            0.0000      2       NaN
    Outerwear Hiking Boots   0.3333      0.6667 2.0000            0.5000      2    2.0000
+</code></pre>
+<h2 id="top-k-rules"><code>top-k-rules</code></h2>
+<p>The <code>k</code> rules with the highest support, with no minimum support to guess (<a href="../ARM/topk_rules/"><code>ARM.top_k_rules</code></a>). The input is the
+transaction file of <code>rules</code>. <code>-k N</code> (required) is the number of rules; <code>--min-conf</code> (default 0.6), <code>--min-lift</code>,
+<code>--max-antecedent</code> and <code>--max-consequent</code> filter the rules <strong>before</strong> the ranking; <code>--max-len</code> bounds the size of a rule (default
+6; 0 means no limit, which can be very slow on dense data) and <code>--min-supp</code> is an optional floor. The rules come out ordered by
+support, so <code>--sort-by</code> is only needed to change that; the <a href="#significance-of-the-rules">significance options</a> and the usual
+output options work as in <code>rules</code>.</p>
+<h2 id="rare-rules"><code>rare-rules</code></h2>
+<p>Rules among items that are frequent separately and rare together (<a href="../ARM/rare_rules/"><code>ARM.rare_rules</code></a>), from the minimal rare
+itemsets. The input is the transaction file of <code>rules</code>. <code>--max-supp S</code> (required) is the support from which an itemset counts as
+frequent; <code>--min-count</code> (default 2) and <code>--min-supp</code> are floors against noise; <code>--min-conf</code> (default 0.6), <code>--min-lift</code>,
+<code>--max-antecedent</code>, <code>--max-consequent</code> and <code>--max-len</code> filter the rules. They come out by confidence and support; the
+<a href="#significance-of-the-rules">significance options</a> and the usual output options work as in <code>rules</code>.</p>
+<h2 id="high-utility-rules"><code>high-utility-rules</code></h2>
+<p>Rules from the itemsets that bring the most profit (<a href="../ARM/utility_rules/"><code>ARM.high_utility_rules</code></a>). The input is a CSV with a
+header, one row per transaction and one column per item (the quantity bought, 0 if not). <code>--profits FILE</code> is a CSV with a header,
+the item in the first column and its unit profit (&gt;= 0) in the second; without it every item is worth 1. <code>--min-utility</code>
+(default 0.1) is a fraction of the total utility, or a value with <code>--absolute</code>. <code>--min-conf</code>, <code>--min-lift</code>, <code>--max-antecedent</code>,
+<code>--max-consequent</code> and <code>--max-len</code> are as in <code>top-k-rules</code>. The table adds <code>utility</code> and <code>utility_share</code> and is ordered by
+utility; the <a href="#significance-of-the-rules">significance options</a> work as in <code>rules</code>.</p>
+<pre><code class="language-text">$ armxtend high-utility-rules sales.csv --profits profits.csv --min-utility 0.05 --min-conf 0.5 --top 3
+antecedents consequents  support  confidence   lift   utility  utility_share
+     caviar        vino   0.1100      1.0000 6.3830 1932.0000         0.7036
+       vino      caviar   0.1100      0.7021 6.3830 1932.0000         0.7036
+caviar, pan        vino   0.0567      1.0000 6.3830 1040.0000         0.3787
 </code></pre>
 <h2 id="fuzzy-rules-fuzzy-association-rules-from-numeric-columns"><code>fuzzy-rules</code> -- fuzzy association rules from numeric columns</h2>
 <p>A CSV with a header. Numeric columns (or those in <code>--columns</code>) are fuzzified automatically with
@@ -590,7 +649,7 @@ applied; the accuracy on the <code>--test-fraction</code> of rows held out at ra
 itchy, sneezing diagnosis=allergy   0.2012      0.7412 3.3839
 </code></pre>
 <h2 id="significance-of-the-rules">Significance of the rules</h2>
-<p><code>rules</code>, <code>temporal-rules</code> and <code>rule-drift</code> can drop the rules that are not statistically significant
+<p><code>rules</code>, <code>generalized-rules</code>, <code>quantitative-rules</code>, <code>top-k-rules</code>, <code>rare-rules</code>, <code>high-utility-rules</code>, <code>temporal-rules</code> and <code>rule-drift</code> can drop the rules that are not statistically significant
 (<a href="../ARM/significance/"><code>ARM.significance</code></a>):</p>
 <pre><code class="language-bash">armxtend rules baskets.csv --min-supp 0.03 --min-threshold 0.45 --alpha 0.05                 # Fisher + FDR
 armxtend rules baskets.csv --alpha 0.05 --correction holm --test chi2

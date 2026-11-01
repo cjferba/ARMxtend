@@ -233,7 +233,39 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
   propio, las difusas pueden ser mejores). Mide con tus datos.
 - [ ] **CLI** (`quantitative-rules`): umbral de confianza por defecto 0.8, `--max-supp` 0.5, 8 intervalos.
 
-## 13. Documentación
+## 13. Reglas top-k, raras y de alta utilidad (`FIM.topk`, `FIM.rare`, `FIM.utility`, `ARM.topk_rules`, `ARM.rare_rules`, `ARM.utility_rules`)
+
+- [ ] **Referencias de memoria**: Fournier-Viger & Tseng (2012), *Mining top-k association rules*, Canadian AI, pp. 61–73;
+  Szathmary, Napoli & Valtchev (2007), *Towards rare itemset mining*, IEEE ICTAI, pp. 305–312; Yao, Hamilton & Butz (2004),
+  *A foundational approach to mining itemset utilities from databases*, SIAM SDM, pp. 482–486; Liu, Liao & Choudhary (2005),
+  *A two-phase algorithm for fast discovery of high utility itemsets*, PAKDD, pp. 689–695; y la mención a Sahoo et al.
+  (2015) en el docstring de `utility_rules.py`. Comprueba títulos, congresos y páginas antes de citarlos.
+- [ ] **Top-k no es el algoritmo del artículo.** `top_k_rules` enumera itemsets el mejor primero y los parte en reglas;
+  TopKRules de Fournier-Viger y Tseng sube el umbral mientras expande reglas. El resultado es exacto (comprobado contra la
+  enumeración exhaustiva) pero el coste no es el suyo: en datos densos con `k` grande la frontera de la cola puede crecer
+  mucho en memoria. `max_len=6` por defecto recorta las reglas largas; decide si ese valor es razonable.
+- [ ] **Los filtros (`min_conf`, `min_lift`, `max_antecedent`, `max_consequent`) se aplican antes de ordenar**, de modo que
+  salen las `k` mejores que los cumplen. Sin filtro de lift, lo más frecuente es lo más obvio (en el ejemplo, `fruit => bread`
+  con lift 1.00). Los p-values de `significant_rules` sobre un top-k son optimistas (las reglas se eligieron por frecuentes):
+  la familia es `n_candidates` (las examinadas), pero no es una corrección por la selección.
+- [ ] **Raras.** Los MRI de un solo ítem no dan reglas; los superconjuntos de un MRI no se generan, así que una combinación
+  rara que necesita un tercer ítem solo aparece si sus pares son frecuentes. `max_supp` decide qué es frecuente y por tanto qué
+  es minimal. Los umbrales por defecto (`min_count=2` en las reglas, `1` en los itemsets) son decisión mía. Las raras entre
+  ítems independientes tienen lift ≈ 1 y solo `min_lift` o la significación las separan.
+- [ ] **Alta utilidad.** Algoritmo de dos fases simple y exacto, no el más rápido (HUI-Miner, EFIM, etc.): matrices densas
+  transacciones × ítems en memoria y candidatos por niveles; con `min_utility` bajo y muchos ítems puede ser lento. Los
+  beneficios y las cantidades deben ser ≥ 0 (con negativos la cota TWU no vale). No hay versión Spark. La fracción
+  `min_utility` depende de toda la base.
+- [ ] **Las reglas de utilidad usan las medidas clásicas** (cuentan transacciones) más `utility` y `utility_share`; todas las
+  particiones de un itemset tienen la misma utilidad, y una regla puede ser de alta utilidad solo porque contiene un ítem muy
+  valioso (en el ejemplo, `cheese => bread` con lift 0.99): sin `min_lift` llena la lista. Las definiciones de «confianza de
+  utilidad» de la literatura (utilidad de X∪Y entre la de X) no se usan.
+- [ ] **CLI** (`top-k-rules`, `rare-rules`, `high-utility-rules`): `-k` y `--max-supp` son obligatorios; `--max-len 0` quita el
+  límite de `top-k-rules`; los beneficios van en un CSV `item,beneficio` con cabecera (sin él, 1 para todos). Las tres admiten
+  `--alpha` y las demás opciones de significación. Un `n_candidates` pequeño (reglas examinadas) hace la corrección por pruebas
+  múltiples más laxa de lo que sería sobre todas las reglas posibles.
+
+## 14. Documentación
 
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la

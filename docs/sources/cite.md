@@ -190,6 +190,16 @@ originals when you use them:
   large relational tables.* Proceedings of the 1996 ACM SIGMOD International Conference on Management of Data, 1-12 (equal-frequency
   base intervals merged into ranges up to a maximum support, partial completeness, R-interesting rules); the implementation reduces the
   ranges to the hierarchy of `ARM.generalized_rules`.
+- **Top-k rules** (`FIM.topk`, `ARM.topk_rules`): Fournier-Viger, P., Tseng, V.S. (2012). *Mining top-k association rules.*
+  Proceedings of the 25th Canadian Conference on Artificial Intelligence, 61-73 (the problem; the best-first search over
+  itemsets used here is the library's own, not their algorithm).
+- **Rare itemsets and rules** (`FIM.rare`, `ARM.rare_rules`): Szathmary, L., Napoli, A., Valtchev, P. (2007). *Towards rare
+  itemset mining.* Proceedings of the 19th IEEE International Conference on Tools with Artificial Intelligence, 305-312
+  (minimal rare itemsets).
+- **High-utility itemsets and rules** (`FIM.utility`, `ARM.utility_rules`): Yao, H., Hamilton, H.J., Butz, C.J. (2004). *A
+  foundational approach to mining itemset utilities from databases.* Proceedings of the 4th SIAM International Conference on
+  Data Mining, 482-486; Liu, Y., Liao, W., Choudhary, A. (2005). *A two-phase algorithm for fast discovery of high utility
+  itemsets.* PAKDD 2005, 689-695 (transaction-weighted utility).
 - **Fuzzy sequential patterns and rules** (`FIM.fuzzy_sequential`, `ARM.fuzzy_sequential_rules`): inspired by Fiot,
   C., Laurent, A., Teisseire, M. (2007). *From crispness to fuzziness: three algorithms for soft sequential pattern
   mining.* IEEE Transactions on Fuzzy Systems 15(6), 1263-1277; the definitions (best embedding, t-norm, mean over

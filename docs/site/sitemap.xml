@@ -105,6 +105,10 @@
          <lastmod>2026-11-01</lastmod>
     </url>
     <url>
+         <loc>http://cjferba.github.io/ARMxtend/user_guide/ARM/rare_rules/</loc>
+         <lastmod>2026-11-01</lastmod>
+    </url>
+    <url>
          <loc>http://cjferba.github.io/ARMxtend/user_guide/ARM/redundancy/</loc>
          <lastmod>2026-11-01</lastmod>
     </url>
@@ -122,6 +126,14 @@
     </url>
     <url>
          <loc>http://cjferba.github.io/ARMxtend/user_guide/ARM/temporal_rules/</loc>
+         <lastmod>2026-11-01</lastmod>
+    </url>
+    <url>
+         <loc>http://cjferba.github.io/ARMxtend/user_guide/ARM/topk_rules/</loc>
+         <lastmod>2026-11-01</lastmod>
+    </url>
+    <url>
+         <loc>http://cjferba.github.io/ARMxtend/user_guide/ARM/utility_rules/</loc>
          <lastmod>2026-11-01</lastmod>
     </url>
     <url>

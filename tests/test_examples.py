@@ -28,6 +28,7 @@ EXAMPLE_MODULES = [
     "example_fuzzy_sequences",
     "example_generalized_rules",
     "example_quantitative_rules",
+    "example_special_rules",
 ]
 
 
@@ -180,3 +181,25 @@ def test_quantitative_rules_example_recovers_the_region_and_beats_fixed_labels(c
     women = rules[(rules["consequents"] == frozenset({"buys=yes"})) & rules["antecedents"].map(lambda items: "sex=F" in items)]
     assert women["confidence"].max() > 0.85 and women["lift"].max() > 3.5
     assert fuzzy.iloc[0]["confidence"] < 0.6 < region.iloc[0]["confidence"]
+
+
+def test_special_rules_example_finds_rare_pairs_and_what_is_worth_more(capsys):
+    """Top-k sin umbral, los pares raros que un umbral global ahoga en ruido y la utilidad frente a la frecuencia."""
+    module = importlib.import_module("example_special_rules")
+    quantities, top, informative, pairs, mri, rare, flat, by_support, useful, value_rules = module.main()
+
+    key = lambda frame: [(tuple(sorted(a)), tuple(sorted(c))) for a, c in zip(frame["antecedents"], frame["consequents"])]   # noqa: E731
+    assert len(top) == 5 and (top["lift"] < 1.1).sum() >= 2 and top["support"].is_monotonic_decreasing
+    assert (informative["lift"] >= 1.5).all() and key(informative)[:3] == [(("diapers",), ("wipes",)), (("wipes",), ("diapers",)),
+                                                                           (("wine",), ("cheese",))]
+    assert len(pairs) == 5 and pairs["itemsets"].map(len).min() == 2
+
+    assert set(key(rare)) == {(("diapers",), ("wipes",)), (("wipes",), ("diapers",)), (("wine",), ("cheese",))}
+    assert (rare["support"] < 0.1).all() and len(mri) > len(rare) and int((flat["lift"] >= 2).sum()) > 10 * len(rare)
+
+    assert [next(iter(s)) for s in by_support["itemsets"]] == ["bread", "milk", "fruit"]
+    assert useful.iloc[0]["itemsets"] == frozenset({"cheese"}) and frozenset({"cheese", "wine"}) in set(useful["itemsets"])
+    assert not set(by_support["itemsets"]) & set(useful.head(3)["itemsets"])
+    assert useful.iloc[0]["utility"] > 0.1 * useful.attrs["total_utility"] and (useful["utility"] >= 0.1 * useful.attrs["total_utility"] - 1e-9).all()
+    assert key(value_rules)[0] == (("wine",), ("cheese",)) and (value_rules["lift"] >= 1.5).all()
+    assert value_rules.iloc[0]["utility_share"] == pytest.approx(0.27, abs=0.03)

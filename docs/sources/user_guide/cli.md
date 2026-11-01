@@ -7,6 +7,9 @@ single machine, without Spark, and covers the most common one-shot tasks:
 armxtend rules transactions.csv --min-supp 0.1 --min-threshold 0.7
 armxtend quantitative-rules customers.csv --intervals 10 --max-supp 0.4 --min-supp 0.05 --interest 1.3
 armxtend generalized-rules basket.txt --taxonomy taxonomy.csv --min-supp 0.2 --level-supp 2=0.1 3=0.04 --interest 1.2
+armxtend top-k-rules basket.txt -k 20 --min-conf 0.7 --min-lift 1.5
+armxtend rare-rules basket.txt --max-supp 0.1 --min-count 3 --min-conf 0.6 --min-lift 2
+armxtend high-utility-rules sales.csv --profits profits.csv --min-utility 0.05 --min-conf 0.5 --min-lift 1.5
 armxtend fuzzy-rules sensors.csv --labels 3 --alpha 10 --metric certainty_factor --min-threshold 0.5
 armxtend gradual-rules health.csv --min-supp 0.3 --min-threshold 0.9
 armxtend temporal-rules house.csv --time-column time --max-lag 2 --targets heater_on --exclude-persistence
@@ -74,6 +77,40 @@ Hiking Boots      Clothes   0.3333      1.0000 1.5000            1.0000      2  
 Hiking Boots    Outerwear   0.3333      1.0000 2.0000            1.0000      2    1.3333
    Outerwear     Footwear   0.3333      0.6667 1.0000            0.0000      2       NaN
    Outerwear Hiking Boots   0.3333      0.6667 2.0000            0.5000      2    2.0000
+```
+
+## `top-k-rules`
+
+The `k` rules with the highest support, with no minimum support to guess ([`ARM.top_k_rules`](ARM/topk_rules.md)). The input is the
+transaction file of `rules`. `-k N` (required) is the number of rules; `--min-conf` (default 0.6), `--min-lift`,
+`--max-antecedent` and `--max-consequent` filter the rules **before** the ranking; `--max-len` bounds the size of a rule (default
+6; 0 means no limit, which can be very slow on dense data) and `--min-supp` is an optional floor. The rules come out ordered by
+support, so `--sort-by` is only needed to change that; the [significance options](#significance-of-the-rules) and the usual
+output options work as in `rules`.
+
+## `rare-rules`
+
+Rules among items that are frequent separately and rare together ([`ARM.rare_rules`](ARM/rare_rules.md)), from the minimal rare
+itemsets. The input is the transaction file of `rules`. `--max-supp S` (required) is the support from which an itemset counts as
+frequent; `--min-count` (default 2) and `--min-supp` are floors against noise; `--min-conf` (default 0.6), `--min-lift`,
+`--max-antecedent`, `--max-consequent` and `--max-len` filter the rules. They come out by confidence and support; the
+[significance options](#significance-of-the-rules) and the usual output options work as in `rules`.
+
+## `high-utility-rules`
+
+Rules from the itemsets that bring the most profit ([`ARM.high_utility_rules`](ARM/utility_rules.md)). The input is a CSV with a
+header, one row per transaction and one column per item (the quantity bought, 0 if not). `--profits FILE` is a CSV with a header,
+the item in the first column and its unit profit (>= 0) in the second; without it every item is worth 1. `--min-utility`
+(default 0.1) is a fraction of the total utility, or a value with `--absolute`. `--min-conf`, `--min-lift`, `--max-antecedent`,
+`--max-consequent` and `--max-len` are as in `top-k-rules`. The table adds `utility` and `utility_share` and is ordered by
+utility; the [significance options](#significance-of-the-rules) work as in `rules`.
+
+```text
+$ armxtend high-utility-rules sales.csv --profits profits.csv --min-utility 0.05 --min-conf 0.5 --top 3
+antecedents consequents  support  confidence   lift   utility  utility_share
+     caviar        vino   0.1100      1.0000 6.3830 1932.0000         0.7036
+       vino      caviar   0.1100      0.7021 6.3830 1932.0000         0.7036
+caviar, pan        vino   0.0567      1.0000 6.3830 1040.0000         0.3787
 ```
 
 ## `fuzzy-rules` -- fuzzy association rules from numeric columns
@@ -254,7 +291,7 @@ itchy, sneezing diagnosis=allergy   0.2012      0.7412 3.3839
 
 ## Significance of the rules
 
-`rules`, `temporal-rules` and `rule-drift` can drop the rules that are not statistically significant
+`rules`, `generalized-rules`, `quantitative-rules`, `top-k-rules`, `rare-rules`, `high-utility-rules`, `temporal-rules` and `rule-drift` can drop the rules that are not statistically significant
 ([`ARM.significance`](ARM/significance.md)):
 
 ```bash

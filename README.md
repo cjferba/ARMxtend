@@ -72,6 +72,12 @@ Spark y el nucleo sigue funcionando.
 * `FIM.taxonomy` y `ARM.generalized_rules`: **jerarquias de items** (productos y categorias) y **reglas generalizadas** ("ropa de abrigo -> calzado"), con un soporte minimo por nivel y las reglas **R-interesantes** que descartan las que solo repiten a su categoria
 * `ARM.quantitative_rules`: **reglas cuantitativas** sobre tablas con columnas numericas y categoricas -- intervalos base de igual frecuencia fundidos en rangos (Srikant y Agrawal), con poda R-interesante; la alternativa nitida a las reglas difusas
 
+### Reglas top-k, raras y de alta utilidad
+
+* `FIM.topk` y `ARM.topk_rules`: los **k itemsets o reglas de mayor soporte, sin fijar un soporte minimo** (busqueda el mejor primero, exacta)
+* `FIM.rare` y `ARM.rare_rules`: **itemsets raros minimales** y reglas entre cosas frecuentes por separado y raras juntas, sin el desborde de un soporte bajo
+* `FIM.utility` y `ARM.utility_rules`: itemsets y reglas de **alta utilidad** -- lo que mas *vale* (cantidades y beneficios), no lo que mas se repite -- con el algoritmo de dos fases
+
 ### Series temporales, sensores y secuencias
 
 * `preprocessing.timeseries`: de columnas numericas ordenadas en el tiempo a **items** (simbolos por cuantiles/uniforme/SAX, eventos, calendario, retardos, ventanas)

@@ -38,6 +38,10 @@ nav:
     - FIM.taxonomy (item hierarchies, generalized itemsets): user_guide/FIM/taxonomy.md
     - ARM.generalized_rules (multilevel rules, R-interesting): user_guide/ARM/generalized_rules.md
     - ARM.quantitative_rules (merged intervals): user_guide/ARM/quantitative_rules.md
+  - Top-k, rare and high-utility rules:
+    - ARM.top_k_rules (the k best, no threshold): user_guide/ARM/topk_rules.md
+    - ARM.rare_rules (rare combinations of frequent items): user_guide/ARM/rare_rules.md
+    - ARM.high_utility_rules (value, not frequency): user_guide/ARM/utility_rules.md
   - Rules in action:
     - ARM.anomaly (anomalies as rule violations): user_guide/ARM/anomaly_detection.md
     - ARM.prediction (next step / next events): user_guide/ARM/prediction.md

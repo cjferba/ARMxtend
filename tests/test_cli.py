@@ -536,3 +536,88 @@ def test_quantitative_rules_command(customers_file, capsys):
     assert main(base + ["--columns", "nope"]) == 1
     assert "inexistentes" in capsys.readouterr().err
     assert main(base + ["--interest", "0.5"]) == 1
+
+
+# ------------------------------------------- reglas top-k, raras y de alta utilidad
+
+@pytest.fixture
+def pairs_file(tmp_path):
+    """a y d son frecuentes por separado (0.30) y juntos no (0.15); b es muy frecuente y va solo."""
+    path = tmp_path / "pairs.txt"
+    path.write_text("\n".join(["a,d"] * 15 + ["a"] * 15 + ["d"] * 15 + ["b"] * 55) + "\n")
+    return str(path)
+
+
+@pytest.fixture
+def gems_files(tmp_path):
+    """3 ventas de una gema y un oro, y 40 de un boligrafo y una gorra: lo que vale no es lo que se vende mas."""
+    rows = [{"gem": 1, "gold": 1, "pen": 0, "cap": 0}] * 3 + [{"gem": 0, "gold": 0, "pen": 2, "cap": 1}] * 40
+    quantities, profits = tmp_path / "sales.csv", tmp_path / "profits.csv"
+    pd.DataFrame(rows).to_csv(quantities, index=False)
+    pd.DataFrame({"item": ["gem", "gold", "pen", "cap"], "profit": [500, 400, 1, 1]}).to_csv(profits, index=False)
+    return str(quantities), str(profits)
+
+
+def test_top_k_rules_command(pairs_file, capsys):
+    assert main(["top-k-rules", pairs_file, "-k", "5", "--min-conf", "0.5", "--format", "json"]) == 0
+    rules = json.loads(capsys.readouterr().out)
+    assert [(r["antecedents"], r["consequents"]) for r in rules] == [("a", "d"), ("d", "a")]
+    assert all(abs(r["support"] - 0.15) < 1e-9 and abs(r["confidence"] - 0.5) < 1e-9 for r in rules)
+    assert main(["top-k-rules", pairs_file, "-k", "1", "--min-conf", "0.5", "--max-len", "0"]) == 0
+    assert len(capsys.readouterr().out.strip().splitlines()) == 2                      # cabecera y una regla
+    assert main(["top-k-rules", pairs_file, "-k", "5", "--min-conf", "0.5", "--alpha", "0.05"]) == 0
+    assert "p_adjusted" in capsys.readouterr().out
+    assert main(["top-k-rules", pairs_file, "-k", "5", "--min-conf", "0.5", "--min-lift", "2"]) == 0
+    assert "no rules found" in capsys.readouterr().out
+    assert main(["top-k-rules", pairs_file, "-k", "0"]) == 1
+    assert "k debe ser" in capsys.readouterr().err
+    with pytest.raises(SystemExit):
+        main(["top-k-rules", pairs_file])                                              # -k es obligatorio
+
+
+def test_rare_rules_command(pairs_file, capsys):
+    base = ["rare-rules", pairs_file, "--max-supp", "0.2", "--min-conf", "0.5"]
+    assert main(base + ["--format", "json"]) == 0
+    rules = json.loads(capsys.readouterr().out)
+    assert {(r["antecedents"], r["consequents"]) for r in rules} == {("a", "d"), ("d", "a")}
+    assert all(r["support"] < 0.2 and abs(r["lift"] - 0.5 / 0.3) < 1e-9 for r in rules)
+    assert main(base + ["--min-count", "16"]) == 0
+    assert "no rules found" in capsys.readouterr().out
+    assert main(base + ["--alpha", "0.05", "--max-antecedent", "1", "--max-consequent", "1"]) == 0
+    assert "p_adjusted" in capsys.readouterr().out
+    assert main(["rare-rules", pairs_file, "--max-supp", "2"]) == 1
+    capsys.readouterr()
+    with pytest.raises(SystemExit):
+        main(["rare-rules", pairs_file])                                               # --max-supp es obligatorio
+
+
+def test_high_utility_rules_command(gems_files, capsys):
+    sales, profits = gems_files
+    assert main(["high-utility-rules", sales, "--profits", profits, "--min-utility", "0.5", "--min-conf", "0.9",
+                 "--format", "json"]) == 0
+    rules = json.loads(capsys.readouterr().out)
+    assert {(r["antecedents"], r["consequents"]) for r in rules} == {("gem", "gold"), ("gold", "gem")}
+    assert all(r["utility"] == 2700 and abs(r["utility_share"] - 2700 / 2820) < 1e-9 for r in rules)
+    # sin beneficios todos valen 1: ahora el valioso es lo que mas se vende
+    assert main(["high-utility-rules", sales, "--min-utility", "0.5", "--min-conf", "0.9", "--format", "json"]) == 0
+    unit = json.loads(capsys.readouterr().out)
+    assert {(r["antecedents"], r["consequents"]) for r in unit} == {("pen", "cap"), ("cap", "pen")}
+    assert main(["high-utility-rules", sales, "--profits", profits, "--min-utility", "2000", "--absolute", "--top", "1"]) == 0
+    assert "utility_share" in capsys.readouterr().out.splitlines()[0]
+    assert main(["high-utility-rules", sales, "--profits", profits, "--min-utility", "0.5", "--alpha", "0.05"]) == 0
+    capsys.readouterr()
+
+
+def test_high_utility_rules_errors(gems_files, tmp_path, capsys):
+    sales, profits = gems_files
+    assert main(["high-utility-rules", sales, "--min-utility", "0"]) == 1
+    assert "min_utility" in capsys.readouterr().err
+    short = tmp_path / "short.csv"
+    short.write_text("gem,gold\n500,400\n")
+    assert main(["high-utility-rules", sales, "--profits", str(short)]) == 1                 # faltan pen y cap
+    assert "faltan los beneficios" in capsys.readouterr().err
+    one_column = tmp_path / "one.csv"
+    one_column.write_text("gem\n500\n")
+    assert main(["high-utility-rules", sales, "--profits", str(one_column)]) == 1
+    assert "primera columna" in capsys.readouterr().err
+    assert main(["high-utility-rules", str(tmp_path / "nothing.csv")]) == 1

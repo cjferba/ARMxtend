@@ -645,6 +645,67 @@ Reglas difusas edad => ingresos (5 etiquetas fijas), por confianza:
 La region [30, 45) cae a caballo de dos etiquetas y ninguna llega a la confianza del rango fundido.
 ```
 
+## Top-k, rare and high-utility rules (`ARM.top_k_rules`, `ARM.rare_rules`, `ARM.high_utility_rules`)
+
+A shop with 2000 baskets and the quantity bought of eight products. Three ways of looking beyond a minimum support:
+[`top_k_rules`](user_guide/ARM/topk_rules.md) asks for the 5 best rules instead of guessing a threshold (0.3 gives no rules and
+0.01 gives 93); [`rare_rules`](user_guide/ARM/rare_rules.md) finds the pairs that are frequent separately and rare together
+(diapers and wipes, wine and cheese) without the flood of a low threshold; and
+[`high_utility_rules`](user_guide/ARM/utility_rules.md) ranks by profit: wine and cheese are worth more than bread and milk
+although they are bought less.
+
+```python
+from ARMxtend.ARM import high_utility_rules, rare_rules, top_k_rules
+from ARMxtend.FIM import high_utility_itemsets, minimal_rare_itemsets, top_k_itemsets
+
+top = top_k_rules(transactions, 5, min_conf=0.5)
+informative = top_k_rules(transactions, 5, min_conf=0.5, min_lift=1.5)
+rare = rare_rules(transactions, 0.1, min_conf=0.5, min_lift=2)
+useful = high_utility_itemsets(quantities, PROFITS, 0.1)
+value_rules = high_utility_rules(quantities, PROFITS, 0.1, min_conf=0.5, min_lift=1.5)
+```
+
+(full source: [`examples/example_special_rules.py`](https://github.com/cjferba/ARMxtend/blob/master/examples/example_special_rules.py))
+
+Output:
+
+```text
+2000 cestas, 8 productos
+
+Las 5 reglas de mayor soporte con confianza >= 0.5 (sin fijar un soporte minimo):
+  fruit => bread  support=0.208 confidence=0.51 lift=1.00
+  eggs => bread  support=0.186 confidence=0.54 lift=1.07
+  cheese => bread  support=0.158 confidence=0.50 lift=0.99
+  diapers => wipes  support=0.089 confidence=0.64 lift=4.30
+  wipes => diapers  support=0.089 confidence=0.60 lift=4.30
+Las 5 de mayor soporte que ademas tienen lift >= 1.5 (lo popular deja de tapar lo que asocia):
+  diapers => wipes  support=0.089 confidence=0.64 lift=4.30
+  wipes => diapers  support=0.089 confidence=0.60 lift=4.30
+  wine => cheese  support=0.081 confidence=0.69 lift=2.18
+  diapers, fruit => wipes  support=0.043 confidence=0.67 lift=4.56
+  fruit, wipes => diapers  support=0.043 confidence=0.64 lift=4.54
+Con un umbral de 0.3: 0 reglas
+Con un umbral de 0.01: 93 reglas
+
+Itemsets raros minimales (soporte < 0.1, todos sus subconjuntos con soporte >= 0.1): 28
+Reglas raras con confianza >= 0.5 y lift >= 2: 3. Con un umbral de 0.01, que tambien las alcanza, salen 93 reglas con esa confianza, 47 con ese lift:
+  diapers => wipes  support=0.089 confidence=0.64 lift=4.30
+  wipes => diapers  support=0.089 confidence=0.60 lift=4.30
+  wine => cheese  support=0.081 confidence=0.69 lift=2.18
+
+Itemsets mas frecuentes: {bread} 0.51; {milk} 0.45; {fruit} 0.41
+Itemsets de alta utilidad (>= 10 % de la utilidad total, que es 11898):
+  {cheese}  utilidad=4710  soporte=0.314
+  {cheese, wine}  utilidad=3263  soporte=0.081
+  {wine}  utilidad=3105  soporte=0.117
+  {bread, cheese}  utilidad=2554  soporte=0.158
+  {cheese, fruit}  utilidad=2278  soporte=0.124
+Reglas de alta utilidad con confianza >= 0.5 y lift >= 1.5 (sin el lift, 'queso => pan' vale mucho solo porque el queso vale mucho):
+  wine => cheese  support=0.081 confidence=0.69 lift=2.18  utility=3263.00  utility_share=0.27
+  bread, wine => cheese  support=0.036 confidence=0.70 lift=2.21  utility=1542.90  utility_share=0.13
+  fruit, wine => cheese  support=0.032 confidence=0.72 lift=2.29  utility=1397.50  utility_share=0.12
+```
+
 ## Statistical significance of rules (`ARM.significance`)
 
 Which of the rules that pass the thresholds are real? 300 random baskets of 12 independent items with a single planted

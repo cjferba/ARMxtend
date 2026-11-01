@@ -17,6 +17,11 @@
 - [ARM.generalized_rules (rules over products and categories, R-interesting rules)](user_guide/ARM/generalized_rules.md)
 - [ARM.quantitative_rules (numeric and categorical columns, merged intervals)](user_guide/ARM/quantitative_rules.md)
 
+## Top-k, rare and high-utility rules (single machine)
+- [ARM.top_k_rules and FIM.top_k_itemsets (the k best, with no support threshold)](user_guide/ARM/topk_rules.md)
+- [ARM.rare_rules and FIM.minimal_rare_itemsets (rare combinations of frequent items)](user_guide/ARM/rare_rules.md)
+- [ARM.high_utility_rules and FIM.high_utility_itemsets (what is worth most, not what is repeated most)](user_guide/ARM/utility_rules.md)
+
 ## Other kinds of rules (single machine)
 - [ARM.negative_rules (rules with absent items, crisp and fuzzy)](user_guide/ARM/negative_rules.md)
 - [ARM.exception_rules (exception and anomalous rules)](user_guide/ARM/exception_rules.md)
@@ -54,7 +59,7 @@
 - [ARM.meta_rules](user_guide/ARM/meta_rules.md)
 
 ## Command line
-- [armxtend (rules, generalized-rules, quantitative-rules, fuzzy-rules, gradual-rules, temporal-rules, rule-drift, sequences, sequential-rules, fuzzy-sequences, fuzzy-sequential-rules, anomalies, forecast, next-events, classify)](user_guide/cli.md)
+- [armxtend (rules, generalized-rules, quantitative-rules, top-k-rules, rare-rules, high-utility-rules, fuzzy-rules, gradual-rules, temporal-rules, rule-drift, sequences, sequential-rules, fuzzy-sequences, fuzzy-sequential-rules, anomalies, forecast, next-events, classify)](user_guide/cli.md)
 
 ## Visualization
 - [VizARM.AREtoGraph](user_guide/VizARM.md)

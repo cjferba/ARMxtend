@@ -102,6 +102,24 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Top-k, rare and high-utility rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/topk_rules/" class="dropdown-item">ARM.top_k_rules (the k best, no threshold)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/rare_rules/" class="dropdown-item">ARM.rare_rules (rare combinations of frequent items)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/utility_rules/" class="dropdown-item">ARM.high_utility_rules (value, not frequency)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Rules in action</a>
     <ul class="dropdown-menu">
             
@@ -377,6 +395,10 @@
               </ul>
             </li>
             <li class="nav-item" data-bs-level="2"><a href="#quantitative-rules-with-merged-intervals-armquantitative_rules" class="nav-link">Quantitative rules with merged intervals (ARM.quantitative_rules)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#top-k-rare-and-high-utility-rules-armtop_k_rules-armrare_rules-armhigh_utility_rules" class="nav-link">Top-k, rare and high-utility rules (ARM.top_k_rules, ARM.rare_rules, ARM.high_utility_rules)</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -949,6 +971,59 @@ Reglas difusas edad =&gt; ingresos (5 etiquetas fijas), por confianza:
   age_medium =&gt; income_high  support=0.12 confidence=0.52 lift=1.64
   age_high =&gt; income_low  support=0.12 confidence=0.50 lift=1.26
 La region [30, 45) cae a caballo de dos etiquetas y ninguna llega a la confianza del rango fundido.
+</code></pre>
+<h2 id="top-k-rare-and-high-utility-rules-armtop_k_rules-armrare_rules-armhigh_utility_rules">Top-k, rare and high-utility rules (<code>ARM.top_k_rules</code>, <code>ARM.rare_rules</code>, <code>ARM.high_utility_rules</code>)</h2>
+<p>A shop with 2000 baskets and the quantity bought of eight products. Three ways of looking beyond a minimum support:
+<a href="../user_guide/ARM/topk_rules/"><code>top_k_rules</code></a> asks for the 5 best rules instead of guessing a threshold (0.3 gives no rules and
+0.01 gives 93); <a href="../user_guide/ARM/rare_rules/"><code>rare_rules</code></a> finds the pairs that are frequent separately and rare together
+(diapers and wipes, wine and cheese) without the flood of a low threshold; and
+<a href="../user_guide/ARM/utility_rules/"><code>high_utility_rules</code></a> ranks by profit: wine and cheese are worth more than bread and milk
+although they are bought less.</p>
+<pre><code class="language-python">from ARMxtend.ARM import high_utility_rules, rare_rules, top_k_rules
+from ARMxtend.FIM import high_utility_itemsets, minimal_rare_itemsets, top_k_itemsets
+
+top = top_k_rules(transactions, 5, min_conf=0.5)
+informative = top_k_rules(transactions, 5, min_conf=0.5, min_lift=1.5)
+rare = rare_rules(transactions, 0.1, min_conf=0.5, min_lift=2)
+useful = high_utility_itemsets(quantities, PROFITS, 0.1)
+value_rules = high_utility_rules(quantities, PROFITS, 0.1, min_conf=0.5, min_lift=1.5)
+</code></pre>
+<p>(full source: <a href="https://github.com/cjferba/ARMxtend/blob/master/examples/example_special_rules.py"><code>examples/example_special_rules.py</code></a>)</p>
+<p>Output:</p>
+<pre><code class="language-text">2000 cestas, 8 productos
+
+Las 5 reglas de mayor soporte con confianza &gt;= 0.5 (sin fijar un soporte minimo):
+  fruit =&gt; bread  support=0.208 confidence=0.51 lift=1.00
+  eggs =&gt; bread  support=0.186 confidence=0.54 lift=1.07
+  cheese =&gt; bread  support=0.158 confidence=0.50 lift=0.99
+  diapers =&gt; wipes  support=0.089 confidence=0.64 lift=4.30
+  wipes =&gt; diapers  support=0.089 confidence=0.60 lift=4.30
+Las 5 de mayor soporte que ademas tienen lift &gt;= 1.5 (lo popular deja de tapar lo que asocia):
+  diapers =&gt; wipes  support=0.089 confidence=0.64 lift=4.30
+  wipes =&gt; diapers  support=0.089 confidence=0.60 lift=4.30
+  wine =&gt; cheese  support=0.081 confidence=0.69 lift=2.18
+  diapers, fruit =&gt; wipes  support=0.043 confidence=0.67 lift=4.56
+  fruit, wipes =&gt; diapers  support=0.043 confidence=0.64 lift=4.54
+Con un umbral de 0.3: 0 reglas
+Con un umbral de 0.01: 93 reglas
+
+Itemsets raros minimales (soporte &lt; 0.1, todos sus subconjuntos con soporte &gt;= 0.1): 28
+Reglas raras con confianza &gt;= 0.5 y lift &gt;= 2: 3. Con un umbral de 0.01, que tambien las alcanza, salen 93 reglas con esa confianza, 47 con ese lift:
+  diapers =&gt; wipes  support=0.089 confidence=0.64 lift=4.30
+  wipes =&gt; diapers  support=0.089 confidence=0.60 lift=4.30
+  wine =&gt; cheese  support=0.081 confidence=0.69 lift=2.18
+
+Itemsets mas frecuentes: {bread} 0.51; {milk} 0.45; {fruit} 0.41
+Itemsets de alta utilidad (&gt;= 10 % de la utilidad total, que es 11898):
+  {cheese}  utilidad=4710  soporte=0.314
+  {cheese, wine}  utilidad=3263  soporte=0.081
+  {wine}  utilidad=3105  soporte=0.117
+  {bread, cheese}  utilidad=2554  soporte=0.158
+  {cheese, fruit}  utilidad=2278  soporte=0.124
+Reglas de alta utilidad con confianza &gt;= 0.5 y lift &gt;= 1.5 (sin el lift, 'queso =&gt; pan' vale mucho solo porque el queso vale mucho):
+  wine =&gt; cheese  support=0.081 confidence=0.69 lift=2.18  utility=3263.00  utility_share=0.27
+  bread, wine =&gt; cheese  support=0.036 confidence=0.70 lift=2.21  utility=1542.90  utility_share=0.13
+  fruit, wine =&gt; cheese  support=0.032 confidence=0.72 lift=2.29  utility=1397.50  utility_share=0.12
 </code></pre>
 <h2 id="statistical-significance-of-rules-armsignificance">Statistical significance of rules (<code>ARM.significance</code>)</h2>
 <p>Which of the rules that pass the thresholds are real? 300 random baskets of 12 independent items with a single planted
