@@ -551,6 +551,65 @@ i00 -> i01: support=0.213 confidence=0.71 [0.61, 0.79] lift=1.79 p=3.9e-13
 11 pares de series independientes: Fisher (supone filas independientes) da 6 falsas alarmas (p < 0.01); el test de permutacion circular, 1 (p < 0.05)
 ```
 
+## Rules in action: `ARM.anomaly`, `ARM.prediction`, `ARM.classification`
+
+Mined rules are put to work. Rules learned from 3000 steps of normal operation of four sensors (motion and door
+open at random; the light switches on after motion 99 % of the time, a chime sounds after the door opens 80 % of the time) are
+applied to 2000 new steps in which the light fails 30 times; the same rules forecast each sensor; the sequential
+rules of the [routine](#event-logs-sequential-patterns-and-rules-fimsequential-armsequential_rules) predict what comes next;
+and class association rules classify 400 new cases into three diagnoses. See [anomalies](user_guide/ARM/anomaly_detection.md),
+[prediction](user_guide/ARM/prediction.md) and [classification](user_guide/ARM/classification.md).
+
+```python
+from ARMxtend.ARM import (
+    RuleClassifier, detect_anomalies, evaluate_forecast, evaluate_next_events, forecast_next, predict_next_events,
+    prune_unproductive_rules, sequential_rules, significant_rules, temporal_association_rules,
+)
+
+rules = temporal_association_rules(train, 1, 0.02, min_threshold=0.75, targets=["light", "chime"],
+                                   exclude_persistence=True, same_time_antecedent=False)
+rules = significant_rules(rules, alpha=0.05)
+rules = prune_unproductive_rules(rules[rules["consequents"].map(len) == 1], min_improvement=0.05)
+
+flagged = detect_anomalies(test, rules, min_score=6.0)                  # rows that break a reliable rule
+quality = evaluate_forecast(test, rules, threshold=0.7)                 # precision / recall of the predictions
+upcoming = forecast_next(test, rules)                                   # the step after the last row
+
+routine = sequential_rules(learned, min_supp=0.2, min_conf=0.3, max_antecedent=2, max_consequent=1)
+predict_next_events([["alarm"], ["bathroom"], ["kitchen"], ["coffee"]], routine)
+evaluate_next_events(unseen, routine, k=2, min_prefix=3, train=learned, target="next")
+
+model = RuleClassifier(min_supp=0.05, min_conf=0.7, max_len=3, min_improvement=0.1).fit(cases, diagnosis)
+model.score(new_cases, new_diagnosis)
+```
+
+(full source: [`examples/example_rules_in_action.py`](https://github.com/cjferba/ARMxtend/blob/master/examples/example_rules_in_action.py))
+
+Output:
+
+```text
+Reglas del funcionamiento normal (3000 instantes):
+  motion (t-1) => light (t)  confidence=0.99
+  door (t-1) => chime (t)  confidence=0.77
+
+Datos nuevos: 2000 instantes con 30 fallos de la luz. 39 instantes superan los 6 bits de sorpresa y contienen 30 de los fallos
+AUC con peso 'surprise': 0.998; con peso 'count': 0.980
+El mas anomalo, 2024-03-02 19:00:00: score=9.4 por motion (t-1) => light (t); door (t-1) => chime (t)
+
+Prediccion de cada sensor con las reglas (umbral 0.7), sobre datos nuevos:
+  chime  precision=0.80 recall=0.77 (el sensor se activa el 19% de las veces)
+  light  precision=0.94 recall=0.82 (el sensor se activa el 36% de las veces)
+Prevision para el instante siguiente al ultimo dato (hubo movimiento: si, puerta: si): light (0.99), chime (0.77)
+
+Tras alarm, bathroom, kitchen, coffee se espera: tv (0.77), phone (0.65)
+En 100 cortes de 40 dias nuevos (con 3 o mas eventos ya ocurridos), los 2 eventos previstos incluyen el siguiente el 63% de las veces (prediciendo los 2 mas frecuentes: 49%)
+
+Clasificador CBA: 12 reglas de clase candidatas, 2 seleccionadas; exactitud 0.96 en 400 casos nuevos (clase mayoritaria: 0.56)
+  si cough y fever => flu  confidence=0.96 support=0.24
+  si itchy y sneezing => allergy  confidence=0.71 support=0.18
+  en otro caso => healthy
+```
+
 ## Big Data and streaming algorithms
 
 The Spark-based algorithms (`FIM.apriori`, `FIM.Eclat`, `FIM.BD_ARE`, `FIM.BD_FARE`, `SARE`,

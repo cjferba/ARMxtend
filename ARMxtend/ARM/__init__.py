@@ -25,7 +25,7 @@ from .gradual_rules import (
     format_gradual_item,
     format_gradual_itemset,
 )
-from .redundancy import prune_redundant_rules
+from .redundancy import prune_redundant_rules, prune_unproductive_rules
 from .temporal_rules import (
     temporal_association_rules,
     fuzzy_temporal_association_rules,
@@ -51,6 +51,9 @@ from .significance import (
     permutation_null,
     permutation_p_values,
 )
+from .anomaly import rule_violations, anomaly_scores, detect_anomalies
+from .prediction import rule_scores, forecast_next, evaluate_forecast, predict_next_events, evaluate_next_events
+from .classification import class_association_rules, select_rules, RuleClassifier
 
 
 __all__ = [
@@ -67,6 +70,7 @@ __all__ = [
     "format_gradual_item",
     "format_gradual_itemset",
     "prune_redundant_rules",
+    "prune_unproductive_rules",
     "temporal_association_rules",
     "fuzzy_temporal_association_rules",
     "format_lagged_item",
@@ -87,6 +91,17 @@ __all__ = [
     "shuffled_items",
     "permutation_null",
     "permutation_p_values",
+    "rule_violations",
+    "anomaly_scores",
+    "detect_anomalies",
+    "rule_scores",
+    "forecast_next",
+    "evaluate_forecast",
+    "predict_next_events",
+    "evaluate_next_events",
+    "class_association_rules",
+    "select_rules",
+    "RuleClassifier",
     "rule_key",
     "mine_primary_rule_measures",
     "build_crisp_meta_database",

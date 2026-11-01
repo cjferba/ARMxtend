@@ -1,0 +1,299 @@
+# -*- coding: utf-8 -*-
+"""
+Clasificacion con reglas de asociacion de CLASE (CARs): reglas ``A => clase=c``
+cuyo consecuente es un valor de la variable a predecir, y un clasificador que
+las ordena y selecciona, siguiendo el algoritmo CBA (Classification Based on
+Associations):
+
+    Liu, B., Hsu, W., Ma, Y. (1998). "Integrating classification and association
+    rule mining". Proceedings of the 4th International Conference on Knowledge
+    Discovery and Data Mining (KDD-98), 80-86.
+
+* ``class_association_rules`` extrae las reglas ``A => clase=c`` frecuentes y
+  fiables. Con ``support="class"`` (por defecto) el soporte minimo se aplica
+  dentro de cada clase, de modo que las clases poco frecuentes no se quedan sin
+  reglas (la idea de los soportes minimos multiples de Liu, Ma y Wong, 2000);
+  con ``support="global"`` se aplica sobre todas las transacciones.
+* ``select_rules`` es el constructor de CBA (M1): ordena las reglas por
+  precedencia (mayor confianza, luego mayor soporte, luego antecedente mas
+  corto), recorre los datos de entrenamiento quedandose con cada regla que
+  clasifica bien algun caso aun sin cubrir, y corta la lista en el punto en
+  que el error total (reglas mas clase por defecto) es minimo.
+* ``RuleClassifier`` encapsula las dos fases con una interfaz ``fit`` /
+  ``predict`` / ``score``; un caso se clasifica con la primera regla de la
+  lista que cumple, y si ninguna, con la clase por defecto.
+
+Las reglas tienen el mismo formato que ``ARM.association_rules`` (y los items
+del antecedente, un nombre sin '-'), de modo que valen ``significant_rules`` y
+``prune_redundant_rules``. El consecuente es el item ``<nombre>=<valor>`` (la
+columna 'class' guarda el valor tal cual).
+
+@author Carlos Fernandez-Basso
+"""
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+
+import numpy as np
+import pandas as pd
+
+from ..FFIM import fpgrowth
+from ..FIM._shared import key_to_itemset
+from ..preprocessing.timeseries import check_item_names
+from ._apply import ItemTable, require_columns
+from ._measures import MEASURES
+from .redundancy import prune_unproductive_rules
+
+_EPS = 1e-9
+
+
+def _classes(labels: Union[Sequence[Any], np.ndarray, pd.Series]) -> Tuple[np.ndarray, List[Any]]:
+    """Etiquetas como vector y lista ordenada de clases distintas."""
+    values = np.asarray(labels, dtype=object)
+    if pd.isna(values).any():
+        raise ValueError("`labels` no puede tener valores nulos")
+    classes = list(pd.unique(values))
+    try:
+        classes.sort()
+    except TypeError:
+        classes.sort(key=str)
+    return values, classes
+
+
+def _check_inputs(items: pd.DataFrame, labels: Union[Sequence[Any], np.ndarray, pd.Series]) -> None:
+    if len(items) != len(labels):
+        raise ValueError("`items` tiene {} filas y `labels` {}".format(len(items), len(labels)))
+    check_item_names(items.columns)
+
+
+def class_association_rules(items: pd.DataFrame, labels: Union[Sequence[Any], np.ndarray, pd.Series],
+                            min_supp: float = 0.05, min_conf: float = 0.6, max_len: int = 4,
+                            support: str = "class", class_name: Optional[str] = None) -> pd.DataFrame:
+    """
+    Minera las reglas de asociacion de clase ``A => clase=c``.
+
+    Argumentos:
+        items (pandas.DataFrame): items booleanos (0/1), una fila por caso
+            (``to_items`` convierte columnas numericas y categoricas)
+        labels: la clase de cada caso, con tantos valores como filas
+        min_supp (float): soporte minimo de la regla, en (0, 1]: relativo a
+            los casos de la clase (`support="class"`) o a todos (`"global"`)
+        min_conf (float): confianza minima, en [0, 1]
+        max_len (int): maximo de items del antecedente, >= 1
+        support (str): 'class' o 'global' (ver arriba)
+        class_name (str, opcional): nombre de la variable de clase en el
+            consecuente (por defecto, el nombre de `labels` o 'class')
+
+    Retorna:
+        pandas.DataFrame con el formato de ``association_rules`` (columnas
+        'antecedents', 'consequents', 'antecedent support', 'consequent
+        support', 'support', 'confidence', 'lift' y las demas medidas; los
+        soportes son siempre relativos a todos los casos) y la columna 'class'
+        con el valor de la clase, ordenado por precedencia. Anota en
+        ``rules.attrs`` el numero de casos ('n_transactions') y el de reglas
+        candidatas ('n_candidates': antecedentes frecuentes de cada clase),
+        que usa ``significant_rules``
+    """
+    if support not in ("class", "global"):
+        raise ValueError("support debe ser 'class' o 'global', recibido: '{}'".format(support))
+    if max_len < 1:
+        raise ValueError("max_len debe ser >= 1")
+    _check_inputs(items, labels)
+    table = ItemTable(items)
+    values, classes = _classes(labels)
+    name = class_name or getattr(labels, "name", None) or "class"
+    total = table.rows
+    names = [str(column) for column in items.columns]
+    rowSets = [frozenset(names[column] for column in np.flatnonzero(row)) for row in table.values]
+
+    columns = ["antecedents", "consequents", "antecedent support", "consequent support", "support", "confidence",
+               "lift"] + [measure for measure in MEASURES if measure not in ("confidence", "lift")] + ["class"]
+    antecedentCount: Dict[frozenset, int] = {}
+    rows: List[dict] = []
+    candidates = 0
+    for label in classes:
+        inClass = np.flatnonzero(values == label)
+        threshold = min_supp if support == "class" else min_supp * total / len(inClass)
+        if threshold > 1 + _EPS:
+            continue
+        frequent = fpgrowth([rowSets[row] for row in inClass], min(threshold, 1.0))
+        for key, within in frequent.items():
+            antecedent = key_to_itemset(key)
+            if not antecedent or len(antecedent) > max_len:
+                continue
+            candidates += 1
+            if antecedent not in antecedentCount:
+                antecedentCount[antecedent] = int(np.count_nonzero(table.holds(antecedent)))
+            joint = int(round(within * len(inClass)))
+            confidence = joint / antecedentCount[antecedent]
+            if confidence < min_conf - _EPS:
+                continue
+            supportJoint, supportA, supportC = joint / total, antecedentCount[antecedent] / total, len(inClass) / total
+            entry: Dict[str, Any] = {"antecedents": antecedent, "consequents": frozenset(["{}={}".format(name, label)]),
+                                     "antecedent support": supportA, "consequent support": supportC,
+                                     "support": supportJoint, "class": label}
+            for measure, function in MEASURES.items():
+                entry[measure] = float(function(supportJoint, supportA, supportC))
+            rows.append(entry)
+
+    rules = pd.DataFrame(rows, columns=columns)
+    if len(rules):
+        rules["_length"] = [len(antecedent) for antecedent in rules["antecedents"]]
+        rules = rules.sort_values(["confidence", "support", "_length"], ascending=[False, False, True],
+                                  kind="mergesort").drop(columns="_length").reset_index(drop=True)
+    rules.attrs["n_transactions"] = total
+    rules.attrs["n_candidates"] = candidates
+    return rules
+
+
+def _precedence(rules: pd.DataFrame) -> pd.DataFrame:
+    """Reglas ordenadas por precedencia de CBA: confianza, soporte (decrecientes) y longitud del antecedente (creciente)."""
+    length = np.array([len(antecedent) for antecedent in rules["antecedents"]], dtype=int)
+    order = np.lexsort((length, -rules["support"].to_numpy(dtype=float), -rules["confidence"].to_numpy(dtype=float)))
+    return rules.iloc[order]
+
+
+def select_rules(rules: pd.DataFrame, items: pd.DataFrame, labels: Union[Sequence[Any], np.ndarray, pd.Series]
+                 ) -> Tuple[pd.DataFrame, Any]:
+    """
+    Construccion del clasificador CBA (CBA-CB, M1) a partir de las reglas
+    candidatas y los datos de entrenamiento.
+
+    Las reglas se recorren por precedencia; una regla se conserva si clasifica
+    correctamente al menos uno de los casos aun no cubiertos, y entonces cubre
+    (retira) todos los casos que cumplen su antecedente. Tras cada regla
+    conservada se anotan la clase por defecto (la mayoritaria entre los casos
+    sin cubrir) y el error total: los casos cubiertos que clasifican mal las
+    reglas conservadas mas los sin cubrir que no son de esa clase. La lista
+    final llega hasta la regla con el menor error total (la mas corta si hay empate).
+
+    Argumentos:
+        rules (pandas.DataFrame): reglas de ``class_association_rules``
+        items, labels: datos de entrenamiento (los mismos que se usaron para minar)
+
+    Retorna:
+        (reglas seleccionadas en orden de aplicacion, clase por defecto)
+    """
+    require_columns(rules, "antecedents", "class", "confidence", "support")
+    _check_inputs(items, labels)
+    table = ItemTable(items)
+    values, classes = _classes(labels)
+    code = {label: position for position, label in enumerate(classes)}
+    codes = np.array([code[value] for value in values], dtype=int)
+    size = len(classes)
+
+    def majority(subset: np.ndarray, fallback: int) -> int:
+        return int(np.bincount(subset, minlength=size).argmax()) if len(subset) else fallback
+
+    overall = majority(codes, 0) if len(codes) else 0
+    ordered = _precedence(rules)
+    remaining = np.arange(table.rows)
+    trace: List[Tuple[int, int, int]] = []            # (posicion en `ordered`, clase por defecto, error total)
+    ruleErrors = 0
+    for position, (antecedent, label) in enumerate(zip(ordered["antecedents"], ordered["class"])):
+        if len(remaining) == 0:
+            break
+        if label not in code:
+            continue
+        columns = np.array([_column(table, item) for item in antecedent], dtype=int)
+        covers = table.values[remaining[:, None], columns].all(axis=1)
+        covered = remaining[covers]
+        correct = int(np.count_nonzero(codes[covered] == code[label]))
+        if correct == 0:
+            continue
+        ruleErrors += len(covered) - correct
+        remaining = remaining[~covers]
+        default = majority(codes[remaining], overall)
+        defaultErrors = len(remaining) - int(np.count_nonzero(codes[remaining] == default))
+        trace.append((position, default, ruleErrors + defaultErrors))
+
+    if not trace:
+        return ordered.iloc[:0].reset_index(drop=True), classes[overall] if classes else None
+    best = min(range(len(trace)), key=lambda index: (trace[index][2], index))
+    kept = ordered.iloc[[step[0] for step in trace[:best + 1]]].reset_index(drop=True)
+    return kept, classes[trace[best][1]]
+
+
+def _column(table: ItemTable, item: str) -> int:
+    if item not in table.columns:
+        raise ValueError("el item '{}' de las reglas no es una columna de `items`".format(item))
+    return table.columns[item]
+
+
+class RuleClassifier:
+    """
+    Clasificador por reglas de asociacion de clase (CBA): ``fit`` extrae las
+    reglas (``class_association_rules``) y se queda con las utiles
+    (``select_rules``); ``predict`` aplica la primera regla que se cumple, y si
+    ninguna, la clase por defecto.
+
+    Argumentos del constructor: `min_supp`, `min_conf`, `max_len` y `support`,
+    como en `class_association_rules`, y `min_improvement`: si no es None, antes de
+    seleccionar se descartan las reglas cuyas condiciones adicionales no mejoran en
+    mas de ese valor la confianza de una regla mas general
+    (``prune_unproductive_rules``), lo que da listas mas cortas y menos
+    sobreajustadas; por defecto no se poda, como en el CBA original.
+
+    Atributos tras `fit`: ``rules_`` (reglas seleccionadas, en orden de
+    aplicacion), ``default_class_``, ``classes_`` y ``candidate_rules_`` (todas
+    las reglas de clase antes de la seleccion).
+    """
+
+    def __init__(self, min_supp: float = 0.05, min_conf: float = 0.6, max_len: int = 4, support: str = "class",
+                 min_improvement: Optional[float] = None) -> None:
+        self.min_improvement = min_improvement
+        self.min_supp = min_supp
+        self.min_conf = min_conf
+        self.max_len = max_len
+        self.support = support
+        self.rules_ = pd.DataFrame()
+        self.candidate_rules_ = pd.DataFrame()
+        self._fitted = False
+        self.default_class_: Any = None
+        self.classes_: List[Any] = []
+
+    def fit(self, items: pd.DataFrame, labels: Union[Sequence[Any], np.ndarray, pd.Series]) -> "RuleClassifier":
+        """Entrena con `items` (booleanos, un caso por fila) y su clase `labels`."""
+        if len(items) == 0:
+            raise ValueError("no hay casos con los que entrenar")
+        self.candidate_rules_ = class_association_rules(items, labels, self.min_supp, self.min_conf, self.max_len,
+                                                        self.support)
+        candidates = self.candidate_rules_
+        if self.min_improvement is not None:
+            candidates = prune_unproductive_rules(candidates, self.min_improvement)
+        self.rules_, self.default_class_ = select_rules(candidates, items, labels)
+        self.classes_ = _classes(labels)[1]
+        self._fitted = True
+        return self
+
+    def explain(self, items: pd.DataFrame) -> pd.DataFrame:
+        """
+        Como `predict`, con el motivo: un ``DataFrame`` con el indice de `items` y las
+        columnas 'prediction', 'rule' (posicion en ``rules_`` de la regla que
+        decide; -1 si es la clase por defecto) y 'confidence' (la de esa regla; NaN
+        con la clase por defecto).
+        """
+        if not self._fitted:
+            raise ValueError("el clasificador no esta entrenado: llame antes a fit")
+        table = ItemTable(items)
+        prediction = np.empty(table.rows, dtype=object)
+        rule = np.full(table.rows, -1, dtype=int)
+        confidence = np.full(table.rows, np.nan)
+        free = np.ones(table.rows, dtype=bool)
+        for position, (antecedent, label, certainty) in enumerate(
+                zip(self.rules_["antecedents"], self.rules_["class"], self.rules_["confidence"])):
+            fires = free & table.holds(antecedent)
+            prediction[fires], rule[fires], confidence[fires] = label, position, certainty
+            free &= ~fires
+        prediction[free] = self.default_class_
+        return pd.DataFrame({"prediction": pd.Series(prediction, index=items.index).infer_objects(), "rule": rule,
+                             "confidence": confidence}, index=items.index)
+
+    def predict(self, items: pd.DataFrame) -> pd.Series:
+        """Clase de cada fila de `items`, con su indice."""
+        return self.explain(items)["prediction"].rename("class")
+
+    def score(self, items: pd.DataFrame, labels: Union[Sequence[Any], np.ndarray, pd.Series]) -> float:
+        """Exactitud (parte de casos bien clasificados) sobre `items` y su clase `labels`."""
+        _check_inputs(items, labels)
+        if len(items) == 0:
+            return float("nan")
+        return float(np.mean(self.predict(items).to_numpy(dtype=object) == np.asarray(labels, dtype=object)))

@@ -5,7 +5,8 @@ import pandas as pd
 import pytest
 
 from ARMxtend.ARM import association_rules
-from ARMxtend.ARM.redundancy import prune_redundant_rules
+from ARMxtend.ARM import redundancy
+from ARMxtend.ARM.redundancy import prune_redundant_rules, prune_unproductive_rules
 from ARMxtend.FFIM import fpgrowth, fuzzy_fpgrowth
 from ARMxtend.FIM._shared import key_to_itemset
 from ARMxtend.FIM.condensed import closed_itemsets, maximal_itemsets, support_from_closed
@@ -133,3 +134,54 @@ def test_prune_on_real_rules_leaves_a_general_rule_for_each_removed_one():
 
 def test_prune_empty():
     assert len(prune_redundant_rules(pd.DataFrame(columns=["antecedents", "consequents", "support", "confidence"]))) == 0
+
+
+def confidence_rules(*rules):
+    return pd.DataFrame({"antecedents": [frozenset(a) for a, _, _ in rules],
+                         "consequents": [frozenset(c) for _, c, _ in rules],
+                         "confidence": [p for _, _, p in rules], "support": [0.1] * len(rules)})
+
+
+def test_unproductive_rules_hand_computed():
+    rules = confidence_rules(({"a"}, {"c"}, 0.80), ({"a", "b"}, {"c"}, 0.82), ({"a", "b", "d"}, {"c"}, 0.95),
+                             ({"b"}, {"c"}, 0.50), ({"a", "b"}, {"e"}, 0.50))
+    # a,b => c gana 0.02 sobre a => c: improductiva con 0.05, productiva con 0. a,b,d => c gana 0.13 sobre a,b => c
+    kept = prune_unproductive_rules(rules, min_improvement=0.05)
+    assert [(set(a), set(c)) for a, c in zip(kept["antecedents"], kept["consequents"])] == [
+        ({"a"}, {"c"}), ({"a", "b", "d"}, {"c"}), ({"b"}, {"c"}), ({"a", "b"}, {"e"})]      # a,b => e: sin regla mas general
+    assert len(prune_unproductive_rules(rules, min_improvement=0.0)) == 5
+    equal = confidence_rules(({"a"}, {"c"}, 0.8), ({"a", "b"}, {"c"}, 0.8))
+    assert len(prune_unproductive_rules(equal)) == 1                                        # no mejora: sobra
+
+
+def test_unproductive_rules_compare_with_any_more_general_rule_even_if_it_is_dropped():
+    # a,b => c gana 0.03 sobre a => c y se descarta; a,b,d => c gana 0.07 sobre a => c pero solo 0.04 sobre
+    # a,b => c (que esta en `rules`, aunque se descarte): la mejora es el maximo sobre todas las subreglas
+    rules = confidence_rules(({"a"}, {"c"}, 0.75), ({"a", "b"}, {"c"}, 0.78), ({"a", "b", "d"}, {"c"}, 0.82))
+    assert len(prune_unproductive_rules(rules, 0.05)) == 1
+
+
+def test_unproductive_rules_large_antecedents_use_the_pairwise_path(monkeypatch):
+    rules = confidence_rules(({"a"}, {"c"}, 0.80), ({"a", "b"}, {"c"}, 0.82), ({"a", "b", "d"}, {"c"}, 0.95),
+                             ({"b"}, {"c"}, 0.50))
+    expected = prune_unproductive_rules(rules, 0.05)
+    monkeypatch.setattr(redundancy, "_EXHAUSTIVE_LIMIT", 1)
+    assert prune_unproductive_rules(rules, 0.05).equals(expected)
+    assert prune_unproductive_rules(rules.iloc[:0]).empty
+
+
+def test_unproductive_rules_keep_the_order_and_the_most_general_rules_of_real_mining():
+    rng = np.random.RandomState(0)
+    table = rng.rand(400, 5) < 0.5
+    table[:, 4] = table[:, 0] | (rng.rand(400) < 0.05)
+    transactions = [{"i{}".format(j) for j in range(5) if row[j]} for row in table]
+    frequent = fpgrowth(transactions, 0.05)
+    itemsets = pd.DataFrame({"support": list(frequent.values()), "itemsets": [key_to_itemset(k) for k in frequent]})
+    rules = association_rules(itemsets, metric="confidence", min_threshold=0.0)
+    kept = prune_unproductive_rules(rules, 0.02)
+    assert 0 < len(kept) < len(rules)
+    confidence = {(a, c): p for a, c, p in zip(kept["antecedents"], kept["consequents"], kept["confidence"])}
+    for (antecedent, consequent), value in confidence.items():
+        for (other, other_consequent), other_value in confidence.items():
+            if other_consequent == consequent and other < antecedent:
+                assert value - other_value > 0.02 - 1e-9

@@ -34,6 +34,10 @@ nav:
     - FIM.condensed (closed / maximal): user_guide/FIM/condensed.md
     - ARM.redundancy: user_guide/ARM/redundancy.md
     - ARM.significance (p-values, FDR, permutation tests): user_guide/ARM/significance.md
+  - Rules in action:
+    - ARM.anomaly (anomalies as rule violations): user_guide/ARM/anomaly_detection.md
+    - ARM.prediction (next step / next events): user_guide/ARM/prediction.md
+    - ARM.classification (class rules, CBA): user_guide/ARM/classification.md
   - Other kinds of rules:
     - ARM.negative_rules (absent items): user_guide/ARM/negative_rules.md
     - ARM.exception_rules (exceptions / anomalies): user_guide/ARM/exception_rules.md

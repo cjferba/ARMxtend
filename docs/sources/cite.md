@@ -189,3 +189,8 @@ originals when you use them:
   Benjamini, Y., Yekutieli, D. (2001), Annals of Statistics 29, 1165-1188; Westfall, P.H., Young, S.S. (1993),
   *Resampling-based multiple testing*; Webb, G.I. (2007), *Discovering significant patterns*, Machine Learning 68,
   1-33; Wilson, E.B. (1927), JASA 22, 209-212.
+- **Rules in action** (`ARM.anomaly`, `ARM.prediction`, `ARM.classification`): Liu, B., Hsu, W., Ma, Y. (1998),
+  *Integrating classification and association rule mining*, Proc. KDD-98, 80-86 (CBA); Liu, B., Ma, Y., Wong, C.-K.
+  (2000), *Improving an association rule based classifier*, PKDD 2000; Bayardo, R.J., Agrawal, R., Gunopulos, D.
+  (2000), *Constraint-based rule mining in large, dense databases*, Data Mining and Knowledge Discovery 4, 217-240
+  (improvement of a rule, `prune_unproductive_rules`).

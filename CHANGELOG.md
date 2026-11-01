@@ -21,6 +21,12 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
   intervals, and minP / maxT permutation tests with circular-shift nulls for time series; `--alpha`,
   `--correction`, `--test`, `--permutations` in the command line. `association_rules` and
   `temporal_association_rules` record `n_candidates` (and `n_transactions`) in `rules.attrs`.
+- **Rules in action:** anomaly detection by rule violation, with surprise-weighted scores and explanations, also for
+  lagged rules (`ARM.anomaly`); forecasting of the next time step with lagged rules and of the pending events of a
+  sequence with sequential rules, with evaluation against real data and a popularity baseline (`ARM.prediction`);
+  class association rules and a CBA classifier with `fit` / `predict` / `explain` / `score`
+  (`ARM.classification`); pruning of unproductive rules (`ARM.redundancy.prune_unproductive_rules`); and the commands
+  `armxtend anomalies | forecast | next-events | classify`.
 - **Measures:** Jaccard, cosine, Kulczynski, all/max confidence, added value, Zhang's metric and Yule's Q in
   `ARM.association_rules` and, aggregated level by level (RL-theory), in `FIM.FARE`.
 - **Fuzzification:** trapezoidal and Gaussian sets, automatic partitions (uniform, quantile, k-means) and
@@ -29,7 +35,7 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
   summaries, a self-contained interactive HTML viewer (`AREtoGraph.to_html`) and Neo4j/MongoDB exports
   (`to_cypher`, `to_documents`).
 - **Command line:** `armxtend rules | fuzzy-rules | gradual-rules | temporal-rules | rule-drift | sequences |
-  sequential-rules` (also `python -m ARMxtend`).
+  sequential-rules | anomalies | forecast | next-events | classify` (also `python -m ARMxtend`).
 - **Tooling:** `pyproject.toml` packaging, type hints and `py.typed`, ruff, mypy, coverage, a release workflow with
   PyPI trusted publishing, runnable examples tested in CI, and a benchmark of the Spark algorithms
   (`benchmarks/spark_scalability.py`).

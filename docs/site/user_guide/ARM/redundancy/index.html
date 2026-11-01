@@ -84,6 +84,24 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Rules in action</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../anomaly_detection/" class="dropdown-item">ARM.anomaly (anomalies as rule violations)</a>
+</li>
+            
+<li>
+    <a href="../prediction/" class="dropdown-item">ARM.prediction (next step / next events)</a>
+</li>
+            
+<li>
+    <a href="../classification/" class="dropdown-item">ARM.classification (class rules, CBA)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Other kinds of rules</a>
     <ul class="dropdown-menu">
             
@@ -292,6 +310,10 @@
             
             <li class="nav-item" data-bs-level="1"><a href="#armredundancy-pruning-redundant-rules" class="nav-link">ARM.redundancy -- pruning redundant rules</a>
               <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#unproductive-rules" class="nav-link">Unproductive rules</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -320,7 +342,23 @@ it carries all the information of the redundant one. Duplicated rules are reduce
   fuzzy rules computed from many alpha-cuts if you want to merge near-ties).</li>
 <li><code>support_column</code>, <code>confidence_column</code>: to prune by other column names.</li>
 </ul>
-<p>It preserves the structure and relative order of <code>rules</code>.</p></div>
+<p>It preserves the structure and relative order of <code>rules</code>.</p>
+<h2 id="unproductive-rules">Unproductive rules</h2>
+<pre><code class="language-python">from ARMxtend.ARM import prune_unproductive_rules
+
+productive = prune_unproductive_rules(rules, min_improvement=0.05)
+</code></pre>
+<p>Redundancy requires <em>exactly</em> equal support and confidence. A looser and often more useful notion is the <em>improvement</em>
+of Bayardo, Agrawal and Gunopulos (2000, <em>Constraint-based rule mining in large, dense databases</em>): the rule
+<code>X =&gt; Y</code> is <strong>unproductive</strong> if some more general rule <code>X' =&gt; Y</code> (with <code>X'</code> a proper subset of <code>X</code>) is present in
+<code>rules</code> and <code>conf(X =&gt; Y) - conf(X' =&gt; Y) &lt;= min_improvement</code>; that is, the extra conditions of <code>X</code> do not improve the
+confidence by more than <code>min_improvement</code>. With <code>0</code> (the default), the rules that do not improve on a more general
+rule at all are removed; with <code>0.05</code>, the extra conditions have to earn at least five points of confidence.</p>
+<p>The comparison is with <strong>every</strong> more general rule in <code>rules</code>, kept or not, so the result does not depend on the order;
+the most general rule of each family is always kept. The rules must therefore be mined with a threshold low enough for the
+general rules to be in the set. It works on any <code>DataFrame</code> with <code>antecedents</code>, <code>consequents</code> and <code>confidence</code>, and keeps
+the order of <code>rules</code>. Typical use: before <a href="../anomaly_detection/">detecting anomalies</a> with the rules, or before building
+a <a href="../classification/">classifier</a>.</p></div>
             </div>
         </div>
 

@@ -291,3 +291,96 @@ def test_rule_drift_with_alpha(sensors_file, capsys):
     frame = pd.read_csv(io.StringIO(capsys.readouterr().out))
     row = frame[(frame["antecedents"] == "door@lag1") & (frame["consequents"] == "heater")].iloc[0]
     assert row["status"] == "stable" and row["windows"] == 4
+
+
+# ------------------------------------------------------ reglas en accion
+
+@pytest.fixture
+def faulty_sensors_file(tmp_path):
+    """Como sensors_file, pero la segunda mitad tiene 8 fallos: la calefaccion no se enciende tras abrirse la puerta."""
+    rng = np.random.RandomState(1)
+    index = pd.date_range("2024-01-01", periods=40 * 24, freq="h")
+    door = rng.rand(len(index)) < 0.3
+    heater = np.zeros(len(index), dtype=int)
+    heater[1:] = door[:-1]
+    late = np.flatnonzero(heater[480:]) + 480
+    faults = rng.choice(late, 8, replace=False)
+    heater[faults] = 0
+    path = tmp_path / "faulty.csv"
+    pd.DataFrame({"time": index.strftime("%Y-%m-%d %H:%M:%S"), "temp": rng.normal(15, 4, len(index)),
+                  "door": door.astype(int), "heater": heater}).to_csv(path, index=False)
+    return str(path), set(index[faults].strftime("%Y-%m-%d %H:%M:%S"))
+
+
+def test_anomalies_command_finds_the_planted_faults(faulty_sensors_file, capsys):
+    path, faults = faulty_sensors_file
+    base = ["anomalies", path, "--time-column", "time", "--train-fraction", "0.5", "--max-lag", "1", "--min-supp",
+            "0.05", "--min-threshold", "0.95", "--targets", "heater", "--exclude-persistence"]
+    assert main(base + ["--format", "json"]) == 0
+    captured = capsys.readouterr()
+    records = json.loads(captured.out)
+    assert {pd.Timestamp(r["time"]).strftime("%Y-%m-%d %H:%M:%S") for r in records} == faults
+    assert all("door (t-1) => heater (t)" in r["rules"] and r["score"] > 5 for r in records)
+    assert "rules learned from the first 480 rows" in captured.err
+
+    assert main(base + ["--top", "3", "--single-consequent", "--alpha", "0.05", "--min-improvement", "0.05"]) == 0
+    lines = capsys.readouterr().out.strip().splitlines()
+    assert len(lines) == 4 and "door (t-1) => heater (t)" in lines[1]            # texto legible en la tabla
+    assert main(base + ["--train-fraction", "1.5"]) == 1
+    assert "train-fraction" in capsys.readouterr().err
+
+
+def test_forecast_command_evaluates_and_predicts_the_next_step(sensors_file, capsys):
+    base = ["forecast", sensors_file, "--time-column", "time", "--max-lag", "1", "--min-supp", "0.05",
+            "--min-threshold", "0.95", "--targets", "heater", "--exclude-persistence", "--format", "json"]
+    assert main(base + ["--train-fraction", "0.7"]) == 0
+    record = next(r for r in json.loads(capsys.readouterr().out) if r["item"] == "heater")
+    assert record["precision"] == 1.0 and record["recall"] == 1.0 and record["predicted"] == record["positives"] > 20
+
+    assert main(base + ["--next"]) == 0
+    forecast = json.loads(capsys.readouterr().out)
+    lastDoor = pd.read_csv(sensors_file)["door"].iloc[-1]
+    assert (forecast == [{"item": "heater", "score": 1.0}]) if lastDoor else (forecast == [])
+    assert main(base[:-2] + ["--next"]) == 0                                           # tabla
+    assert capsys.readouterr().out.split()[:2] == (["item", "score"] if lastDoor else ["(no", "rules"])
+
+
+def test_next_events_command_ranks_pending_events_and_evaluates(sequences_file, capsys):
+    base = ["next-events", sequences_file, "--min-supp", "0.4", "--min-threshold", "0.3", "--format", "json"]
+    assert main(base + ["--history", "door;kitchen"]) == 0
+    assert json.loads(capsys.readouterr().out) == [{"item": "coffee", "score": 0.75}]
+    assert main(base + ["--test-fraction", "0.4", "--target", "next", "-k", "2"]) == 0
+    measures = {r["measure"]: r["value"] for r in json.loads(capsys.readouterr().out)}
+    assert measures["cases"] == 3 and 0 <= measures["hit_rate"] <= 1 and "baseline_hit_rate" in measures
+    assert main(base) == 1
+    assert "--history" in capsys.readouterr().err
+
+
+@pytest.fixture
+def patients_file(tmp_path):
+    rng = np.random.RandomState(2)
+    rows = 400
+    temp, cough = rng.normal(37, 1, rows), rng.rand(rows) < 0.5
+    flu = cough & (temp > np.quantile(temp, 2 / 3))
+    diagnosis = np.where(flu, "flu", "ok")
+    path = tmp_path / "patients.csv"
+    pd.DataFrame({"temp": temp, "cough": cough.astype(int), "color": rng.choice(["red", "blue", "green"], rows),
+                  "diagnosis": diagnosis}).to_csv(path, index=False)
+    return str(path)
+
+
+def test_classify_command_learns_the_class_rules(patients_file, capsys):
+    assert main(["classify", patients_file, "--class-column", "diagnosis", "--min-supp", "0.1", "--min-threshold", "0.8",
+                 "--max-len", "2", "--seed", "0", "--format", "json"]) == 0
+    captured = capsys.readouterr()
+    rules = json.loads(captured.out)
+    assert any(r["consequents"] == "diagnosis=flu" and set(r["antecedents"].split(", ")) == {"cough", "temp=high"}
+               for r in rules)
+    assert "accuracy on 120 held-out rows: 1.000" in captured.err and "default class: ok" in captured.err
+
+    assert main(["classify", patients_file, "--class-column", "diagnosis", "--test-fraction", "0", "--top", "1"]) == 0
+    captured = capsys.readouterr()
+    assert "held-out" not in captured.err and len(captured.out.strip().splitlines()) == 2
+    assert main(["classify", patients_file, "--class-column", "nope"]) == 1
+    assert "columna de clase" in capsys.readouterr().err
+    assert main(["classify", patients_file, "--class-column", "diagnosis", "--test-fraction", "1.5"]) == 1

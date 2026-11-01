@@ -132,7 +132,26 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
 - [ ] **Reglas difusas y secuenciales**: no tienen test por regla; solo permutación con una medida (`lift`, ...) para las
   difusas. No hay test para reglas secuenciales.
 
-## 9. Documentación
+## 9. Reglas en acción (`ARM.anomaly`, `ARM.prediction`, `ARM.classification`)
+
+- [ ] **Referencias de memoria**: CBA (Liu, Hsu, Ma, KDD-98, pp. 80–86), Liu–Ma–Wong (PKDD 2000) y Bayardo–Agrawal–
+  Gunopulos (DMKD 4, 2000, pp. 217–240). Verifica títulos y páginas antes de citar.
+- [ ] **Peso de una violación = `-log2(1 - confianza)`** con suelo `floor=1e-3`. Es una elección mía (bits de sorpresa),
+  no un estándar; la suma de pesos sobre reglas correlacionadas cuenta de más (por eso se recomienda podar). Decide si
+  prefieres otro peso por defecto.
+- [ ] **Anomalía = violar una regla fiable.** Una regla del 99 % se viola sola el 1 % de las veces: esas violaciones
+  naturales son indistinguibles de los fallos (en el ejemplo, 9 de 39 instantes). El umbral lo decide la aplicación.
+- [ ] **Predicción con reglas secuenciales**: dicen "después", no "inmediatamente", así que `target="future"` es el criterio
+  coherente y `target="next"` el exigente. Las reglas no pueden vetarse entre sí (el ejemplo sigue prediciendo `door`
+  tras `coffee`). El baseline de popularidad es el de los eventos más frecuentes aún no vistos.
+- [ ] **CBA**: es CBA-CB M1 (sin la fase de reglas con soporte mínimo múltiple completo del CBA 2.0). Los soportes por clase
+  son una simplificación de Liu–Ma–Wong. La lista suele empezar por reglas de la clase mayoritaria con confianza 1.
+- [ ] **`prune_unproductive_rules`**: la mejora se compara con todas las subreglas presentes en el conjunto; si las reglas
+  generales no se minaron (umbral alto), no se detecta la improductividad.
+- [ ] **CLI**: `anomalies`/`forecast` reservan por filas (`--train-fraction`), no por fechas; `classify` baraja con semilla.
+  El JSON de fechas pasó a ISO (antes, milisegundos desde 1970) para evitar el aviso de pandas 4.
+
+## 10. Documentación
 
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la

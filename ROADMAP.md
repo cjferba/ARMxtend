@@ -11,7 +11,7 @@ trabajar** (anomalías, predicción, clasificación), después **nuevos tipos de
 | # | Paso | Estado |
 |---|---|---|
 | 1 | **Significación estadística** (`ARM.significance`): test de Fisher / chi², Bonferroni / Holm / FDR, intervalos de confianza, permutación (minP) con desplazamientos circulares para series | hecho |
-| 2 | **Reglas en acción**: detección de anomalías por violación de reglas; predicción del siguiente evento con reglas temporales y secuenciales; reglas de asociación de clase (tipo CBA) | pendiente |
+| 2 | **Reglas en acción** (`ARM.anomaly`, `ARM.prediction`, `ARM.classification`): detección de anomalías por violación de reglas; predicción del siguiente instante/evento con reglas temporales y secuenciales; reglas de asociación de clase (CBA); poda de reglas improductivas | hecho |
 | 3 | **Patrones y reglas secuenciales difusos** (cantidades/intensidades en los eventos) | pendiente |
 | 4 | **Reglas multinivel / con taxonomía** (jerarquías de ítems, poda de reglas redundantes entre niveles) | pendiente |
 | 5 | **Reglas cuantitativas**: discretización por intervalos con fusión (Srikant–Agrawal) frente a la difusa | pendiente |
@@ -25,10 +25,11 @@ trabajar** (anomalías, predicción, clasificación), después **nuevos tipos de
 **1. Significación.** Entregado en `ARMxtend/ARM/significance.py`. Queda fuera: test por regla para reglas difusas y
 secuenciales (solo permutación con una medida para las difusas).
 
-**2. Reglas en acción.** Tres piezas independientes: (a) puntuar cada transacción/ventana por las reglas fuertes que
-viola (reutiliza `ARM.exception_rules`); (b) dado un historial, proponer el evento siguiente con las reglas
-temporales/secuenciales que se cumplen, evaluado con una partición temporal; (c) un clasificador por reglas de clase
-(consecuente = clase) con la cobertura de CBA, evaluado frente a una línea base.
+**2. Reglas en acción.** Entregado: (a) `anomaly_scores` / `detect_anomalies` puntúan cada fila por las reglas fiables
+que viola; (b) `rule_scores` / `forecast_next` / `predict_next_events` anticipan con reglas temporales y secuenciales y
+`evaluate_*` mide el acierto frente a una línea base; (c) `RuleClassifier` (CBA-CB M1). Queda fuera: reglas
+secuenciales con veto (una regla que descarte eventos), CBA con soportes mínimos múltiples completos, y clasificación
+con reglas difusas.
 
 **3–6.** Cada uno es un módulo nuevo en `ARM/` o `FIM/` con el mismo patrón que los existentes: función pura sobre
 `DataFrame`, columnas de medidas estándar y `attrs` con el contexto (`n_transactions`, ...), de modo que las reglas

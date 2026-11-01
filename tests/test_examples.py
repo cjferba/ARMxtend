@@ -23,6 +23,7 @@ EXAMPLE_MODULES = [
     "example_temporal_rules",
     "example_sequences",
     "example_significance",
+    "example_rules_in_action",
 ]
 
 
@@ -119,3 +120,17 @@ def test_significance_example_removes_the_noise_rules(capsys):
     best = permuted[permuted["p_permutation"] <= 0.05]
     assert len(best) > 0 and noise(best) == 0
     assert pairs >= 10 and fisher_alarms >= 5 and shift_alarms <= 2
+
+
+def test_rules_in_action_example_finds_predicts_and_classifies(capsys):
+    """Las reglas minadas con el funcionamiento normal encuentran los fallos plantados, predicen y clasifican."""
+    module = importlib.import_module("example_rules_in_action")
+    rules, (flagged, fault), (quality, upcoming), (hits, after_coffee), (classifier, accuracy, majority) = module.main()
+
+    assert {frozenset(a) for a in rules["antecedents"]} == {frozenset({"motion@lag1"}), frozenset({"door@lag1"})}
+    assert int(fault.loc[flagged.index].sum()) == 30                                  # los 30 fallos, entre 39 instantes
+    assert len(flagged) < 45
+    assert quality.loc["light", "precision"] > 0.9 and quality.loc["chime", "precision"] == pytest.approx(0.8, abs=0.08)
+    assert "light" in upcoming.index
+    assert after_coffee.index[0] == "tv" and hits["hit_rate"] > hits["baseline_hit_rate"] + 0.05
+    assert accuracy > majority + 0.3 and len(classifier.rules_) <= 4

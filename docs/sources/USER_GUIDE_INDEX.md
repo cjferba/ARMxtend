@@ -7,6 +7,11 @@
 - [ARM.redundancy (pruning redundant rules)](user_guide/ARM/redundancy.md)
 - [ARM.significance (p-values, multiple-testing correction, confidence intervals, permutation tests)](user_guide/ARM/significance.md)
 
+## Rules in action (single machine)
+- [ARM.anomaly (anomalies as rule violations)](user_guide/ARM/anomaly_detection.md)
+- [ARM.prediction (forecasting the next step and the next events with rules)](user_guide/ARM/prediction.md)
+- [ARM.classification (class association rules, CBA classifier)](user_guide/ARM/classification.md)
+
 ## Other kinds of rules (single machine)
 - [ARM.negative_rules (rules with absent items, crisp and fuzzy)](user_guide/ARM/negative_rules.md)
 - [ARM.exception_rules (exception and anomalous rules)](user_guide/ARM/exception_rules.md)

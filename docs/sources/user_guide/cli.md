@@ -11,6 +11,10 @@ armxtend temporal-rules house.csv --time-column time --max-lag 2 --targets heate
 armxtend rule-drift house.csv --time-column time --window 15D --max-lag 1 --targets heater_on
 armxtend sequences routines.txt --min-supp 0.3 --min-len 3
 armxtend sequential-rules routines.txt --min-supp 0.3 --min-threshold 0.8
+armxtend anomalies house.csv --time-column time --train-fraction 0.6 --max-lag 1 --min-threshold 0.95
+armxtend forecast house.csv --time-column time --train-fraction 0.6 --max-lag 1 --targets heater_on
+armxtend next-events routines.txt --min-supp 0.2 --min-threshold 0.3 --history "alarm;bathroom"
+armxtend classify patients.csv --class-column diagnosis --test-fraction 0.3
 armxtend --version
 ```
 
@@ -106,6 +110,79 @@ antecedents consequents  support  confidence   lift  certainty_factor
        door     kitchen   0.8000      1.0000 1.2500            1.0000
     kitchen      coffee   0.6000      0.7500 1.2500            0.3750
        door      coffee   0.6000      0.7500 1.2500            0.3750
+```
+
+## Rules in action: `anomalies`, `forecast`, `next-events` and `classify`
+
+These four commands learn rules and apply them straight away ([`ARM.anomaly`](ARM/anomaly_detection.md),
+[`ARM.prediction`](ARM/prediction.md), [`ARM.classification`](ARM/classification.md)).
+
+**`anomalies`** and **`forecast`** read a sensor CSV like `temporal-rules` (`--time-column`, `--columns`, `--symbols`,
+`--method`, `--calendar`) and use the first `--train-fraction` of the rows (default 0.5) to learn the rules -- lagged
+rules up to `--max-lag` steps back (default 1; `0` for rules within the same row) with only past items in the antecedent --
+and the rest of the rows to apply them. The rule options are those of `temporal-rules` (`--min-supp`, `--metric`,
+`--min-threshold`, `--targets`, `--exclude-persistence`), plus `--single-consequent` and `--min-improvement X` (drop the
+[unproductive rules](ARM/redundancy.md#unproductive-rules)) and the [significance options](#significance-of-the-rules)
+(`--alpha`, `--correction`, `--test`) to keep only rules that are not noise.
+
+```text
+$ armxtend anomalies house.csv --time-column time --train-fraction 0.6 --min-supp 0.02 --min-threshold 0.75 \
+      --targets light chime --exclude-persistence --single-consequent --alpha 0.05 --min-improvement 0.05 \
+      --min-score 6 --top 5
+2 rules learned from the first 3000 rows
+               time  score  violations                                               rules
+2024-03-23 15:00:00 9.3699           2 motion (t-1) => light (t) | door (t-1) => chime (t)
+2024-03-29 18:40:00 9.3699           2 motion (t-1) => light (t) | door (t-1) => chime (t)
+2024-03-22 19:40:00 7.2400           1                           motion (t-1) => light (t)
+2024-03-22 21:20:00 7.2400           1                           motion (t-1) => light (t)
+2024-03-23 13:20:00 7.2400           1                           motion (t-1) => light (t)
+```
+
+`anomalies` lists the analysed rows that violate some rule, highest `score` first (`--min-score`, `--weight
+surprise|confidence|count`, `--top`). `forecast` prints how well the rules predict each item on the analysed rows
+(`--threshold`: the confidence from which an item is predicted) or, with `--next`, the prediction for the step after
+the last row:
+
+```text
+$ armxtend forecast house.csv --time-column time --train-fraction 0.6 --min-supp 0.02 --min-threshold 0.75 \
+      --targets light chime --exclude-persistence --single-consequent --threshold 0.7
+7 rules learned from the first 3000 rows; evaluated on the remaining 2000
+ item    n  positives  predicted  hits  precision  recall     f1  base_rate
+chime 1999        387        373   298     0.7989  0.7700 0.7842     0.1936
+light 1999        725        633   594     0.9384  0.8193 0.8748     0.3627
+```
+
+**`next-events`** takes the same input as [`sequential-rules`](#sequences-and-sequential-rules) and mines
+sequential rules (`--min-supp`, `--min-threshold` = minimum confidence, default 0.3, `--max-antecedent`,
+`--max-consequent`). With `--history "alarm;bathroom;kitchen"` (elements separated by `--element-delimiter`) it ranks the
+events still to come; with `--test-fraction 0.3` it learns from the first sequences and measures `hit_rate` on the last
+30 % (`-k`, `--min-prefix`, `--target future|next`), next to the popularity baseline:
+
+```text
+$ armxtend next-events events.csv --sequence-column day --time-column time --item-column event \
+      --min-supp 0.2 --history "alarm;bathroom;kitchen;coffee"
+40 sequential rules learned from 120 sequences
+ item  score
+   tv 0.7727
+phone 0.6667
+ door 0.5917
+```
+
+(`door` is still listed after `coffee` because the rule `kitchen => door` does not know that a coffee rules out the
+rushed branch: rules cannot veto each other.)
+
+**`classify`** reads a CSV with a column of classes (`--class-column`); numeric columns are discretised
+(`--symbols`, `--method`), 0/1 columns are events and text columns give `column=value` items. It learns a
+[CBA classifier](ARM/classification.md) (`--min-supp` within each class, `--min-threshold` = minimum confidence,
+`--max-len`, `--support class|global`, `--min-improvement`) and prints the selected rules, in the order they are
+applied; the accuracy on the `--test-fraction` of rows held out at random (default 0.3, `--seed`) goes to standard error:
+
+```text
+$ armxtend classify patients.csv --class-column diagnosis --min-threshold 0.7 --min-improvement 0.1
+2 class rules selected from 16 candidates; default class: healthy; accuracy on 360 held-out rows: 0.958 (majority class: 0.550)
+    antecedents       consequents  support  confidence   lift
+   cough, fever     diagnosis=flu   0.2179      0.9632 4.1278
+itchy, sneezing diagnosis=allergy   0.2012      0.7412 3.3839
 ```
 
 ## Significance of the rules

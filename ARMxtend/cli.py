@@ -11,6 +11,10 @@ Interfaz de linea de comandos de ARMxtend::
     armxtend sequential-rules rutinas.txt --min-supp 0.3 --min-threshold 0.8
     armxtend rules transacciones.csv --min-supp 0.05 --alpha 0.05      # solo reglas significativas
     armxtend temporal-rules sensores.csv --time-column hora --permutations 200 --alpha 0.05
+    armxtend anomalies sensores.csv --time-column hora --train-fraction 0.5 --max-lag 1 --min-threshold 0.95
+    armxtend forecast sensores.csv --time-column hora --train-fraction 0.7 --max-lag 2 --targets calefaccion
+    armxtend next-events rutinas.txt --min-supp 0.2 --min-threshold 0.3 --history "alarma;bano"
+    armxtend classify pacientes.csv --class-column diagnostico --test-fraction 0.3
 
 Tambien se puede invocar como ``python -m ARMxtend``. Todos los comandos
 trabajan en una sola maquina (sin Spark) y escriben el resultado en una tabla
@@ -72,13 +76,18 @@ def _read_items(args: argparse.Namespace) -> pd.DataFrame:
     (`--symbols`, `--method`), las 0/1 y las booleanas son eventos, las de texto dan items
     ``columna=valor``; `--time-column` fija el indice temporal y `--calendar` anade items de calendario.
     """
-    from .preprocessing.timeseries import calendar_items, discretize, to_items
-
     table = pd.read_csv(args.input, sep=args.delimiter)
     if args.time_column:
         if args.time_column not in table.columns:
             raise ValueError("la columna de tiempo '{}' no existe".format(args.time_column))
         table = table.set_index(pd.to_datetime(table.pop(args.time_column))).sort_index()
+    return _items_from_table(table, args)
+
+
+def _items_from_table(table: pd.DataFrame, args: argparse.Namespace) -> pd.DataFrame:
+    """Items booleanos de una tabla: ver `_read_items`."""
+    from .preprocessing.timeseries import calendar_items, discretize, to_items
+
     columns = list(args.columns) if args.columns else list(table.columns)
     missing = [name for name in columns if name not in table.columns]
     if missing:
@@ -133,7 +142,7 @@ def _emit(rules: pd.DataFrame, args: argparse.Namespace) -> None:
         flat["sequence"] = [format_sequence(sequence) for sequence in rules["sequence"]]
 
     if args.format == "json":
-        text = json.dumps(json.loads(flat.to_json(orient="records")), indent=2, ensure_ascii=False)
+        text = json.dumps(json.loads(flat.to_json(orient="records", date_format="iso")), indent=2, ensure_ascii=False)
     elif args.format == "csv":
         text = flat.to_csv(index=False)
     else:
@@ -228,6 +237,122 @@ def _run_temporal_rules(args: argparse.Namespace) -> pd.DataFrame:
     return prune_redundant_rules(rules) if args.prune and len(rules) else rules
 
 
+def _train_cut(rows: int, fraction: float) -> int:
+    """Primera fila de la parte de prueba cuando las `fraction` primeras filas son de entrenamiento."""
+    if not 0 < fraction < 1:
+        raise ValueError("--train-fraction debe estar en (0, 1)")
+    cut = int(rows * fraction)
+    if cut < 2 or rows - cut < 2:
+        raise ValueError("hay muy pocas filas ({}) para repartirlas con --train-fraction {}".format(rows, fraction))
+    return cut
+
+
+def _mine_normal_rules(items: pd.DataFrame, args: argparse.Namespace) -> pd.DataFrame:
+    """Reglas del periodo de entrenamiento para `anomalies` y `forecast` (solo con antecedente del pasado)."""
+    from .ARM import crisp_rule_miner, prune_unproductive_rules, significant_rules, temporal_association_rules
+
+    if args.max_lag > 0:
+        rules = temporal_association_rules(items, args.max_lag, args.min_supp, metric=args.metric,
+                                           min_threshold=args.min_threshold, targets=args.targets,
+                                           same_time_antecedent=False, exclude_persistence=args.exclude_persistence)
+    else:
+        rules = crisp_rule_miner(args.min_supp, args.metric, args.min_threshold)(items)
+    if args.alpha is not None and len(rules):
+        rules = significant_rules(rules, args.alpha, args.correction, method=args.test)
+    if args.single_consequent and len(rules):
+        rules = rules[rules["consequents"].map(len) == 1]
+    if args.min_improvement is not None and len(rules):
+        rules = prune_unproductive_rules(rules, args.min_improvement)
+    return rules
+
+
+def _run_anomalies(args: argparse.Namespace) -> pd.DataFrame:
+    from .ARM import detect_anomalies
+
+    args.pretty_lags = True
+    items = _read_items(args)
+    cut = _train_cut(len(items), args.train_fraction)
+    rules = _mine_normal_rules(items.iloc[:cut], args)
+    print("{} rules learned from the first {} rows".format(len(rules), cut), file=sys.stderr)
+    flagged = detect_anomalies(items, rules, min_score=args.min_score, weight=args.weight)
+    flagged = flagged[items.index.get_indexer(flagged.index) >= cut] if items.index.is_unique else flagged
+    flagged = flagged.rename_axis("time" if args.time_column else "row").reset_index()
+    flagged["rules"] = [" | ".join(texts) for texts in flagged["rules"]]
+    args.table_columns = [flagged.columns[0], "score", "violations", "rules"]
+    return flagged
+
+
+def _run_forecast(args: argparse.Namespace) -> pd.DataFrame:
+    from .ARM import evaluate_forecast, forecast_next
+
+    args.pretty_lags = True
+    items = _read_items(args)
+    if args.next:
+        rules = _mine_normal_rules(items, args)
+        print("{} rules learned from all {} rows".format(len(rules), len(items)), file=sys.stderr)
+        args.table_columns = ["item", "score"]
+        return forecast_next(items, rules).reset_index()
+    cut = _train_cut(len(items), args.train_fraction)
+    rules = _mine_normal_rules(items.iloc[:cut], args)
+    print("{} rules learned from the first {} rows; evaluated on the remaining {}".format(
+        len(rules), cut, len(items) - cut), file=sys.stderr)
+    args.table_columns = ["item", "n", "positives", "predicted", "hits", "precision", "recall", "f1", "base_rate"]
+    return evaluate_forecast(items.iloc[cut:], rules, threshold=args.threshold).reset_index()
+
+
+def _run_next_events(args: argparse.Namespace) -> pd.DataFrame:
+    from .ARM import evaluate_next_events, predict_next_events, sequential_rules
+
+    sequences = _read_sequences(args)
+    training = sequences
+    if args.test_fraction:
+        if not 0 < args.test_fraction < 1:
+            raise ValueError("--test-fraction debe estar en (0, 1)")
+        cut = len(sequences) - max(1, int(len(sequences) * args.test_fraction))
+        training = sequences[:cut]
+    elif not args.history:
+        raise ValueError("indique --history (los eventos ya ocurridos) o --test-fraction (para evaluar)")
+    rules = sequential_rules(training, args.min_supp, min_conf=args.min_threshold, max_antecedent=args.max_antecedent,
+                             max_consequent=args.max_consequent)
+    print("{} sequential rules learned from {} sequences".format(len(rules), len(training)), file=sys.stderr)
+    if args.history:
+        history = [[item.strip() for item in element.split(args.delimiter) if item.strip()]
+                   for element in args.history.split(args.element_delimiter)]
+        args.table_columns = ["item", "score"]
+        return predict_next_events(history, rules).reset_index()
+    result = evaluate_next_events(sequences[len(training):], rules, k=args.k, min_prefix=args.min_prefix,
+                                  train=training, target=args.target)
+    args.table_columns = ["measure", "value"]
+    return pd.DataFrame({"measure": list(result), "value": [float(value) for value in result.values()]})
+
+
+def _run_classify(args: argparse.Namespace) -> pd.DataFrame:
+    import numpy as np
+
+    from .ARM import RuleClassifier
+
+    table = pd.read_csv(args.input, sep=args.delimiter)
+    if args.class_column not in table.columns:
+        raise ValueError("la columna de clase '{}' no existe".format(args.class_column))
+    labels = table.pop(args.class_column)
+    items = _items_from_table(table, args)
+    if not 0 <= args.test_fraction < 1:
+        raise ValueError("--test-fraction debe estar en [0, 1)")
+    order = np.random.RandomState(args.seed).permutation(len(items))
+    cut = len(items) - int(len(items) * args.test_fraction)
+    train, test = order[:cut], order[cut:]
+    model = RuleClassifier(args.min_supp, args.min_threshold, args.max_len, args.support, args.min_improvement)
+    model.fit(items.iloc[train], labels.iloc[train])
+    message = "{} class rules selected from {} candidates; default class: {}".format(
+        len(model.rules_), len(model.candidate_rules_), model.default_class_)
+    if len(test):
+        majority = float((labels.iloc[test] == labels.iloc[train].mode()[0]).mean())
+        message += "; accuracy on {} held-out rows: {:.3f} (majority class: {:.3f})".format(
+            len(test), model.score(items.iloc[test], labels.iloc[test]), majority)
+    print(message, file=sys.stderr)
+    return model.rules_.drop(columns=["class"])
+
+
 def _window_size(text: str):
     """'20' -> 20 filas; '7D', '12h', ... -> duracion (``window_rules`` exige un indice temporal)."""
     return int(text) if text.isdigit() else text
@@ -279,12 +404,12 @@ def _output_options(parser: argparse.ArgumentParser, what: str = "rules") -> Non
     parser.add_argument("-o", "--output", help="write the {} to this file instead of stdout".format(what))
 
 
-def _common_output_options(parser: argparse.ArgumentParser, metric: str) -> None:
+def _common_output_options(parser: argparse.ArgumentParser, metric: str, min_threshold: float = 0.7) -> None:
     parser.add_argument("-d", "--delimiter", default=",", help="field/item delimiter (default: ',')")
     parser.add_argument("--min-supp", type=float, default=0.1, help="minimum support (default: 0.1)")
     parser.add_argument("--metric", default=metric, help="measure used to filter and sort the rules (default: %(default)s)")
-    parser.add_argument("--min-threshold", type=float, default=0.7,
-                        help="minimum value of --metric (default: 0.7)")
+    parser.add_argument("--min-threshold", type=float, default=min_threshold,
+                        help="minimum value of --metric (default: %(default)s)")
     _output_options(parser)
 
 
@@ -318,6 +443,22 @@ def _series_options(parser: argparse.ArgumentParser) -> None:
                         help="how numeric columns are discretised (default: quantile)")
     parser.add_argument("--calendar", nargs="+", choices=("hour", "weekday", "daytype", "month", "part_of_day"),
                         help="add calendar items (needs --time-column)")
+
+
+def _normal_rules_options(parser: argparse.ArgumentParser) -> None:
+    """Opciones de las reglas del funcionamiento normal (anomalies y forecast)."""
+    parser.add_argument("--train-fraction", type=float, default=0.5,
+                        help="share of the first rows used to learn the rules; the rest is analysed (default: 0.5)")
+    parser.add_argument("--max-lag", type=int, default=1,
+                        help="steps back the antecedents may look; 0 = rules within the same row (default: 1)")
+    parser.add_argument("--targets", nargs="+", help="items the consequent is restricted to")
+    parser.add_argument("--exclude-persistence", action="store_true",
+                        help="drop rules that merely say a state persists (x at t-k => x at t)")
+    parser.add_argument("--single-consequent", action="store_true", help="keep only rules with a single item as consequent")
+    parser.add_argument("--min-improvement", type=float,
+                        help="drop rules whose extra conditions improve the confidence of a more general rule by "
+                             "no more than this")
+    _significance_options(parser)
 
 
 def _sequence_options(parser: argparse.ArgumentParser) -> None:
@@ -423,6 +564,70 @@ def build_parser() -> argparse.ArgumentParser:
     sequential.add_argument("--max-consequent", type=int, default=2, help="maximum items in Y (default: 2)")
     _output_options(sequential)
     sequential.set_defaults(run=_run_sequential_rules)
+
+    anomalies = commands.add_parser(
+        "anomalies", help="rows that break the rules learned from the normal behaviour (rule violation)")
+    _series_options(anomalies)
+    _common_output_options(anomalies, "confidence", 0.9)
+    _normal_rules_options(anomalies)
+    anomalies.add_argument("--min-score", type=float, default=0.0,
+                           help="report only rows with a score above this (default: 0, any violation)")
+    anomalies.add_argument("--weight", choices=("surprise", "confidence", "count"), default="surprise",
+                           help="weight of a violated rule: -log2(1 - confidence) bits (default), its confidence or 1")
+    anomalies.set_defaults(run=_run_anomalies, keep_order=True)
+
+    forecast = commands.add_parser(
+        "forecast", help="predict items at the next time step with temporal rules; evaluated on held-out rows")
+    _series_options(forecast)
+    _common_output_options(forecast, "confidence", 0.8)
+    _normal_rules_options(forecast)
+    forecast.add_argument("--threshold", type=float, default=0.5,
+                          help="predict an item when the confidence of the rules that fire is at least this (default: 0.5)")
+    forecast.add_argument("--next", action="store_true",
+                          help="instead of evaluating, print the forecast for the step after the last row")
+    forecast.set_defaults(run=_run_forecast, keep_order=True)
+
+    nextEvents = commands.add_parser(
+        "next-events", help="events expected to happen next in a sequence (sequential rules); evaluated on held-out sequences")
+    _sequence_options(nextEvents)
+    nextEvents.add_argument("--min-threshold", type=float, default=0.3, help="minimum confidence of the rules (default: 0.3)")
+    nextEvents.add_argument("--max-antecedent", type=int, default=2, help="maximum items in X (default: 2)")
+    nextEvents.add_argument("--max-consequent", type=int, default=1, help="maximum items in Y (default: 1)")
+    nextEvents.add_argument("--history", help="events already observed, elements separated by --element-delimiter: "
+                                              "prints the ranking of the events still to come")
+    nextEvents.add_argument("--test-fraction", type=float,
+                            help="evaluate instead: learn from the first sequences and test on this fraction of the last ones")
+    nextEvents.add_argument("-k", type=int, default=1, help="evaluation: events predicted per cut (default: 1)")
+    nextEvents.add_argument("--min-prefix", type=int, default=1, help="evaluation: elements of history at least (default: 1)")
+    nextEvents.add_argument("--target", choices=("future", "next"), default="future",
+                            help="evaluation: a prediction is right if the event happens later (default) or next")
+    _output_options(nextEvents, "events")
+    nextEvents.set_defaults(run=_run_next_events, metric=None, keep_order=True)
+
+    classify = commands.add_parser(
+        "classify", help="class association rules (CBA classifier) from a CSV with a class column")
+    classify.add_argument("input", help="CSV file with a header; numeric columns are discretised")
+    classify.add_argument("--class-column", required=True, help="column with the class to predict")
+    classify.add_argument("--columns", nargs="+", help="attribute columns to use (default: all but the class)")
+    classify.add_argument("--symbols", type=int, default=3, help="symbols per numeric column (default: 3)")
+    classify.add_argument("--method", choices=("quantile", "uniform", "sax"), default="quantile",
+                          help="how numeric columns are discretised (default: quantile)")
+    classify.add_argument("-d", "--delimiter", default=",", help="CSV delimiter (default: ',')")
+    classify.add_argument("--min-supp", type=float, default=0.05,
+                          help="minimum support of a rule, within its class (see --support; default: 0.05)")
+    classify.add_argument("--min-threshold", type=float, default=0.6, help="minimum confidence (default: 0.6)")
+    classify.add_argument("--max-len", type=int, default=3, help="maximum conditions in a rule (default: 3)")
+    classify.add_argument("--support", choices=("class", "global"), default="class",
+                          help="whether --min-supp is relative to the rows of the class (default) or to all rows")
+    classify.add_argument("--min-improvement", type=float,
+                          help="drop rules whose extra conditions improve the confidence of a more general rule by "
+                               "no more than this")
+    classify.add_argument("--test-fraction", type=float, default=0.3,
+                          help="share of the rows held out to measure the accuracy (default: 0.3; 0 = use all to learn)")
+    classify.add_argument("--seed", type=int, default=0, help="random seed of the split (default: 0)")
+    _output_options(classify)
+    classify.set_defaults(run=_run_classify, metric=None, keep_order=True, time_column=None, calendar=None,
+                          table_columns=["antecedents", "consequents", "support", "confidence", "lift"])
 
     return parser
 
