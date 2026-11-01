@@ -37,6 +37,7 @@ import pandas as pd
 
 from ..FFIM import fpgrowth
 from ..FIM._shared import key_to_itemset
+from ..base import ParamsMixin
 from ..preprocessing.timeseries import check_item_names
 from ._apply import ItemTable, require_columns
 from ._measures import MEASURES
@@ -218,7 +219,7 @@ def _column(table: ItemTable, item: str) -> int:
     return table.columns[item]
 
 
-class RuleClassifier:
+class RuleClassifier(ParamsMixin):
     """
     Clasificador por reglas de asociacion de clase (CBA): ``fit`` extrae las
     reglas (``class_association_rules``) y se queda con las utiles
