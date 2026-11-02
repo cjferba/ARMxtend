@@ -26,6 +26,8 @@
 - [estimators (TransactionEncoder, RuleMiner, scikit-learn style API)](user_guide/estimators.md)
 - [datasets (synthetic generators and example data sets)](user_guide/datasets.md)
 
+- [Comparison with mlxtend (identical results, timings)](user_guide/comparison.md)
+
 ## Other kinds of rules (single machine)
 - [ARM.negative_rules (rules with absent items, crisp and fuzzy)](user_guide/ARM/negative_rules.md)
 - [ARM.exception_rules (exception and anomalous rules)](user_guide/ARM/exception_rules.md)

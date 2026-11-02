@@ -4,6 +4,9 @@ If you use ARMxtend as part of your workflow in a scientific publication, please
 the paper(s) behind the specific module(s) you used. For studies that apply these methods to real data see
 [Applications](applications.md).
 
+To cite the software itself use the `CITATION.cff` file at the root of the repository (GitHub shows it under
+"Cite this repository"). There is no Zenodo DOI yet.
+
 ## Big Data / streaming frequent itemset mining (`SFIM`, `SARE`)
 
 Fernandez-Basso, C., Francisco-Agra, A. J., Martin-Bautista, M. J., & Ruiz, M. D. (2019).

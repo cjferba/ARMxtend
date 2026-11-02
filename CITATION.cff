@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+message: "If you use ARMxtend in your work, please cite the paper(s) behind the module(s) you used (see docs/sources/cite.md) and, for the software itself, this entry."
+title: "ARMxtend: association rule mining extensions"
+type: software
+version: 0.1.0
+authors:
+  - family-names: Fernandez-Basso
+    given-names: Carlos
+    email: cjferba@decsai.ugr.es
+repository-code: "https://github.com/cjferba/ARMxtend"
+url: "https://cjferba.github.io/ARMxtend"
+license: CC-BY-NC-4.0
+keywords:
+  - association rules
+  - frequent itemsets
+  - fuzzy logic
+  - sequential patterns
+  - apache spark
+references:
+  - type: article
+    title: "New Spark solutions for distributed frequent itemset and association rule mining algorithms"
+    authors:
+      - family-names: Fernandez-Basso
+        given-names: Carlos
+      - family-names: Ruiz
+        given-names: M. Dolores
+      - family-names: Martin-Bautista
+        given-names: Maria J.
+    journal: "Cluster Computing"
+    volume: 27
+    start: 1217
+    end: 1234
+    year: 2024
+    doi: "10.1007/s10586-023-04014-w"
+  - type: article
+    title: "Finding tendencies in streaming data using big data frequent itemset mining"
+    authors:
+      - family-names: Fernandez-Basso
+        given-names: Carlos
+      - family-names: Francisco-Agra
+        given-names: Abel J.
+      - family-names: Martin-Bautista
+        given-names: Maria J.
+      - family-names: Ruiz
+        given-names: M. Dolores
+    journal: "Knowledge-Based Systems"
+    volume: 163
+    start: 666
+    end: 674
+    year: 2019
+    doi: "10.1016/j.knosys.2018.09.026"

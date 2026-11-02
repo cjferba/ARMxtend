@@ -45,6 +45,7 @@ nav:
   - Estimators and datasets:
     - estimators (scikit-learn style API): user_guide/estimators.md
     - datasets (generators and examples): user_guide/datasets.md
+  - Comparison with mlxtend: user_guide/comparison.md
   - Rules in action:
     - ARM.anomaly (anomalies as rule violations): user_guide/ARM/anomaly_detection.md
     - ARM.prediction (next step / next events): user_guide/ARM/prediction.md

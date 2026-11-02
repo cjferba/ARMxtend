@@ -281,7 +281,14 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
 - [ ] **Los conjuntos pequeños (`han`, `weather`) están escritos a mano** de las tablas habituales de los libros; contrástalos con las fuentes antes de publicar cifras. Referencias de `datasets.md` escritas de memoria.
 - [ ] **Un bug encontrado al probar**: `transform` sin reglas devolvía 0 filas (corregido); un primer generador podía no terminar si pedía más items que los alcanzables (ahora se limita a `n_items`).
 
-## 16. Documentación
+## 16. Proyecto (`CITATION.cff`, cuaderno, comparativa)
+
+- [ ] **ARMxtend es más lento que mlxtend en minería simple**: FP-Growth ~4-5× y reglas ~4× (`comparison.md`); el Apriori denso de mlxtend, mucho más. Resultados idénticos. Optimizar `FFIM.fpgrowth` / `association_rules` es una mejora pendiente.
+- [ ] **Sin SPMF** (necesita Java y su .jar, que no se incluye) **ni DOI de Zenodo** (hay que activarlo en GitHub al publicar la primera release; después se añade el DOI a `CITATION.cff`).
+- [ ] **`CITATION.cff`** cita los dos artículos Spark/streaming como referencias, no como `preferred-citation`; decide si el software debe citarse por uno de ellos. Autor y correo tomados del `pyproject.toml`.
+- [ ] El cuaderno está ejecutado con datos sintéticos (semilla fija); los números pueden variar con otras versiones de numpy.
+
+## 17. Documentación
 
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la

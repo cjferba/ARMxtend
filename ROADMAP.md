@@ -18,7 +18,7 @@ trabajar** (anomalías, predicción, clasificación), después **nuevos tipos de
 | 6 | **Reglas raras, de alta utilidad y top-k** (`FIM.topk`, `FIM.rare`, `FIM.utility`, `ARM.topk_rules`, `ARM.rare_rules`, `ARM.utility_rules`): las k mejores sin umbral, itemsets raros minimales, itemsets y reglas de alta utilidad | hecho |
 | 7 | **Spark**: entrada DataFrame/Parquet; DECLAT/FuzzyDECLAT con TID-lists compactas; benchmark de secuencias | hecho |
 | 8 | **API estilo scikit-learn**, generadores sintéticos y conjuntos de datos de ejemplo (`estimators`, `datasets`, `armxtend generate`) | hecho |
-| 9 | **Proyecto**: `CITATION.cff` / Zenodo, cuadernos, comparativas con SPMF y mlxtend, idioma de la documentación | pendiente |
+| 9 | **Proyecto**: `CITATION.cff` / Zenodo, cuadernos, comparativas con SPMF y mlxtend, idioma de la documentación | parcial: hechos `CITATION.cff`, cuaderno y comparativa con mlxtend; faltan Zenodo, SPMF y decidir el idioma |
 
 ## Notas por paso
 
