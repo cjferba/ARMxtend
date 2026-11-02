@@ -133,18 +133,15 @@ def association_rules(df: pd.DataFrame, metric: str = "confidence",
     frozenset_vect = np.vectorize(lambda x: frozenset(x), otypes=[object])
     frequent_items_dict = dict(zip(frozenset_vect(keys), values))
 
-    # prepare buckets to collect frequent rules
+    # candidatos: todas las particiones antecedente/consecuente de cada itemset frecuente
     rule_antecedents = []
     rule_consequents = []
     rule_supports = []
     n_candidates = 0
 
-    # iterate over all frequent itemsets
     for k in frequent_items_dict.keys():
         sAC = frequent_items_dict[k]
-        # to find all possible combinations
         for idx in range(len(k)-1, 0, -1):
-            # of antecedent and consequent
             for c in combinations(k, r=idx):
                 antecedent = frozenset(c)
                 consequent = k.difference(antecedent)
@@ -168,13 +165,22 @@ def association_rules(df: pd.DataFrame, metric: str = "confidence",
                                       ' You can try using the '
                                       ' `support_only=True` option')
                         raise KeyError(s)
-                    # check for the threshold
 
-                score = metric_dict[metric](sAC, sA, sC)
-                if score >= min_threshold:
-                    rule_antecedents.append(antecedent)
-                    rule_consequents.append(consequent)
-                    rule_supports.append([sAC, sA, sC])
+                rule_antecedents.append(antecedent)
+                rule_consequents.append(consequent)
+                rule_supports.append([sAC, sA, sC])
+
+    # la medida se evalua una sola vez, vectorizada, sobre todos los candidatos y despues se filtra
+    if rule_supports:
+        if support_only:
+            scores = np.array([row[0] for row in rule_supports], dtype=float)
+        else:
+            columns = np.array(rule_supports, dtype=float).T
+            scores = np.asarray(metric_dict[metric](columns[0], columns[1], columns[2]), dtype=float)
+        keep = np.flatnonzero(scores >= min_threshold)
+        rule_antecedents = [rule_antecedents[i] for i in keep]
+        rule_consequents = [rule_consequents[i] for i in keep]
+        rule_supports = [rule_supports[i] for i in keep]
 
     # check if frequent rule was generated
     if not rule_supports:

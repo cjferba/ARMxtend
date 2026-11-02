@@ -51,3 +51,22 @@ def test_fuzzy_fpgrowth_matches_fuzzy_declat_on_partial_membership():
 
     for key, declatSupport in declatResult.items():
         assert np.allclose(fpgrowthResult.get(key, np.zeros(4)), declatSupport)
+
+
+def test_fpgrowth_with_many_repeated_transactions_matches_brute_force():
+    """Las transacciones iguales se agrupan con pesos: el resultado debe ser el de contar una a una."""
+    from itertools import combinations
+    from ARMxtend.FFIM import fpgrowth
+    from ARMxtend.FIM._shared import key_to_itemset
+
+    base = [["a", "b", "c"], ["a", "b"], ["b", "c", "d"], ["a", "d"], ["c"], []]
+    transactions = [base[i % len(base)] for i in range(60)] + [["a", "b", "c", "d"]] * 7
+    found = {key_to_itemset(key): supp for key, supp in fpgrowth(transactions, 0.2).items()}
+    expected = {}
+    for size in range(1, 5):
+        for itemset in combinations("abcd", size):
+            supp = sum(set(itemset) <= set(t) for t in transactions) / len(transactions)
+            if supp >= 0.2 - 1e-9:
+                expected[frozenset(itemset)] = supp
+    assert found.keys() == expected.keys()
+    assert all(abs(found[k] - expected[k]) < 1e-12 for k in expected)

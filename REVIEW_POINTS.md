@@ -283,7 +283,7 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
 
 ## 16. Proyecto (`CITATION.cff`, cuaderno, comparativa)
 
-- [ ] **ARMxtend es más lento que mlxtend en minería simple**: FP-Growth ~4-5× y reglas ~4× (`comparison.md`); el Apriori denso de mlxtend, mucho más. Resultados idénticos. Optimizar `FFIM.fpgrowth` / `association_rules` es una mejora pendiente.
+- [ ] **Optimización de `FFIM.fpgrowth` y `association_rules`** (transacciones iguales agrupadas con peso, bases condicionales sin replicar caminos, medida vectorizada): resultados iguales (tests contra fuerza bruta) y tiempos a la par de mlxtend FP-Growth (5× y 3× más rápido que antes). El Apriori denso de mlxtend sigue ~7× por delante en esta tabla; ARMxtend no tiene minero denso. Los fuzzy usan este `fpgrowth` en cada alpha-corte, así que también se benefician (no medido).
 - [ ] **Sin SPMF** (necesita Java y su .jar, que no se incluye) **ni DOI de Zenodo** (hay que activarlo en GitHub al publicar la primera release; después se añade el DOI a `CITATION.cff`).
 - [ ] **`CITATION.cff`** cita los dos artículos Spark/streaming como referencias, no como `preferred-citation`; decide si el software debe citarse por uno de ellos. Autor y correo tomados del `pyproject.toml`.
 - [ ] El cuaderno está ejecutado con datos sintéticos (semilla fija); los números pueden variar con otras versiones de numpy.

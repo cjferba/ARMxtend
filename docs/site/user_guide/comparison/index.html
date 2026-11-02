@@ -405,40 +405,42 @@ and times them (best of 3, one machine, <code>min_supp=0.05</code>, <code>min_co
 <td style="text-align: right;">2 000</td>
 <td style="text-align: right;">537</td>
 <td style="text-align: right;">716</td>
-<td style="text-align: right;">0.058</td>
+<td style="text-align: right;">0.015</td>
 <td style="text-align: right;">0.017</td>
 <td style="text-align: right;">0.004</td>
-<td style="text-align: right;">0.014</td>
+<td style="text-align: right;">0.004</td>
 <td style="text-align: right;">0.004</td>
 </tr>
 <tr>
 <td style="text-align: right;">10 000</td>
 <td style="text-align: right;">508</td>
 <td style="text-align: right;">655</td>
-<td style="text-align: right;">0.262</td>
-<td style="text-align: right;">0.058</td>
-<td style="text-align: right;">0.009</td>
-<td style="text-align: right;">0.013</td>
+<td style="text-align: right;">0.052</td>
+<td style="text-align: right;">0.057</td>
+<td style="text-align: right;">0.010</td>
+<td style="text-align: right;">0.004</td>
 <td style="text-align: right;">0.003</td>
 </tr>
 <tr>
 <td style="text-align: right;">50 000</td>
 <td style="text-align: right;">515</td>
 <td style="text-align: right;">679</td>
-<td style="text-align: right;">1.368</td>
 <td style="text-align: right;">0.266</td>
-<td style="text-align: right;">0.037</td>
-<td style="text-align: right;">0.013</td>
+<td style="text-align: right;">0.259</td>
+<td style="text-align: right;">0.035</td>
+<td style="text-align: right;">0.004</td>
 <td style="text-align: right;">0.003</td>
 </tr>
 </tbody>
 </table>
-<p>In every case both libraries return the same itemsets (same supports) and the same rules (same confidences).</p>
+<p>In every case both libraries return the same itemsets (same supports) and the same rules (same confidences). (Before the
+optimization of version 0.1.0, ARMxtend's FP-Growth took 0.058, 0.262 and 1.368 s and its rules 0.014, 0.013 and 0.013 s.)</p>
 <h2 id="how-to-read-it">How to read it</h2>
 <ul>
-<li><strong>For plain frequent itemsets and rules, mlxtend is faster.</strong> ARMxtend's FP-Growth is pure Python and about 4 to 5 times
-  slower than mlxtend's, and mlxtend's Apriori (dense numpy bit operations) is far ahead on this narrow, dense table. ARMxtend's
-  rule generation is about 4 times slower too. If that is all you need and it is on one machine, use mlxtend.</li>
+<li><strong>FP-Growth and rules are on par with mlxtend</strong> on this data. FP-Growth groups equal transactions and keeps each conditional
+  path once with its weight; the rule measures are computed once, vectorized, over all candidate rules.</li>
+<li><strong>mlxtend's Apriori is still 7 to 8 times faster</strong> here: it works on a dense boolean matrix with numpy, which suits a table
+  of 60 items and short baskets. ARMxtend has no dense miner; with many more items that advantage disappears.</li>
 <li><strong>The reasons to use ARMxtend are what mlxtend does not have</strong>: fuzzy, gradual, sequential, temporal, quantitative, rare,
   high-utility and top-k rules, significance testing, anomaly detection and forecasting with rules, and the Spark versions.</li>
 <li><strong>It says nothing about quality or about Spark.</strong> It compares speed on one kind of synthetic data (60 items, many short

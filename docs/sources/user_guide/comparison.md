@@ -6,17 +6,19 @@ and times them (best of 3, one machine, `min_supp=0.05`, `min_conf=0.7`; seconds
 
 | transactions | itemsets | rules | ARMxtend FP-Growth | mlxtend FP-Growth | mlxtend Apriori | ARMxtend rules | mlxtend rules |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 2 000 | 537 | 716 | 0.058 | 0.017 | 0.004 | 0.014 | 0.004 |
-| 10 000 | 508 | 655 | 0.262 | 0.058 | 0.009 | 0.013 | 0.003 |
-| 50 000 | 515 | 679 | 1.368 | 0.266 | 0.037 | 0.013 | 0.003 |
+| 2 000 | 537 | 716 | 0.015 | 0.017 | 0.004 | 0.004 | 0.004 |
+| 10 000 | 508 | 655 | 0.052 | 0.057 | 0.010 | 0.004 | 0.003 |
+| 50 000 | 515 | 679 | 0.266 | 0.259 | 0.035 | 0.004 | 0.003 |
 
-In every case both libraries return the same itemsets (same supports) and the same rules (same confidences).
+In every case both libraries return the same itemsets (same supports) and the same rules (same confidences). (Before the
+optimization of version 0.1.0, ARMxtend's FP-Growth took 0.058, 0.262 and 1.368 s and its rules 0.014, 0.013 and 0.013 s.)
 
 ## How to read it
 
-- **For plain frequent itemsets and rules, mlxtend is faster.** ARMxtend's FP-Growth is pure Python and about 4 to 5 times
-  slower than mlxtend's, and mlxtend's Apriori (dense numpy bit operations) is far ahead on this narrow, dense table. ARMxtend's
-  rule generation is about 4 times slower too. If that is all you need and it is on one machine, use mlxtend.
+- **FP-Growth and rules are on par with mlxtend** on this data. FP-Growth groups equal transactions and keeps each conditional
+  path once with its weight; the rule measures are computed once, vectorized, over all candidate rules.
+- **mlxtend's Apriori is still 7 to 8 times faster** here: it works on a dense boolean matrix with numpy, which suits a table
+  of 60 items and short baskets. ARMxtend has no dense miner; with many more items that advantage disappears.
 - **The reasons to use ARMxtend are what mlxtend does not have**: fuzzy, gradual, sequential, temporal, quantitative, rare,
   high-utility and top-k rules, significance testing, anomaly detection and forecasting with rules, and the Spark versions.
 - **It says nothing about quality or about Spark.** It compares speed on one kind of synthetic data (60 items, many short

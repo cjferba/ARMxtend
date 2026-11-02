@@ -49,20 +49,21 @@ class _FPNode(object):
         self.link = None
 
 
-def _build_fptree(transactions, min_count):
+def _build_fptree(weighted, min_count):
     """
-    Construye un FP-Tree a partir de una lista de transacciones (cada una,
-    una coleccion de items), conservando unicamente los items cuyo conteo
-    absoluto (sobre el total de transacciones ORIGINAL, no el tamano de
-    `transactions`) alcanza `min_count`.
+    Construye un FP-Tree a partir de pares (items, peso): cada transaccion (o camino
+    condicional) con el numero de veces que se repite. Conserva unicamente los items cuyo
+    conteo absoluto (ponderado) alcanza `min_count`, que es el del conjunto ORIGINAL de
+    transacciones, no el tamano de `weighted`.
 
-    Retorna (header, order, item_counts): la tabla de cabeceras (item -> primer
-    nodo del arbol con ese item, enlazados entre si via `link`), el orden
-    descendente de frecuencia de los items conservados, y sus conteos.
+    Retorna (header, order, item_counts): la tabla de cabeceras (item -> primer nodo del
+    arbol con ese item, enlazados entre si via `link`), el orden descendente de frecuencia
+    de los items conservados, y sus conteos.
     """
     rawCounts: Counter = Counter()
-    for transaction in transactions:
-        rawCounts.update(set(transaction))
+    for items, weight in weighted:
+        for item in items:
+            rawCounts[item] += weight
 
     itemCounts = {item: count for item, count in rawCounts.items() if count >= min_count}
     if not itemCounts:
@@ -75,11 +76,9 @@ def _build_fptree(transactions, min_count):
     header: Dict[str, Optional[_FPNode]] = {item: None for item in order}
     headerTail: Dict[str, Optional[_FPNode]] = {item: None for item in order}
 
-    for transaction in transactions:
-        filteredItems = sorted((item for item in set(transaction) if item in itemCounts),
-                               key=lambda item: orderIndex[item])
+    for items, weight in weighted:
         node = root
-        for item in filteredItems:
+        for item in sorted((item for item in items if item in itemCounts), key=orderIndex.__getitem__):
             child = node.children.get(item)
             if child is None:
                 child = _FPNode(item, node)
@@ -90,14 +89,14 @@ def _build_fptree(transactions, min_count):
                 else:
                     tail.link = child
                 headerTail[item] = child
-            child.count += 1
+            child.count += weight
             node = child
 
     return header, order, itemCounts
 
 
 def _ascend_prefix_path(node):
-    """Items (sin contar el propio nodo) desde la raiz hasta el nodo dado."""
+    """Items (sin contar el propio nodo) desde el nodo dado hacia la raiz."""
     path = []
     node = node.parent
     while node is not None and node.item is not None:
@@ -107,23 +106,23 @@ def _ascend_prefix_path(node):
 
 
 def _mine_fptree(header, order, itemCounts, min_count, prefix, result):
-    # Se procesan los items del menos al mas frecuente: cada uno se combina
-    # con el prefijo actual para formar un nuevo itemset frecuente, y su
-    # base de patrones condicional se mina recursivamente
+    # Se procesan los items del menos al mas frecuente: cada uno se combina con el prefijo
+    # actual para formar un nuevo itemset frecuente, y su base de patrones condicional
+    # (caminos con su peso, sin repetirlos) se mina recursivamente
     for item in reversed(order):
-        newItemset = frozenset(prefix) | {item}
+        newItemset = prefix | {item}
         result[newItemset] = itemCounts[item]
 
-        conditionalTransactions = []
+        conditionalBase = []
         node = header[item]
         while node is not None:
             prefixPath = _ascend_prefix_path(node)
             if prefixPath:
-                conditionalTransactions.extend([prefixPath] * node.count)
+                conditionalBase.append((prefixPath, node.count))
             node = node.link
 
-        if conditionalTransactions:
-            condHeader, condOrder, condCounts = _build_fptree(conditionalTransactions, min_count)
+        if conditionalBase:
+            condHeader, condOrder, condCounts = _build_fptree(conditionalBase, min_count)
             if condOrder:
                 _mine_fptree(condHeader, condOrder, condCounts, min_count, newItemset, result)
 
@@ -132,6 +131,9 @@ def fpgrowth(transactions: Sequence[Iterable[str]], min_supp: float) -> Dict[str
     """
     FP-Growth crisp: mineria exhaustiva de itemsets frecuentes sin generar
     candidatos explicitos.
+
+    Las transacciones iguales se agrupan antes de construir el arbol (con pesos), y las
+    bases condicionales llevan cada camino una sola vez con su peso.
 
     Argumentos:
         transactions (Sequence[Iterable[str]]): una transaccion por
@@ -147,7 +149,8 @@ def fpgrowth(transactions: Sequence[Iterable[str]], min_supp: float) -> Dict[str
         return {}
 
     minCount = min_supp * totalTransacs - 1e-9
-    header, order, itemCounts = _build_fptree(transactions, minCount)
+    weighted = Counter(frozenset(transaction) for transaction in transactions)
+    header, order, itemCounts = _build_fptree(weighted.items(), minCount)
 
     result: dict = {}
     if order:

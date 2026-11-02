@@ -26,7 +26,8 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
   `RuleClassifier` on the same protocol (`ARMxtend.estimators`, `ARMxtend.base`); synthetic generators with planted patterns and
   four packaged example data sets (`ARMxtend.datasets`); `armxtend generate`.
 - **Project:** `CITATION.cff`, an executed quick-start notebook (`examples/notebooks/quickstart.ipynb`) and a comparison with
-  mlxtend (`benchmarks/compare_mlxtend.py`: identical itemsets and rules; ARMxtend is slower on plain mining).
+  mlxtend (`benchmarks/compare_mlxtend.py`: identical itemsets and rules). `FFIM.fpgrowth` (equal transactions grouped, weighted conditional
+  paths) and `ARM.association_rules` (measure computed once, vectorized) are 5x and 3x faster, on par with mlxtend FP-Growth.
 - **Spark:** `DECLAT` / `FuzzyDECLAT` keep numpy TID-lists and broadcast them once (same results; `FuzzyDECLAT` 19.6 s to
   0.8 s and 1.1 GB to 23 MB of driver memory at 100 000 transactions); input from DataFrames and Parquet
   (`FIM.spark_io`); `prefixspan_spark` accepts DataFrames and no longer collects an RDD; sequence benchmark.
