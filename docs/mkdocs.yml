@@ -42,6 +42,9 @@ nav:
     - ARM.top_k_rules (the k best, no threshold): user_guide/ARM/topk_rules.md
     - ARM.rare_rules (rare combinations of frequent items): user_guide/ARM/rare_rules.md
     - ARM.high_utility_rules (value, not frequency): user_guide/ARM/utility_rules.md
+  - Estimators and datasets:
+    - estimators (scikit-learn style API): user_guide/estimators.md
+    - datasets (generators and examples): user_guide/datasets.md
   - Rules in action:
     - ARM.anomaly (anomalies as rule violations): user_guide/ARM/anomaly_detection.md
     - ARM.prediction (next step / next events): user_guide/ARM/prediction.md

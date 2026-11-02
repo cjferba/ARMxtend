@@ -19,7 +19,7 @@ dias de la tabla del tenis de Quinlan, con la clase), ``"sales"`` (cantidades y 
 
 @author Carlos Fernandez-Basso
 """
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -81,14 +81,16 @@ def make_transactions(n_transactions: int = 1000, n_items: int = 100, avg_length
     popularity /= popularity.sum()
     transactions = []
     for _ in range(n_transactions):
-        target = max(1, rng.poisson(avg_length))
+        target = min(n_items, max(1, rng.poisson(avg_length)))
         basket: set = set()
         while len(basket) < target:
             if rng.random() < 0.5:
                 pattern = patterns[rng.choice(n_patterns, p=weights)]
                 basket.update(item for item in pattern if rng.random() >= corruption)
-            else:
-                basket.add(items[rng.choice(n_items, p=popularity)])
+            else:                                           # un item suelto que aun no este, segun su popularidad
+                free = np.array([item not in basket for item in items])
+                chance = popularity * free
+                basket.add(items[rng.choice(n_items, p=chance / chance.sum())])
         transactions.append(sorted(basket))
     return (transactions, patterns) if return_patterns else transactions
 
@@ -148,8 +150,8 @@ def make_quantities(n_transactions: int = 1000, n_items: int = 30, avg_length: f
     """
     _check_positive(n_transactions=n_transactions, n_items=n_items, max_quantity=max_quantity)
     rng = _rng(random_state)
-    baskets = make_transactions(n_transactions, n_items, avg_length, n_patterns=max(1, n_items // 3), pattern_length=3,
-                                random_state=rng)
+    baskets = cast(List[List[str]], make_transactions(n_transactions, n_items, avg_length,
+                                                      n_patterns=max(1, n_items // 3), pattern_length=3, random_state=rng))
     items = _names("i", n_items)
     table = np.zeros((n_transactions, n_items), dtype=int)
     position = {item: number for number, item in enumerate(items)}

@@ -203,3 +203,13 @@ def test_special_rules_example_finds_rare_pairs_and_what_is_worth_more(capsys):
     assert useful.iloc[0]["utility"] > 0.1 * useful.attrs["total_utility"] and (useful["utility"] >= 0.1 * useful.attrs["total_utility"] - 1e-9).all()
     assert key(value_rules)[0] == (("wine",), ("cheese",)) and (value_rules["lift"] >= 1.5).all()
     assert value_rules.iloc[0]["utility_share"] == pytest.approx(0.27, abs=0.03)
+
+
+def test_estimators_example_recovers_patterns_and_classifies():
+    """Reglas con RuleMiner sobre datos sinteticos, atributos de regla y un clasificador."""
+    module = importlib.import_module("example_estimators")
+    patterns, recovered, miner, features, top, accuracy, tennis, weather = module.main()
+
+    assert 0 < len(recovered) <= len(patterns) and features.shape == (2000, len(miner.rules_))
+    assert len(top) == 5 and top["support"].is_monotonic_decreasing and accuracy > 0.9
+    assert tennis.score(weather.data, weather.target) >= 0.9

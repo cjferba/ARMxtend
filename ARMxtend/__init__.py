@@ -18,9 +18,11 @@ imported explicitly by the code that needs them, e.g.
 __version__ = "0.1.0"
 
 from . import ARM
+from . import datasets
+from . import estimators
 from . import FFIM
 from . import VizARM
 from . import preprocessing
 from .FIM import FARE
 
-__all__ = ["ARM", "FIM", "FFIM", "SARE", "SFIM", "VizARM", "preprocessing", "FARE"]
+__all__ = ["ARM", "datasets", "estimators", "FIM", "FFIM", "SARE", "SFIM", "VizARM", "preprocessing", "FARE"]

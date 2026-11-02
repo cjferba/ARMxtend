@@ -182,7 +182,7 @@ class RuleMiner(ParamsMixin):
         table = ItemTable(encoded)
         columns = {position: table.holds(antecedent) for position, antecedent in enumerate(self.rules_["antecedents"])}
         index = X.index if isinstance(X, pd.DataFrame) else None
-        return pd.DataFrame(columns, index=index, dtype=bool) if columns else pd.DataFrame(index=index)
+        return pd.DataFrame(columns, index=index if index is not None else range(len(transactions)), dtype=bool)
 
     def fit_transform(self, X: Transactions, y: Any = None) -> pd.DataFrame:
         return self.fit(X).transform(X)

@@ -120,6 +120,20 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Estimators and datasets</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/estimators/" class="dropdown-item">estimators (scikit-learn style API)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/datasets/" class="dropdown-item">datasets (generators and examples)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Rules in action</a>
     <ul class="dropdown-menu">
             
@@ -411,6 +425,10 @@
               </ul>
             </li>
             <li class="nav-item" data-bs-level="2"><a href="#big-data-and-streaming-algorithms" class="nav-link">Big Data and streaming algorithms</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#estimators-and-synthetic-data-ruleminer-datasets" class="nav-link">Estimators and synthetic data (RuleMiner, datasets)</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -1110,7 +1128,19 @@ Clasificador CBA: 12 reglas de clase candidatas, 2 seleccionadas; exactitud 0.96
 and the rest of the <code>tests/</code> suite against <code>tests/spark_stub.py</code>, a small local double of the Spark
 RDD API -- see the <a href="../USER_GUIDE_INDEX/">User Guide</a> for each algorithm's reference and the
 <code>pip install -e ".[spark]"</code> note in the project <a href="https://github.com/cjferba/ARMxtend#readme">README</a>
-for running them against a real cluster.</p></div>
+for running them against a real cluster.</p>
+<h2 id="estimators-and-synthetic-data-ruleminer-datasets">Estimators and synthetic data (<code>RuleMiner</code>, <code>datasets</code>)</h2>
+<p><a href="../user_guide/datasets/"><code>make_transactions</code></a> plants 8 patterns in 2000 baskets; <a href="../user_guide/estimators/"><code>RuleMiner</code></a>
+mines them with a lift and significance filter and recovers the frequent ones (the rarer ones stay below the support threshold,
+as designed); the rules become 150 boolean features, and a <code>RuleClassifier</code> trained on 1000 labeled rows scores about 0.98 on the other 500.</p>
+<pre><code class="language-python">from ARMxtend.datasets import make_transactions
+from ARMxtend.estimators import RuleMiner, TransactionEncoder
+
+baskets, patterns = make_transactions(2000, 60, avg_length=7, n_patterns=8, pattern_length=3, random_state=7, return_patterns=True)
+miner = RuleMiner(min_supp=0.1, min_threshold=0.8, min_lift=1.5, alpha=0.01).fit(TransactionEncoder().fit_transform(baskets))
+features = miner.transform(baskets)          # one boolean column per rule
+</code></pre>
+<p>The full script is <code>examples/example_estimators.py</code>.</p></div>
             </div>
         </div>
 

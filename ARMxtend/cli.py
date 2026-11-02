@@ -22,6 +22,7 @@ Interfaz de linea de comandos de ARMxtend::
     armxtend forecast sensores.csv --time-column hora --train-fraction 0.7 --max-lag 2 --targets calefaccion
     armxtend next-events rutinas.txt --min-supp 0.2 --min-threshold 0.3 --history "alarma;bano"
     armxtend classify pacientes.csv --class-column diagnostico --test-fraction 0.3
+    armxtend generate transactions -n 5000 --items 80 --seed 1 -o cesta.txt     # datos sinteticos para probar
 
 Tambien se puede invocar como ``python -m ARMxtend``. Todos los comandos
 trabajan en una sola maquina (sin Spark) y escriben el resultado en una tabla
@@ -889,7 +890,46 @@ def build_parser() -> argparse.ArgumentParser:
     classify.set_defaults(run=_run_classify, metric=None, keep_order=True, time_column=None, calendar=None,
                           table_columns=["antecedents", "consequents", "support", "confidence", "lift"])
 
+    generate = commands.add_parser(
+        "generate", help="synthetic data with planted patterns, in the input formats of the other commands")
+    generate.add_argument("kind", choices=("transactions", "sequences", "quantities"),
+                          help="transactions (for rules, top-k-rules...), sequences (for sequences...) or quantities "
+                               "(CSV for high-utility-rules)")
+    generate.add_argument("-n", type=int, default=1000, help="number of transactions or sequences (default: 1000)")
+    generate.add_argument("--items", type=int, default=100, help="distinct items (default: 100)")
+    generate.add_argument("--length", type=float, default=8.0,
+                          help="average items per transaction, or elements per sequence (default: 8)")
+    generate.add_argument("--seed", type=int, help="random seed, to repeat the same data")
+    generate.add_argument("-d", "--delimiter", default=",", help="item delimiter (default: ',')")
+    generate.add_argument("--element-delimiter", default=";", help="element delimiter in sequences (default: ';')")
+    generate.add_argument("--profits", metavar="FILE", help="quantities: also write the unit profits of the items to FILE")
+    generate.add_argument("-o", "--output", metavar="FILE", help="write to FILE instead of the standard output")
+    generate.set_defaults(run=_run_generate)
+
     return parser
+
+
+def _run_generate(args: argparse.Namespace) -> None:
+    """Escribe datos sinteticos (con los mismos formatos de entrada que `rules` y `sequences`) en un fichero o en stdout."""
+    from .datasets import make_quantities, make_sequences, make_transactions
+
+    if args.kind == "transactions":
+        data = make_transactions(args.n, args.items, args.length, random_state=args.seed)
+        lines = [args.delimiter.join(basket) for basket in data]
+    elif args.kind == "sequences":
+        data = make_sequences(args.n, args.items, args.length, random_state=args.seed)
+        lines = [args.element_delimiter.join(args.delimiter.join(element) for element in sequence) for sequence in data]
+    else:
+        quantities, profits = make_quantities(args.n, args.items, args.length, random_state=args.seed)
+        lines = quantities.to_csv(index=False).splitlines()
+        if args.profits:
+            pd.Series(profits, name="profit").rename_axis("item").to_csv(args.profits)
+    text = "\n".join(lines) + "\n"
+    if args.output:
+        with open(args.output, "w", encoding="utf-8") as stream:
+            stream.write(text)
+    else:
+        sys.stdout.write(text)
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -897,7 +937,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         rules = args.run(args)
-        _emit(rules, args)
+        if rules is not None:
+            _emit(rules, args)
     except (ValueError, OSError, KeyError) as error:
         print("armxtend: error: {}".format(error), file=sys.stderr)
         return 1

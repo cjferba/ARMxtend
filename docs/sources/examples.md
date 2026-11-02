@@ -809,3 +809,20 @@ and the rest of the `tests/` suite against `tests/spark_stub.py`, a small local 
 RDD API -- see the [User Guide](USER_GUIDE_INDEX.md) for each algorithm's reference and the
 `pip install -e ".[spark]"` note in the project [README](https://github.com/cjferba/ARMxtend#readme)
 for running them against a real cluster.
+
+## Estimators and synthetic data (`RuleMiner`, `datasets`)
+
+[`make_transactions`](user_guide/datasets.md) plants 8 patterns in 2000 baskets; [`RuleMiner`](user_guide/estimators.md)
+mines them with a lift and significance filter and recovers the frequent ones (the rarer ones stay below the support threshold,
+as designed); the rules become 150 boolean features, and a `RuleClassifier` trained on 1000 labeled rows scores about 0.98 on the other 500.
+
+```python
+from ARMxtend.datasets import make_transactions
+from ARMxtend.estimators import RuleMiner, TransactionEncoder
+
+baskets, patterns = make_transactions(2000, 60, avg_length=7, n_patterns=8, pattern_length=3, random_state=7, return_patterns=True)
+miner = RuleMiner(min_supp=0.1, min_threshold=0.8, min_lift=1.5, alpha=0.01).fit(TransactionEncoder().fit_transform(baskets))
+features = miner.transform(baskets)          # one boolean column per rule
+```
+
+The full script is `examples/example_estimators.py`.

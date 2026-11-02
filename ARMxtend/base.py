@@ -34,6 +34,12 @@ class ParamsMixin(object):
             setattr(self, name, value)
         return self
 
+    def __sklearn_tags__(self) -> Any:
+        """Etiquetas que pide scikit-learn >= 1.6 para usar el estimador en ``GridSearchCV`` o ``Pipeline``."""
+        from sklearn.base import BaseEstimator       # solo se importa si scikit-learn esta instalado y lo pide
+
+        return BaseEstimator.__sklearn_tags__(self)
+
     def __repr__(self) -> str:
         defaults = {name: parameter.default for name, parameter in inspect.signature(type(self).__init__).parameters.items()}
         changed = ["{}={!r}".format(name, value) for name, value in self.get_params().items()

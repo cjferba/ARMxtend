@@ -312,6 +312,19 @@ armxtend rule-drift house.csv --time-column time --window 15D --alpha 0.05      
 
 `fuzzy-rules` and the sequence commands have no significance test.
 
+## `generate`
+
+Synthetic data with planted patterns, in the formats the other commands read:
+
+```
+$ armxtend generate transactions -n 5000 --items 80 --seed 1 -o basket.txt
+$ armxtend generate sequences -n 1000 --items 20 --seed 1 -o routines.txt
+$ armxtend generate quantities -n 2000 --items 30 --seed 1 -o sales.csv --profits profits.csv
+```
+
+`--length` sets the average items per transaction (elements per sequence); without `-o` the data goes to the standard output.
+See [datasets](datasets.md).
+
 ## Options shared by the commands
 
 | Option | Meaning |

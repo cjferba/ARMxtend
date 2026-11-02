@@ -17,7 +17,7 @@ trabajar** (anomalías, predicción, clasificación), después **nuevos tipos de
 | 5 | **Reglas cuantitativas** (`ARM.quantitative_rules`): discretización por intervalos con fusión (Srikant–Agrawal) frente a la difusa | hecho |
 | 6 | **Reglas raras, de alta utilidad y top-k** (`FIM.topk`, `FIM.rare`, `FIM.utility`, `ARM.topk_rules`, `ARM.rare_rules`, `ARM.utility_rules`): las k mejores sin umbral, itemsets raros minimales, itemsets y reglas de alta utilidad | hecho |
 | 7 | **Spark**: entrada DataFrame/Parquet; DECLAT/FuzzyDECLAT con TID-lists compactas; benchmark de secuencias | hecho |
-| 8 | **API estilo scikit-learn**, generadores sintéticos y conjuntos de datos de ejemplo | pendiente |
+| 8 | **API estilo scikit-learn**, generadores sintéticos y conjuntos de datos de ejemplo (`estimators`, `datasets`, `armxtend generate`) | hecho |
 | 9 | **Proyecto**: `CITATION.cff` / Zenodo, cuadernos, comparativas con SPMF y mlxtend, idioma de la documentación | pendiente |
 
 ## Notas por paso

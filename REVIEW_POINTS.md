@@ -273,7 +273,15 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
 - [ ] **Secuencias**: el PrefixSpan local gana por debajo de ~100 000 secuencias; el de Spark solo compensa con datos mayores. Entrada DataFrame con `array<array<string>>`; los items se ordenan y deduplican por elemento.
 - [ ] **`FIM.spark_io`**: los items no pueden contener `,` ni `-`; una fila nula es una transacción vacía.
 
-## 15. Documentación
+## 15. API estilo scikit-learn y datos (`estimators`, `base`, `datasets`)
+
+- [ ] **No heredan de `BaseEstimator`**: el protocolo de parámetros es propio y `__sklearn_tags__` se delega en scikit-learn solo si está instalado. Probado con scikit-learn 1.x (`clone` y `GridSearchCV`); en versiones antiguas o futuras puede pedir otras etiquetas.
+- [ ] **`RuleMiner.transform` marca solo el antecedente** de cada regla; no es una predicción.
+- [ ] **El generador no es el de IBM Quest**, solo sigue su idea (patrones con pesos exponenciales, items con popularidad tipo Zipf). No sirve para comparar con resultados publicados con ese generador.
+- [ ] **Los conjuntos pequeños (`han`, `weather`) están escritos a mano** de las tablas habituales de los libros; contrástalos con las fuentes antes de publicar cifras. Referencias de `datasets.md` escritas de memoria.
+- [ ] **Un bug encontrado al probar**: `transform` sin reglas devolvía 0 filas (corregido); un primer generador podía no terminar si pedía más items que los alcanzables (ahora se limita a `n_items`).
+
+## 16. Documentación
 
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la

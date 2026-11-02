@@ -22,6 +22,9 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
   rare together (`FIM.rare`, `ARM.rare_rules`); high-utility itemsets (two-phase algorithm over quantities and unit profits)
   and rules with `utility` and `utility_share` (`FIM.utility`, `ARM.utility_rules`); `armxtend top-k-rules | rare-rules |
   high-utility-rules`.
+- **Estimators and data:** `TransactionEncoder` and `RuleMiner` (fpgrowth, top-k, rare) with `fit` / `transform` / `get_params`,
+  `RuleClassifier` on the same protocol (`ARMxtend.estimators`, `ARMxtend.base`); synthetic generators with planted patterns and
+  four packaged example data sets (`ARMxtend.datasets`); `armxtend generate`.
 - **Spark:** `DECLAT` / `FuzzyDECLAT` keep numpy TID-lists and broadcast them once (same results; `FuzzyDECLAT` 19.6 s to
   0.8 s and 1.1 GB to 23 MB of driver memory at 100 000 transactions); input from DataFrames and Parquet
   (`FIM.spark_io`); `prefixspan_spark` accepts DataFrames and no longer collects an RDD; sequence benchmark.
@@ -50,7 +53,7 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
 - **VizARM:** the VizARE typed item/rule graph (Fernandez-Basso et al., 2026), JSON Graph Format export, rule
   summaries, a self-contained interactive HTML viewer (`AREtoGraph.to_html`) and Neo4j/MongoDB exports
   (`to_cypher`, `to_documents`).
-- **Command line:** `armxtend rules | generalized-rules | quantitative-rules | top-k-rules | rare-rules | high-utility-rules | fuzzy-rules | gradual-rules | temporal-rules | rule-drift | sequences |
+- **Command line:** `armxtend rules | generalized-rules | quantitative-rules | top-k-rules | rare-rules | high-utility-rules | generate | fuzzy-rules | gradual-rules | temporal-rules | rule-drift | sequences |
   sequential-rules | fuzzy-sequences | fuzzy-sequential-rules | anomalies | forecast | next-events | classify` (also `python -m ARMxtend`).
 - **Tooling:** `pyproject.toml` packaging, type hints and `py.typed`, ruff, mypy, coverage, a release workflow with
   PyPI trusted publishing, runnable examples tested in CI, and a benchmark of the Spark algorithms

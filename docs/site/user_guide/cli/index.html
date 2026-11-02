@@ -120,6 +120,20 @@
   </li>
                                     
   <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Estimators and datasets</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../estimators/" class="dropdown-item">estimators (scikit-learn style API)</a>
+</li>
+            
+<li>
+    <a href="../datasets/" class="dropdown-item">datasets (generators and examples)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
     <a href="#" class="dropdown-item">Rules in action</a>
     <ul class="dropdown-menu">
             
@@ -406,6 +420,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#generate" class="nav-link">generate</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#options-shared-by-the-commands" class="nav-link">Options shared by the commands</a>
               <ul class="nav flex-column">
               </ul>
@@ -688,6 +706,14 @@ armxtend rule-drift house.csv --time-column time --window 15D --alpha 0.05      
 </tbody>
 </table>
 <p><code>fuzzy-rules</code> and the sequence commands have no significance test.</p>
+<h2 id="generate"><code>generate</code></h2>
+<p>Synthetic data with planted patterns, in the formats the other commands read:</p>
+<pre><code>$ armxtend generate transactions -n 5000 --items 80 --seed 1 -o basket.txt
+$ armxtend generate sequences -n 1000 --items 20 --seed 1 -o routines.txt
+$ armxtend generate quantities -n 2000 --items 30 --seed 1 -o sales.csv --profits profits.csv
+</code></pre>
+<p><code>--length</code> sets the average items per transaction (elements per sequence); without <code>-o</code> the data goes to the standard output.
+See <a href="../datasets/">datasets</a>.</p>
 <h2 id="options-shared-by-the-commands">Options shared by the commands</h2>
 <table>
 <thead>

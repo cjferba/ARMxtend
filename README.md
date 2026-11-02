@@ -78,6 +78,11 @@ Spark y el nucleo sigue funcionando.
 * `FIM.rare` y `ARM.rare_rules`: **itemsets raros minimales** y reglas entre cosas frecuentes por separado y raras juntas, sin el desborde de un soporte bajo
 * `FIM.utility` y `ARM.utility_rules`: itemsets y reglas de **alta utilidad** -- lo que mas *vale* (cantidades y beneficios), no lo que mas se repite -- con el algoritmo de dos fases
 
+### API estilo scikit-learn y datos de prueba
+
+* `estimators`: `TransactionEncoder` y `RuleMiner` (`fit` / `transform` / `get_params`), compatibles con `clone`, `Pipeline` y `GridSearchCV` si scikit-learn esta instalado, sin depender de el
+* `datasets`: generadores sinteticos con **patrones plantados** (transacciones, secuencias, cantidades, clases) y cuatro conjuntos pequenos de ejemplo; `armxtend generate` los escribe a fichero
+
 ### Series temporales, sensores y secuencias
 
 * `preprocessing.timeseries`: de columnas numericas ordenadas en el tiempo a **items** (simbolos por cuantiles/uniforme/SAX, eventos, calendario, retardos, ventanas)

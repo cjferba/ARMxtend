@@ -621,3 +621,31 @@ def test_high_utility_rules_errors(gems_files, tmp_path, capsys):
     assert main(["high-utility-rules", sales, "--profits", str(one_column)]) == 1
     assert "primera columna" in capsys.readouterr().err
     assert main(["high-utility-rules", str(tmp_path / "nothing.csv")]) == 1
+
+
+def test_generate_command_writes_files_that_other_commands_read(tmp_path, capsys):
+    baskets, sequences = tmp_path / "tx.txt", tmp_path / "seq.txt"
+    assert main(["generate", "transactions", "-n", "300", "--items", "20", "--length", "5", "--seed", "1",
+                 "-o", str(baskets)]) == 0
+    assert len(baskets.read_text().splitlines()) == 300
+    again = tmp_path / "again.txt"
+    main(["generate", "transactions", "-n", "300", "--items", "20", "--length", "5", "--seed", "1", "-o", str(again)])
+    assert again.read_text() == baskets.read_text()
+    assert main(["rules", str(baskets), "--min-supp", "0.2", "--min-threshold", "0.6", "--format", "csv"]) == 0
+    assert "antecedents" in capsys.readouterr().out
+
+    assert main(["generate", "sequences", "-n", "100", "--items", "10", "--seed", "2", "-o", str(sequences)]) == 0
+    assert main(["sequences", str(sequences), "--min-supp", "0.3", "--format", "csv"]) == 0
+    capsys.readouterr()
+
+
+def test_generate_quantities_and_stdout(tmp_path, capsys):
+    sales, profits = tmp_path / "sales.csv", tmp_path / "profits.csv"
+    assert main(["generate", "quantities", "-n", "100", "--items", "8", "--seed", "3", "-o", str(sales),
+                 "--profits", str(profits)]) == 0
+    assert pd.read_csv(sales).shape == (100, 8) and list(pd.read_csv(profits).columns) == ["item", "profit"]
+    assert main(["high-utility-rules", str(sales), "--profits", str(profits), "--min-utility", "0.1",
+                 "--min-conf", "0.3", "--format", "csv"]) == 0
+    capsys.readouterr()
+    assert main(["generate", "transactions", "-n", "5", "--items", "6", "--seed", "1"]) == 0
+    assert len(capsys.readouterr().out.splitlines()) == 5
