@@ -90,14 +90,29 @@ nav:
     - Inicio: es/index.md
     - Instalación: es/installation.md
     - Guía rápida: es/quick-start.md
+    - Guía de usuario (extracto):
+      - ARM.association_rules: es/user_guide/ARM/association_rules.md
+      - FFIM: es/user_guide/FFIM.md
+      - datasets: es/user_guide/datasets.md
+      - estimators: es/user_guide/estimators.md
   - Français:
     - Accueil: fr/index.md
     - Installation: fr/installation.md
     - Démarrage rapide: fr/quick-start.md
+    - Guide utilisateur (extrait):
+      - ARM.association_rules: fr/user_guide/ARM/association_rules.md
+      - FFIM: fr/user_guide/FFIM.md
+      - datasets: fr/user_guide/datasets.md
+      - estimators: fr/user_guide/estimators.md
   - Português:
     - Início: pt/index.md
     - Instalação: pt/installation.md
     - Início rápido: pt/quick-start.md
+    - Guia do usuário (trecho):
+      - ARM.association_rules: pt/user_guide/ARM/association_rules.md
+      - FFIM: pt/user_guide/FFIM.md
+      - datasets: pt/user_guide/datasets.md
+      - estimators: pt/user_guide/estimators.md
 - About:
   - How To Contribute: CONTRIBUTING.md
   - Contributors: contributors.md

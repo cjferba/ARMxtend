@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Carlos Fernandez-Basso">
+        <link rel="canonical" href="http://cjferba.github.io/ARMxtend/es/user_guide/FFIM/">
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>FFIM - ARMxtend</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">ARMxtend</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../examples/" class="nav-link">Examples</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../applications/" class="nav-link">Applications</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../USER_GUIDE_INDEX/" class="dropdown-item">User Guide Index</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crisp association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/explain/" class="dropdown-item">ARM.explain (why a rule fires)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/significance/" class="dropdown-item">ARM.significance (p-values, FDR, permutation tests)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Taxonomies, multilevel and quantitative rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/FIM/taxonomy/" class="dropdown-item">FIM.taxonomy (item hierarchies, generalized itemsets)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/generalized_rules/" class="dropdown-item">ARM.generalized_rules (multilevel rules, R-interesting)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/quantitative_rules/" class="dropdown-item">ARM.quantitative_rules (merged intervals)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Top-k, rare and high-utility rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/ARM/topk_rules/" class="dropdown-item">ARM.top_k_rules (the k best, no threshold)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/rare_rules/" class="dropdown-item">ARM.rare_rules (rare combinations of frequent items)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/utility_rules/" class="dropdown-item">ARM.high_utility_rules (value, not frequency)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Estimators and datasets</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/estimators/" class="dropdown-item">estimators (scikit-learn style API)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/datasets/" class="dropdown-item">datasets (generators and examples)</a>
+</li>
+    </ul>
+  </li>
+                                    
+<li>
+    <a href="../../../user_guide/comparison/" class="dropdown-item">Comparison with mlxtend</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Rules in action</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/ARM/anomaly_detection/" class="dropdown-item">ARM.anomaly (anomalies as rule violations)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/prediction/" class="dropdown-item">ARM.prediction (next step / next events)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/classification/" class="dropdown-item">ARM.classification (class rules, CBA)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/fuzzy_classification/" class="dropdown-item">ARM.fuzzy_classification (fuzzy class rules)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Time series, sensors and sequences</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/preprocessing/timeseries/" class="dropdown-item">preprocessing.timeseries (items from series)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/temporal_rules/" class="dropdown-item">ARM.temporal_rules (lagged rules)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/rule_drift/" class="dropdown-item">ARM.rule_drift (rules over time)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/FIM/sequential/" class="dropdown-item">FIM.sequential (PrefixSpan)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/FIM/fuzzy_sequential/" class="dropdown-item">FIM.fuzzy_sequential (fuzzy patterns)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/ARM/fuzzy_sequential_rules/" class="dropdown-item">ARM.fuzzy_sequential_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../../../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/cli/" class="dropdown-item">armxtend</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../user_guide/preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Languages</a>
+                                <ul class="dropdown-menu">
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Español</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../" class="dropdown-item">Inicio</a>
+</li>
+            
+<li>
+    <a href="../../installation/" class="dropdown-item">Instalación</a>
+</li>
+            
+<li>
+    <a href="../../quick-start/" class="dropdown-item">Guía rápida</a>
+</li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Guía de usuario (extracto)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">FFIM</a>
+</li>
+            
+<li>
+    <a href="../datasets/" class="dropdown-item">datasets</a>
+</li>
+            
+<li>
+    <a href="../estimators/" class="dropdown-item">estimators</a>
+</li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Français</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../fr/" class="dropdown-item">Accueil</a>
+</li>
+            
+<li>
+    <a href="../../../fr/installation/" class="dropdown-item">Installation</a>
+</li>
+            
+<li>
+    <a href="../../../fr/quick-start/" class="dropdown-item">Démarrage rapide</a>
+</li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Guide utilisateur (extrait)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../fr/user_guide/ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../../../fr/user_guide/FFIM/" class="dropdown-item">FFIM</a>
+</li>
+            
+<li>
+    <a href="../../../fr/user_guide/datasets/" class="dropdown-item">datasets</a>
+</li>
+            
+<li>
+    <a href="../../../fr/user_guide/estimators/" class="dropdown-item">estimators</a>
+</li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Português</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../pt/" class="dropdown-item">Início</a>
+</li>
+            
+<li>
+    <a href="../../../pt/installation/" class="dropdown-item">Instalação</a>
+</li>
+            
+<li>
+    <a href="../../../pt/quick-start/" class="dropdown-item">Início rápido</a>
+</li>
+            
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Guia do usuário (trecho)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../../pt/user_guide/ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../../../pt/user_guide/FFIM/" class="dropdown-item">FFIM</a>
+</li>
+            
+<li>
+    <a href="../../../pt/user_guide/datasets/" class="dropdown-item">datasets</a>
+</li>
+            
+<li>
+    <a href="../../../pt/user_guide/estimators/" class="dropdown-item">estimators</a>
+</li>
+    </ul>
+  </li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
+</li>
+                                    
+<li>
+    <a href="../../../contributors/" class="dropdown-item">Contributors</a>
+</li>
+                                    
+<li>
+    <a href="../../../license/" class="dropdown-item">License</a>
+</li>
+                                    
+<li>
+    <a href="../../../cite/" class="dropdown-item">Citing ARMxtend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../ARM/association_rules/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../datasets/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/es/user_guide/FFIM.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#ffim-fp-growth-nitido-y-difuso" class="nav-link">FFIM -- FP-Growth (nítido y difuso)</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#nitido-fpgrowth" class="nav-link">Nítido: fpgrowth</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#difuso-fuzzy_fpgrowth" class="nav-link">Difuso: fuzzy_fpgrowth</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#mas-rapido-fimdense_fuzzy_itemsets" class="nav-link">Más rápido: FIM.dense_fuzzy_itemsets</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="ffim-fp-growth-nitido-y-difuso"><code>FFIM</code> -- FP-Growth (nítido y difuso)</h1>
+<p>Extracción de itemsets frecuentes en una sola máquina mediante FP-Growth (Han, Pei y Yin, 2000): construye un árbol de
+patrones frecuentes y lo explora recursivamente sin generar candidatos, lo que suele ser más rápido que los enfoques
+tipo Apriori/Eclat en una sola máquina.</p>
+<h2 id="nitido-fpgrowth">Nítido: <code>fpgrowth</code></h2>
+<pre><code class="language-python">fpgrowth(transactions, min_supp)
+</code></pre>
+<ul>
+<li><strong>transactions</strong> (<code>Sequence[Iterable[str]]</code>): una transacción por elemento.</li>
+<li><strong>min_supp</strong> (<code>float</code>): soporte relativo mínimo, en <code>(0, 1]</code>.</li>
+</ul>
+<p>Devuelve un <code>dict {clave_itemset: soporte}</code>, por ejemplo <code>{"bread": 0.8, "bread-milk": 0.6, ...}</code> -- convierta una
+clave de nuevo en un <code>frozenset</code> con <code>FIM._shared.key_to_itemset</code> antes de pasarla a
+<a href="../ARM/association_rules/"><code>ARM.association_rules</code></a>.</p>
+<pre><code class="language-python">from ARMxtend.FFIM import fpgrowth
+
+transactions = [
+    [&quot;bread&quot;, &quot;milk&quot;],
+    [&quot;bread&quot;, &quot;diapers&quot;, &quot;beer&quot;, &quot;eggs&quot;],
+    [&quot;milk&quot;, &quot;diapers&quot;, &quot;beer&quot;, &quot;cola&quot;],
+    [&quot;bread&quot;, &quot;milk&quot;, &quot;diapers&quot;, &quot;beer&quot;],
+    [&quot;bread&quot;, &quot;milk&quot;, &quot;diapers&quot;, &quot;cola&quot;],
+]
+fpgrowth(transactions, min_supp=0.5)
+# {'beer': 0.6, 'beer-diapers': 0.6, 'milk': 0.8, 'diapers-milk': 0.6,
+#  'bread-milk': 0.6, 'diapers': 0.8, 'bread-diapers': 0.6, 'bread': 0.8}
+</code></pre>
+<h2 id="difuso-fuzzy_fpgrowth">Difuso: <code>fuzzy_fpgrowth</code></h2>
+<pre><code class="language-python">fuzzy_fpgrowth(transactions, min_supp, num_alpha)
+</code></pre>
+<ul>
+<li><strong>transactions</strong> (<code>Sequence[Iterable[Tuple[str, float]]]</code>): cada transacción es una lista de pares
+  <code>(ítem, grado de pertenencia en [0, 1])</code>.</li>
+<li><strong>num_alpha</strong> (<code>int</code>): número de alfa-cortes usados para descomponer la base de datos difusa (10 es un valor por
+  defecto razonable, véase <a href="../../../cite/">Cómo citar ARMxtend</a>).</li>
+</ul>
+<p>Como el FP-tree fusiona los caminos de transacciones que comparten <em>los mismos</em> ítems, no puede acomodar directamente
+grados de pertenencia reales arbitrarios (dos transacciones con ítems idénticos pero grados distintos dejarían de ser
+"el mismo camino"). <code>fuzzy_fpgrowth</code> lo resuelve binarizando la base de datos difusa de forma independiente en cada uno
+de los <code>num_alpha</code> alfa-cortes (véase <code>FIM._shared.alpha_cuts</code>) para descubrir itemsets candidatos, y recalculando
+después el soporte exacto de cada candidato en cada alfa-corte. Devuelve <code>dict {clave_itemset: numpy.ndarray(num_alpha)}</code>
+-- la lista de bits de soporte relativo del itemset en cada alfa-corte, lista para pasarla a
+<a href="../../../user_guide/FIM/FARE/"><code>FIM.FARE.fuzzy_association_rules</code></a> (exactamente la misma convención de salida que
+<a href="../../../user_guide/FIM/Eclat/"><code>FIM.Eclat.FuzzyDECLAT</code></a> y <a href="../../../user_guide/FIM/BD_FARE/"><code>FIM.BD_FARE.FuzzyDAprioriTID</code></a>, de modo que los tres son
+intercambiables como entrada de <code>FARE</code>).</p>
+<p>Un itemset se considera frecuente si su soporte difuso <strong>agregado</strong> FSupp (una suma ponderada de su soporte en cada
+alfa-corte, véase <a href="../../../user_guide/FIM/FARE/"><code>FIM.FARE</code></a>) alcanza <code>min_supp</code> -- no basta con que sea frecuente de forma aislada en un
+único alfa-corte.</p>
+<pre><code class="language-python">from ARMxtend.FFIM import fuzzy_fpgrowth
+
+fuzzy_transactions = [
+    [(&quot;cold&quot;, 1.0), (&quot;low_humidity&quot;, 0.8)],
+    [(&quot;cold&quot;, 0.9), (&quot;low_humidity&quot;, 0.6)],
+    [(&quot;warm&quot;, 0.7), (&quot;low_humidity&quot;, 0.9)],
+    [(&quot;cold&quot;, 0.6), (&quot;low_humidity&quot;, 0.7)],
+    [(&quot;warm&quot;, 1.0), (&quot;low_humidity&quot;, 0.2)],
+]
+fuzzy_fpgrowth(fuzzy_transactions, min_supp=0.3, num_alpha=10)
+</code></pre>
+<h2 id="mas-rapido-fimdense_fuzzy_itemsets">Más rápido: <code>FIM.dense_fuzzy_itemsets</code></h2>
+<p><code>fuzzy_fpgrowth</code> ejecuta FP-Growth una vez por alfa-corte y después vuelve a recorrer las transacciones para cada
+candidato. Cuando el número de ítems difusos es moderado (de decenas a unos cientos) existe un extractor exacto mucho más
+rápido con la <strong>misma entrada y salida</strong>:</p>
+<pre><code class="language-python">from ARMxtend.FIM import dense_fuzzy_itemsets
+
+dense_fuzzy_itemsets(fuzzy_transactions, min_supp=0.3, num_alpha=10)    # same dict as fuzzy_fpgrowth
+</code></pre>
+<p>Mantiene un vector de bits empaquetado por ítem <em>y</em> alfa-corte, y cuenta los candidatos de cada nivel de Apriori con un
+AND bit a bit y un recuento de bits. El soporte agregado FSupp es antimonótono (es una suma ponderada no negativa de
+soportes que lo son), de modo que la poda sobre él es exacta. Medido con <code>benchmarks/fuzzy_dense.py</code> (10 alfa-cortes,
+<code>min_supp=0.03</code>, datos sintéticos, mejor de 2):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">transacciones</th>
+<th style="text-align: right;">ítems</th>
+<th style="text-align: right;">itemsets</th>
+<th style="text-align: right;"><code>fuzzy_fpgrowth</code></th>
+<th style="text-align: right;"><code>dense_fuzzy_itemsets</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2 000</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">353</td>
+<td style="text-align: right;">2.317 s</td>
+<td style="text-align: right;">0.009 s</td>
+</tr>
+<tr>
+<td style="text-align: right;">2 000</td>
+<td style="text-align: right;">200</td>
+<td style="text-align: right;">135</td>
+<td style="text-align: right;">0.524 s</td>
+<td style="text-align: right;">0.012 s</td>
+</tr>
+<tr>
+<td style="text-align: right;">5 000</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">354</td>
+<td style="text-align: right;">5.735 s</td>
+<td style="text-align: right;">0.020 s</td>
+</tr>
+<tr>
+<td style="text-align: right;">5 000</td>
+<td style="text-align: right;">200</td>
+<td style="text-align: right;">138</td>
+<td style="text-align: right;">1.338 s</td>
+<td style="text-align: right;">0.023 s</td>
+</tr>
+</tbody>
+</table>
+<p>Se comprueba que la salida es idéntica en cada ejecución. Con miles de ítems muy dispersos conserve <code>fuzzy_fpgrowth</code>.
+Desde la línea de comandos: <code>armxtend fuzzy-rules data.csv --algorithm dense</code>.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../js/base.js"></script>
+        <script src="../../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

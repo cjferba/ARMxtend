@@ -8,6 +8,7 @@ project uses [semantic versioning](https://semver.org/).
 First version prepared for publication on PyPI (until then: `pip install git+https://github.com/cjferba/ARMxtend.git`).
 
 ### Added
+- **User Guide translations (partial):** Spanish, French and Portuguese versions of `ARM.association_rules`, `FFIM`, `datasets` and `estimators` (the rest of the guide is still English; untranslated links point to the English page).
 - **Explanations:** `ARM.rule_evidence`, `explain_rule` and `explain_row` (evidence, contribution of each item, alternatives, why a rule did not fire).
 - **Incremental rule drift:** `ARM.RuleDriftMonitor` mines only the windows each chunk of a stream completes (bounded memory, optional `history`).
 - **Fuzzy rule classification:** `ARM.fuzzy_class_rules` and `FuzzyRuleClassifier` (fuzzy class rules with Ishibuchi-Yamamoto weights; winner or sum inference).
