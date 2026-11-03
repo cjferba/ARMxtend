@@ -37,7 +37,7 @@ def main():
     transactions = [line.split(",") for line in TRANSACTIONS]
 
     freqItemsets = fpgrowth(transactions, min_supp=0.3)
-    print("Itemsets frecuentes (min_supp=0.3):")
+    print("Frequent itemsets (min_supp=0.3):")
     for itemsetKey, support in sorted(freqItemsets.items()):
         print("  {:<10} support={:.2f}".format(itemsetKey, support))
 
@@ -47,7 +47,7 @@ def main():
     })
     rulesDf = association_rules(itemsetsDf, metric="confidence", min_threshold=0.7)
 
-    print("\nReglas de asociacion (min_confidence=0.7):")
+    print("\nAssociation rules (min_confidence=0.7):")
     for _, rule in rulesDf.iterrows():
         antecedent = ",".join(sorted(rule["antecedents"]))
         consequent = ",".join(sorted(rule["consequents"]))
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 Output:
 
 ```text
-Itemsets frecuentes (min_supp=0.3):
+Frequent itemsets (min_supp=0.3):
   A          support=0.50
   A-B        support=0.30
   A-C        support=0.40
@@ -77,7 +77,7 @@ Itemsets frecuentes (min_supp=0.3):
   C-D        support=0.30
   D          support=0.60
 
-Reglas de asociacion (min_confidence=0.7):
+Association rules (min_confidence=0.7):
   A -> C      support=0.40 confidence=0.80 lift=1.14
   D -> B      support=0.50 confidence=0.83 lift=1.04
   C -> B      support=0.50 confidence=0.71 lift=0.89
@@ -94,7 +94,7 @@ asserts, so any regression in the alpha-cut aggregation breaks CI immediately.
 from ARMxtend.FFIM import fuzzy_fpgrowth
 from ARMxtend.FIM.FARE import fuzzy_association_rules
 
-# t1..t6, grados de pertenencia de i1..i5 (Tabla 2 del articulo)
+# t1..t6, membership degrees of i1..i5 (Table 2 of the paper)
 FUZZY_TRANSACTIONS = [
     [("i1", 1.0), ("i2", 0.2), ("i3", 1.0), ("i4", 0.8), ("i5", 0.9)],
     [("i1", 1.0), ("i2", 1.0), ("i3", 0.8)],
@@ -104,7 +104,7 @@ FUZZY_TRANSACTIONS = [
     [("i2", 1.0)],
 ]
 
-NUM_ALPHA = 5  # alpha-cortes {1, 0.8, 0.6, 0.4, 0.2}, como en el articulo
+NUM_ALPHA = 5  # alpha-cuts {1, 0.8, 0.6, 0.4, 0.2}, as in the paper
 
 
 def main():
@@ -115,8 +115,8 @@ def main():
         row for _, row in rulesDf.iterrows()
         if set(row["antecedents"]) == {"i1", "i3"} and set(row["consequents"]) == {"i4"}
     )
-    print("Comprobacion contra el articulo para {i1,i3} -> {i4}:")
-    print("  esperado  FSupp=0.266 FConf=0.5 FCF=0.33")
+    print("Check against the paper for {i1,i3} -> {i4}:")
+    print("  expected  FSupp=0.266 FConf=0.5 FCF=0.33")
     print("  obtenido  FSupp={:.3f} FConf={:.3f} FCF={:.3f}".format(
         target["support"], target["confidence"], target["certainty_factor"]))
 
@@ -132,8 +132,8 @@ if __name__ == "__main__":
 Output (abridged -- the full run lists every fuzzy rule found):
 
 ```text
-Comprobacion contra el articulo para {i1,i3} -> {i4}:
-  esperado  FSupp=0.266 FConf=0.5 FCF=0.33
+Check against the paper for {i1,i3} -> {i4}:
+  expected  FSupp=0.266 FConf=0.5 FCF=0.33
   obtenido  FSupp=0.267 FConf=0.500 FCF=0.330
 ```
 
@@ -151,8 +151,8 @@ from ARMxtend.ARM.meta_rules import (
     fuzzy_meta_association_rules,
 )
 
-# Tres datasets D1, D2, D3 en los que A -> B es una regla fuerte y
-# consistente (aparece siempre que aparece A), y C -> D solo aparece,
+# Three datasets D1, D2, D3 in which A -> B is a strong and
+# consistent rule (it appears whenever A appears), and C -> D only appears,
 # debilmente, en D3.
 DATASETS = [
     [["A", "B"], ["A", "B"], ["A", "B"], ["C"]],
@@ -182,16 +182,16 @@ if __name__ == "__main__":
 Output:
 
 ```text
-Reglas primarias minadas en cada dataset:
+Primary rules mined in each dataset:
   D1: {'A=>B': 1.0, 'B=>A': 1.0}
   D2: {'A=>B': 1.0, 'B=>A': 0.6666666666666666}
   D3: {'C=>D': 1.0, 'D=>C': 1.0, 'A=>B': 1.0, 'B=>A': 0.6666666666666666}
 
-Meta-reglas crisp (co-ocurrencia de reglas entre datasets):
+Crisp meta-rules (co-occurrence of rules between datasets):
   {'A=>B'} -> {'B=>A'}  support=1.00 confidence=1.00
   {'B=>A'} -> {'A=>B'}  support=1.00 confidence=1.00
 
-Meta-reglas difusas (ponderadas por la fuerza de cada regla primaria):
+Fuzzy meta-rules (weighted by the strength of each primary rule):
   {'A=>B'} -> {'B=>A'}  FSupp=0.73 FConf=0.73
   {'B=>A'} -> {'A=>B'}  FSupp=0.73 FConf=1.00
   {'C=>D'} -> {'D=>C'}  FSupp=0.33 FConf=1.00
@@ -230,7 +230,7 @@ def main():
         FuzzyLabel=[["cold", "comfortable", "warm"]],
     )
 
-    print("Columnas difusas anadidas:", addedColumns)
+    print("Fuzzy columns added:", addedColumns)
     print(fuzzyLib.GetData().to_string(index=False))
     return fuzzyLib.GetData()
 
@@ -244,7 +244,7 @@ if __name__ == "__main__":
 Output:
 
 ```text
-Columnas difusas anadidas: ['temperature_cold', 'temperature_comfortable', 'temperature_warm']
+Fuzzy columns added: ['temperature_cold', 'temperature_comfortable', 'temperature_warm']
 
  temperature sensor_id  temperature_cold  temperature_comfortable  temperature_warm
         17.0        s1               1.0                      0.0               0.0
@@ -324,9 +324,9 @@ JGF (formato intermedio propuesto, primeras lineas):
           "support": 0.4,
           "confidence": 0.8,
 
-Resumen por consecuente (2 grupos):
-  1 reglas -> ['C']  confidence en [0.80, 0.80] (media 0.80)
-  2 reglas -> ['B']  confidence en [0.71, 0.83] (media 0.77)
+Summary by consequent (2 groups):
+  1 rules -> ['C']  confidence in [0.80, 0.80] (mean 0.80)
+  2 rules -> ['B']  confidence in [0.71, 0.83] (mean 0.77)
 
 Visor HTML interactivo: 25950 bytes, grafo JGF embebido
 ```
@@ -359,19 +359,19 @@ from ARMxtend.preprocessing import FuzzyLib
 # quien toma cafe no toma te
 negative = negative_association_rules(drinks, min_supp=0.25, min_threshold=0.95)
 
-# "fever -> rest" falla cuando ademas hay "must_work" (excepcion) o termina en "hospital" (anomalia)
+# "fever -> rest" fails when there is also "must_work" (exception) or ends in "hospital" (anomaly)
 exceptions = exception_rules(sickness, min_supp=0.3, min_conf=0.8, min_exception_supp=0.03)
 anomalies = anomalous_rules(sickness, min_supp=0.3, min_conf=0.7, min_anomalous_supp=0.05,
                             min_anomalous_conf=0.6)
 
-# cuanto mas edad y menos ejercicio, mas colesterol -- directamente sobre columnas numericas
+# the more age and the less exercise, the more cholesterol -- directly on numeric columns
 gradual = gradual_rules(health, min_supp=0.25, min_conf=0.8)
 
 # representaciones condensadas y poda
 closed, maximal = closed_itemsets(frequent), maximal_itemsets(frequent)
 pruned = prune_redundant_rules(all_rules)
 
-# fuzzificacion automatica (cuantiles) + reglas difusas con medidas adicionales
+# automatic fuzzification (quantiles) + fuzzy rules with additional measures
 fuzzy = FuzzyLib()
 fuzzy.data = health[["age", "cholesterol"]].copy()
 fuzzy.AutoFuzzification(n_labels=3, method="quantile")
@@ -385,7 +385,7 @@ rules = fuzzy_association_rules(itemsets, 10, metric="zhangs_metric", min_thresh
 Output:
 
 ```text
-Reglas con items ausentes:
+Rules with absent items:
   {~coffee, ~sugar} -> {tea}  support=0.36 confidence=1.00
   {tea, ~sugar} -> {~coffee}  support=0.36 confidence=1.00
   {~coffee} -> {tea}  support=0.43 confidence=1.00
@@ -395,21 +395,21 @@ Reglas con items ausentes:
   {~tea} -> {coffee}  support=0.57 confidence=1.00
   {coffee} -> {~tea}  support=0.57 confidence=1.00
 
-Excepciones a reglas comunes fuertes:
-  {must_work} -> rest (conf 0.88), pero con {fever} ocurre ~rest: confidence=1.00 (referencia 0.20)
-  {fever} -> rest (conf 0.80), pero con {must_work} ocurre ~rest: confidence=1.00 (referencia 0.12)
+Exceptions to strong common rules:
+  {must_work} -> rest (conf 0.88), but with {fever} ~rest occurs: confidence=1.00 (reference 0.20)
+  {fever} -> rest (conf 0.80), but with {must_work} ~rest occurs: confidence=1.00 (reference 0.12)
 Anomalias (A y no b -> C):
-  {fever} -> rest: en 15 casos con ~rest, aparece {hospital} (confidence=0.67)
+  {fever} -> rest: in 15 cases with ~rest, {hospital} appears (confidence=0.67)
 
-Reglas graduales:
+Gradual rules:
   cuanto age↑, exercise↓ -> cholesterol↑  support=0.51 confidence=0.98
   cuanto cholesterol↑, exercise↑ -> age↑  support=0.29 confidence=0.97
   cuanto age↑ -> cholesterol↑  support=0.80 confidence=0.80
 
-Itemsets frecuentes: 8, cerrados: ['a-b', 'a-b-c', 'd'], maximales: ['a-b-c', 'd']
-Reglas: 12 -> 5 tras eliminar las redundantes
+Frequent itemsets: 8, closed: ['a-b', 'a-b-c', 'd'], maximal: ['a-b-c', 'd']
+Rules: 12 -> 5 after removing the redundant ones
 
-Reglas difusas con Zhang >= 0.4:
+Fuzzy rules with Zhang >= 0.4:
   {age_low} -> {cholesterol_low}  FSupp=0.12 FConf=0.37 zhang=0.74 kulczynski=0.55
   {cholesterol_low} -> {age_low}  FSupp=0.12 FConf=0.73 zhang=0.63 kulczynski=0.55
   {age_high} -> {cholesterol_high}  FSupp=0.12 FConf=0.48 zhang=0.49 kulczynski=0.51
@@ -429,19 +429,19 @@ from ARMxtend.ARM import (
 )
 from ARMxtend.preprocessing.timeseries import calendar_items, discretize, to_items
 
-# temperatura -> low/medium/high; puerta y calefaccion son eventos; + franja del dia
+# temperature -> low/medium/high; door and heating are events; + time of day
 items = to_items(discretize(house, ["temp"], n_symbols=3, method="quantile"))
 with_calendar = items.join(calendar_items(items.index, ["part_of_day"]))
 
-# reglas con retardo: que hubo hace una hora para que la calefaccion este encendida ahora
+# rules with lag: what happened an hour ago for the heating to be on now
 rules = temporal_association_rules(with_calendar, max_lag=1, min_supp=0.02, min_threshold=0.9,
                                    targets=["heater_on"], exclude_persistence=True)
 rules = prune_redundant_rules(rules)
 
-# la misma regla, hora a hora: solo vale a partir de las 17 h
+# the same rule, hour by hour: it only holds from 17 h on
 profile = rule_profile(items, ["door_open@lag1"], ["heater_on"], lambda stamps: stamps.hour)
 
-# deriva: reglas con retardo en ventanas de 15 dias; cuales emergen, se mantienen o desaparecen
+# drift: rules with lag in windows of 15 days; which ones emerge, stay or vanish
 windows = window_rules(with_calendar, "15D", miner=lambda w: temporal_association_rules(
     w, max_lag=1, min_supp=0.03, min_threshold=0.85, targets=["heater_on"], exclude_persistence=True))
 drift = rule_drift(windows)
@@ -454,13 +454,13 @@ Output:
 ```text
 Items: temp=high, temp=low, temp=medium, door_open, heater_on
 
-Reglas con retardo (consecuente: heater_on):
+Rules with lag (consequent: heater_on):
   door_open (t-1), part_of_day=evening (t), temp=high (t-1) -> heater_on (t)  support=0.022 confidence=1.00 lift=4.4
   door_open (t-1), part_of_day=evening (t) -> heater_on (t)  support=0.051 confidence=0.95 lift=4.1
   door_open (t-1), part_of_day=evening (t), part_of_day=evening (t-1) -> heater_on (t)  support=0.043 confidence=0.94 lift=4.1
   door_open (t-1), part_of_day=evening (t), temp=medium (t) -> heater_on (t)  support=0.030 confidence=0.93 lift=4.1
 
-Confianza de 'puerta abierta hace 1 hora -> calefaccion encendida' segun la hora:
+Confidence of 'door open 1 hour ago -> heating on' by hour:
   04h: 0.55
   10h: 0.00
   16h: 0.00
@@ -468,9 +468,9 @@ Confianza de 'puerta abierta hace 1 hora -> calefaccion encendida' segun la hora
   20h: 0.86
   23h: 0.92
 
-Ventanas: 4 | estados de las reglas: {'emerging': 52, 'vanishing': 6, 'intermittent': 3, 'stable': 2}
-  emerging: temp=low (t-1) -> heater_on (t) (desde la ventana 2, confianza media 0.99)
-Primera frente a ultima ventana: {'new': 52, 'lost': 6, 'changed': 2}
+Windows: 4 | rule states: {'emerging': 52, 'vanishing': 6, 'intermittent': 3, 'stable': 2}
+  emerging: temp=low (t-1) -> heater_on (t) (since window 2, mean confidence 0.99)
+First versus last window: {'new': 52, 'lost': 6, 'changed': 2}
 ```
 
 ## Event logs: sequential patterns and rules (`FIM.sequential`, `ARM.sequential_rules`)
@@ -486,9 +486,9 @@ The script builds one sequence per day from the event log, mines the routines wi
 from ARMxtend.ARM import sequential_rules
 from ARMxtend.FIM import format_sequence, prefixspan, sequences_from_events
 
-sequences = sequences_from_events(events, "day", "time", "event")      # una secuencia por dia
+sequences = sequences_from_events(events, "day", "time", "event")      # one sequence per day
 
-patterns = prefixspan(sequences, min_supp=0.3, min_len=4)             # rutinas frecuentes
+patterns = prefixspan(sequences, min_supp=0.3, min_len=4)             # frequent routines
 every = sequential_rules(sequences, min_supp=0.2, min_conf=0.0, max_antecedent=1, max_consequent=1)
 rules = every[every["confidence"] >= 0.7].sort_values("lift", ascending=False)
 ```
@@ -498,21 +498,21 @@ rules = every[every["confidence"] >= 0.7].sort_values("lift", ascending=False)
 Output:
 
 ```text
-Secuencias: 120 | primer dia: {alarm} {bathroom} {kitchen} {door} {phone}
+Sequences: 120 | first day: {alarm} {bathroom} {kitchen} {door} {phone}
 
-Patrones frecuentes de 4 o mas eventos (soporte >= 0.3):
+Frequent patterns of 4 or more events (support >= 0.3):
   <{alarm} {bathroom} {kitchen} {phone}>  support=0.67
   <{alarm} {bathroom} {kitchen} {door}>  support=0.59
   <{alarm} {bathroom} {door} {phone}>  support=0.41
   <{alarm} {kitchen} {door} {phone}>  support=0.41
 
-Reglas secuenciales con confianza >= 0.7, por lift decreciente:
+Sequential rules with confidence >= 0.7, by decreasing lift:
   coffee => tv  support=0.28 confidence=0.77 lift=2.44
   bathroom => kitchen  support=1.00 confidence=1.00 lift=1.00
   alarm => kitchen  support=1.00 confidence=1.00 lift=1.00
   alarm => bathroom  support=1.00 confidence=1.00 lift=1.00
 
-confianza de coffee => tv: 0.77; de tv => coffee: 0.00
+confidence of coffee => tv: 0.77; of tv => coffee: 0.00
 ```
 
 ## Fuzzy sequential patterns and rules (`FIM.fuzzy_sequential`, `ARM.fuzzy_sequential_rules`)
@@ -543,24 +543,24 @@ degrees = [fuzzy_rule_degree(day, ["temp_low"], ["power_high"]) for day in seque
 Output:
 
 ```text
-80 dias; etiquetas difusas: temp_low, temp_medium, temp_high, power_low, power_medium, power_high
+80 days; fuzzy labels: temp_low, temp_medium, temp_high, power_low, power_medium, power_high
 
-Patrones de dos eventos (soporte difuso, 26 en total):
+Patterns of two events (fuzzy support, 26 in total):
   <temp_low -> power_high>  support=0.22
   <power_high -> temp_low>  support=< 0.20 (no frecuente)
 
-Reglas difusas mas llamativas (por lift):
+Most striking fuzzy rules (by lift):
   temp_low => power_high  support=0.22 confidence=0.63 lift=2.76
   temp_medium => power_medium  support=0.68 confidence=0.92 lift=1.25
   temp_low => temp_high  support=0.34 confidence=0.94 lift=1.19
 
-temp_low => power_high por dia: grado 0 en 45 dias suaves, hasta 0.93 los mas frios; correlacion con la intensidad del frio 0.86
+temp_low => power_high per day: degree 0 on 45 mild days, up to 0.93 on the coldest; correlation with the cold intensity 0.86
 
-Con conjuntos difusos: temp_low => power_high  support=0.22 confidence=0.63 lift=2.76
-Con umbral temp <  8:      cold => peak           support=0.21 confidence=1.00 lift=1.60
-Con umbral temp < 10:      cold => peak           support=0.39 confidence=1.00 lift=1.60
-Con umbral temp < 12:      cold => peak           support=0.60 confidence=0.96 lift=1.54
-Con umbral temp < 14:      cold => peak           support=0.62 confidence=0.82 lift=1.31
+With fuzzy sets: temp_low => power_high  support=0.22 confidence=0.63 lift=2.76
+With threshold temp <  8:      cold => peak           support=0.21 confidence=1.00 lift=1.60
+With threshold temp < 10:      cold => peak           support=0.39 confidence=1.00 lift=1.60
+With threshold temp < 12:      cold => peak           support=0.60 confidence=0.96 lift=1.54
+With threshold temp < 14:      cold => peak           support=0.62 confidence=0.82 lift=1.31
 ```
 
 ## Multilevel rules over a taxonomy (`FIM.taxonomy`, `ARM.generalized_rules`)
@@ -585,12 +585,12 @@ kept = interesting_rules(rules, interest=1.2)                                   
 Output:
 
 ```text
-2639 cestas; taxonomia: 19 items en 3 niveles (Drinks, Food)
+2639 baskets; taxonomy: 19 items in 3 levels (Drinks, Food)
 
-Sin taxonomia (soporte 0.04, confianza 0.4, lift 1.2): 4 reglas, todas entre productos concretos
-Con taxonomia (soporte 0.2 / 0.1 / 0.04 por nivel): 31 reglas, 12 de ellas entre categorias (nivel 1 o 2)
+Without a taxonomy (support 0.04, confidence 0.4, lift 1.2): 4 rules, all between specific products
+With taxonomy (support 0.2 / 0.1 / 0.04 per level): 31 rules, 12 of them between categories (level 1 or 2)
 
-R-interesantes (R=1.2): quedan 14 de 31. Por lift:
+R-interesting (R=1.2): 14 of 31 remain. By lift:
   Dairy, Juice => croissant  support=0.14 confidence=0.63 lift=3.26
   croissant => Dairy, Juice  support=0.14 confidence=0.71 lift=3.26
   Dairy, croissant => Juice  support=0.14 confidence=0.89 lift=2.57
@@ -598,7 +598,7 @@ R-interesantes (R=1.2): quedan 14 de 31. Por lift:
   Juice => croissant  support=0.17 confidence=0.50 lift=2.55
   Dairy, Drinks => Bakery  support=0.27 confidence=0.79 lift=1.38
 
-Descartadas por repetir lo que ya dicen sus antecesoras, por ejemplo:
+Discarded for repeating what their ancestors already say, for example:
   orange_juice => croissant  support=0.08 confidence=0.50 lift=2.57
   croissant => orange_juice  support=0.08 confidence=0.43 lift=2.57
   croissant => apple_juice  support=0.09 confidence=0.46 lift=2.54
@@ -625,24 +625,24 @@ kept = quantitative_rules(customers, min_supp=0.05, partition=partition, min_thr
 Output:
 
 ```text
-3000 clientes. Con completitud parcial K=1.5 y soporte 0.05 el articulo pide 160 intervalos por atributo; aqui bastan 10 y rangos de hasta el 40 %.
-Particion: 68 items de rango (20 intervalos base + 48 rangos de varios); edad en 10 intervalos de ~5.2 anos
+3000 customers. With partial completeness K=1.5 and support 0.05 the paper asks for 160 intervals per attribute; here 10 and ranges of up to 40 % are enough.
+Partition: 68 range items (20 base intervals + 48 ranges of several); age in 10 intervals of ~5.2 years
 
-631 reglas (soporte 0.05, confianza 0.7); R-interesantes con R=1.3: 152
+631 rules (support 0.05, confidence 0.7); R-interesting with R=1.3: 152
 
-La region plantada [30, 45), con el mayor soporte con confianza >= 0.85:
+The planted region [30, 45), with the highest support with confidence >= 0.85:
   age=[28.5368,44.0395) => income=[44.7127,96.4526]  support=0.28 confidence=0.93 lift=2.33
 
-Quien compra (mujeres, por lift):
+Who buys (women, by lift):
   income=[66.5424,96.4526] & sex=F => buys=yes  support=0.09 confidence=0.89 lift=4.12
   income=[56.3001,96.4526] & sex=F => buys=yes  support=0.12 confidence=0.83 lift=3.84
   age=[33.6534,44.0395) & sex=F => buys=yes  support=0.08 confidence=0.82 lift=3.80
 
-Reglas difusas edad => ingresos (5 etiquetas fijas), por confianza:
+Fuzzy rules age => income (5 fixed labels), by confidence:
   age_low => income_high  support=0.13 confidence=0.55 lift=1.84
   age_medium => income_high  support=0.12 confidence=0.52 lift=1.64
   age_high => income_low  support=0.12 confidence=0.50 lift=1.26
-La region [30, 45) cae a caballo de dos etiquetas y ninguna llega a la confianza del rango fundido.
+The region [30, 45) straddles two labels and none reaches the confidence of the merged range.
 ```
 
 ## Top-k, rare and high-utility rules (`ARM.top_k_rules`, `ARM.rare_rules`, `ARM.high_utility_rules`)
@@ -670,37 +670,37 @@ value_rules = high_utility_rules(quantities, PROFITS, 0.1, min_conf=0.5, min_lif
 Output:
 
 ```text
-2000 cestas, 8 productos
+2000 baskets, 8 products
 
-Las 5 reglas de mayor soporte con confianza >= 0.5 (sin fijar un soporte minimo):
+The 5 rules with the highest support with confidence >= 0.5 (without fixing a minimum support):
   fruit => bread  support=0.208 confidence=0.51 lift=1.00
   eggs => bread  support=0.186 confidence=0.54 lift=1.07
   cheese => bread  support=0.158 confidence=0.50 lift=0.99
   diapers => wipes  support=0.089 confidence=0.64 lift=4.30
   wipes => diapers  support=0.089 confidence=0.60 lift=4.30
-Las 5 de mayor soporte que ademas tienen lift >= 1.5 (lo popular deja de tapar lo que asocia):
+The 5 with the highest support that also have lift >= 1.5 (the popular stops covering up what associates):
   diapers => wipes  support=0.089 confidence=0.64 lift=4.30
   wipes => diapers  support=0.089 confidence=0.60 lift=4.30
   wine => cheese  support=0.081 confidence=0.69 lift=2.18
   diapers, fruit => wipes  support=0.043 confidence=0.67 lift=4.56
   fruit, wipes => diapers  support=0.043 confidence=0.64 lift=4.54
-Con un umbral de 0.3: 0 reglas
-Con un umbral de 0.01: 93 reglas
+With a threshold of 0.3: 0 rules
+With a threshold of 0.01: 93 rules
 
-Itemsets raros minimales (soporte < 0.1, todos sus subconjuntos con soporte >= 0.1): 28
-Reglas raras con confianza >= 0.5 y lift >= 2: 3. Con un umbral de 0.01, que tambien las alcanza, salen 93 reglas con esa confianza, 47 con ese lift:
+Minimal rare itemsets (support < 0.1, all their subsets with support >= 0.1): 28
+Rare rules with confidence >= 0.5 and lift >= 2: 3. With a threshold of 0.01, which also reaches them, 93 rules come out with that confidence, 47 with that lift:
   diapers => wipes  support=0.089 confidence=0.64 lift=4.30
   wipes => diapers  support=0.089 confidence=0.60 lift=4.30
   wine => cheese  support=0.081 confidence=0.69 lift=2.18
 
-Itemsets mas frecuentes: {bread} 0.51; {milk} 0.45; {fruit} 0.41
-Itemsets de alta utilidad (>= 10 % de la utilidad total, que es 11898):
-  {cheese}  utilidad=4710  soporte=0.314
-  {cheese, wine}  utilidad=3263  soporte=0.081
-  {wine}  utilidad=3105  soporte=0.117
-  {bread, cheese}  utilidad=2554  soporte=0.158
-  {cheese, fruit}  utilidad=2278  soporte=0.124
-Reglas de alta utilidad con confianza >= 0.5 y lift >= 1.5 (sin el lift, 'queso => pan' vale mucho solo porque el queso vale mucho):
+Most frequent itemsets: {bread} 0.51; {milk} 0.45; {fruit} 0.41
+High-utility itemsets (>= 10 % of the total utility, which is 11898):
+  {cheese}  utility=4710  support=0.314
+  {cheese, wine}  utility=3263  support=0.081
+  {wine}  utility=3105  support=0.117
+  {bread, cheese}  utility=2554  support=0.158
+  {cheese, fruit}  utility=2278  support=0.124
+High-utility rules with confidence >= 0.5 and lift >= 1.5 (without the lift, 'cheese => bread' is worth a lot only because the cheese is worth a lot):
   wine => cheese  support=0.081 confidence=0.69 lift=2.18  utility=3263.00  utility_share=0.27
   bread, wine => cheese  support=0.036 confidence=0.70 lift=2.21  utility=1542.90  utility_share=0.13
   fruit, wine => cheese  support=0.032 confidence=0.72 lift=2.29  utility=1397.50  utility_share=0.12
@@ -720,11 +720,11 @@ from ARMxtend.ARM import (
 
 fisher = significant_rules(rules, alpha=0.05, correction="fdr_bh", n_transactions=len(table))
 
-miner = crisp_rule_miner(0.03, "confidence", 0.45)                       # el mismo minero de las reglas reales
-null = permutation_null(table, miner, n_permutations=50, null="permute")   # re-minar sobre copias barajadas
+miner = crisp_rule_miner(0.03, "confidence", 0.45)                       # the same miner as for the real rules
+null = permutation_null(table, miner, n_permutations=50, null="permute")   # re-mine on shuffled copies
 permuted = permutation_p_values(rules, null, n_transactions=len(table))
 
-# series temporales: se baraja con desplazamientos circulares, que conservan la autocorrelacion de cada serie
+# time series: shuffle with circular shifts, which preserve the autocorrelation of each series
 null = permutation_null(series, miner, n_permutations=60, null="shift")
 ```
 
@@ -733,13 +733,13 @@ null = permutation_null(series, miner, n_permutations=60, null="shift")
 Output:
 
 ```text
-Cestas: 300 | reglas con confianza >= 0.45: 100 | sin i00 e i01 juntos (ruido): 54
-Con test de Fisher y FDR (alpha=0.05): 22 reglas, 2 de ruido
-Con permutacion (50 copias barajadas): 5 reglas, 0 de ruido; en los datos barajados salen 56 reglas de media
+Baskets: 300 | rules with confidence >= 0.45: 100 | without i00 and i01 together (noise): 54
+With Fisher's test and FDR (alpha=0.05): 22 rules, 2 of them noise
+With permutation (50 shuffled copies): 5 rules, 0 of them noise; in the shuffled data 56 rules come out on average
 
 i00 -> i01: support=0.213 confidence=0.71 [0.61, 0.79] lift=1.79 p=3.9e-13
 
-11 pares de series independientes: Fisher (supone filas independientes) da 6 falsas alarmas (p < 0.01); el test de permutacion circular, 1 (p < 0.05)
+11 pairs of independent series: Fisher (assumes independent rows) gives 6 false alarms (p < 0.01); the circular permutation test, 1 (p < 0.05)
 ```
 
 ## Rules in action: `ARM.anomaly`, `ARM.prediction`, `ARM.classification`
@@ -779,23 +779,23 @@ model.score(new_cases, new_diagnosis)
 Output:
 
 ```text
-Reglas del funcionamiento normal (3000 instantes):
+Rules from normal operation (3000 instants):
   motion (t-1) => light (t)  confidence=0.99
   door (t-1) => chime (t)  confidence=0.77
 
-Datos nuevos: 2000 instantes con 30 fallos de la luz. 39 instantes superan los 6 bits de sorpresa y contienen 30 de los fallos
-AUC con peso 'surprise': 0.998; con peso 'count': 0.980
-El mas anomalo, 2024-03-02 19:00:00: score=9.4 por motion (t-1) => light (t); door (t-1) => chime (t)
+New data: 2000 instants with 30 light faults. 39 instants exceed the 6 bits of surprise and contain 30 of the faults
+AUC with weight 'surprise': 0.998; with weight 'count': 0.980
+The most anomalous, 2024-03-02 19:00:00: score=9.4 for motion (t-1) => light (t); door (t-1) => chime (t)
 
-Prediccion de cada sensor con las reglas (umbral 0.7), sobre datos nuevos:
-  chime  precision=0.80 recall=0.77 (el sensor se activa el 19% de las veces)
-  light  precision=0.94 recall=0.82 (el sensor se activa el 36% de las veces)
-Prevision para el instante siguiente al ultimo dato (hubo movimiento: si, puerta: si): light (0.99), chime (0.77)
+Prediction of each sensor with the rules (threshold 0.7), on new data:
+  chime  precision=0.80 recall=0.77 (the sensor activates 19% of the time)
+  light  precision=0.94 recall=0.82 (the sensor activates 36% of the time)
+Forecast for the instant after the last reading (motion: yes, door: yes): light (0.99), chime (0.77)
 
-Tras alarm, bathroom, kitchen, coffee se espera: tv (0.77), phone (0.65)
-En 100 cortes de 40 dias nuevos (con 3 o mas eventos ya ocurridos), los 2 eventos previstos incluyen el siguiente el 63% de las veces (prediciendo los 2 mas frecuentes: 49%)
+After alarm, bathroom, kitchen, coffee the expected next is: tv (0.77), phone (0.65)
+On 100 cuts of 40 new days (with 3 or more events already occurred), the 2 predicted events include the next one 63% of the time (predicting the 2 most frequent: 49%)
 
-Clasificador CBA: 12 reglas de clase candidatas, 2 seleccionadas; exactitud 0.96 en 400 casos nuevos (clase mayoritaria: 0.56)
+CBA classifier: 12 candidate class rules, 2 selected; accuracy 0.96 on 400 new cases (majority class: 0.56)
   si cough y fever => flu  confidence=0.96 support=0.24
   si itchy y sneezing => allergy  confidence=0.71 support=0.18
   en otro caso => healthy

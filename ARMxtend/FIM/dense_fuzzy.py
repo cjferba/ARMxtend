@@ -10,7 +10,7 @@ because the supports per level are, so the usual Apriori pruning is valid on it 
 
 @author Carlos Fernandez-Basso
 """
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, Tuple
 
 import numpy as np
 

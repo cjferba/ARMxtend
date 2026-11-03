@@ -380,6 +380,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#faster-fimdense_fuzzy_itemsets" class="nav-link">Faster: FIM.dense_fuzzy_itemsets</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -446,7 +450,60 @@ fuzzy_transactions = [
     [(&quot;warm&quot;, 1.0), (&quot;low_humidity&quot;, 0.2)],
 ]
 fuzzy_fpgrowth(fuzzy_transactions, min_supp=0.3, num_alpha=10)
-</code></pre></div>
+</code></pre>
+<h2 id="faster-fimdense_fuzzy_itemsets">Faster: <code>FIM.dense_fuzzy_itemsets</code></h2>
+<p><code>fuzzy_fpgrowth</code> runs FP-Growth once per alpha-cut and then re-scans the transactions for every candidate. When the number of
+fuzzy items is moderate (tens to a few hundred) there is a much faster exact miner with the <strong>same input and output</strong>:</p>
+<pre><code class="language-python">from ARMxtend.FIM import dense_fuzzy_itemsets
+
+dense_fuzzy_itemsets(fuzzy_transactions, min_supp=0.3, num_alpha=10)    # same dict as fuzzy_fpgrowth
+</code></pre>
+<p>It keeps one packed bit vector per item <em>and</em> alpha-cut, and counts the candidates of each Apriori level with a bitwise AND and a
+bit count. The aggregated support FSupp is anti-monotone (it is a non-negative weighted sum of supports that are), so pruning on it
+is exact. Measured with <code>benchmarks/fuzzy_dense.py</code> (10 alpha-cuts, <code>min_supp=0.03</code>, synthetic data, best of 2):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">transactions</th>
+<th style="text-align: right;">items</th>
+<th style="text-align: right;">itemsets</th>
+<th style="text-align: right;"><code>fuzzy_fpgrowth</code></th>
+<th style="text-align: right;"><code>dense_fuzzy_itemsets</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2 000</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">353</td>
+<td style="text-align: right;">2.317 s</td>
+<td style="text-align: right;">0.009 s</td>
+</tr>
+<tr>
+<td style="text-align: right;">2 000</td>
+<td style="text-align: right;">200</td>
+<td style="text-align: right;">135</td>
+<td style="text-align: right;">0.524 s</td>
+<td style="text-align: right;">0.012 s</td>
+</tr>
+<tr>
+<td style="text-align: right;">5 000</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">354</td>
+<td style="text-align: right;">5.735 s</td>
+<td style="text-align: right;">0.020 s</td>
+</tr>
+<tr>
+<td style="text-align: right;">5 000</td>
+<td style="text-align: right;">200</td>
+<td style="text-align: right;">138</td>
+<td style="text-align: right;">1.338 s</td>
+<td style="text-align: right;">0.023 s</td>
+</tr>
+</tbody>
+</table>
+<p>The output is checked to be identical in every run. With thousands of very sparse items keep <code>fuzzy_fpgrowth</code>. From the command
+line: <code>armxtend fuzzy-rules data.csv --algorithm dense</code>.</p></div>
             </div>
         </div>
 
