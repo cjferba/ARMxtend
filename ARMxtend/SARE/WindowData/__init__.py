@@ -3,31 +3,25 @@
 
 class WindowData(object):
     """
-	Clase utilitaria para definir de forma genérica una ventana de tiempo deslizante conformada por
-	transacciones de datos.
+    Utility class to define in a generic way a sliding time window made up of data transactions.
 
-	Atributos:
-    	transactionIntervals (Array(RDD, int), obligatorio): Lista de intervalos de tiempo que 
-    		incluye la ventana de tiempo. Cada intervalo es un conjunto de transacciones que
-    		son recibidas en tiempo real, y un valor que indica el total de transacciones que existen
-    		en dicho instante
-    	timeWindow (int, obligatorio): Identificador del punto temporal en el que termina 
-    		la ventana de tiempo
-    	totalWindowTransacs (int, opcional): cantidad total de transacciones contenidas 
-    		en la ventana deslizante de tiempo
-    		
-	@author Abel Francisco (2016)
+    Attributes:
+        transactionIntervals (Array(RDD, int), required): List of time intervals included in the time window. Each
+            interval is a set of transactions that are received in real time, and a value that indicates the total
+            number of transactions that exist at that instant
+        timeWindow (int, required): Identifier of the time point at which the time window ends
+        totalWindowTransacs (int, optional): total number of transactions contained in the sliding time window
+
+    @author Abel Francisco (2016)
     """
 
     def __init__(self, transactionIntervals=None, timeWindow=-1):
         """
-		Inicialización de una nueva ventana de tiempo deslizante.
+        Initialization of a new sliding time window.
 
-		Attributos:
-    		transactionIntervals (Array(RDD, int), obligatorio): Nueva lista de intervalos de tiempo que 
-    			incluye la ventana de tiempo
-			timeWindow (int, obligatorio): Nuevo identificador del punto temporal en el que termina 
-				la ventana de tiempo
+        Attributes:
+            transactionIntervals (Array(RDD, int), required): New list of time intervals included in the time window
+            timeWindow (int, required): New identifier of the time point at which the time window ends
         """
         self.transactionIntervals = transactionIntervals if transactionIntervals is not None else []
         self.timeWindow = timeWindow
@@ -35,13 +29,13 @@ class WindowData(object):
 
     def addTransacInterval(self, transacInterval):
         """
-		Agregar un conjunto de transacciones (intervalo temporal) a la lista de intervalos
-		que integran actualmente la ventana deslizante (simular un avance en el tiempo)
-		
-		Argumentos:
-		
-			transacInterval(RDD,int): la lista de transacciones, definida como un intervalo de tiempo,
-				que deben ser agregadas a la ventan de tiempo actual
+        Add a set of transactions (time interval) to the list of intervals that currently make up the sliding window
+        (simulate an advance in time)
+
+        Args:
+
+            transacInterval(RDD,int): the list of transactions, defined as a time interval, that must be added to the
+                current time window
         """
         self.transactionIntervals.append(transacInterval)
         self.timeWindow += 1
@@ -49,12 +43,11 @@ class WindowData(object):
 		
     def deleteTransacInterval(self):
         """
-		Eliminar un conjunto de transacciones de la lista de transacciones que integran actualmente un
-		intervalo temporal de la ventana deslizante (simular un avance en el tiempo), se elimina el 
-		primer bloque de transacciones en la ventana (el más antiguo).
+        Remove a set of transactions from the list of transactions that currently make up a time interval of the sliding
+        window (simulate an advance in time); the first block of transactions in the window (the oldest) is removed.
 
-		Retorna:
-			Las cantidad de transacciones que han sido eliminadas de la ventana
+        Returns:
+            The number of transactions that have been removed from the window
         """
         deletedInterval = self.transactionIntervals.pop(0)
         deletedInterval[0].unpersist()
@@ -63,11 +56,11 @@ class WindowData(object):
 		
     def countTotalWindowTransacs(self):
         """
-		Calcular el total de transacciones que integran la ventana de tiempo, las cuales
-		se distribuyen entre todos los intervalos de tiempo que la conforman.
+        Compute the total number of transactions that make up the time window, which are distributed among all the time
+        intervals that make it up.
 
-		Retorna:
-			La cantidad total de transacciones que integran a la ventana de tiempo actual
+        Returns:
+            The total number of transactions that make up the current time window
         """
         totalWindowTransacs = 0
         for intervals in self.transactionIntervals:
@@ -76,16 +69,14 @@ class WindowData(object):
         
     def getUnionTransactions(self, sparkContext):
         """
-        Obtener la unión de todos los archivos RDD asociados a los intervalos de transacciones
-        que integran una ventana de tiempo.
-        
-         Argumentos:
-		
-			sparkContext(SparkContext): contexto distribuido para aplicar técnicas de BigData
-			    en un RDD con Spark
-		
-		Retorna:
-		    La unión de los RDD de una ventana de tiempo (intervalos) como un único RDD
+        Get the union of all the RDD files associated with the transaction intervals that make up a time window.
+
+        Args:
+
+            sparkContext(SparkContext): distributed context to apply Big Data techniques on an RDD with Spark
+
+        Returns:
+            The union of the RDDs of a time window (intervals) as a single RDD
         """
         windowRDDList = []
         for intervals in self.transactionIntervals:

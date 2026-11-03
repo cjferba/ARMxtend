@@ -5,33 +5,30 @@
 
 class FIMoTS_Bounds(object):
     """
-	Clase utilitaria para definir una terna que contiene las cotas transformadoras de un 
-	itemset (algoritmo FIMoTS), y una lista con las claves en el Diccionario/Árbol 
-	Lexicográfico de los nodos que comparten dichas cotas.
+    Utility class to define a triple that contains the transformation bounds of an itemset (FIMoTS algorithm), and a
+    list with the keys, in the Dictionary/Lexicographic Tree, of the nodes that share those bounds.
 
-	Atributos:
-    	upperBound (int, opcional, por defecto 0): Cota superior de transformación de un itemset
-    	lowerBound (int, opcional, por defecto 0): Cota inferior de transformación de un itemset
-    	itemNodes (Array(String), opcional, por defecto []): lista de claves en el Diccionario
-    		que identifican a los nodos del árbol que comparten la combinación de cotas 
-    		especificada en la terna
-    		
-	@author Abel Francisco (2016)
+    Attributes:
+        upperBound (int, optional, default 0): Upper transformation bound of an itemset
+        lowerBound (int, optional, default 0): Lower transformation bound of an itemset
+        itemNodes (Array(String), optional, default []): list of keys in the Dictionary that identify the nodes of the
+            tree that share the combination of bounds specified in the triple
+
+    @author Abel Francisco (2016)
     """
 
     def __init__(self, upperBound = 0, lowerBound = 0, itemNodes = []):
         """
-		Inicialización de una terna que contiene las cotas transformadoras de un 
-		itemset (algoritmo FIMoTS), y los identificadores de los itemsets que las comparten.
+        Initialization of a triple that contains the transformation bounds of an itemset (FIMoTS algorithm), and the
+        identifiers of the itemsets that share them.
 
-		Atributos:
-			upperBound (int, opcional, por defecto 0): Nueva cota superior de transformación de un itemset
-			lowerBound (int, opcional, por defecto 0): Nueva cota inferior de transformación de un itemset
-			itemNodes (Array(String), opcional, por defecto []): Nueva lista de claves en el Diccionario
-				que identifican a los nodos del árbol que comparten la combinación de cotas 
-				especificada en la terna
-			
-		@author Abel Francisco (2016)
+        Attributes:
+            upperBound (int, optional, default 0): New upper transformation bound of an itemset
+            lowerBound (int, optional, default 0): New lower transformation bound of an itemset
+            itemNodes (Array(String), optional, default []): New list of keys in the Dictionary that identify the nodes
+                of the tree that share the combination of bounds specified in the triple
+
+        @author Abel Francisco (2016)
         """
         self.upperBound	= upperBound
         self.lowerBound = lowerBound
@@ -39,12 +36,10 @@ class FIMoTS_Bounds(object):
     	
     def __repr__(self):
         """
-    	Mecanismo de presentación o escritura en pantalla de una terna de cotas transformadoras
-    	y sus itemsets.
-    	
-    	Retorna:
-    		Una cadena de caracteres que representa visualmente (texto) a una combinación
-    		de cotas transformadoras FIMoTS
+        Mechanism to display or print a triple of transformation bounds and their itemsets.
+
+        Returns:
+            A string that visually represents (text) a combination of FIMoTS transformation bounds
         """
         boundFormat = '{}: [ COTA SUPERIOR: {}, COTA INFERIOR: {}, ITEMS: {} ]'
         return boundFormat.format(self.__class__.__name__, self.upperBound, 
@@ -52,9 +47,9 @@ class FIMoTS_Bounds(object):
 
     def getItemsetsCount(self):
     	"""
-    	Obtiene el total de itemsets que comparten el par de cotas transformadoras actual
-    	
-    	Retorna:
-    		Entero con el conteo total de itemsets que comparten el par de cotas transformadoras
-    	"""
+        Get the total number of itemsets that share the current pair of transformation bounds
+
+        Returns:
+            Integer with the total count of itemsets that share the pair of transformation bounds
+        """
     	return len(self.itemNodes)

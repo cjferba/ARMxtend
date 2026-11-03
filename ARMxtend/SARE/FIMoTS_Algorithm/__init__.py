@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 """
-Algoritmo para la obtención e identificación eficiente de itemsets frecuentes en ventanas de tiempo
-sensibles al tiempo (deslizantes), y en ambientes de flujo constante de datos (streams).
+Algorithm for the efficient obtention and identification of frequent itemsets in time-sensitive (sliding) time
+windows, and in constant data stream environments (streams).
 
-La concepción inicial del algoritmo se encuentra en el artículo "Efficient frequent itemset mining
-methods over time-sensitive streams", publicado en la revista Knowledge-Based Systems, en 2014.
- 
-@author Haifeng Li, Ning Zhang, Jianming Zhu, Huaihu Cao, Yue Wang (Especificación - 2014)
-		Abel Francisco (Implementación - 2016)  
+The initial conception of the algorithm is found in the paper "Efficient frequent itemset mining
+methods over time-sensitive streams", published in Knowledge-Based Systems, in 2014.
+
+@author Haifeng Li, Ning Zhang, Jianming Zhu, Huaihu Cao, Yue Wang (Specification - 2014)
+        Abel Francisco (Implementation - 2016)
 """
 
 from math import floor
@@ -23,23 +23,19 @@ from ..FIMoTS_Tree import FIMoTS_Tree
 
 def FIMoTS_TreeInitialization(initialStructure, slidingWindow, minRelSupportElems, sparkContext):
     """
-	Construcción del árbol FP-Tree asociado a la ventana de tiempo inicial.
-	
-	Argumentos:
-		initialStructure (FIMoTS_Structure): una estructura vacía para ser inicializada y 
-			utilizada durante la aplicación y resolución del algoritmo FIMoTS
-		slidingWindow (WindowData, obligatorio): el conjunto de transacciones que integran a la
-			ventana de tiempo
-		minRelSupportElems (DecimalFraction, obligatorio): el soporte mínimo con el que
-			un itemset puede ser considerado frecuente, expresado como una fracción de 
-			números enteros
-		sparkContext(SparkContext): contexto distribuido para aplicar técnicas de BigData
-			en un RDD con Spark
-	
-	Retorna:
-		Una estructura para la resolución y aplicación del algoritmo FIMoTS, conteniendo
-		un árbol FP-Tree con el conteo inicial de itemsets en la ventana de tiempo
-		original.
+    Construction of the FP-Tree associated with the initial time window.
+
+    Args:
+        initialStructure (FIMoTS_Structure): an empty structure to be initialized and used during the application
+            and resolution of the FIMoTS algorithm
+        slidingWindow (WindowData, required): the set of transactions that make up the time window
+        minRelSupportElems (DecimalFraction, required): the minimum support with which an itemset can be considered
+            frequent, expressed as a fraction of integers
+        sparkContext(SparkContext): distributed context to apply Big Data techniques on an RDD with Spark
+
+    Returns:
+        A structure for the resolution and application of the FIMoTS algorithm, containing an FP-Tree with the
+        initial count of itemsets in the original time window.
     """
     currentTree = FIMoTS_GetFirstLevelTree(slidingWindow, sparkContext)
     initialStructure.itemsetsTree = currentTree
@@ -47,7 +43,7 @@ def FIMoTS_TreeInitialization(initialStructure, slidingWindow, minRelSupportElem
     initialStructure.infrequentItemsetsBounds = FIMoTS_List([])
     currentLevel = 1
 
-    # Construir de forma iterativa los nuevos niveles del árbol, siempre y 
+    # Iteratively build the new levels of the tree, as long as
     # cuando existan nodos frecuentes candidatos
     while initialStructure.itemsetsTree.getLevelTree(currentLevel):
         FIMoTS_BuildLevelTree(initialStructure, slidingWindow, minRelSupportElems, currentLevel, sparkContext)
@@ -56,37 +52,35 @@ def FIMoTS_TreeInitialization(initialStructure, slidingWindow, minRelSupportElem
 
 def FIMoTS_GetFirstLevelTree(slidingWindow, sparkContext):
     """
-    Armar el primer nivel del árbol lexicográfico FP, realizando un conteo inicial de 
-    items (soportes relativos) sobre la primera ventana de tiempo.
-	
-    Argumentos:
-        slidingWindow (WindowData, obligatorio): el conjunto de transacciones que integran a la
-        ventana de tiempo
-			
-    Retorna:
-        Un árbol lexicográfico, representado como un Diccionario o HashMap, con los
-        items (vocabulario) frecuentes identificados en la ventana de tiempo (nivel 1 del
-        árbol).
+    Build the first level of the lexicographic FP tree, performing an initial count of items (relative supports) over
+    the first time window.
+
+    Args:
+        slidingWindow (WindowData, required): the set of transactions that make up the time window
+
+    Returns:
+        A lexicographic tree, represented as a Dictionary or HashMap, with the frequent items (vocabulary) identified
+        in the time window (level 1 of the tree).
     """
     transactions = slidingWindow.getUnionTransactions(sparkContext)
     transacsTotal = transactions.count()
 
-    # Dividir cada línea del RDD en palabras
+    # Split each line of the RDD into words
     items = transactions.flatMap(lambda transaction: transaction.split())
 
-    # Contar cada palabra en cada subconjunto
+    # Count each word in each subset
     itemPairs = items.map(lambda item: (item, 1))
     itemCounts = itemPairs.reduceByKey(lambda x, y: x + y).collect()
 
     # Crear el Diccionario FP-Tree
     fimotsTree = FIMoTS_Tree({})
 
-    # Crear el Nivel 0 del árbol (Raíz)
+    # Create Level 0 of the tree (Root)
     fractionElems = DecimalFraction(-1, transacsTotal)
     rootNode = FIMoTS_Node([], -1.0, fractionElems, None, len(itemCounts), slidingWindow.timeWindow)
     fimotsTree.nodeMap['-1'] = rootNode
 
-    # Crear Nivel 1 del árbol (items - itemsets de tamaño 1)
+    # Create Level 1 of the tree (items - itemsets of size 1)
     for (item, countItem) in itemCounts:
         fractionElems = DecimalFraction(countItem, transacsTotal)
         node = FIMoTS_Node([item], countItem / float(transacsTotal), fractionElems, '-1', 0, slidingWindow.timeWindow)
@@ -97,17 +91,14 @@ def FIMoTS_GetFirstLevelTree(slidingWindow, sparkContext):
 
 def FIMoTS_BuildLevelTree(algStructure, slidingWindow, minRelSupportElems, currentLevel, sparkContext):
     """
-	Construir un nuevo nivel de itemsets frecuentes en el árbol FP-Tree inicial.
-	
-	Argumentos:
-		algStructure (FIMoTS_Structure, obligatorio): estructura actual para la ejecución del
-			algoritmo FIMoTS
-		slidingWindow (WindowData, obligatorio): el conjunto de transacciones que integran a la
-			ventana de tiempo
-		minRelSupportElems (DecimalFraction, obligatorio): el soporte mínimo con el que
-			un itemset puede ser considerado frecuente, expresado como una fracción de 
-			números enteros
-		currentLevel (int, obligatorio): nivel actual máximo del árbol FP
+    Build a new level of frequent itemsets in the initial FP-Tree.
+
+    Args:
+        algStructure (FIMoTS_Structure, required): current structure for the execution of the FIMoTS algorithm
+        slidingWindow (WindowData, required): the set of transactions that make up the time window
+        minRelSupportElems (DecimalFraction, required): the minimum support with which an itemset can be considered
+            frequent, expressed as a fraction of integers
+        currentLevel (int, required): current maximum level of the FP tree
     """
     transactions = slidingWindow.getUnionTransactions(sparkContext)
     transacsTotal = slidingWindow.totalWindowTransacs
@@ -115,22 +106,22 @@ def FIMoTS_BuildLevelTree(algStructure, slidingWindow, minRelSupportElems, curre
     itemsetsCandidates = []
     itemsetsCounts = []
 
-    # Ordenar lexicográficamente nodos del nivel máximo actual del árbol
+    # Sort lexicographically the nodes of the current maximum level of the tree
     mapCurrentLevel = sorted(algStructure.itemsetsTree.getLevelTree(currentLevel),
                              key=algStructure.itemsetsTree.getLevelTree(currentLevel).get)
 
-    # Generar descendencia de cada nodo hoja actual (nodos en el máximo nivel)
+    # Generate the descendants of each current leaf node (nodes at the maximum level)
     for keyItemsetNode in mapCurrentLevel:
         itemsetsCandidates += FIMoTS_Initial(keyItemsetNode, algStructure.itemsetsTree.nodeMap[keyItemsetNode],
                                              algStructure, slidingWindow, minRelSupportElems, True, True, sparkContext)
 
-    # Si se ha generado un nuevo nivel del árbol
+    # If a new level of the tree has been generated
     if algStructure.itemsetsTree.getLevelTree(currentLevel + 1):
 
-        # Calcular los soportes de los nuevos itemsets hojas
+        # Compute the supports of the new leaf itemsets
         itemsetsCounts = FIMoTS_CalculateSupportLevelsTree(itemsetsCandidates, transactions)
 
-        # Armar y agregar nodos en el Diccionario para cada itemset nuevo
+        # Build and add nodes to the Dictionary for each new itemset
         for (itemsetKey, countItemset) in itemsetsCounts:
             fractionElems = DecimalFraction(countItemset, transacsTotal)
             currentNode = algStructure.itemsetsTree.nodeMap[itemsetKey]
@@ -141,39 +132,33 @@ def FIMoTS_BuildLevelTree(algStructure, slidingWindow, minRelSupportElems, curre
 def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWindow, minRelSupportElems,
                    recalculateList, isTreeInitialization, sparkContext):
     """
-	Método para desplegar un nodo que represente un itemset frecuente en el árbol lexicográfico,
-	generando su descendencia, es decir, los nodos hijos que representan superconjuntos de
-	dicho itemset.
-	
-	Argumentos:
-	
-		keyCurrentItemNode (String, obligatorio): clave que identifica al nodo en el Diccionario/Árbol
-		currentItemNode (FIMoTS_Node, obligatorio): contenido del nodo al que se debe desplegar 
-			su descendencia
-		algStructure (FIMoTS_Structure, obligatorio): estructura actual con la ejecución del 
-			algoritmo FIMoTS
-		slidingWindow (WindowData, obligatorio): el conjunto de transacciones que integran a la
-			ventana de tiempo
-		minRelSupportElems (DecimalFraction, obligatorio): mínimo Soporte relativo, 
-			especificado como una fracción de enteros
-		recalculateList (Boolean, obligatorio): indica si se deben recalcular las cotas del 
-			nodo actual, así como su ubicación en la lista de claves de cotas transformadoras
-		isTreeInitialization (Boolean, obligatorio): indica si se está realizando el proceso inicial
-			de construcción del árbol lexicográfico, o se está actualizando el mismo en tiempo
-			real. Si es la inicialización del árbol, solo se debe generar el primer nivel de
-			la descendencia del nodo y no se debe calcular su soporte, ya que dicho despliegue
-			y cálculos se realizan en el proceso externo de construcción de niveles del árbol.
-		sparkContext(SparkContext): contexto distribuido para aplicar técnicas de BigData
-			en un RDD con Spark
-			
-	Retorna:
-		Lista de nodos hijos generados a partir del nodo padre recibido como argumento
+    Method to unfold a node that represents a frequent itemset in the lexicographic tree, generating its descendants,
+    that is, the child nodes that represent supersets of that itemset.
+
+    Args:
+
+        keyCurrentItemNode (String, required): key that identifies the node in the Dictionary/Tree
+        currentItemNode (FIMoTS_Node, required): content of the node whose descendants must be unfolded
+        algStructure (FIMoTS_Structure, required): current structure with the execution of the FIMoTS algorithm
+        slidingWindow (WindowData, required): the set of transactions that make up the time window
+        minRelSupportElems (DecimalFraction, required): minimum relative support, specified as a fraction of integers
+        recalculateList (Boolean, required): indicates whether the bounds of the current node must be recomputed, as
+            well as its location in the list of transformation-bound keys
+        isTreeInitialization (Boolean, required): indicates whether the initial process of building the lexicographic
+            tree is being carried out, or the tree is being updated in real time. If it is the initialization of the
+            tree, only the first level of the descendants of the node must be generated and its support must not be
+            computed, since that unfolding and those computations are carried out in the external process of building
+            the levels of the tree.
+        sparkContext(SparkContext): distributed context to apply Big Data techniques on an RDD with Spark
+
+    Returns:
+        List of child nodes generated from the parent node received as argument
     """
     minRelSupport = minRelSupportElems.numeratorFraction / float(minRelSupportElems.denominatorFraction)
     transactions = slidingWindow.getUnionTransactions(sparkContext)
     transacTotal = slidingWindow.totalWindowTransacs
 
-    # Si el itemset es infrecuente
+    # If the itemset is infrequent
     if currentItemNode.relativeSupport < minRelSupport:
 
         # Actualizar cotas transformadoras del nodo en listas
@@ -181,7 +166,7 @@ def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWin
 
         return []
 
-    # Si el itemset actual es frecuente
+    # If the current itemset is frequent
     else:
         rightSiblingsCurrentNode = algStructure.itemsetsTree.getRightSiblings(keyCurrentItemNode, currentItemNode)
         newLevelCandidates = []
@@ -189,7 +174,7 @@ def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWin
         # Para cada nodo hermano derecho
         for keyRightSibling, rightSibling in rightSiblingsCurrentNode.items():
 
-            # Si el itemset asociado al nodo hermano es frecuente
+            # If the itemset associated with the sibling node is frequent
             if rightSibling.relativeSupport >= minRelSupport:
                 itemPrefixNewNode = sorted(list(set(currentItemNode.itemPrefix + rightSibling.itemPrefix)))
                 newLevelCandidates.append(itemPrefixNewNode)
@@ -198,19 +183,19 @@ def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWin
 
         for itemsetCandidate in newLevelCandidates:
             newNode = FIMoTS_Node(itemsetCandidate, 0.0, None, currentItemNode.getItemsetKey(), 0, 0)
-            # Un hijo que ya existe (p.ej. creado por FIMoTS_ExtendLeftSiblings cuando dos itemsets
-            # hermanos pasan a ser frecuentes en la misma ventana) no se vuelve a crear: se
-            # registraria dos veces en las listas de cotas y su soporte se contaria por duplicado.
+            # A child that already exists (e.g. created by FIMoTS_ExtendLeftSiblings when two sibling itemsets
+            # become frequent in the same window) is not created again: it would be
+            # registered twice in the bound lists and its support would be counted twice.
             if not isTreeInitialization and newNode.getItemsetKey() in algStructure.itemsetsTree.nodeMap:
                 continue
             newNodes.append(newNode)
 
         itemsetsCounts = []
 
-        # Calcular soporte de nuevos nodos hijos si se está
-        # actualizando el árbol (no inicialización)
-        # Si es inicialización, el cálculo de los soportes se
-        # realiza en el método externo FIMoTS_BuildLevelTree
+        # Compute the support of new child nodes if the tree is
+        # being updated (not initialization)
+        # If it is initialization, the computation of the supports is
+        # carried out in the external method FIMoTS_BuildLevelTree
         if not isTreeInitialization:
             itemsetsCounts = FIMoTS_CalculateSupportLevelsTree(newNodes, transactions)
 
@@ -225,7 +210,7 @@ def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWin
             nodeChild.orderItemPrefix()
             algStructure.itemsetsTree.nodeMap[nodeChild.getItemsetKey()] = nodeChild
 
-        # Actualizar valores de identificación de hijos en el nodo padre
+        # Update the child identification values in the parent node
         currentItemNode.totalChildNodes = len(newNodes)
 
         if recalculateList:
@@ -242,25 +227,22 @@ def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWin
 
 def FIMoTS_ExtendLeftSiblings(keyNode, node, algStructure, slidingWindow, minRelSupportElems, sparkContext):
     """
-    Incorporar un itemset que acaba de ser frecuente como "hermano derecho" de sus hermanos
-    izquierdos frecuentes. En el árbol, los hijos de un nodo L se forman uniendo L con sus
-    hermanos derechos FRECUENTES. Si un hermano derecho N era infrecuente cuando se
-    desplegaron los hijos de L, L no tiene el hijo L u N; cuando N pasa a ser frecuente
-    (p.ej. por un cambio en los datos de la ventana) hay que crearlo ahora. Sin este paso,
-    el algoritmo incremental pierde itemsets frecuentes que una inicialización completa de
-    la misma ventana sí encuentra.
+    Incorporate an itemset that has just become frequent as a "right sibling" of its frequent left siblings. In the
+    tree, the children of a node L are formed by joining L with its FREQUENT right siblings. If a right sibling N was
+    infrequent when the children of L were unfolded, L does not have the child L u N; when N becomes frequent (e.g.
+    because of a change in the data of the window) it has to be created now. Without this step, the incremental
+    algorithm loses frequent itemsets that a full initialization of the same window does find.
 
-    Cada nuevo hijo L u N se registra en las listas de cotas (FIMoTS_Initial) y, si resulta
-    frecuente, se despliega su propia descendencia y se repite el proceso entre sus
-    hermanos izquierdos (los demás hijos de L).
+    Each new child L u N is registered in the bound lists (FIMoTS_Initial) and, if it turns out to be frequent, its own
+    descendants are unfolded and the process is repeated among its left siblings (the other children of L).
 
-    Argumentos:
-        keyNode (String, obligatorio): clave en el árbol del nodo que ha pasado a ser frecuente
-        node (FIMoTS_Node, obligatorio): contenido de dicho nodo
-        algStructure (FIMoTS_Structure, obligatorio): estructura actual del algoritmo FIMoTS
-        slidingWindow (WindowData, obligatorio): ventana de tiempo actual
-        minRelSupportElems (DecimalFraction, obligatorio): mínimo soporte relativo
-        sparkContext(SparkContext): contexto distribuido de Spark
+    Args:
+        keyNode (String, required): key in the tree of the node that has become frequent
+        node (FIMoTS_Node, required): content of that node
+        algStructure (FIMoTS_Structure, required): current structure of the FIMoTS algorithm
+        slidingWindow (WindowData, required): current time window
+        minRelSupportElems (DecimalFraction, required): minimum relative support
+        sparkContext(SparkContext): Spark distributed context
     """
     minRelSupport = minRelSupportElems.numeratorFraction / float(minRelSupportElems.denominatorFraction)
     transactions = slidingWindow.getUnionTransactions(sparkContext)
@@ -289,7 +271,7 @@ def FIMoTS_ExtendLeftSiblings(keyNode, node, algStructure, slidingWindow, minRel
         left.totalChildNodes += 1
 
     for left, child in newChildren:
-        # Registra las cotas del nuevo nodo y, si es frecuente, despliega sus hijos
+        # Register the bounds of the new node and, if it is frequent, unfold its children
         FIMoTS_Initial(child.getItemsetKey(), child, algStructure, slidingWindow, minRelSupportElems, True, False,
                        sparkContext)
         if child.relativeSupport >= minRelSupport:
@@ -299,27 +281,24 @@ def FIMoTS_ExtendLeftSiblings(keyNode, node, algStructure, slidingWindow, minRel
 
 def FIMoTS_AddNewItems(algStructure, slidingWindow, minRelSupportElems, sparkContext):
     """
-    Incorporar al árbol los items que aparecen POR PRIMERA VEZ en el flujo de datos. El primer
-    nivel del árbol se construye con el vocabulario de la primera ventana, y los cambios de
-    soporte de los nodos existentes se detectan mediante las cotas de transformación; pero un
-    item que no estaba en esa primera ventana no tiene nodo, y sin este paso nunca llegaría a
-    detectarse (ni él ni los itemsets que lo contienen), por frecuente que se volviera.
+    Incorporate into the tree the items that appear for the FIRST TIME in the data stream. The first level of the tree
+    is built with the vocabulary of the first window, and the support changes of the existing nodes are detected through
+    the transformation bounds; but an item that was not in that first window has no node, and without this step it would
+    never be detected (neither it nor the itemsets that contain it), however frequent it became.
 
-    Se buscan los items del último lote recibido que no tienen nodo de primer nivel, se calcula
-    su soporte sobre la ventana actual (un único trabajo Spark adicional, solo si hay items
-    nuevos) y se insertan como nodos del primer nivel. Si resultan frecuentes, se despliega su
-    descendencia y se incorporan como pareja a sus hermanos izquierdos frecuentes, igual que
-    cualquier otro itemset que pasa a ser frecuente.
+    The items of the last received batch that have no first-level node are looked for, their support over the current
+    window is computed (a single additional Spark job, only if there are new items) and they are inserted as first-level
+    nodes. If they turn out to be frequent, their descendants are unfolded and they are incorporated as a pair with
+    their frequent left siblings, like any other itemset that becomes frequent.
 
-    Este paso se ejecuta al final de FIMoTS_Main: los soportes de los nodos nuevos ya se calculan
-    sobre la ventana actual, así que no deben pasar por la actualización de cotas por
-    desplazamiento de la ventana.
+    This step is executed at the end of FIMoTS_Main: the supports of the new nodes are already computed over the
+    current window, so they must not go through the bound update due to the shift of the window.
 
-    Argumentos:
-        algStructure (FIMoTS_Structure, obligatorio): estructura actual del algoritmo FIMoTS
-        slidingWindow (WindowData, obligatorio): ventana de tiempo ya actualizada
-        minRelSupportElems (DecimalFraction, obligatorio): mínimo soporte relativo
-        sparkContext(SparkContext): contexto distribuido de Spark
+    Args:
+        algStructure (FIMoTS_Structure, required): current structure of the FIMoTS algorithm
+        slidingWindow (WindowData, required): already updated time window
+        minRelSupportElems (DecimalFraction, required): minimum relative support
+        sparkContext(SparkContext): Spark distributed context
     """
     nodeMap = algStructure.itemsetsTree.nodeMap
     minRelSupport = minRelSupportElems.numeratorFraction / float(minRelSupportElems.denominatorFraction)
@@ -352,33 +331,29 @@ def FIMoTS_AddNewItems(algStructure, slidingWindow, minRelSupportElems, sparkCon
 
 def FIMoTS_UpdateBoundsList(currentItemNode, algStructure, minSupportElems, windowSize):
     """
-	Actualizar las listas con las cotas de transformación de un nodo/itemset en la 
-	estructura de solución del algoritmo.
-	
-	Argumentos:
-		currentItemNode (FIMoTS_Node, obligatorio): nodo al cual se le deben recalcular sus
-			cotas, así como su ubicación en las listas enlazadas de cotas de itemsets
-		algStructure (FIMoTS_Structure, obligatorio): estructura actual para la ejecución del
-			algoritmo FIMoTS
-		minSupportElems (DecimalFraction, obligatorio): el soporte mínimo con el que
-			un itemset puede ser considerado frecuente, expresado como una fracción de 
-			números enteros
-		windowSize (int, obligatorio): total de transacciones que integran la ventana de
-			tiempo actual
-	"""
-    # Calcular nuevos límites transformadores del nodo
+    Update the lists with the transformation bounds of a node/itemset in the solution structure of the algorithm.
+
+    Args:
+        currentItemNode (FIMoTS_Node, required): node whose bounds, as well as its location in the linked lists of
+            itemset bounds, must be recomputed
+        algStructure (FIMoTS_Structure, required): current structure for the execution of the FIMoTS algorithm
+        minSupportElems (DecimalFraction, required): the minimum support with which an itemset can be considered
+            frequent, expressed as a fraction of integers
+        windowSize (int, required): total number of transactions that make up the current time window
+    """
+    # Compute new transformation limits of the node
     nodeSupportElems = currentItemNode.fractionElems
     minSupport = float(minSupportElems.numeratorFraction) / float(minSupportElems.denominatorFraction)
     nodeItemsetKey = currentItemNode.getItemsetKey()
     nodeNewBounds = FIMoTS_Bounds()
 
-    # Si el itemset es itemset infrecuente
+    # If the itemset is an infrequent itemset
     if currentItemNode.relativeSupport < minSupport:
         nodeUpperBound = FIMoTS_CalculateUpperBound(minSupportElems, nodeSupportElems, windowSize, False)
         nodeLowerBound = FIMoTS_CalculateLowerBound(minSupportElems, nodeSupportElems, windowSize, False)
         nodeNewBounds = FIMoTS_Bounds(nodeUpperBound, nodeLowerBound, [nodeItemsetKey])
 
-    # Si el itemset es frecuente
+    # If the itemset is frequent
     else:
         nodeUpperBound = FIMoTS_CalculateUpperBound(minSupportElems, nodeSupportElems, windowSize, True)
         nodeLowerBound = FIMoTS_CalculateLowerBound(minSupportElems, nodeSupportElems, windowSize, True)
@@ -387,7 +362,7 @@ def FIMoTS_UpdateBoundsList(currentItemNode, algStructure, minSupportElems, wind
     currentItemList = FIMoTS_List()
 
     # Generar elemento correspondiente en lista de cotas (ajustar apuntadores)
-    # Si el itemset se mantiene como itemset infrecuente
+    # If the itemset remains an infrequent itemset
     if currentItemNode.relativeSupport < minSupport:
         currentItemList = algStructure.infrequentItemsetsBounds
 
@@ -398,46 +373,43 @@ def FIMoTS_UpdateBoundsList(currentItemNode, algStructure, minSupportElems, wind
     equalBounds = None
     findEqualBounds = False
 
-    # Buscar otro elemento en la lista de cotas transformadoras con la misma combinación
-    # de límite superior - inferior
+    # Look for another element in the list of transformation bounds with the same combination
+    # of upper - lower limit
     for bounds in currentItemList.itemsBounds:
 
         if nodeNewBounds.upperBound == bounds.upperBound and nodeNewBounds.lowerBound == bounds.lowerBound:
-            # Si se encuentra un elemento equivalente
+            # If an equivalent element is found
             equalBounds = bounds
             findEqualBounds = True
             break
 
-    # Si ya existe una combinación de cotas equivalente en la lista
+    # If an equivalent combination of bounds already exists in the list
     if findEqualBounds:
 
-        # Agregar nodo actual al final de la lista de
-        # apuntadores de la cota equivalente
+        # Add the current node to the end of the list of
+        # pointers of the equivalent bound
         equalBounds.itemNodes.append(nodeItemsetKey)
 
-    # Si es un nuevo par de cotas superior/inferior
+    # If it is a new upper/lower pair of bounds
     else:
 
-        # Agregar nuevo elemento a lista de cotas distintas de
+        # Add a new element to the list of distinct bounds of
         # itemsets frecuentes
         currentItemList.itemsBounds.append(nodeNewBounds)
 
 
 def FIMoTS_CalculateUpperBound(relSupportElems, currentSupportElems, windowSize, isFrequent):
     """
-	Calcular nuevo valor de la Cota de Transformación Superior de un itemset
-	 
-	relSupportElems (DecimalFraction, obligatorio): mínimo Soporte relativo, especificado 
-		como una fracción de enteros
-	currentSupportElems (DecimalFraction, obligatorio): soporte actual del itemset, 
-		especificado como una fracción de enteros
-	windowSize (int, obligatorio): cantidad de Transacciones en la ventana deslizante actual
-	isFrequent (Boolean, obligatorio): indica si el itemset sobre el que se aplica el 
-		cálculo es frecuente, o no
-	
-	Retorna: 
-		El nuevo valor de la Cota Transformadora Superior del itemset
-	"""
+    Compute the new value of the Upper Transformation Bound of an itemset
+
+    relSupportElems (DecimalFraction, required): minimum relative support, specified as a fraction of integers
+    currentSupportElems (DecimalFraction, required): current support of the itemset, specified as a fraction of integers
+    windowSize (int, required): number of transactions in the current sliding window
+    isFrequent (Boolean, required): indicates whether the itemset on which the computation is applied is frequent or not
+
+    Returns:
+        The new value of the Upper Transformation Bound of the itemset
+    """
     computeUpperBound = 0.0
 
     if isFrequent:
@@ -464,18 +436,16 @@ def FIMoTS_CalculateUpperBound(relSupportElems, currentSupportElems, windowSize,
 
 def FIMoTS_CalculateLowerBound(relSupportElems, currentSupportElems, windowSize, isFrequent):
     """
-	Calcular nuevo valor de la Cota de Transformación Inferior de un itemset
-	 
-	relSupportElems (DecimalFraction, obligatorio): mínimo Soporte relativo, especificado 
-		como una fracción de enteros
-	currentSupportElems (DecimalFraction, obligatorio): Soporte actual del itemset, 
-		especificado como una fracción de enteros
-	windowSize (int, obligatorio): cantidad de Transacciones en la ventana deslizante actual
-	isFrequent (Boolean, obligatorio): indica si el itemset sobre el que se aplica el cálculo es frecuente, o no
-	
-	Retorna:
-		El nuevo valor de la Cota Transformadora Inferior del itemset
-	"""
+    Compute the new value of the Lower Transformation Bound of an itemset
+
+    relSupportElems (DecimalFraction, required): minimum relative support, specified as a fraction of integers
+    currentSupportElems (DecimalFraction, required): current support of the itemset, specified as a fraction of integers
+    windowSize (int, required): number of transactions in the current sliding window
+    isFrequent (Boolean, required): indicates whether the itemset on which the computation is applied is frequent or not
+
+    Returns:
+        The new value of the Lower Transformation Bound of the itemset
+    """
     computeLowerBound = 0.0
 
     if isFrequent:
@@ -502,39 +472,34 @@ def FIMoTS_CalculateLowerBound(relSupportElems, currentSupportElems, windowSize,
 
 def rint(num):
     """
-    Retorna el valor decimal que es el más cercano al argumento recibido y es igual a un
-    número entero.
-	
-    Argumentos:
-        num (float, obligatorio): El valor numérico a redondear a un entero
-		
-    Retorna:
-        El valor decimal que es el más cercano al argumento recibido y es igual a un
-        número entero.
+    Return the decimal value that is closest to the received argument and is equal to an integer.
+
+    Args:
+        num (float, required): The numeric value to round to an integer
+
+    Returns:
+        The decimal value that is closest to the received argument and is equal to an integer.
     """
     return round(num + (num % 2 - 1 if (num % 1 == 0.5) else 0))
 
 
 def FIMoTS_CalculateSupportLevelsTree(itemsetsCandidates, transactions):
     """
-    Calcular los soportes relativos de un conjunto de itemsets candidatos, sobre un
-    grupo de transacciones que integran una ventana de tiempo.
-	
-    Argumentos:
-        itemsetsCandidates(Array(FIMoTS_Node), obligatorio): lista de nodos del árbol
-            en los cuales se busca actualizar o calcular su soporte en un conjunto de
-            transacciones
-        transactions (RDD, obligatorio): el conjunto de transacciones que integran a la
-            ventana de tiempo
-			
-    Retorna:
-        Una lista con los pares de (claves,conteos) asociados con los itemsets candidatos
-        recibidos como argumentos.
+    Compute the relative supports of a set of candidate itemsets, over a group of transactions that make up a time
+    window.
+
+    Args:
+        itemsetsCandidates(Array(FIMoTS_Node), required): list of nodes of the tree whose support is to be updated or
+            computed over a set of transactions
+        transactions (RDD, required): the set of transactions that make up the time window
+
+    Returns:
+        A list with the (key, count) pairs associated with the candidate itemsets received as arguments.
     """
-    # Dividir cada línea del RDD en palabras
+    # Split each line of the RDD into words
     transactionsAsList = transactions.map(lambda transaction: transaction.split())
 
-    # Contar cada palabra en cada subconjunto
+    # Count each word in each subset
     itemsetPairs = transactionsAsList.flatMap(
         lambda transaction: getItemsetsInTransaction(transaction, itemsetsCandidates))
     itemsetCounts = itemsetPairs.reduceByKey(lambda x, y: x + y).collect()
@@ -544,18 +509,16 @@ def FIMoTS_CalculateSupportLevelsTree(itemsetsCandidates, transactions):
 
 def getItemsetsInTransaction(transaction, itemsetsCandidates):
     """
-	Función auxiliar para determinar si un itemset se encuentra contenido en una transacción
-	de items determinada.
-	
-	Argumentos:
-		itemsetsCandidates(Array(FIMoTS_Node), obligatorio): lista de nodos del árbol
-			en los cuales se busca determinar si está presente en la transacción
-		transaction (Array(String), obligatorio): una transacción de items
-			
-	Retorna:
-		Una lista con los pares de (clave,1) para cada itemset que se encuentre contenido
-		en la transacción, o (clave,0) si el itemset no se encuentra contenido en la
-		transacción
+    Auxiliary function to determine whether an itemset is contained in a given transaction of items.
+
+    Args:
+        itemsetsCandidates(Array(FIMoTS_Node), required): list of nodes of the tree for which it is to be determined
+            whether they are present in the transaction
+        transaction (Array(String), required): a transaction of items
+
+    Returns:
+        A list with the (key, 1) pairs for each itemset contained in the transaction, or (key, 0) if the itemset is not
+        contained in the transaction
     """
     itemsetsInTransaction = []
     for itemset in itemsetsCandidates:
@@ -569,22 +532,16 @@ def getItemsetsInTransaction(transaction, itemsetsCandidates):
 
 def FIMoTS_Main(deletedTransacSize, addedTransacSize, algStructure, slidingWindow, minRelSupportElems, sparkContext):
     """
-	Programa principal del algoritmo FIMoTS, en el que se actualiza el estado de los itemsets frecuentes
-	e infrecuentes, en base a la actualización de una ventana de datos deslizante en el tiempo. La
-	actualización depende de los cambios ocurridos en las cotas de transformación superiores e inferiores
-	de cada itemset identificado.
-	
-	deletedTransacSize (int, obligatorio): total de transacciones eliminadas de la ventana 
-	    de tiempo
-	addedTransacSize (int, obligatorio): total de transacciones agregadas a la ventana de 
-	    tiempo
-	algStructure (FIMoTS_Structure, obligatorio): estructura actual con la ejecución del 
-		algoritmo FIMoTS
-	slidingWindow (WindowData, obligatorio): Ventana deslizante de tiempo actualizada
-	minRelSupportElems (DecimalFraction, obligatorio): Mínimo Soporte relativo, especificado 
-		como una fracción de enteros
-	sparkContext(SparkContext): contexto distribuido para aplicar técnicas de BigData
-		en un RDD con Spark
+    Main program of the FIMoTS algorithm, in which the state of the frequent and infrequent itemsets is updated based
+    on the update of a data window sliding in time. The update depends on the changes that have occurred in the upper
+    and lower transformation bounds of each identified itemset.
+
+    deletedTransacSize (int, required): total number of transactions removed from the time window
+    addedTransacSize (int, required): total number of transactions added to the time window
+    algStructure (FIMoTS_Structure, required): current structure with the execution of the FIMoTS algorithm
+    slidingWindow (WindowData, required): Updated sliding time window
+    minRelSupportElems (DecimalFraction, required): Minimum relative support, specified as a fraction of integers
+    sparkContext(SparkContext): distributed context to apply Big Data techniques on an RDD with Spark
     """
     relSupportElems = minRelSupportElems
     minRelSupport = float(minRelSupportElems.numeratorFraction) / float(minRelSupportElems.denominatorFraction)
@@ -594,24 +551,24 @@ def FIMoTS_Main(deletedTransacSize, addedTransacSize, algStructure, slidingWindo
 
     # Estudiar lista de itemset frecuentes
     for currentBounds in algStructure.frequentItemsetsBounds.itemsBounds:
-        # Actualizar Cota Inferior de Transformación (Lower Transformation Bound)
+        # Update Lower Transformation Bound
         currentLowerBound = currentBounds.lowerBound
         currentBounds.lowerBound = FIMoTS_UpdateLowerBound(currentLowerBound, relSupportElems, deletedTransacSize,
                                                            addedTransacSize, True)
 
-        # Actualizar Cota Superior de Transformación (Upper Transformation Bound)
+        # Update Upper Transformation Bound
         currentUpperBound = currentBounds.upperBound
         currentBounds.upperBound = FIMoTS_UpdateUpperBound(currentUpperBound, relSupportElems, deletedTransacSize,
                                                            addedTransacSize, True)
 
     # Estudiar lista de itemset infrecuentes
     for currentBounds in algStructure.infrequentItemsetsBounds.itemsBounds:
-        # Actualizar Cota Inferior de Transformación (Lower Transformation Bound)
+        # Update Lower Transformation Bound
         currentLowerBound = currentBounds.lowerBound
         currentBounds.lowerBound = FIMoTS_UpdateLowerBound(currentLowerBound, relSupportElems, deletedTransacSize,
                                                            addedTransacSize, False)
 
-        # Actualizar Cota Superior de Transformación (Upper Transformation Bound)
+        # Update Upper Transformation Bound
         currentUpperBound = currentBounds.upperBound
         currentBounds.upperBound = FIMoTS_UpdateUpperBound(currentUpperBound, relSupportElems, deletedTransacSize,
                                                            addedTransacSize, False)
@@ -619,17 +576,17 @@ def FIMoTS_Main(deletedTransacSize, addedTransacSize, algStructure, slidingWindo
     nodesUpdated = []
     itemsetsCounts = []
 
-    # Actualizar itemsets frecuentes con cotas de transformación igual o menores que cero
+    # Update frequent itemsets with transformation bounds equal to or lower than zero
     for currentBounds in algStructure.frequentItemsetsBounds.itemsBounds:
 
         if (currentBounds.lowerBound <= 0) or (currentBounds.upperBound <= 0):
 
-            # Mientras exista otro nodo con la misma combinación de cota superior - inferior
+            # While there is another node with the same upper - lower bound combination
             for currentFreqItemKey in currentBounds.itemNodes:
                 freqNodeUpdated = algStructure.itemsetsTree.nodeMap.get(currentFreqItemKey)
                 nodesUpdated.append(freqNodeUpdated)
 
-            # Eliminar todos los itemsets ya estudiados de la lista de frecuentes (con sus cotas originales)
+            # Remove all the already studied itemsets from the list of frequent ones (with their original bounds)
             currentBounds.itemNodes = []
 
     itemsetsCounts = FIMoTS_CalculateSupportLevelsTree(nodesUpdated, transactions)
@@ -649,22 +606,22 @@ def FIMoTS_Main(deletedTransacSize, addedTransacSize, algStructure, slidingWindo
 
             # Si el itemset frecuente ha cambiado a infrecuente
             if currentFreqItemNode.relativeSupport < minRelSupport:
-                # Podar los sub-árboles hijos del nodo
+                # Prune the child subtrees of the node
                 algStructure.deleteChildNodes(currentFreqItemKey)
 
         nodesUpdated = []
 
-    # Actualizar itemsets infrecuentes con cotas de transformación igual o menores que cero
+    # Update infrequent itemsets with transformation bounds equal to or lower than zero
     for currentBounds in algStructure.infrequentItemsetsBounds.itemsBounds:
 
         if (currentBounds.lowerBound <= 0) or (currentBounds.upperBound <= 0):
 
-            # Mientras exista otro nodo con la misma combinación de cota superior - inferior
+            # While there is another node with the same upper - lower bound combination
             for currentInfreqItemKey in currentBounds.itemNodes:
                 infreqNodeUpdated = algStructure.itemsetsTree.nodeMap.get(currentInfreqItemKey)
                 nodesUpdated.append(infreqNodeUpdated)
 
-            # Eliminar todos los itemsets ya estudiados de la lista de infrecuentes (con sus cotas originales)
+            # Remove all the already studied itemsets from the list of infrequent ones (with their original bounds)
             currentBounds.itemNodes = []
 
     itemsetsCounts = FIMoTS_CalculateSupportLevelsTree(nodesUpdated, transactions)
@@ -688,7 +645,7 @@ def FIMoTS_Main(deletedTransacSize, addedTransacSize, algStructure, slidingWindo
             if currentInfreqItemNode.relativeSupport >= minRelSupport:
                 newFrequentItemsKeys.append(currentInfreqItemNode.getItemsetKey())
 
-    # Generar la descendencia de todos los nuevos nodos frecuentes
+    # Generate the descendants of all the new frequent nodes
     for newFreqItemKey in newFrequentItemsKeys:
         newFreqItemNode = algStructure.itemsetsTree.nodeMap.get(newFreqItemKey)
         FIMoTS_Initial(newFreqItemKey, newFreqItemNode, algStructure, slidingWindow, minRelSupportElems, False, False,
@@ -704,21 +661,17 @@ def FIMoTS_Main(deletedTransacSize, addedTransacSize, algStructure, slidingWindo
 
 def FIMoTS_UpdateLowerBound(currentLowerBound, relSupportElems, deletedTransacsSize, addedTransacsSize, isFrequent):
     """
-	Actualizar el valor de la Cota Transformadora Inferior de un itemset.
-	 
-	currentLowerBound (int, obligatorio): el valor de la cota transformadora inferior actual
-	relSupportElems (DecimalFraction, obligatorio): mínimo Soporte relativo, especificado 
-		como una fracción de enteros
-	deletedTransacsSize (int, obligatorio): Cantidad de transacciones eliminadas de la 
-		ventana de tiempo
-	addedTransacsSize (int, obligatorio): total de transacciones agregadas a la ventana 
-		deslizante
-	isFrequent (Boolean, obligatorio): indica si el itemset sobre el que se aplica la 
-		actualización es frecuente, o no
-	
-	Retorna:
-		El valor actualizado de la Cota Transformadora Inferior del itemset
-	"""
+    Update the value of the Lower Transformation Bound of an itemset.
+
+    currentLowerBound (int, required): the value of the current lower transformation bound
+    relSupportElems (DecimalFraction, required): minimum relative support, specified as a fraction of integers
+    deletedTransacsSize (int, required): number of transactions removed from the time window
+    addedTransacsSize (int, required): total number of transactions added to the sliding window
+    isFrequent (Boolean, required): indicates whether the itemset on which the update is applied is frequent or not
+
+    Returns:
+        The updated value of the Lower Transformation Bound of the itemset
+    """
     lowerBoundUpdate = 0.0
 
     if isFrequent:
@@ -733,21 +686,17 @@ def FIMoTS_UpdateLowerBound(currentLowerBound, relSupportElems, deletedTransacsS
 
 def FIMoTS_UpdateUpperBound(currentUpperBound, relSupportElems, deletedTransacsSize, addedTransacsSize, isFrequent):
     """
-	Actualizar el valor de la Cota Transformadora Superior de un itemset.
-	 
-	currentUpperBound (int, obligatorio): el valor de la cota transformadora superior actual
-	relSupportElems (DecimalFraction, obligatorio): mínimo Soporte relativo, especificado 
-		como una fracción de enteros
-	deletedTransacsSize (int, obligatorio): cantidad de transacciones eliminadas de la 
-		ventana de tiempo
-	addedTransacsSize (int, obligatorio): total de transacciones agregadas a la ventana 
-		deslizante
-	isFrequent (Boolean, obligatorio): indica si el itemset sobre el que se aplica la 
-		actualización es frecuente, o no
-	
-	Retorna:
-		El valor actualizado de la Cota Transformadora Superior del itemset
-	"""
+    Update the value of the Upper Transformation Bound of an itemset.
+
+    currentUpperBound (int, required): the value of the current upper transformation bound
+    relSupportElems (DecimalFraction, required): minimum relative support, specified as a fraction of integers
+    deletedTransacsSize (int, required): number of transactions removed from the time window
+    addedTransacsSize (int, required): total number of transactions added to the sliding window
+    isFrequent (Boolean, required): indicates whether the itemset on which the update is applied is frequent or not
+
+    Returns:
+        The updated value of the Upper Transformation Bound of the itemset
+    """
     upperBoundUpdate = 0.0
 
     if isFrequent:

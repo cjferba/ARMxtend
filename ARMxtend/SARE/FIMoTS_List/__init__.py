@@ -5,43 +5,41 @@
 
 class FIMoTS_List(object):
     """
- 	Clase utilitaria que especifica la estructura de una lista de ternas, con las combinaciones distintas
-	de cotas transformadoras (superior - inferior) que tienen los itemsets en una solución del algoritmo
-	FIMoTS.
-			
-	Atributos:
-    	itemsBounds (Array(FIMoTS_Bounds), opcional, por defecto []): La lista de 
-    		combinaciones distintas de cotas transformadoras
-        
-	@author Abel Francisco (2016)
+    Utility class that specifies the structure of a list of triples, with the distinct combinations of transformation
+    bounds (upper - lower) that the itemsets have in a solution of the FIMoTS algorithm.
+
+    Attributes:
+        itemsBounds (Array(FIMoTS_Bounds), optional, default []): The list of distinct combinations of transformation
+            bounds
+
+    @author Abel Francisco (2016)
     """
 
     def __init__(self, itemsBounds=None):
         """
-		Inicialización la estructura con la lista de cotas transformadoras (superior - inferior) 
-		que tienen los itemsets en una solución del algoritmo FIMoTS.
-			
-		Atributos:
-			itemsBounds (Array(FIMoTS_Bounds), opcional, por defecto []): La nueva lista de 
-				combinaciones distintas de cotas transformadoras        
+        Initialization of the structure with the list of transformation bounds (upper - lower) that the itemsets have in
+        a solution of the FIMoTS algorithm.
+
+        Attributes:
+            itemsBounds (Array(FIMoTS_Bounds), optional, default []): The new list of distinct combinations of
+                transformation bounds
         """
         self.itemsBounds = itemsBounds if itemsBounds is not None else []
 
     def __repr__(self):
         """
-    	Mecanismo de presentación o escritura en pantalla de una lista de cotas transformadoras
-    	
-    	Retorna:
-    		Una cadena de caracteres que representa visualmente (texto) a una lista de cotas
-    		transformadoras
+        Mechanism to display or print a list of transformation bounds
+
+        Returns:
+            A string that visually represents (text) a list of transformation bounds
         """
         boundListFormat = '{}: [ COTAS: {} ]'
         return boundListFormat.format(self.__class__.__name__, self.itemsBounds)
 
     def clearEmptyBounds(self):
         """
-    	Eliminar aquellos pares de cotas no asociados a ningún itemset del árbol
-    	"""
+        Remove those pairs of bounds not associated with any itemset of the tree
+        """
         newBoundList = []
         for bounds in self.itemsBounds:
             if bounds.itemNodes:
@@ -50,14 +48,13 @@ class FIMoTS_List(object):
 
     def deleteBounds(self, keyNode):
         """
-		Eliminar de la lista de cotas aquellas referencias a un nodo en particular.
-		
-		Argumentos:
-			keyNode(string): clave, en el diccionario/árbol, del nodo que se desea eliminar
-				de la lista de cotas
-		
-		Retorna:
-			True, si se ha encontrado la clave del nodo en la lista, False si no
+        Remove from the list of bounds the references to a particular node.
+
+        Args:
+            keyNode(string): key, in the dictionary/tree, of the node to remove from the list of bounds
+
+        Returns:
+            True, if the key of the node was found in the list, False if not
         """
         keyRemoved = False
         for bounds in self.itemsBounds:
@@ -70,13 +67,11 @@ class FIMoTS_List(object):
 
     def getItemsetsCount(self):
         """
-    	Obtiene el total de itemsets incluidos en la lista, referenciados por cada una de las
-    	cotas que la integran.
-    	
-    	Retorna:
-    		Entero con el conteo total de itemsets que son referenciados desde las cotas que
-    		integran a la lista
-    	"""
+        Get the total number of itemsets included in the list, referenced by each of the bounds that make it up.
+
+        Returns:
+            Integer with the total count of itemsets that are referenced from the bounds that make up the list
+        """
         totalItemsets = 0
         for bounds in self.itemsBounds:
             totalItemsets += bounds.getItemsetsCount()
@@ -85,13 +80,11 @@ class FIMoTS_List(object):
 
     def getItemsetsKeys(self):
         """
-    	Obtiene la lista de claves en el diccionario de todos los itemsets/nodos referenciados
-    	en la lista.
-    	
-    	Retorna:
-    		Lista de cadenas de caracteres que representan las claves de cada uno de los nodos
-    		referenciados por la lista de cotas actual
-    	"""
+        Get the list of keys in the dictionary of all the itemsets/nodes referenced in the list.
+
+        Returns:
+            List of strings that represent the keys of each of the nodes referenced by the current list of bounds
+        """
         itemsetsKeys = []
         for bounds in self.itemsBounds:
             itemsetsKeys.extend(bounds.itemNodes)

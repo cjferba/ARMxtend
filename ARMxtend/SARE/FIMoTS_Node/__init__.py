@@ -5,51 +5,45 @@
 
 class FIMoTS_Node(object):
     """
-	Clase utilitaria para definir la estructura de un nodo de un árbol lexicográfico. Cada nodo del árbol
-	representa un itemset distinto. Un nodo padre representa un "prefijo" (subconjunto) de cada uno de sus
- 	nodos hijos. Un nodo hijo es la union de los prefijos de su padre y uno de sus "tíos derechos"
- 	(hermanos ubicados a la deracha de su nodo padre).
- 		
- 	Atributos:
-    	itemPrefix (Array(String), opcional, por defecto []): Lista de items que integran al itemset
-    		identificado en el nodo
-    	relativeSupport (float, opcional, por defecto 0.0): Soporte relativo asociado al
-    		itemset. Frecuencia con que aparece dicho prefijo en el conjunto de transacciones
-    		estudiado
-    	fractionElems (DecimalFraction, opcional, por defecto None): Numerador y Denominador
-    		que definen el soporte relativo de un itemset.
-    	parentNode (String, opcional, por defecto ''): Clave en el Diccionario/Árbol de nodos
-    		que identifica al nodo padre del elemento actual
-    	totalChildNodes (int, opcional, por defecto 0): Cantidad total de nodos hijos que
-    		presenta el nodo actual en el árbol lexicográfico
-    	lastUpdate (int, opcional, por defecto -1): Indicador temporal que especifica el 
-    		momento, en la ventana de tiempo deslizante, en que el soporte relativo del
-    		presente itemset ha sido actualizado por última vez 
-    		
- 	@author Abel Francisco (2016)
+    Utility class to define the structure of a node of a lexicographic tree. Each node of the tree represents a
+    distinct itemset. A parent node represents a "prefix" (subset) of each of its child nodes. A child node is the union
+    of the prefixes of its parent and one of its "right uncles" (siblings located to the right of its parent node).
+
+    Attributes:
+        itemPrefix (Array(String), optional, default []): List of items that make up the itemset identified in the node
+        relativeSupport (float, optional, default 0.0): Relative support associated with the itemset. Frequency with
+            which that prefix appears in the set of transactions studied
+        fractionElems (DecimalFraction, optional, default None): Numerator and Denominator that define the relative
+            support of an itemset.
+        parentNode (String, optional, default ''): Key in the Dictionary/Tree of nodes that identifies the parent node
+            of the current element
+        totalChildNodes (int, optional, default 0): Total number of child nodes that the current node has in the
+            lexicographic tree
+        lastUpdate (int, optional, default -1): Temporal indicator that specifies the moment, in the sliding time
+            window, in which the relative support of this itemset was last updated
+
+    @author Abel Francisco (2016)
     """
 
     def __init__(self, itemPrefix=None, relativeSupport=0.0, fractionElems=None,
                  parentNode='', totalChildNodes=0, lastUpdate=-1):
         """
-    	Inicialización de un nuevo nodo del árbol lexicográfico que representa a un itemset
-    	frecuente identificado en un conjunto de transacciones.
-    	
-    	Argumentos:
-    		itemPrefix (Array(String), opcional, por defecto []): Lista de items que integran al itemset
-    			identificado en el nodo
-    		relativeSupport (float, opcional, por defecto 0.0): Soporte relativo asociado al
-    			itemset. Frecuencia con que aparece dicho prefijo en el conjunto de transacciones
-    			estudiado
-    		fractionElems (DecimalFraction, opcional, por defecto None): Numerador y Denominador
-    			que definen el soporte relativo de un itemset.
-    		parentNode (String, opcional, por defecto ''): Clave en el Diccionario/Árbol de nodos
-    			que identifica al nodo padre del elemento actual
-    		totalChildNodes (int, opcional, por defecto 0): Cantidad total de nodos hijos que
-    			presenta el nodo actual en el árbol lexicográfico
-   		 	lastUpdate (int, opcional, por defecto -1): Indicador temporal que especifica el 
-    			momento, en la ventana de tiempo deslizante, en que el soporte relativo del
-    			presente itemset ha sido actualizado por última vez 
+        Initialization of a new node of the lexicographic tree that represents a frequent itemset identified in a set
+        of transactions.
+
+        Args:
+            itemPrefix (Array(String), optional, default []): List of items that make up the itemset identified in the
+                node
+            relativeSupport (float, optional, default 0.0): Relative support associated with the itemset. Frequency with
+                which that prefix appears in the set of transactions studied
+            fractionElems (DecimalFraction, optional, default None): Numerator and Denominator that define the relative
+                support of an itemset.
+            parentNode (String, optional, default ''): Key in the Dictionary/Tree of nodes that identifies the parent
+                node of the current element
+            totalChildNodes (int, optional, default 0): Total number of child nodes that the current node has in the
+                lexicographic tree
+            lastUpdate (int, optional, default -1): Temporal indicator that specifies the moment, in the sliding time
+                window, in which the relative support of this itemset was last updated
         """
         self.itemPrefix = itemPrefix if itemPrefix is not None else []
         self.relativeSupport = relativeSupport
@@ -60,40 +54,35 @@ class FIMoTS_Node(object):
 
     def orderItemPrefix(self):
         """
-    	Ordenar alfabéticamente los elementos del itemset asociado al nodo.
+        Sort alphabetically the elements of the itemset associated with the node.
         """
         self.itemPrefix = sorted(self.itemPrefix)
 
     def getItemPrefixConcat(self):
         """
-    	Obtener una cadena de caracteres que identifica al itemset, concatenando los items
-    	del prefijo.
-    	
-    	Retorna:
-    		Una cadena de caracteres que concatena los items del prefijo del itemset de forma
-    		directa (sin separadores).
+        Get a string that identifies the itemset, concatenating the items of the prefix.
+
+        Returns:
+            A string that concatenates the items of the prefix of the itemset directly (without separators).
         """
         return ''.join(self.itemPrefix).lower()
 
     def getItemsetKey(self):
         """
-    	Obtener una cadena de caracteres que identifica al itemset, concatenando los items
-    	del prefijo con guiones bajos ('_'). Esta cadena resultante es el formato de las claves
-    	que identifican a los nodos en el Diccionario/Árbol Lexicográfico.
-    	
-    	Retorna:
-    		Una cadena de caracteres que concatena los items del prefijo del itemset, 
-    		separándolos por un guión bajo ('_').
+        Get a string that identifies the itemset, concatenating the items of the prefix with underscores ('_'). This
+        resulting string is the format of the keys that identify the nodes in the Dictionary/Lexicographic Tree.
+
+        Returns:
+            A string that concatenates the items of the prefix of the itemset, separating them by an underscore ('_').
         """
         return '_'.join(self.itemPrefix)
 
     def __repr__(self):
         """
-    	Mecanismo de presentación o escritura en pantalla de un nodo del árbol lexicográfico
-    	
-    	Retorna:
-    		Una cadena de caracteres que representa visualmente (texto) a un nodo del árbol
-    		lexicográfico
+        Mechanism to display or print a node of the lexicographic tree
+
+        Returns:
+            A string that visually represents (text) a node of the lexicographic tree
         """
         nodeFormat = '{}: [ PREFIJO: {}, SOPORTE: {}, FRACCION: {}, PADRE: {}, TOTAL HIJOS: {}, ACTUALIZACION: {} ]'
         return nodeFormat.format(self.__class__.__name__, '_'.join(self.itemPrefix),
@@ -102,31 +91,28 @@ class FIMoTS_Node(object):
 
     def __eq__(self, other):
         """
-    	Mecanismo para definir si dos (2) nodos del árbol lexicográfico son equivalentes.
-    	Dos (2) nodos son equivalentes, si sus prefijos concatenados son exactamente
-    	iguales.
-    	
-    	Argumentos:
-    		other (FIMoTS_Node, obligatorio): Nodo con el que se quiere comparar al nodo
-    			actual
-    			
-    	Retorna:
-    		True si los nodos son equivalentes, False si no
+        Mechanism to define whether two (2) nodes of the lexicographic tree are equivalent. Two (2) nodes are
+        equivalent if their concatenated prefixes are exactly equal.
+
+        Args:
+            other (FIMoTS_Node, required): Node to compare the current node with
+
+        Returns:
+            True if the nodes are equivalent, False if not
         """
         if hasattr(other, 'itemPrefix'):
             return (self.getItemPrefixConcat() == other.getItemPrefixConcat())
 
     def __lt__(self, other):
         """
-    	Mecanismo para definir si un (1) nodo del árbol lexicográfico es "menor" que otro.
-    	Un nodo es "anterior" o "menor" que otro, si su representación escrita es previa,
-    	lexicográficamente al prefijo concatenado del otro.
-    	
-    	Argumentos:
-    		other (FIMoTS_Node, obligatorio): Nodo con el que se quiere comparar al nodo
-    			actual
-    			
-    	Retorna:
-    	    True si el nodo actual es anterior que el otro, False si no
-    	"""
+        Mechanism to define whether one (1) node of the lexicographic tree is "less" than another. A node is "earlier"
+        or "less" than another if its written representation precedes, lexicographically, the concatenated prefix of
+        the other.
+
+        Args:
+            other (FIMoTS_Node, required): Node to compare the current node with
+
+        Returns:
+            True if the current node is earlier than the other, False if not
+        """
         return (self.getItemPrefixConcat() < other.getItemPrefixConcat())

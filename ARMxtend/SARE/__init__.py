@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Programa principal para configurar y ejecutar la activación de un algoritmo FIMoTS,
-utilizando el ambiente de programación BigData Spark. Se puede emplear en conjuntos
-de datos estáticos (Dataset) y, principalmente, en ambientes de Tiempo Real (Streaming).
+Main program to configure and run the activation of a FIMoTS algorithm, using the BigData Spark programming
+environment. It can be used on static datasets (Dataset) and, mainly, in Real-Time (Streaming) environments.
 
 @author Abel Francisco (2016)
 """
@@ -32,33 +31,27 @@ from ARMxtend.ARM.association_rules import association_rules
 
 def extractAssociationRules(Actual_FIMoTS_Structure, metric="confidence", min_threshold=0.7):
     """
-    Extension de FIMoTS a la mineria de reglas de asociacion (no solo de
-    itemsets frecuentes), anunciada como trabajo futuro en:
+    Extension of FIMoTS to association rule mining (not only frequent itemsets), announced as future work in:
         Fernandez-Basso, C., Francisco-Agra, A.J., Martin-Bautista, M.J.,
         Ruiz, M.D. (2019). "Finding tendencies in streaming data using Big
         Data frequent itemset mining". Knowledge-Based Systems, 163,
-        666-674 (Seccion 5, Conclusiones: "we plan [...] to extend it to
+        666-674 (Section 5, Conclusions: "we plan [...] to extend it to
         consider association rule mining in order to study the
         co-occurrences of frequent items in data streams").
 
-    Dado que el Frequent Itemset Tree (FIT) de FIMoTS ya contiene, por
-    construccion (generacion de candidatos por cierre descendente, ver
-    `FIMoTS_Initial`), el soporte de todo subconjunto no vacio de cada
-    itemset frecuente, la extraccion de reglas se reduce exactamente al
-    caso crisp no distribuido: basta construir el DataFrame de itemsets
-    frecuentes esperado por `ARM.association_rules` a partir del arbol
-    actual, y reutilizar dicha funcion sin duplicar su logica.
+    Since the Frequent Itemset Tree (FIT) of FIMoTS already contains, by construction (candidate generation by downward
+    closure, see `FIMoTS_Initial`), the support of every non-empty subset of each frequent itemset, rule extraction
+    reduces exactly to the non-distributed crisp case: it is enough to build the DataFrame of frequent itemsets expected
+    by `ARM.association_rules` from the current tree, and reuse that function without duplicating its logic.
 
-    Argumentos:
-        Actual_FIMoTS_Structure (FIMoTS_Structure): estructura actual con la
-            ejecucion del algoritmo FIMoTS (arbol de itemsets + listas de
-            cotas transformadoras)
-        metric, min_threshold: ver `ARM.association_rules`
+    Args:
+        Actual_FIMoTS_Structure (FIMoTS_Structure): current structure with the execution of the FIMoTS algorithm
+            (itemset tree + lists of transformation bounds)
+        metric, min_threshold: see `ARM.association_rules`
 
-    Retorna:
-        pandas.DataFrame con las reglas de asociacion vigentes sobre los
-        itemsets frecuentes de la ventana de tiempo actual (mismo formato
-        que `ARM.association_rules`)
+    Returns:
+        pandas.DataFrame with the association rules in force over the frequent itemsets of the current time window
+        (same format as `ARM.association_rules`)
     """
     freqItemsetKeys = Actual_FIMoTS_Structure.frequentItemsetsBounds.getItemsetsKeys()
     if not freqItemsetKeys:
@@ -78,24 +71,21 @@ def extractAssociationRules(Actual_FIMoTS_Structure, metric="confidence", min_th
 def runStreamingFIMoTSAlgorithm(addedTransactions, slidingWindow, intervals, Actual_FIMoTS_Structure,
                                 minSuppRelElements, sc, minConf=None):
     """
-    Método para aplicar el manejo de intervalos de tiempo en la ventana deslizante, durante
-    la ejecución del algoritmo FIMoTS en ambientes de flujos de datos (streaming), en
-    tiempo real. Cada RDD procesado es considerado como un conjunto de transacciones recibidas
-    en un instante de tiempo, y son agregadas a la ventana deslizante actual, eliminando a
-    su vez las transacciones más antiguas (intervalo de tiempo más antiguo).
+    Method to apply the handling of time intervals in the sliding window, during the execution of the FIMoTS algorithm in
+    data stream (streaming) environments, in real time. Each processed RDD is considered as a set of transactions
+    received at an instant of time, and is added to the current sliding window, while removing the oldest transactions
+    (oldest time interval).
 
-    Argumentos:
-        addedTransactions (RDD, obligatorio): Conjunto de transacciones recibidas en el
-            instante de tiempo actual, y que deben ser agregadas a la ventana deslizante
-        slidingWindow (WindowData, obligatorio): Ventana deslizante de tiempo actual
-        intervals (int, opcional): Total de intervalos temporales, o instantes
-            de tiempo (grupos de transacciones) que integran a una ventana de tiempo
-        Actual_FIMoTS_Structure (FIMoTS_Structure, obligatorio): estructura actual con la
-            ejecución del algoritmo FIMoTS
-        minRelSupportElems (DecimalFraction, obligatorio): mínimo Soporte relativo,
-            especificado como una fracción de enteros
-        sparkContext(SparkContext): contexto distribuido para aplicar técnicas de BigData
-            en un RDD con Spark
+    Args:
+        addedTransactions (RDD, required): Set of transactions received at the current instant of time, which must be
+            added to the sliding window
+        slidingWindow (WindowData, required): Current sliding time window
+        intervals (int, optional): Total number of time intervals, or instants of time (groups of transactions) that
+            make up a time window
+        Actual_FIMoTS_Structure (FIMoTS_Structure, required): current structure with the execution of the FIMoTS
+            algorithm
+        minRelSupportElems (DecimalFraction, required): minimum relative support, specified as a fraction of integers
+        sparkContext(SparkContext): distributed context to apply BigData techniques on an RDD with Spark
     """
     isFirstWindow = (len(slidingWindow.transactionIntervals) < intervals)
 
@@ -109,8 +99,8 @@ def runStreamingFIMoTSAlgorithm(addedTransactions, slidingWindow, intervals, Act
 
     if isFirstWindow or (Actual_FIMoTS_Structure.itemsetsTree.getItemsetsCount() == 0):
         if len(slidingWindow.transactionIntervals) == intervals:
-            # Inicializar el árbol FP-Tree para el algoritmo FIMoTS (conteo inicial de itemsets
-            # en la primera ventana de tiempo)
+            # Initialize the FP-Tree for the FIMoTS algorithm (initial count of itemsets
+            # in the first time window)
             FIMoTS_TreeInitialization(Actual_FIMoTS_Structure, slidingWindow, minSuppRelElements, sc)
             isFirstWindow = False
     else:
@@ -123,16 +113,14 @@ def runStreamingFIMoTSAlgorithm(addedTransactions, slidingWindow, intervals, Act
 
 def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow, minConf=None):
     """
-    Muestra en pantalla los resultados de una iteración del algoritmo FIMoTS aplicado sobre
-    una ventana de tiempo de transacciones.
+    Display on screen the results of an iteration of the FIMoTS algorithm applied over a time window of transactions.
 
-    Argumentos:
-        Actual_FIMoTS_Structure (FIMoTS_Structure, obligatorio): estructura actual con la
-            ejecución del algoritmo FIMoTS
-        slidingWindow (WindowData, obligatorio): Ventana deslizante de tiempo actual
-        minConf (float, opcional): si se especifica, ademas de los itemsets frecuentes se
-            muestran las reglas de asociacion vigentes con confianza >= minConf
-            (ver `extractAssociationRules`)
+    Args:
+        Actual_FIMoTS_Structure (FIMoTS_Structure, required): current structure with the execution of the FIMoTS
+            algorithm
+        slidingWindow (WindowData, required): Current sliding time window
+        minConf (float, optional): if specified, besides the frequent itemsets the association rules in force with
+            confidence >= minConf are displayed (see `extractAssociationRules`)
     """
     current_time = time.time()
     current_datetime = datetime.datetime.fromtimestamp(current_time).strftime('%d/%m/%Y %H:%M:%S')
@@ -145,8 +133,8 @@ def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow, minConf
         Actual_FIMoTS_Structure.infrequentItemsetsBounds.getItemsetsCount()))
     print("Total de Itemsets: {}".format(Actual_FIMoTS_Structure.itemsetsTree.getItemsetsCount()))
 
-    # Presentar detalles sobre todos los itemsets identificados
-    # print('Árbol Actual de Itemsets - {}:'.format(slidingWindow.timeWindow))
+    # Show details about all the identified itemsets
+    # print('Current Itemset Tree - {}:'.format(slidingWindow.timeWindow))
     # print Actual_FIMoTS_Structure
     # print("")
     # print("Itemsets Frecuentes: ")
@@ -180,38 +168,32 @@ def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow, minConf
 def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
          threads=2, seconds=5, hostname='localhost', port=9999, minConf=None):
     """
-    Programa Principal para ejecutar el algoritmo FIMoTS en BigData con Spark (Estático o
-    en Streaming).
+    Main program to run the FIMoTS algorithm on BigData with Spark (Static or Streaming).
 
-    Argumentos:
-    	minSuppNum (int, opcional, por defecto 1): Numerador del soporte mínimo relativo
-    		para que un itemset sea frecuente. Mayor que cero (0)
-    	minSuppDen (int, opcional, por defecto 3): Denominador del soporte mínimo relativo
-    		para que un itemset sea frecuente. Mayor que cero (0)
-    	minConf (float, opcional, por defecto None): si se especifica, ademas de los
-    		itemsets frecuentes se extraen y muestran las reglas de asociacion vigentes
-    		con confianza >= minConf en cada iteracion (ver `extractAssociationRules`)
-    	mode (String, opcional, por defecto 'TEXTFILE'): Modo de recepción de transacciones
-    		sobre las cuales aplicar el algoritmo FIMoTS. 'TEXTFILE' para un conjunto de
-    		datos estáticos, con las transacciones especificadas en un archivo de texto (cada
-    		transacción en una línea, con los ítems separados por espacios en blanco);
-    		'STREAMING' para que las transacciones sean enviadas en tiempo real, a través
-    		de un contexto de Spark Streaming
-    	intervals (int, opcional, por defecto 5): Total de intervalos temporales, o instantes
-    		de tiempo (grupos de transacciones) que integran a una ventana de tiempo
-    	filesDir (string, opcional, por defecto '/'): Dirección absoluta del directorio
-    		en el que se ubican los archivos de texto con las transacciones a procesar.
-    		Una (1) transacción por cada línea en el archivo.
-    	threads (int, opcional, por defecto 2): Total de hilos de procesamiento empleados
-    		para definir el contexto de spark
-    	seconds (int, opcional, por defecto 2): Cantidad de segundos de acumulación de
-    		transacciones, para generar un nuevo bloque de procesamiento
-    	hostname (string, opcional, por defecto 'localhost'): Identificador del servidor
-    		o host desde el que se enviarán las transacciones a estudiar
-    	port (int, opcional, por defecto 9999): Número de puerto desde el que se recibirán
-    		las transacciones a procesar
+    Args:
+    	minSuppNum (int, optional, default 1): Numerator of the minimum relative support for an itemset to be frequent.
+    		Greater than zero (0)
+    	minSuppDen (int, optional, default 3): Denominator of the minimum relative support for an itemset to be
+    		frequent. Greater than zero (0)
+    	minConf (float, optional, default None): if specified, besides the frequent itemsets the association rules in
+    		force with confidence >= minConf are extracted and displayed at each iteration (see
+    		`extractAssociationRules`)
+    	mode (String, optional, default 'TEXTFILE'): Mode of reception of the transactions on which to apply the FIMoTS
+    		algorithm. 'TEXTFILE' for a static dataset, with the transactions specified in a text file (each
+    		transaction on a line, with the items separated by blanks); 'STREAMING' for the transactions to be sent in
+    		real time, through a Spark Streaming context
+    	intervals (int, optional, default 5): Total number of time intervals, or instants of time (groups of
+    		transactions) that make up a time window
+    	filesDir (string, optional, default '/'): Absolute path of the directory where the text files with the
+    		transactions to process are located. One (1) transaction per line in the file.
+    	threads (int, optional, default 2): Total number of processing threads used to define the spark context
+    	seconds (int, optional, default 2): Number of seconds of accumulation of transactions, to generate a new
+    		processing block
+    	hostname (string, optional, default 'localhost'): Identifier of the server or host from which the transactions
+    		to study will be sent
+    	port (int, optional, default 9999): Port number from which the transactions to process will be received
     """
-    print("Parámetros de entrada Recibidos: ")
+    print("Input parameters received: ")
     print("")
     print("MINSUPPORT_NUMERATOR: '%s'" % minSuppNum)
     print("MINSUPPORT_DENOMINATOR: '%s'" % minSuppDen)
@@ -233,13 +215,13 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
     # Inicializar nueva ventana de tiempo
     slidingWindow = WindowData([], 0)
 
-    # Crear un contexto de Spark local con 'threads' hilos de ejecución
+    # Create a local Spark context with 'threads' execution threads
     threadsConfig = "local[%s]" % threads
     algExecName = "FIMoTS_Algorithm_" + current_datetime
     scConf = SparkConf().setAppName(algExecName).setMaster(threadsConfig).set("spark.streaming.unpersist", "false")
     sc = SparkContext(conf=scConf)
 
-    # Solo mostrar mensajes en pantalla de Advertencia o Error (No informativos)
+    # Only show Warning or Error messages on screen (not informative ones)
     sc.setLogLevel("ERROR")
 
     Actual_FIMoTS_Structure = FIMoTS_Structure()
@@ -248,22 +230,22 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
     isFirstWindow = True
 
     if mode == 'STREAMING':
-        # Crear un contexto de Streaming local con una periodicidad de 'seconds' segundos
+        # Create a local Streaming context with a period of 'seconds' seconds
         ssc = StreamingContext(sc, seconds)
 
-        # Crear un DStream que se conectará con el host y puerto indicado
+        # Create a DStream that will connect to the indicated host and port
         # transactions = ssc.socketTextStream(hostname, port)
 
-        # Definir directorio del cual tomar los archivos de datos
+        # Define the directory from which to take the data files
         transactions = ssc.textFileStream(filesDir)
 
         # Procesar RDDs con transacciones recibidas
-        # desde el streaming en cada instante de tiempo
+        # from the streaming at each instant of time
         transactions.foreachRDD(
             lambda rdd: runStreamingFIMoTSAlgorithm(rdd, slidingWindow, intervals, Actual_FIMoTS_Structure,
                                                     minSuppRelElements, sc, minConf))
 
-        # Iniciar la computación en streaming
+        # Start the streaming computation
         ssc.start()
     else:
         filesNames = []
@@ -272,8 +254,8 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
         # for (filename, fileContent) in fileList:
         #	filesNames.append(filename)
 
-        # Listar archivos de texto que especifican las
-        # transacciones recibidas en cada instante de tiempo
+        # List the text files that specify the
+        # transactions received at each instant of time
 
         # Buscar en Directorio Local
         fileList = os.walk(filesDir)
@@ -281,15 +263,15 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
             filesNames.extend([os.path.join(dirPath, fileName) for fileName in sorted(fileNames)])
             break
 
-        # Buscar en directorio HDFS (import diferido: 'sh' solo hace falta en este caso)
+        # Search in an HDFS directory (deferred import: 'sh' is only needed in this case)
         if not filesNames:
             import sh
             filesNames = [line.rsplit(None, 1)[-1] for line in sh.hdfs('dfs', '-ls', filesDir).split('\n') if
                           len(line.rsplit(None, 1))][1:]
         # filesNames = esutil.hdfs.ls(hdfs_url=filesDir, recurse=False, full=False)
 
-        # Procesar cada archivo de texto con transacciones
-        # como un instante de tiempo que integrará a la
+        # Process each text file with transactions
+        # as an instant of time that will be part of the
         # ventana deslizante de tiempo
         for fileName in filesNames:
             if len(slidingWindow.transactionIntervals) == intervals:
@@ -301,8 +283,8 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
 
             if isFirstWindow:
                 if len(slidingWindow.transactionIntervals) == intervals:
-                    # Inicializar el árbol FP-Tree para el algoritmo FIMoTS (conteo inicial de itemsets
-                    # en la primera ventana de tiempo)
+                    # Initialize the FP-Tree for the FIMoTS algorithm (initial count of itemsets
+                    # in the first time window)
                     FIMoTS_TreeInitialization(Actual_FIMoTS_Structure, slidingWindow, minSuppRelElements, sc)
                     isFirstWindow = False
             else:
@@ -313,45 +295,44 @@ def main(minSuppNum=1, minSuppDen=3, mode='TEXTFILE', intervals=5, filesDir='/',
                 FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow, minConf)
 
     if mode == 'STREAMING':
-        # Esperar a que la computación termine
+        # Wait for the computation to finish
         ssc.awaitTermination()
 
 
 if __name__ == '__main__':
     if ('--help' in sys.argv) or ('-h' in sys.argv):
-        print("Ejecutar algoritmo FIMoTS para obtención de Itemsets Frecuentes en " +
-              "Ventanas de Tiempo Deslizante de tamaño Variable")
+        print("Run the FIMoTS algorithm to obtain Frequent Itemsets in " +
+              "Sliding Time Windows of Variable size")
         print("")
-        print("Uso: %s [MINSUPPORT_NUMERATOR] [MINSUPPORT_DENOMINATOR] " % sys.argv[0] +
+        print("Usage: %s [MINSUPPORT_NUMERATOR] [MINSUPPORT_DENOMINATOR] " % sys.argv[0] +
               "[MODE] [THREADS] [SECONDS] [FILES_DIRECTORY] [HOSTNAME] [PORT]")
         print("")
-        print("MINSUPPORT_NUMERATOR: Numerador entero correspondiente al mínimo " +
-              "soporte aceptado para considerar a un itemset como frecuente. El " +
-              "soporte mínimo debe ser expresado como una fracción de números enteros " +
-              "(por defecto: 1)")
-        print("MINSUPPORT_DENOMINATOR: Denominador entero correspondiente al mínimo " +
-              "soporte aceptado para considerar a un itemset como frecuente (por " +
-              " defecto: 3)")
-        print("MODE: 'TEXTFILE' para procesamiento sobre transacciones en un archivo " +
-              "de texto, 'STREAMING' para procesamiento de transacciones en tiempo " +
-              "real (por defecto: TEXTFILE)")
-        print("INTERVALS: Total de intervalos de tiempo (instantes) que integran a " +
-              "una ventana temporal deslizante de transacciones.")
-        print("FILES_DIRECTORY: dirección absoluta del directorio con los archivos de " +
-              "texto con las transacciones a procesar. Una (1) transacción por cada " +
-              "línea en los archivos. Solo aplica para modo de procesamiento (MODE) de " +
-              "tipo 'TEXTFILE'")
-        print("THREADS: Total de hilos de procesamiento empleados para definir el " +
-              "contexto de streaming (por defecto: 2).")
-        print("SECONDS: Cantidad de segundos de acumulación de transacciones, para " +
-              "generar un nuevo bloque de procesamiento (por defecto: 5). Solo " +
-              "aplica para modo de procesamiento (MODE) de tipo 'STREAMING'")
-        print("HOSTNAME: Identificador del servidor o host desde el que se enviarán " +
-              "las transacciones a estudiar (por defecto: localhost). Solo aplica " +
-              "para modo de procesamiento (MODE) de tipo 'STREAMING'")
-        print("PORT: Número de puerto desde el que se recibirán las transacciones " +
-              "a procesar (por defecto: 9999). Solo aplica para modo de procesamiento " +
-              "(MODE) de tipo 'STREAMING'")
+        print("MINSUPPORT_NUMERATOR: Integer numerator of the minimum support " +
+              "accepted to consider an itemset as frequent. The minimum " +
+              "support must be expressed as a fraction of integers " +
+              "(default: 1)")
+        print("MINSUPPORT_DENOMINATOR: Integer denominator of the minimum support " +
+              "accepted to consider an itemset as frequent (default: 3)")
+        print("MODE: 'TEXTFILE' to process transactions in a text file, " +
+              "'STREAMING' to process transactions in real time " +
+              "(default: TEXTFILE)")
+        print("INTERVALS: Total number of time intervals (instants) that make up " +
+              "a sliding time window of transactions.")
+        print("FILES_DIRECTORY: absolute path of the directory with the text files " +
+              "with the transactions to process. One (1) transaction per " +
+              "line in the files. Only applies to processing mode (MODE) " +
+              "'TEXTFILE'")
+        print("THREADS: Total number of processing threads used to define the " +
+              "streaming context (default: 2).")
+        print("SECONDS: Number of seconds of accumulation of transactions, to " +
+              "generate a new processing block (default: 5). Only " +
+              "applies to processing mode (MODE) 'STREAMING'")
+        print("HOSTNAME: Identifier of the server or host from which the " +
+              "transactions to study will be sent (default: localhost). Only applies " +
+              "to processing mode (MODE) 'STREAMING'")
+        print("PORT: Port number from which the transactions to process will be " +
+              "received (default: 9999). Only applies to processing mode " +
+              "(MODE) 'STREAMING'")
         print("")
     else:
         kwargs = {}
