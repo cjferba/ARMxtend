@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Carlos Fernandez-Basso">
+        <link rel="canonical" href="http://cjferba.github.io/ARMxtend/es/">
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Inicio - ARMxtend</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../css/brands.min.css" rel="stylesheet">
+        <link href="../css/solid.min.css" rel="stylesheet">
+        <link href="../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">ARMxtend</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href=".." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../quick-start/" class="nav-link">Quick Start</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../examples/" class="nav-link">Examples</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../applications/" class="nav-link">Applications</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../USER_GUIDE_INDEX/" class="dropdown-item">User Guide Index</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Crisp association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/association_rules/" class="dropdown-item">ARM.association_rules</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FFIM/" class="dropdown-item">FFIM (FP-Growth)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/condensed/" class="dropdown-item">FIM.condensed (closed / maximal)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/redundancy/" class="dropdown-item">ARM.redundancy</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/significance/" class="dropdown-item">ARM.significance (p-values, FDR, permutation tests)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Taxonomies, multilevel and quantitative rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/taxonomy/" class="dropdown-item">FIM.taxonomy (item hierarchies, generalized itemsets)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/generalized_rules/" class="dropdown-item">ARM.generalized_rules (multilevel rules, R-interesting)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/quantitative_rules/" class="dropdown-item">ARM.quantitative_rules (merged intervals)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Top-k, rare and high-utility rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/topk_rules/" class="dropdown-item">ARM.top_k_rules (the k best, no threshold)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/rare_rules/" class="dropdown-item">ARM.rare_rules (rare combinations of frequent items)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/utility_rules/" class="dropdown-item">ARM.high_utility_rules (value, not frequency)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Estimators and datasets</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/estimators/" class="dropdown-item">estimators (scikit-learn style API)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/datasets/" class="dropdown-item">datasets (generators and examples)</a>
+</li>
+    </ul>
+  </li>
+                                    
+<li>
+    <a href="../user_guide/comparison/" class="dropdown-item">Comparison with mlxtend</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Rules in action</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/anomaly_detection/" class="dropdown-item">ARM.anomaly (anomalies as rule violations)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/prediction/" class="dropdown-item">ARM.prediction (next step / next events)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/classification/" class="dropdown-item">ARM.classification (class rules, CBA)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Other kinds of rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/negative_rules/" class="dropdown-item">ARM.negative_rules (absent items)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/exception_rules/" class="dropdown-item">ARM.exception_rules (exceptions / anomalies)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/gradual_rules/" class="dropdown-item">ARM.gradual_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Time series, sensors and sequences</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/preprocessing/timeseries/" class="dropdown-item">preprocessing.timeseries (items from series)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/temporal_rules/" class="dropdown-item">ARM.temporal_rules (lagged rules)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/rule_drift/" class="dropdown-item">ARM.rule_drift (rules over time)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/sequential/" class="dropdown-item">FIM.sequential (PrefixSpan)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/sequential_rules/" class="dropdown-item">ARM.sequential_rules</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/fuzzy_sequential/" class="dropdown-item">FIM.fuzzy_sequential (fuzzy patterns)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/ARM/fuzzy_sequential_rules/" class="dropdown-item">ARM.fuzzy_sequential_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Fuzzy association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/FARE/" class="dropdown-item">FIM.FARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - crisp</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/apriori/" class="dropdown-item">FIM.apriori (DApriori/DAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/BD_ARE/" class="dropdown-item">FIM.BD_ARE</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Big Data (Spark) - fuzzy</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/FIM/BD_FARE/" class="dropdown-item">FIM.BD_FARE (FuzzyDAprioriTID)</a>
+</li>
+            
+<li>
+    <a href="../user_guide/FIM/Eclat/" class="dropdown-item">FIM.Eclat (DECLAT)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Streaming (Spark)</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/SARE_SFIM/" class="dropdown-item">SFIM / SARE (FIMoTS)</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Scalability</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/scalability/" class="dropdown-item">Spark benchmarks</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Meta-association rules</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/ARM/meta_rules/" class="dropdown-item">ARM.meta_rules</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Command line</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/cli/" class="dropdown-item">armxtend</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Visualization</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/VizARM/" class="dropdown-item">VizARM.AREtoGraph</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Preprocessing</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../user_guide/preprocessing/FuzzyLib/" class="dropdown-item">preprocessing.FuzzyLib</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Languages</a>
+                                <ul class="dropdown-menu">
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Español</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">Inicio</a>
+</li>
+            
+<li>
+    <a href="installation/" class="dropdown-item">Instalación</a>
+</li>
+            
+<li>
+    <a href="quick-start/" class="dropdown-item">Guía rápida</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Français</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../fr/" class="dropdown-item">Accueil</a>
+</li>
+            
+<li>
+    <a href="../fr/installation/" class="dropdown-item">Installation</a>
+</li>
+            
+<li>
+    <a href="../fr/quick-start/" class="dropdown-item">Démarrage rapide</a>
+</li>
+    </ul>
+  </li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Português</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../pt/" class="dropdown-item">Início</a>
+</li>
+            
+<li>
+    <a href="../pt/installation/" class="dropdown-item">Instalação</a>
+</li>
+            
+<li>
+    <a href="../pt/quick-start/" class="dropdown-item">Início rápido</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">About</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../CONTRIBUTING/" class="dropdown-item">How To Contribute</a>
+</li>
+                                    
+<li>
+    <a href="../contributors/" class="dropdown-item">Contributors</a>
+</li>
+                                    
+<li>
+    <a href="../license/" class="dropdown-item">License</a>
+</li>
+                                    
+<li>
+    <a href="../cite/" class="dropdown-item">Citing ARMxtend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../user_guide/preprocessing/FuzzyLib/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="installation/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/cjferba/ARMxtend/docs/user_guide/es/index.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#bienvenido-a-la-documentacion-de-armxtend" class="nav-link">Bienvenido a la documentación de ARMxtend</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#enlaces" class="nav-link">Enlaces</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#caracteristicas" class="nav-link">Características</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#como-citar" class="nav-link">Cómo citar</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="../">English</a> · <a href="./">Español</a> · <a href="../fr/">Français</a> · <a href="../pt/">Português</a></p>
+<h2 id="bienvenido-a-la-documentacion-de-armxtend">Bienvenido a la documentación de ARMxtend</h2>
+<p><strong>ARMxtend (association rule mining extensions) es una biblioteca de Python para la extracción de reglas de
+asociación, tanto nítidas (crisp) como difusas, en una sola máquina y en Apache Spark para escenarios de Big Data y
+streaming, además de meta-reglas de asociación para resumir las reglas halladas en varios conjuntos de datos.</strong></p>
+<p><a href="https://doi.org/10.1016/j.knosys.2018.09.026"><img alt="DOI" src="https://img.shields.io/badge/KNOSYS-2018.09.026-green" /></a></p>
+<hr>
+
+<h2 id="enlaces">Enlaces</h2>
+<ul>
+<li><strong>Documentación:</strong> <a href="http://cjferba.github.io/ARMxtend">http://cjferba.github.io/armxtend</a></li>
+<li>Repositorio del código fuente: <a href="https://github.com/cjferba/ARMxtend">https://github.com/cjferba/armxtend</a></li>
+</ul>
+<hr>
+
+<h2 id="caracteristicas">Características</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Nítido (crisp)</th>
+<th>Difuso (alfa-cortes)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Una sola máquina</td>
+<td><code>ARM.association_rules</code>, <code>FFIM.fpgrowth</code></td>
+<td><code>FIM.FARE</code>, <code>FFIM.fuzzy_fpgrowth</code></td>
+</tr>
+<tr>
+<td>Big Data (Spark)</td>
+<td><code>FIM.apriori</code> (DApriori/DAprioriTID), <code>FIM.Eclat.DECLAT</code>, <code>FIM.BD_ARE</code></td>
+<td><code>FIM.BD_FARE.FuzzyDAprioriTID</code>, <code>FIM.Eclat.FuzzyDECLAT</code></td>
+</tr>
+<tr>
+<td>Streaming (Spark)</td>
+<td><code>SFIM</code> (FIMoTS) + <code>SARE.extractAssociationRules</code></td>
+<td>-</td>
+</tr>
+<tr>
+<td>Meta-reglas (reglas sobre reglas, entre varios conjuntos de datos)</td>
+<td><code>ARM.meta_rules.crisp_meta_association_rules</code></td>
+<td><code>ARM.meta_rules.fuzzy_meta_association_rules</code></td>
+</tr>
+</tbody>
+</table>
+<p>Además, <code>preprocessing.FuzzyLib</code> para fuzzificar atributos numéricos y <code>VizARM.AREtoGraph</code> para transformar reglas
+en el grafo tipado ítem/regla de VizARE (JGF/GraphML/DOT).</p>
+<p>Consulte la <a href="quick-start/">Guía rápida</a> para ver ejemplos ejecutables de cada uno de ellos y la
+<a href="../USER_GUIDE_INDEX/">Guía de usuario</a> (en inglés) para la referencia completa de cada módulo.</p>
+<hr>
+
+<h2 id="como-citar">Cómo citar</h2>
+<p>Si utiliza ARMxtend en una publicación científica, considere citar la investigación en la que se basa:</p>
+<p><a href="https://doi.org/10.1016/j.knosys.2018.09.026"><img alt="DOI" src="https://img.shields.io/badge/KNOSYS-2018.09.026-green" /></a></p>
+<pre><code>@article{fernandez2019finding,
+  title={Finding tendencies in streaming data using big data frequent itemset mining},
+  author={Fernandez-Basso, Carlos and Francisco-Agra, Abel J and Martin-Bautista, Maria J and Ruiz, M Dolores},
+  journal={Knowledge-Based Systems},
+  volume={163},
+  pages={666--674},
+  year={2019},
+  publisher={Elsevier}
+}
+</code></pre>
+<p>Consulte <a href="../cite/">Cómo citar ARMxtend</a> para las referencias de cada módulo.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Copyright &copy; 2016-2026 <a href="http://cjferba.github.com">Carlos Fernandez-Basso</a></p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js"></script>
+        <script src="../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

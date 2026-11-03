@@ -83,6 +83,19 @@ nav:
     - VizARM.AREtoGraph: user_guide/VizARM.md
   - Preprocessing:
     - preprocessing.FuzzyLib: user_guide/preprocessing/FuzzyLib.md
+- Languages:
+  - Español:
+    - Inicio: es/index.md
+    - Instalación: es/installation.md
+    - Guía rápida: es/quick-start.md
+  - Français:
+    - Accueil: fr/index.md
+    - Installation: fr/installation.md
+    - Démarrage rapide: fr/quick-start.md
+  - Português:
+    - Início: pt/index.md
+    - Instalação: pt/installation.md
+    - Início rápido: pt/quick-start.md
 - About:
   - How To Contribute: CONTRIBUTING.md
   - Contributors: contributors.md

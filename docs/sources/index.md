@@ -1,6 +1,8 @@
 
 ## Welcome to ARMxtend's documentation!
 
+*Also available in:* [Español](es/index.md) · [Français](fr/index.md) · [Português](pt/index.md) (installation and quick start)
+
 **ARMxtend (association rule mining extensions) is a Python library for mining association rules,
 covering the crisp and fuzzy cases, on a single machine as well as on Apache Spark for Big Data and
 streaming scenarios, plus meta-association rules for summarizing rules found across multiple datasets.**
