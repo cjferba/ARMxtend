@@ -14,7 +14,7 @@ and the p-values can then be corrected for multiple testing (``ARM.significance.
 
 @author Carlos Fernandez-Basso
 """
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
