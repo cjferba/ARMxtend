@@ -503,13 +503,22 @@ applied to every itemset.</p>
 <h2 id="rules">Rules</h2>
 <p><code>high_utility_rules</code> splits every HUI of two or more items into <code>X =&gt; Y</code>. The measures are the <strong>classical</strong> ones
 (support, confidence, lift... count transactions); to them it adds <code>utility</code> (the utility of <code>X u Y</code>) and <code>utility_share</code> (its
-fraction of the total). Other definitions of "utility confidence" (utility of <code>X u Y</code> over utility of <code>X</code>) are not used here.
-<code>attrs</code> keeps <code>n_transactions</code>, <code>total_utility</code> and <code>n_candidates</code>, so <a href="../significance/"><code>significant_rules</code></a> works as with
+fraction of the total), and two measures of the value of the <strong>rule</strong> itself:</p>
+<ul>
+<li><code>utility_confidence</code>: the confidence weighted by value. Of the utility that the items of <code>X</code> bring in <em>all</em> the transactions
+  that contain <code>X</code>, the fraction that falls in transactions where <code>Y</code> is also bought. It is in [0, 1] (<code>NaN</code> if <code>X</code> has zero
+  profit) and equals the usual confidence when every transaction brings the same utility of <code>X</code>. Filter with
+  <code>min_utility_conf=</code>. Sahoo et al. (2015) define <code>u(X u Y) / u(X)</code>, which is not bounded by 1 and mixes the value of <code>Y</code> with
+  that of <code>X</code>; it is not used here.</li>
+<li><code>consequent_utility_share</code>: fraction of <code>u(X u Y)</code> that comes from the items of <code>Y</code>, that is, how much of the rule's value is
+  in what it predicts.</li>
+</ul>
+<p><code>attrs</code> keeps <code>n_transactions</code>, <code>total_utility</code> and <code>n_candidates</code>, so <a href="../significance/"><code>significant_rules</code></a> works as with
 any other rule frame (it tests the association of <code>X</code> and <code>Y</code>, not their value).</p>
 <h2 id="signature">Signature</h2>
 <pre><code class="language-python">high_utility_itemsets(quantities, profits=None, min_utility=0.1, absolute=False, min_len=1, max_len=None)
 high_utility_rules(quantities, profits=None, min_utility=0.1, absolute=False, min_conf=0.6, min_lift=None,
-                   max_antecedent=None, max_consequent=None, max_len=None)
+                   max_antecedent=None, max_consequent=None, max_len=None, min_utility_conf=None)
 </code></pre>
 <p><code>quantities</code> is a <code>DataFrame</code> (one row per transaction, one column per item, 0 or NaN if not bought) or a list of
 <code>{item: quantity}</code> dictionaries. <code>profits</code> maps each item to its unit profit; without it every item is worth 1 and the utility

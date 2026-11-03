@@ -312,3 +312,32 @@ def test_high_utility_rules_equal_the_brute_force_splits(seed):
         high_utility_rules(table, profits, 0.12, min_conf=2)
     with pytest.raises(ValueError):
         high_utility_rules(table, profits, 0.12, max_antecedent=0)
+
+
+@pytest.mark.parametrize("seed", range(3))
+def test_rule_level_utility_measures_equal_the_definition(seed):
+    table, profits = random_quantities(seed, rows=60)
+    rows = [{item: float(v) for item, v in row.items() if v > 0} for row in table.to_dict("records")]
+    found = high_utility_rules(table, profits, 0.12, min_conf=0.4)
+    assert len(found) > 0
+    for antecedent, consequent, confidence, utility_confidence, share in zip(
+            found["antecedents"], found["consequents"], found["confidence"], found["utility_confidence"],
+            found["consequent_utility_share"]):
+        with_x = [row for row in rows if antecedent <= set(row)]
+        with_xy = [row for row in with_x if consequent <= set(row)]
+        value_x = sum(row[i] * profits[i] for row in with_x for i in antecedent)
+        in_rule = sum(row[i] * profits[i] for row in with_xy for i in antecedent)
+        value_y = sum(row[i] * profits[i] for row in with_xy for i in consequent)
+        if value_x == 0:           # the antecedent has zero profit: no value to weigh by
+            assert np.isnan(utility_confidence)
+        else:
+            assert utility_confidence == pytest.approx(in_rule / value_x) and 0 <= utility_confidence <= 1 + 1e-12
+        assert share == pytest.approx(value_y / (value_y + in_rule))
+    # with equal quantities and profits the weighted confidence is the usual one
+    flat = pd.DataFrame([{k: 1.0 for k in row} for row in rows]).fillna(0.0)
+    plain = high_utility_rules(flat, None, 0.05, min_conf=0.0)
+    assert plain["utility_confidence"].to_numpy() == pytest.approx(plain["confidence"].to_numpy())
+    kept = high_utility_rules(table, profits, 0.12, min_conf=0.4, min_utility_conf=0.7)
+    assert len(kept) <= len(found) and (kept["utility_confidence"] >= 0.7 - 1e-9).all()
+    with pytest.raises(ValueError, match="min_utility_conf"):
+        high_utility_rules(table, profits, 0.12, min_utility_conf=1.5)

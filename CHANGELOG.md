@@ -8,6 +8,8 @@ project uses [semantic versioning](https://semver.org/).
 First version prepared for publication on PyPI (until then: `pip install git+https://github.com/cjferba/ARMxtend.git`).
 
 ### Added
+- **Fuzzy significance with FConf:** `fuzzy_rule_significance(..., statistic="fconf")` and `armxtend fuzzy-rules --statistic fconf` test the confidence aggregated by alpha-cuts.
+- **Rule-level utility:** `high_utility_rules` adds `utility_confidence` and `consequent_utility_share` (and `min_utility_conf`).
 - **Sequential rule significance:** `ARM.sequential_rule_significance` / `significant_sequential_rules` (permutation of the element order, with multiple-testing correction).
 - **Documentation in several languages:** installation, quick start and home page in Spanish, French and Portuguese (`docs/sources/{es,fr,pt}`).
 - **Code in English:** docstrings, comments, error messages, CLI text, tests, examples and benchmarks.

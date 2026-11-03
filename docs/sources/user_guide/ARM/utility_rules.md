@@ -48,7 +48,16 @@ applied to every itemset.
 
 `high_utility_rules` splits every HUI of two or more items into `X => Y`. The measures are the **classical** ones
 (support, confidence, lift... count transactions); to them it adds `utility` (the utility of `X u Y`) and `utility_share` (its
-fraction of the total). Other definitions of "utility confidence" (utility of `X u Y` over utility of `X`) are not used here.
+fraction of the total), and two measures of the value of the **rule** itself:
+
+- `utility_confidence`: the confidence weighted by value. Of the utility that the items of `X` bring in *all* the transactions
+  that contain `X`, the fraction that falls in transactions where `Y` is also bought. It is in [0, 1] (`NaN` if `X` has zero
+  profit) and equals the usual confidence when every transaction brings the same utility of `X`. Filter with
+  `min_utility_conf=`. Sahoo et al. (2015) define `u(X u Y) / u(X)`, which is not bounded by 1 and mixes the value of `Y` with
+  that of `X`; it is not used here.
+- `consequent_utility_share`: fraction of `u(X u Y)` that comes from the items of `Y`, that is, how much of the rule's value is
+  in what it predicts.
+
 `attrs` keeps `n_transactions`, `total_utility` and `n_candidates`, so [`significant_rules`](significance.md) works as with
 any other rule frame (it tests the association of `X` and `Y`, not their value).
 
@@ -57,7 +66,7 @@ any other rule frame (it tests the association of `X` and `Y`, not their value).
 ```python
 high_utility_itemsets(quantities, profits=None, min_utility=0.1, absolute=False, min_len=1, max_len=None)
 high_utility_rules(quantities, profits=None, min_utility=0.1, absolute=False, min_conf=0.6, min_lift=None,
-                   max_antecedent=None, max_consequent=None, max_len=None)
+                   max_antecedent=None, max_consequent=None, max_len=None, min_utility_conf=None)
 ```
 
 `quantities` is a `DataFrame` (one row per transaction, one column per item, 0 or NaN if not bought) or a list of

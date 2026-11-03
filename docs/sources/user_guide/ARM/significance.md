@@ -120,7 +120,10 @@ fuzzy_significant_rules(rules, transactions, alpha=0.05, n_permutations=999, ran
 ```
 
 For every rule `A => B` the membership of each side in each transaction is the minimum of its items' degrees; the statistic
-is the **scalar-cardinality confidence** `sum(min(a, b)) / sum(a)` (not the alpha-cut aggregate `FConf`, but the same idea);
+is by default the **scalar-cardinality confidence** `sum(min(a, b)) / sum(a)`; with `statistic="fconf", num_alpha=10` (the
+number of cuts the rules were mined with) it is the **alpha-cut aggregate `FConf`** of `FIM.FARE` itself (the crisp confidence
+of each cut `min(a, b) >= alpha_i` over `a >= alpha_i`, weighted by the width of the level, `0/0 := 1`), so the tested value is
+exactly the `confidence` column of the rules;
 the null hypothesis shuffles `b` among the transactions, and the p-value is `(1 + #shuffles >= observed) / (1 + n_permutations)`.
 Then `adjust_pvalues` corrects it, over `n_candidates` (the splits examined, now annotated by `fuzzy_association_rules`).
 `transactions` is the list of `(item, degree)` lists used to mine, or a table of degrees.
@@ -130,7 +133,7 @@ Then `adjust_pvalues` corrects it, over `n_candidates` (the splits examined, now
 - **It tests one rule against shuffled data, not the maximum over all rules** (that is `permutation_null`): the correction takes
   care of the multiplicity, not of the selection by thresholds, as with the crisp tests.
 - **Cost** is `n_permutations x transactions` per rule: 1000 shuffles of 10 000 transactions takes about 30 ms per rule.
-- Command line: `armxtend fuzzy-rules --significance 0.05 --permutations 999 --seed 1`.
+- Command line: `armxtend fuzzy-rules --significance 0.05 --permutations 999 --seed 1` (`--statistic fconf` for the alpha-cut statistic).
 
 ## Choosing
 

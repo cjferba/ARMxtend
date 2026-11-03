@@ -278,8 +278,10 @@ def _run_high_utility_rules(args: argparse.Namespace) -> pd.DataFrame:
         profits = dict(zip(table.iloc[:, 0].astype(str), table.iloc[:, 1]))
     rules = high_utility_rules(quantities, profits, args.min_utility, absolute=args.absolute, min_conf=args.min_conf,
                                min_lift=args.min_lift, max_antecedent=args.max_antecedent,
-                               max_consequent=args.max_consequent, max_len=args.max_len)
-    return _special_rules(rules, args, len(quantities), extra=("utility", "utility_share"))
+                               max_consequent=args.max_consequent, max_len=args.max_len,
+                               min_utility_conf=args.min_utility_conf)
+    return _special_rules(rules, args, len(quantities),
+                          extra=("utility", "utility_share", "utility_confidence", "consequent_utility_share"))
 
 
 def _run_fuzzy_rules(args: argparse.Namespace) -> pd.DataFrame:
@@ -302,7 +304,7 @@ def _run_fuzzy_rules(args: argparse.Namespace) -> pd.DataFrame:
         from .ARM import fuzzy_significant_rules
 
         rules = fuzzy_significant_rules(rules, transactions, args.significance, args.correction, args.permutations,
-                                        random_state=args.seed)
+                                        random_state=args.seed, statistic=args.statistic, num_alpha=args.alpha)
     return prune_redundant_rules(rules) if args.prune and len(rules) else rules
 
 
@@ -734,6 +736,8 @@ def build_parser() -> argparse.ArgumentParser:
                          help="minimum utility of an itemset: a fraction of the total utility (default: 0.1) or, with "
                               "--absolute, a value")
     utility.add_argument("--absolute", action="store_true", help="read --min-utility as an absolute value")
+    utility.add_argument("--min-utility-conf", type=float, metavar="X",
+                         help="minimum utility confidence u(X u Y) / u(X), in [0, 1]")
     utility.add_argument("--max-len", type=int, help="maximum items in a rule")
     _rule_filters(utility, 0.6)
     utility.set_defaults(run=_run_high_utility_rules, metric=None, keep_order=True)
@@ -759,6 +763,9 @@ def build_parser() -> argparse.ArgumentParser:
     fuzzy.add_argument("--permutations", type=int, default=999, help="shuffles of the significance test (default: 999)")
     fuzzy.add_argument("--correction", choices=("bonferroni", "holm", "fdr_bh", "fdr_by"), default="fdr_bh",
                        help="multiple-testing correction for --significance (default: fdr_bh)")
+    fuzzy.add_argument("--statistic", choices=("cardinality", "fconf"), default="cardinality",
+                       help="statistic of the significance test: scalar-cardinality confidence or FConf aggregated "
+                            "by alpha-cuts (default: cardinality)")
     fuzzy.add_argument("--seed", type=int, help="random seed of the significance test")
     fuzzy.add_argument("--html", metavar="FILE", help="also write the interactive VizARE viewer to FILE")
     fuzzy.set_defaults(run=_run_fuzzy_rules)

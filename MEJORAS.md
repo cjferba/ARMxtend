@@ -21,7 +21,7 @@ llevan **[tuyo]**.
 
 ## Investigación
 13. ~~Significación de reglas difusas, regla a regla (`ARM.fuzzy_significant_rules`).~~
-14. Contrastar la `FConf` agregada por alpha-cortes en lugar de la confianza por cardinal escalar.
+14. ~~Contrastar la `FConf` agregada por alpha-cortes (`statistic="fconf"` en `fuzzy_rule_significance`).~~
 15. Reglas secuenciales con veto (reglas que descartan eventos).
 16. Elementos con varios items simultáneos en los patrones secuenciales difusos.
 17. Fuzzificar también el tiempo (Fiot et al.).
@@ -29,7 +29,7 @@ llevan **[tuyo]**.
 19. CBA con soportes mínimos múltiples completos.
 20. Clasificación con reglas difusas.
 21. Reglas sobre flujos: `rule_drift` incremental.
-22. Utilidad de la regla (no solo del itemset).
+22. ~~Utilidad de la regla (no solo del itemset): `utility_confidence` y `consequent_utility_share`.~~
 23. Explicabilidad: por qué se dispara una regla y comparación con alternativas.
 24. Reglas sobre grafos o datos relacionales.
 

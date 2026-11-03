@@ -582,8 +582,8 @@ frequent; <code>--min-count</code> (default 2) and <code>--min-supp</code> are f
 header, one row per transaction and one column per item (the quantity bought, 0 if not). <code>--profits FILE</code> is a CSV with a header,
 the item in the first column and its unit profit (&gt;= 0) in the second; without it every item is worth 1. <code>--min-utility</code>
 (default 0.1) is a fraction of the total utility, or a value with <code>--absolute</code>. <code>--min-conf</code>, <code>--min-lift</code>, <code>--max-antecedent</code>,
-<code>--max-consequent</code> and <code>--max-len</code> are as in <code>top-k-rules</code>. The table adds <code>utility</code> and <code>utility_share</code> and is ordered by
-utility; the <a href="#significance-of-the-rules">significance options</a> work as in <code>rules</code>.</p>
+<code>--max-consequent</code> and <code>--max-len</code> are as in <code>top-k-rules</code>. The table adds <code>utility</code>, <code>utility_share</code>, <code>utility_confidence</code> and <code>consequent_utility_share</code> and is ordered by
+utility; <code>--min-utility-conf X</code> keeps the rules whose utility confidence is at least <code>X</code>; the <a href="#significance-of-the-rules">significance options</a> work as in <code>rules</code>.</p>
 <pre><code class="language-text">$ armxtend high-utility-rules sales.csv --profits profits.csv --min-utility 0.05 --min-conf 0.5 --top 3
 antecedents consequents  support  confidence   lift   utility  utility_share
      caviar        vino   0.1100      1.0000 6.3830 1932.0000         0.7036
@@ -593,8 +593,9 @@ caviar, pan        vino   0.0567      1.0000 6.3830 1040.0000         0.3787
 <h2 id="fuzzy-rules-fuzzy-association-rules-from-numeric-columns"><code>fuzzy-rules</code> -- fuzzy association rules from numeric columns</h2>
 <p>A CSV with a header. Numeric columns (or those in <code>--columns</code>) are fuzzified automatically with
 <a href="../preprocessing/FuzzyLib/"><code>FuzzyLib.AutoFuzzification</code></a> (<code>--labels</code>, <code>--method uniform|quantile|kmeans</code>,
-<code>--membership triangular|trapezoidal|gaussian</code>), mined with <code>fuzzy_fpgrowth</code> (<code>--alpha</code> alpha-cuts) and turned
-into rules with <a href="../FIM/FARE/"><code>FIM.FARE</code></a>. <code>--measures</code> adds extra interest measures as columns.</p>
+<code>--membership triangular|trapezoidal|gaussian</code>), mined with <code>fuzzy_fpgrowth</code> or <code>--algorithm dense</code> (<code>--alpha</code> alpha-cuts) and turned
+into rules with <a href="../FIM/FARE/"><code>FIM.FARE</code></a>. <code>--measures</code> adds extra interest measures as columns.
+<code>--significance LEVEL</code> keeps the rules that pass a per-rule permutation test (<code>--permutations</code>, <code>--correction</code>, <code>--seed</code>); <code>--statistic fconf</code> tests the confidence aggregated by alpha-cuts instead of the scalar-cardinality one.</p>
 <h2 id="gradual-rules"><code>gradual-rules</code></h2>
 <p>"The more A, the more B" rules directly on the numeric columns (<a href="../ARM/gradual_rules/"><code>ARM.gradual_rules</code></a>);
 <code>--max-rows</code> works on a random sample for big tables.</p>
@@ -768,7 +769,7 @@ armxtend rule-drift house.csv --time-column time --window 15D --alpha 0.05      
 </tr>
 </tbody>
 </table>
-<p><code>fuzzy-rules</code> and the sequence commands have no significance test.</p>
+<p><code>fuzzy-rules</code> has its own per-rule test (<code>--significance</code>, see above); the sequence commands have none on the command line.</p>
 <h2 id="generate"><code>generate</code></h2>
 <p>Synthetic data with planted patterns, in the formats the other commands read:</p>
 <pre><code>$ armxtend generate transactions -n 5000 --items 80 --seed 1 -o basket.txt

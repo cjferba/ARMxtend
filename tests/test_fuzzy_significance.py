@@ -10,7 +10,7 @@ from ARMxtend.FIM.FARE import fuzzy_association_rules
 
 
 def make_data(rows=300, seed=0):
-    """a y b relacionadas (b sigue a a), c independiente."""
+    """a and b related (b follows a), c independent."""
     rng = np.random.default_rng(seed)
     a = rng.random(rows)
     b = np.clip(a + rng.normal(0, 0.1, rows), 0, 1)
@@ -97,3 +97,15 @@ def test_edge_cases_and_validation():
         fuzzy_significant_rules(rules, table, alpha=1.5)
     repeated = fuzzy_rule_significance(never, [[("a", 0.2), ("a", 0.9), ("b", 0.5)]] * 4, 9, random_state=0)
     assert repeated["fuzzy_confidence"].iloc[0] == pytest.approx(0.5 / 0.9)
+
+
+def test_fconf_statistic_matches_the_aggregated_confidence_of_fare():
+    table = make_data()
+    rules = mined(table)
+    scored = fuzzy_rule_significance(rules, table, n_permutations=199, random_state=1, statistic="fconf", num_alpha=5)
+    assert np.allclose(scored["fuzzy_confidence"].to_numpy(), rules["confidence"].to_numpy(), atol=1e-9)
+    assert row_of(scored, "a", "b")["p_value"] <= 0.02 and row_of(scored, "a", "c")["p_value"] > 0.05
+    kept = fuzzy_significant_rules(rules, table, n_permutations=499, random_state=1, statistic="fconf", num_alpha=5)
+    assert {(tuple(a), tuple(c)) for a, c in zip(kept["antecedents"], kept["consequents"])} >= {(("a",), ("b",))}
+    with pytest.raises(ValueError, match="statistic"):
+        fuzzy_rule_significance(rules, table, statistic="nope")

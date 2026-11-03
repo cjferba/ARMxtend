@@ -102,8 +102,8 @@ Rules from the itemsets that bring the most profit ([`ARM.high_utility_rules`](A
 header, one row per transaction and one column per item (the quantity bought, 0 if not). `--profits FILE` is a CSV with a header,
 the item in the first column and its unit profit (>= 0) in the second; without it every item is worth 1. `--min-utility`
 (default 0.1) is a fraction of the total utility, or a value with `--absolute`. `--min-conf`, `--min-lift`, `--max-antecedent`,
-`--max-consequent` and `--max-len` are as in `top-k-rules`. The table adds `utility` and `utility_share` and is ordered by
-utility; the [significance options](#significance-of-the-rules) work as in `rules`.
+`--max-consequent` and `--max-len` are as in `top-k-rules`. The table adds `utility`, `utility_share`, `utility_confidence` and `consequent_utility_share` and is ordered by
+utility; `--min-utility-conf X` keeps the rules whose utility confidence is at least `X`; the [significance options](#significance-of-the-rules) work as in `rules`.
 
 ```text
 $ armxtend high-utility-rules sales.csv --profits profits.csv --min-utility 0.05 --min-conf 0.5 --top 3
@@ -117,8 +117,9 @@ caviar, pan        vino   0.0567      1.0000 6.3830 1040.0000         0.3787
 
 A CSV with a header. Numeric columns (or those in `--columns`) are fuzzified automatically with
 [`FuzzyLib.AutoFuzzification`](preprocessing/FuzzyLib.md) (`--labels`, `--method uniform|quantile|kmeans`,
-`--membership triangular|trapezoidal|gaussian`), mined with `fuzzy_fpgrowth` (`--alpha` alpha-cuts) and turned
+`--membership triangular|trapezoidal|gaussian`), mined with `fuzzy_fpgrowth` or `--algorithm dense` (`--alpha` alpha-cuts) and turned
 into rules with [`FIM.FARE`](FIM/FARE.md). `--measures` adds extra interest measures as columns.
+`--significance LEVEL` keeps the rules that pass a per-rule permutation test (`--permutations`, `--correction`, `--seed`); `--statistic fconf` tests the confidence aggregated by alpha-cuts instead of the scalar-cardinality one.
 
 ## `gradual-rules`
 
@@ -310,7 +311,7 @@ armxtend rule-drift house.csv --time-column time --window 15D --alpha 0.05      
 | `--permutations N` | (`temporal-rules`) test every rule against `N` shuffled copies of the series instead (adds `p_permutation`; keeps `p_permutation <= --alpha` if given); the right choice for time series |
 | `--null`, `--seed` | how the series are shuffled (`shift`, the default, keeps each series' autocorrelation; or `permute`) and the random seed |
 
-`fuzzy-rules` and the sequence commands have no significance test.
+`fuzzy-rules` has its own per-rule test (`--significance`, see above); the sequence commands have none on the command line.
 
 ## `generate`
 

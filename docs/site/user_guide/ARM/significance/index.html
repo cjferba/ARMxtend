@@ -586,7 +586,10 @@ rules = fuzzy_association_rules(frequent, 5, metric=&quot;confidence&quot;, min_
 fuzzy_significant_rules(rules, transactions, alpha=0.05, n_permutations=999, random_state=0)
 </code></pre>
 <p>For every rule <code>A =&gt; B</code> the membership of each side in each transaction is the minimum of its items' degrees; the statistic
-is the <strong>scalar-cardinality confidence</strong> <code>sum(min(a, b)) / sum(a)</code> (not the alpha-cut aggregate <code>FConf</code>, but the same idea);
+is by default the <strong>scalar-cardinality confidence</strong> <code>sum(min(a, b)) / sum(a)</code>; with <code>statistic="fconf", num_alpha=10</code> (the
+number of cuts the rules were mined with) it is the <strong>alpha-cut aggregate <code>FConf</code></strong> of <code>FIM.FARE</code> itself (the crisp confidence
+of each cut <code>min(a, b) &gt;= alpha_i</code> over <code>a &gt;= alpha_i</code>, weighted by the width of the level, <code>0/0 := 1</code>), so the tested value is
+exactly the <code>confidence</code> column of the rules;
 the null hypothesis shuffles <code>b</code> among the transactions, and the p-value is <code>(1 + #shuffles &gt;= observed) / (1 + n_permutations)</code>.
 Then <code>adjust_pvalues</code> corrects it, over <code>n_candidates</code> (the splits examined, now annotated by <code>fuzzy_association_rules</code>).
 <code>transactions</code> is the list of <code>(item, degree)</code> lists used to mine, or a table of degrees.</p>
@@ -596,7 +599,7 @@ Then <code>adjust_pvalues</code> corrects it, over <code>n_candidates</code> (th
 <li><strong>It tests one rule against shuffled data, not the maximum over all rules</strong> (that is <code>permutation_null</code>): the correction takes
   care of the multiplicity, not of the selection by thresholds, as with the crisp tests.</li>
 <li><strong>Cost</strong> is <code>n_permutations x transactions</code> per rule: 1000 shuffles of 10 000 transactions takes about 30 ms per rule.</li>
-<li>Command line: <code>armxtend fuzzy-rules --significance 0.05 --permutations 999 --seed 1</code>.</li>
+<li>Command line: <code>armxtend fuzzy-rules --significance 0.05 --permutations 999 --seed 1</code> (<code>--statistic fconf</code> for the alpha-cut statistic).</li>
 </ul>
 <h2 id="choosing">Choosing</h2>
 <table>

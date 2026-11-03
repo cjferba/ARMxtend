@@ -7,8 +7,10 @@ degrees. Here, for each rule ``A => B``:
 
 * the membership vector of the antecedent ``a`` and of the consequent ``b`` is computed in each transaction (the
   minimum, the t-norm, of the degrees of its items; an absent item is worth 0);
-* the statistic is the **scalar-cardinality confidence** ``sum(min(a, b)) / sum(a)`` -- not the confidence aggregated
-  by alpha-cuts (``FConf``) of ``FIM.FARE``, but the same idea and the same ordering in practice;
+* the statistic is, by default, the **scalar-cardinality confidence** ``sum(min(a, b)) / sum(a)``. With
+  ``statistic="fconf"`` it is the confidence aggregated by alpha-cuts (``FConf``) of ``FIM.FARE`` (RL-theory): the
+  crisp confidence of the cut ``min(a, b) >= alpha_i`` over ``a >= alpha_i``, weighted by the width of each level, with
+  the convention 0/0 := 1;
 * the null hypothesis is that ``b`` does not depend on ``a``: ``b`` is shuffled among the transactions (it keeps the
   distribution of each side and breaks their relation) and the p-value is the fraction of shuffles whose statistic
   reaches the observed one, ``(1 + #shuffled >= observed) / (1 + n_permutations)`` (Phipson and Smyth, 2010),
@@ -25,7 +27,10 @@ from typing import Dict, Iterable, Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 
+from ..FIM._shared import alpha_levels, alpha_weights
 from .significance import adjust_pvalues
+
+STATISTICS = ("cardinality", "fconf")
 
 FuzzyTransactions = Union[pd.DataFrame, Sequence[Iterable[Tuple[str, float]]]]
 
@@ -63,8 +68,24 @@ def _side(columns: Dict[str, np.ndarray], items: Iterable[str], rows: int) -> np
     return result
 
 
+def _fconf(a: np.ndarray, joint: np.ndarray, levels: np.ndarray, weights: np.ndarray) -> np.ndarray:
+    """
+    FConf of each row of `joint` (one shuffle per row): sum over levels of weight * |joint >= alpha| / |a >= alpha|,
+    with 0/0 := 1 as in ``FIM.FARE``.
+    """
+    result = np.zeros(joint.shape[0])
+    for level, weight in zip(levels, weights):
+        denominator = np.count_nonzero(a >= level - _TOL)
+        if denominator == 0:
+            result += weight
+        else:
+            result += weight * (joint >= level - _TOL).sum(axis=1) / denominator
+    return result
+
+
 def fuzzy_rule_significance(rules: pd.DataFrame, transactions: FuzzyTransactions, n_permutations: int = 999,
-                            random_state: Union[None, int, np.random.Generator] = None) -> pd.DataFrame:
+                            random_state: Union[None, int, np.random.Generator] = None,
+                            statistic: str = "cardinality", num_alpha: int = 10) -> pd.DataFrame:
     """
     Add to the fuzzy rules the ``fuzzy_confidence`` statistic and the ``p_value`` of the permutation test.
 
@@ -76,6 +97,9 @@ def fuzzy_rule_significance(rules: pd.DataFrame, transactions: FuzzyTransactions
             ``preprocessing.timeseries.to_fuzzy_transactions``)
         n_permutations (int): number of shuffles (999 by default; more gives finer but slower p-values)
         random_state: seed or ``numpy.random.Generator``
+        statistic (str): 'cardinality' (scalar-cardinality confidence) or 'fconf' (confidence aggregated by
+            alpha-cuts, see the module docstring)
+        num_alpha (int): number of alpha-cuts of the 'fconf' statistic (use the one the rules were mined with)
 
     Returns:
         Copy of `rules` with the columns 'fuzzy_confidence' and 'p_value'; ``attrs`` keeps those of `rules` and adds
@@ -83,6 +107,10 @@ def fuzzy_rule_significance(rules: pd.DataFrame, transactions: FuzzyTransactions
     """
     if n_permutations < 1:
         raise ValueError("n_permutations must be >= 1")
+    if statistic not in STATISTICS:
+        raise ValueError("statistic must be one of {}, got: '{}'".format(STATISTICS, statistic))
+    levels = alpha_levels(num_alpha)
+    weights = alpha_weights(levels)
     rng = random_state if isinstance(random_state, np.random.Generator) else np.random.default_rng(random_state)
     result = rules.copy()
     result.attrs.update(rules.attrs)
@@ -103,12 +131,17 @@ def fuzzy_rule_significance(rules: pd.DataFrame, transactions: FuzzyTransactions
         a, b = _side(columns, antecedent, rows), _side(columns, consequent, rows)
         total = a.sum()
         if total <= 0:
-            confidences.append(0.0)
+            confidences.append(0.0 if statistic == "cardinality" else 1.0)
             p_values.append(1.0)
             continue
-        observed = np.minimum(a, b).sum()
-        shuffled = np.minimum(a[None, :], b[permutations]).sum(axis=1)
-        confidences.append(observed / total)
+        if statistic == "cardinality":
+            observed = np.minimum(a, b).sum()
+            shuffled = np.minimum(a[None, :], b[permutations]).sum(axis=1)
+            confidences.append(observed / total)
+        else:
+            observed = _fconf(a, np.minimum(a, b)[None, :], levels, weights)[0]
+            shuffled = _fconf(a, np.minimum(a[None, :], b[permutations]), levels, weights)
+            confidences.append(float(observed))
         p_values.append((1 + int((shuffled >= observed - _TOL).sum())) / (n_permutations + 1))
     result["fuzzy_confidence"] = confidences
     result["p_value"] = p_values
@@ -117,7 +150,8 @@ def fuzzy_rule_significance(rules: pd.DataFrame, transactions: FuzzyTransactions
 
 def fuzzy_significant_rules(rules: pd.DataFrame, transactions: FuzzyTransactions, alpha: float = 0.05,
                             correction: str = "fdr_bh", n_permutations: int = 999, n_tests: Optional[int] = None,
-                            random_state: Union[None, int, np.random.Generator] = None) -> pd.DataFrame:
+                            random_state: Union[None, int, np.random.Generator] = None,
+                            statistic: str = "cardinality", num_alpha: int = 10) -> pd.DataFrame:
     """
     The significant fuzzy rules after correcting for multiple testing (see `fuzzy_rule_significance`).
 
@@ -128,7 +162,7 @@ def fuzzy_significant_rules(rules: pd.DataFrame, transactions: FuzzyTransactions
     """
     if not 0 < alpha < 1:
         raise ValueError("alpha must be in (0, 1), got: {}".format(alpha))
-    scored = fuzzy_rule_significance(rules, transactions, n_permutations, random_state)
+    scored = fuzzy_rule_significance(rules, transactions, n_permutations, random_state, statistic, num_alpha)
     family = n_tests if n_tests is not None else rules.attrs.get("n_candidates")
     family = max(int(family), len(scored)) if family is not None else len(scored)
     scored["p_adjusted"] = adjust_pvalues(scored["p_value"].to_numpy(), correction, n_tests=family)
