@@ -56,6 +56,27 @@ exhaustive enumeration). This is **not** the RuleGrowth algorithm of Fournier-Vi
 rules incrementally without enumerating all the itemsets), but it yields the same rules with the same support
 and confidence.
 
+## Rules with veto: `X => ~Y`
+
+Positive rules say what *will* happen; a **veto** rule says what is *discarded*: once all the items of `X` have occurred, the
+item `Y` does **not** occur afterwards (it may have happened before, or at the same instant). `sequential_veto_rules` mines them:
+
+```python
+from ARMxtend.ARM import sequential_veto_rules
+
+sequences = [["arm", "sleep", "wake"], ["arm", "sleep"], ["arm", "open"], ["open", "arm"], ["wake"]]
+sequential_veto_rules(sequences, min_supp=0.2, min_conf=0.7, max_antecedent=1, min_antecedent_supp=0.2)
+# antecedents consequents  support  confidence  consequent support  lift
+#       {arm}      {open}      0.6        0.75                 0.6  1.25   (and the others that pass the thresholds)
+```
+
+- `support` is the fraction of sequences where the rule is valid, `confidence` divides it by the sequences that contain `X`.
+- `consequent support` is the fraction of sequences in which `Y` **never** appears, the base rate of the veto, so
+  `lift = confidence / base rate` says whether `X` makes the absence of `Y` more likely than it already was.
+- Vetoes of rare events hold almost everywhere, so `X` must be frequent (`min_antecedent_supp`) and the lift is what to read.
+- `Y` is a single item. The test suite compares the rules with the definition applied to every `(X, Y)`.
+- Command line: `armxtend sequential-rules routines.txt --veto --min-supp 0.2 --min-threshold 0.8`.
+
 ## Is the order real? Significance
 
 A rule can look strong only because `X` and `Y` are frequent in the same sequences, in any order.

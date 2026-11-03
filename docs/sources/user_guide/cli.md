@@ -182,6 +182,7 @@ element.
 
 - **`sequences`** mines the [frequent sequential patterns](FIM/sequential.md) (PrefixSpan): `--min-supp`,
   `--min-len`, `--max-len`. Columns: `sequence` (such as `<{alarm} {bathroom} {kitchen}>`), `support`, `length`.
+- **`sequential-rules --veto`** mines the [rules with veto](ARM/sequential_rules.md#rules-with-veto-x-y) `X => ~Y` ("after X, Y does not happen").
 - **`sequential-rules`** mines [sequential rules](ARM/sequential_rules.md) `X => Y`: `--min-supp`, `--metric` /
   `--min-threshold` (default `confidence` >= 0.7; use `--metric lift --min-threshold 1.2` to keep informative
   rules), `--max-antecedent` and `--max-consequent` (default 2).

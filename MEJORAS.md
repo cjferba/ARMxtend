@@ -22,7 +22,7 @@ llevan **[tuyo]**.
 ## Investigación
 13. ~~Significación de reglas difusas, regla a regla (`ARM.fuzzy_significant_rules`).~~
 14. ~~Contrastar la `FConf` agregada por alpha-cortes (`statistic="fconf"` en `fuzzy_rule_significance`).~~
-15. Reglas secuenciales con veto (reglas que descartan eventos).
+15. ~~Reglas secuenciales con veto (`ARM.sequential_veto_rules`, `X => ~Y`).~~
 16. Elementos con varios items simultáneos en los patrones secuenciales difusos.
 17. Fuzzificar también el tiempo (Fiot et al.).
 18. ~~Significación para reglas secuenciales (`ARM.sequential_rule_significance`, test de permutación del orden).~~

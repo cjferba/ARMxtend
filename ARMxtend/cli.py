@@ -532,8 +532,11 @@ def _run_sequences(args: argparse.Namespace) -> pd.DataFrame:
 
 
 def _run_sequential_rules(args: argparse.Namespace) -> pd.DataFrame:
-    from .ARM import sequential_rules
+    from .ARM import sequential_rules, sequential_veto_rules
 
+    if args.veto:
+        return sequential_veto_rules(_read_sequences(args), args.min_supp, min_conf=args.min_threshold,
+                                     max_antecedent=args.max_antecedent)
     return sequential_rules(_read_sequences(args), args.min_supp,
                             min_conf=args.min_threshold if args.metric == "confidence" else 0.0,
                             max_antecedent=args.max_antecedent, max_consequent=args.max_consequent,
@@ -826,6 +829,9 @@ def build_parser() -> argparse.ArgumentParser:
     sequential.add_argument("--min-threshold", type=float, default=0.7, help="minimum value of --metric (default: 0.7)")
     sequential.add_argument("--max-antecedent", type=int, default=2, help="maximum items in X (default: 2)")
     sequential.add_argument("--max-consequent", type=int, default=2, help="maximum items in Y (default: 2)")
+    sequential.add_argument("--veto", action="store_true",
+                            help="mine rules with veto 'X => ~Y' ('after X, Y does not happen'); --min-threshold is the "
+                                 "minimum confidence and Y is a single item")
     _output_options(sequential)
     sequential.set_defaults(run=_run_sequential_rules)
 
