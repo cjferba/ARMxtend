@@ -59,12 +59,35 @@ lagged = window_rules(items, "15D", miner=lambda w: temporal_association_rules(
 Example (simulated house, 60 days, 15-day windows): the rule *"temperature low one hour ago -> heater on"* is
 planted only in the second half of the period, and `rule_drift` reports it as `emerging` from window 2.
 
+## On a stream: `RuleDriftMonitor`
+
+`window_rules` re-mines every window of a table you already have. For a **stream** that arrives in chunks use
+`RuleDriftMonitor`, which mines only the windows each chunk completes and drops the rows no later window needs, so memory stays
+bounded:
+
+```python
+from ARMxtend.ARM import RuleDriftMonitor
+
+monitor = RuleDriftMonitor(width=20, step=10, min_supp=0.3, min_threshold=0.9, history=50)
+for chunk in stream:                      # DataFrames of new rows, in time order
+    new_rules = monitor.update(chunk)     # the rules of the windows this chunk completed (possibly empty)
+    if monitor.n_windows >= 2:
+        print(monitor.latest_changes())   # compare_rule_sets between the last two windows
+monitor.drift()                           # rule_drift over the windows kept (renumbered from 0)
+```
+
+Same arguments as `window_rules` (`width`, `step`, `miner`, `min_rows`; windows by rows or by duration) plus `history`, which keeps
+only the rules of the last windows (window numbers keep growing). Only **complete** windows are mined: by rows, when all their
+rows have arrived; by duration, when a row at or after the end has arrived. After feeding all the data the windows and rules are
+those of `window_rules` (the tests compare them for several chunk sizes), except that a final window by duration that ends
+exactly at the last row waits for a later row.
+
 ## Notes
 
 - Each window needs enough rows for the support threshold to mean something; very short windows produce noisy
   rules that look `intermittent`.
 - `slope` is a least-squares line over the windows in which the rule is present; use it to spot rules that are
   gaining or losing confidence, not to extrapolate.
-- Windows are independent: rules are re-mined from scratch, so the cost is `W` times the cost of one window.
+- Windows are independent: rules are re-mined from scratch, so the cost is `W` times the cost of one window. `RuleDriftMonitor` does not make a window cheaper, it avoids repeating the ones already mined.
 
 Command line: [`armxtend rule-drift`](../cli.md#temporal-rules-and-rule-drift-sensor-csv-files).

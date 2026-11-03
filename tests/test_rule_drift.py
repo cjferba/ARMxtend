@@ -188,3 +188,80 @@ def test_compare_rule_sets():
     assert result["status"].tolist()[0] == "changed"                  # first what changes the most
     with pytest.raises(ValueError, match="does not have the columns"):
         compare_rule_sets(before, after.drop(columns="confidence"))
+
+
+def stream_in_chunks(table, sizes):
+    position = 0
+    index = 0
+    while position < len(table):
+        size = sizes[index % len(sizes)]
+        yield table.iloc[position:position + size]
+        position += size
+        index += 1
+
+
+def test_monitor_equals_window_rules_for_windows_by_rows(drifting_items):
+    from ARMxtend.ARM import RuleDriftMonitor
+    batch = window_rules(drifting_items, WINDOW_ROWS, min_supp=0.3, min_threshold=0.9)
+    for sizes in ([7], [20], [3, 41, 1], [160]):
+        monitor = RuleDriftMonitor(WINDOW_ROWS, min_supp=0.3, min_threshold=0.9)
+        mined = [monitor.update(chunk) for chunk in stream_in_chunks(drifting_items, sizes)]
+        assert monitor.n_windows == batch.attrs["n_windows"] == 8
+        got = monitor.rules_
+        assert len(got) == len(batch) and (got["window"].to_numpy() == batch["window"].to_numpy()).all()
+        assert [rule_key(a, c) for a, c in zip(got["antecedents"], got["consequents"])] == \
+               [rule_key(a, c) for a, c in zip(batch["antecedents"], batch["consequents"])]
+        assert np.allclose(got["confidence"].to_numpy(), batch["confidence"].to_numpy())
+        assert sum(len(m) for m in mined) == len(batch)
+        assert monitor.buffered_rows < WINDOW_ROWS
+        assert monitor.drift().equals(rule_drift(batch))
+
+
+def test_monitor_with_overlapping_windows_and_history(drifting_items):
+    from ARMxtend.ARM import RuleDriftMonitor
+    batch = window_rules(drifting_items, 30, 10, min_supp=0.3, min_threshold=0.9)
+    monitor = RuleDriftMonitor(30, 10, min_supp=0.3, min_threshold=0.9, history=4)
+    for chunk in stream_in_chunks(drifting_items, [13]):
+        monitor.update(chunk)
+    total = batch.attrs["n_windows"]
+    assert monitor.n_windows == total
+    kept = monitor.rules_
+    assert kept["window"].min() >= total - 4
+    expected = batch[batch["window"] >= total - 4]
+    assert len(kept) == len(expected)
+    drift = monitor.drift()
+    assert drift["last_window"].max() <= 3 and len(drift) > 0
+    assert monitor.latest_changes().shape[0] >= 0
+
+
+def test_monitor_by_duration_mines_only_complete_windows(drifting_items):
+    from ARMxtend.ARM import RuleDriftMonitor
+    batch = window_rules(drifting_items, "20h", min_supp=0.3, min_threshold=0.9)
+    monitor = RuleDriftMonitor("20h", min_supp=0.3, min_threshold=0.9)
+    for chunk in stream_in_chunks(drifting_items, [17]):
+        monitor.update(chunk)
+    # the last window of the batch ends exactly with the data: it is only complete once a later row arrives
+    assert monitor.n_windows == batch.attrs["n_windows"] - 1
+    got = monitor.rules_
+    assert len(got) == len(batch[batch["window"] < monitor.n_windows])
+
+
+def test_monitor_validation(drifting_items):
+    from ARMxtend.ARM import RuleDriftMonitor
+    with pytest.raises(ValueError, match=">= 1"):
+        RuleDriftMonitor(0)
+    with pytest.raises(ValueError, match="history"):
+        RuleDriftMonitor(5, history=0)
+    with pytest.raises(ValueError, match="positive durations"):
+        RuleDriftMonitor("0h")
+    monitor = RuleDriftMonitor(20, min_supp=0.3)
+    with pytest.raises(ValueError, match="no window"):
+        monitor.drift()
+    with pytest.raises(ValueError, match="at least two windows"):
+        monitor.latest_changes()
+    monitor.update(drifting_items.iloc[:5])
+    with pytest.raises(ValueError, match="same columns"):
+        monitor.update(drifting_items[["A", "B"]].iloc[5:8])
+    assert len(monitor.update(drifting_items.iloc[0:0])) == 0
+    with pytest.raises(ValueError, match="DatetimeIndex"):
+        RuleDriftMonitor("5h").update(drifting_items.reset_index(drop=True))

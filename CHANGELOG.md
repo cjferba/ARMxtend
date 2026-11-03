@@ -8,6 +8,7 @@ project uses [semantic versioning](https://semver.org/).
 First version prepared for publication on PyPI (until then: `pip install git+https://github.com/cjferba/ARMxtend.git`).
 
 ### Added
+- **Incremental rule drift:** `ARM.RuleDriftMonitor` mines only the windows each chunk of a stream completes (bounded memory, optional `history`).
 - **Fuzzy rule classification:** `ARM.fuzzy_class_rules` and `FuzzyRuleClassifier` (fuzzy class rules with Ishibuchi-Yamamoto weights; winner or sum inference).
 - **CBA with multiple minimum supports:** `min_supp` and `min_conf` per class and `min_count` in `class_association_rules` / `RuleClassifier`.
 - **Fuzzy sequential patterns with multi-item elements:** `fuzzy_prefixspan(..., itemset_elements=True)` and `fuzzy-sequences --itemset-elements`.
