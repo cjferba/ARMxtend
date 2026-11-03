@@ -30,6 +30,12 @@ the class in the column `class`. The items must be boolean columns; `preprocessi
 (by discretising) and categorical columns. `support="class"` (default) applies `min_supp` inside each class, so that
 rare classes get their rules; `"global"` applies it to all rows. The supports in the result are always relative to all rows.
 
+*Multiple minimum supports* (Liu, Ma and Wong, 2000): the minimum support of the rules of class `c` is `t x freq(c)` over all
+the cases, which is `t` over the cases of the class, i.e. `support="class"`. Besides, `min_supp` and `min_conf` can be
+**dictionaries per class** (`min_supp={"rare": 0.3, "common": 0.05}`; every class must appear), and `min_count` (default 1)
+sets an absolute floor on the number of cases a rule must cover, so that a tiny class does not produce rules that hold for one
+single case. All three work in `class_association_rules` and in `RuleClassifier`.
+
 **2. Optional pruning.**
 `prune_unproductive_rules(rules, min_improvement)` (see [redundancy](redundancy.md#unproductive-rules)) removes the
 rules whose extra conditions do not improve the confidence of a more general rule. In the `RuleClassifier`, pass

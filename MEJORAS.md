@@ -26,7 +26,7 @@ llevan **[tuyo]**.
 16. ~~Elementos con varios items simultáneos en los patrones secuenciales difusos (`itemset_elements=True`).~~
 17. Fuzzificar también el tiempo (Fiot et al.).
 18. ~~Significación para reglas secuenciales (`ARM.sequential_rule_significance`, test de permutación del orden).~~
-19. CBA con soportes mínimos múltiples completos.
+19. ~~CBA con soportes mínimos múltiples completos (`min_supp`/`min_conf` por clase y `min_count`).~~
 20. Clasificación con reglas difusas.
 21. Reglas sobre flujos: `rule_drift` incremental.
 22. ~~Utilidad de la regla (no solo del itemset): `utility_confidence` y `consequent_utility_share`.~~

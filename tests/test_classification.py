@@ -218,3 +218,35 @@ def test_class_rules_work_with_significance_testing():
     signal = np.where(items["i0"] & items["i1"] & (rng.rand(300) < 0.95), "p", "q")
     real = significant_rules(class_association_rules(items, signal, min_supp=0.05, min_conf=0.8, max_len=2), alpha=0.05)
     assert {"i0", "i1"} in [set(a) for a in real["antecedents"]]
+
+
+def test_per_class_thresholds_and_min_count_equal_the_brute_force():
+    items, labels = random_cases(3)
+    supp = {"x": 0.30, "y": 0.10, "z": 0.20}
+    conf = {"x": 0.7, "y": 0.4, "z": 0.5}
+    rules = class_association_rules(items, labels, min_supp=supp, min_conf=conf, max_len=3, min_count=4)
+    matrix, array = items.to_numpy(bool), np.asarray(labels)
+    expected = set()
+    for label in supp:
+        inClass = array == label
+        for length in (1, 2, 3):
+            for columns in combinations(range(items.shape[1]), length):
+                holds = matrix[:, columns].all(axis=1)
+                joint = int((holds & inClass).sum())
+                if joint >= max(supp[label] * inClass.sum() - 1e-9, 4) and joint / holds.sum() >= conf[label] - 1e-9:
+                    expected.add((frozenset(items.columns[list(columns)]), label))
+    assert len(expected) > 3
+    assert set(zip(rules["antecedents"], rules["class"])) == expected
+    classifier = RuleClassifier(min_supp=supp, min_conf=conf, max_len=3, min_count=4).fit(items, labels)
+    assert classifier.score(items, labels) > 0.5
+    assert classifier.get_params()["min_count"] == 4
+
+
+def test_per_class_thresholds_validation():
+    items, labels = random_cases(0)
+    with pytest.raises(ValueError, match="no value for the classes"):
+        class_association_rules(items, labels, min_supp={"x": 0.1})
+    with pytest.raises(ValueError, match="min_conf must be in"):
+        class_association_rules(items, labels, min_conf={"x": 0.5, "y": 2, "z": 0.5})
+    with pytest.raises(ValueError, match="min_count"):
+        class_association_rules(items, labels, min_count=0)

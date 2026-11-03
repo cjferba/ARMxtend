@@ -9,9 +9,12 @@ on Associations):
     Discovery and Data Mining (KDD-98), 80-86.
 
 * ``class_association_rules`` extracts the frequent and reliable ``A => class=c`` rules. With ``support="class"``
-  (default) the minimum support is applied within each class, so that infrequent classes do not end up without rules
-  (the idea of the multiple minimum supports of Liu, Ma and Wong, 2000); with ``support="global"`` it is applied over
-  all the transactions.
+  (default) the minimum support is applied within each class, so that infrequent classes do not end up without rules.
+  This is the multiple-minimum-supports scheme of Liu, Ma and Wong (2000): the minimum support of the rules of class c
+  is ``t * freq(c)`` over all the cases, which is the same as ``t`` over the cases of the class. It can also be given
+  PER CLASS (``min_supp={"rare": 0.2, "common": 0.05}``, ``min_conf`` too) and floored with ``min_count`` (an absolute
+  number of cases, so that a tiny class does not yield rules that hold for one single case). With ``support="global"``
+  it is applied over all the transactions.
 * ``select_rules`` is the CBA builder (M1): it orders the rules by precedence (higher confidence, then higher support,
   then shorter antecedent), goes through the training data keeping each rule that classifies correctly some
   still-uncovered case, and cuts the list at the point where the total error (rules plus default class) is minimal.
@@ -24,7 +27,7 @@ The rules have the same format as ``ARM.association_rules`` (and the antecedent 
 
 @author Carlos Fernandez-Basso
 """
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -53,6 +56,22 @@ def _classes(labels: Union[Sequence[Any], np.ndarray, pd.Series]) -> Tuple[np.nd
     return values, classes
 
 
+def _per_class(value: Union[float, Mapping[Any, float]], classes: List[Any], name: str, low: float, high: float,
+               open_low: bool = False) -> Dict[Any, float]:
+    """A threshold for each class: the same number for all or a dictionary {class: number} that covers all."""
+    if isinstance(value, Mapping):
+        missing = [label for label in classes if label not in value]
+        if missing:
+            raise ValueError("{} has no value for the classes {}".format(name, missing))
+        result = {label: float(value[label]) for label in classes}
+    else:
+        result = {label: float(value) for label in classes}
+    for label, number in result.items():
+        if not (low < number if open_low else low <= number) or number > high:
+            raise ValueError("{} must be in {}{}, {}], got: {}".format(name, "(" if open_low else "[", low, high, number))
+    return result
+
+
 def _check_inputs(items: pd.DataFrame, labels: Union[Sequence[Any], np.ndarray, pd.Series]) -> None:
     if len(items) != len(labels):
         raise ValueError("`items` has {} rows and `labels` {}".format(len(items), len(labels)))
@@ -60,8 +79,10 @@ def _check_inputs(items: pd.DataFrame, labels: Union[Sequence[Any], np.ndarray, 
 
 
 def class_association_rules(items: pd.DataFrame, labels: Union[Sequence[Any], np.ndarray, pd.Series],
-                            min_supp: float = 0.05, min_conf: float = 0.6, max_len: int = 4,
-                            support: str = "class", class_name: Optional[str] = None) -> pd.DataFrame:
+                            min_supp: Union[float, Mapping[Any, float]] = 0.05,
+                            min_conf: Union[float, Mapping[Any, float]] = 0.6, max_len: int = 4,
+                            support: str = "class", class_name: Optional[str] = None,
+                            min_count: int = 1) -> pd.DataFrame:
     """
     Mine the class association rules ``A => class=c``.
 
@@ -69,13 +90,15 @@ def class_association_rules(items: pd.DataFrame, labels: Union[Sequence[Any], np
         items (pandas.DataFrame): boolean (0/1) items, one row per case (``to_items`` converts numeric and
             categorical columns)
         labels: the class of each case, with as many values as rows
-        min_supp (float): minimum support of the rule, in (0, 1]: relative to the cases of the class
-            (`support="class"`) or to all (`"global"`)
-        min_conf (float): minimum confidence, in [0, 1]
+        min_supp (float or dict): minimum support of the rule, in (0, 1]: relative to the cases of the class
+            (`support="class"`) or to all (`"global"`). A dictionary {class: value} sets one per class (all the
+            classes must be in it)
+        min_conf (float or dict): minimum confidence, in [0, 1], or one per class
         max_len (int): maximum number of items of the antecedent, >= 1
         support (str): 'class' or 'global' (see above)
         class_name (str, optional): name of the class variable in the consequent (by default, the name of `labels` or
             'class')
+        min_count (int): minimum number of cases a rule must cover (hold together with its class), >= 1
 
     Returns:
         pandas.DataFrame with the format of ``association_rules`` (columns 'antecedents', 'consequents', 'antecedent
@@ -88,9 +111,13 @@ def class_association_rules(items: pd.DataFrame, labels: Union[Sequence[Any], np
         raise ValueError("support must be 'class' or 'global', got: '{}'".format(support))
     if max_len < 1:
         raise ValueError("max_len must be >= 1")
+    if min_count < 1:
+        raise ValueError("min_count must be >= 1")
     _check_inputs(items, labels)
     table = ItemTable(items)
     values, classes = _classes(labels)
+    suppByClass = _per_class(min_supp, classes, "min_supp", 0.0, 1.0, open_low=True)
+    confByClass = _per_class(min_conf, classes, "min_conf", 0.0, 1.0)
     name = class_name or getattr(labels, "name", None) or "class"
     total = table.rows
     names = [str(column) for column in items.columns]
@@ -103,7 +130,8 @@ def class_association_rules(items: pd.DataFrame, labels: Union[Sequence[Any], np
     candidates = 0
     for label in classes:
         inClass = np.flatnonzero(values == label)
-        threshold = min_supp if support == "class" else min_supp * total / len(inClass)
+        threshold = suppByClass[label] if support == "class" else suppByClass[label] * total / len(inClass)
+        threshold = max(threshold, min_count / len(inClass))
         if threshold > 1 + _EPS:
             continue
         frequent = fpgrowth([rowSets[row] for row in inClass], min(threshold, 1.0))
@@ -116,7 +144,7 @@ def class_association_rules(items: pd.DataFrame, labels: Union[Sequence[Any], np
                 antecedentCount[antecedent] = int(np.count_nonzero(table.holds(antecedent)))
             joint = int(round(within * len(inClass)))
             confidence = joint / antecedentCount[antecedent]
-            if confidence < min_conf - _EPS:
+            if confidence < confByClass[label] - _EPS:
                 continue
             supportJoint, supportA, supportC = joint / total, antecedentCount[antecedent] / total, len(inClass) / total
             entry: Dict[str, Any] = {"antecedents": antecedent, "consequents": frozenset(["{}={}".format(name, label)]),
@@ -213,7 +241,8 @@ class RuleClassifier(ParamsMixin):
     the useful ones (``select_rules``); ``predict`` applies the first rule that holds, and if none does, the default
     class.
 
-    Constructor arguments: `min_supp`, `min_conf`, `max_len` and `support`, as in `class_association_rules`, and
+    Constructor arguments: `min_supp`, `min_conf` (numbers or one per class), `max_len`, `support` and `min_count`, as in
+    `class_association_rules`, and
     `min_improvement`: if not None, before selecting, the rules whose additional conditions do not improve by more than
     that value the confidence of a more general rule are discarded (``prune_unproductive_rules``), which gives
     shorter and less overfitted lists; by default it is not pruned, as in the original CBA.
@@ -222,9 +251,11 @@ class RuleClassifier(ParamsMixin):
     ``candidate_rules_`` (all the class rules before selection).
     """
 
-    def __init__(self, min_supp: float = 0.05, min_conf: float = 0.6, max_len: int = 4, support: str = "class",
-                 min_improvement: Optional[float] = None) -> None:
+    def __init__(self, min_supp: Union[float, Mapping[Any, float]] = 0.05,
+                 min_conf: Union[float, Mapping[Any, float]] = 0.6, max_len: int = 4, support: str = "class",
+                 min_improvement: Optional[float] = None, min_count: int = 1) -> None:
         self.min_improvement = min_improvement
+        self.min_count = min_count
         self.min_supp = min_supp
         self.min_conf = min_conf
         self.max_len = max_len
@@ -240,7 +271,7 @@ class RuleClassifier(ParamsMixin):
         if len(items) == 0:
             raise ValueError("there are no cases to train with")
         self.candidate_rules_ = class_association_rules(items, labels, self.min_supp, self.min_conf, self.max_len,
-                                                        self.support)
+                                                        self.support, min_count=self.min_count)
         candidates = self.candidate_rules_
         if self.min_improvement is not None:
             candidates = prune_unproductive_rules(candidates, self.min_improvement)
