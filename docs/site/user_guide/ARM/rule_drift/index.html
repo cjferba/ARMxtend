@@ -78,6 +78,10 @@
 </li>
             
 <li>
+    <a href="../explain/" class="dropdown-item">ARM.explain (why a rule fires)</a>
+</li>
+            
+<li>
     <a href="../significance/" class="dropdown-item">ARM.significance (p-values, FDR, permutation tests)</a>
 </li>
     </ul>
@@ -447,6 +451,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#on-a-stream-ruledriftmonitor" class="nav-link">On a stream: RuleDriftMonitor</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#notes" class="nav-link">Notes</a>
               <ul class="nav flex-column">
               </ul>
@@ -525,13 +533,31 @@ lagged = window_rules(items, &quot;15D&quot;, miner=lambda w: temporal_associati
 </code></pre>
 <p>Example (simulated house, 60 days, 15-day windows): the rule <em>"temperature low one hour ago -&gt; heater on"</em> is
 planted only in the second half of the period, and <code>rule_drift</code> reports it as <code>emerging</code> from window 2.</p>
+<h2 id="on-a-stream-ruledriftmonitor">On a stream: <code>RuleDriftMonitor</code></h2>
+<p><code>window_rules</code> re-mines every window of a table you already have. For a <strong>stream</strong> that arrives in chunks use
+<code>RuleDriftMonitor</code>, which mines only the windows each chunk completes and drops the rows no later window needs, so memory stays
+bounded:</p>
+<pre><code class="language-python">from ARMxtend.ARM import RuleDriftMonitor
+
+monitor = RuleDriftMonitor(width=20, step=10, min_supp=0.3, min_threshold=0.9, history=50)
+for chunk in stream:                      # DataFrames of new rows, in time order
+    new_rules = monitor.update(chunk)     # the rules of the windows this chunk completed (possibly empty)
+    if monitor.n_windows &gt;= 2:
+        print(monitor.latest_changes())   # compare_rule_sets between the last two windows
+monitor.drift()                           # rule_drift over the windows kept (renumbered from 0)
+</code></pre>
+<p>Same arguments as <code>window_rules</code> (<code>width</code>, <code>step</code>, <code>miner</code>, <code>min_rows</code>; windows by rows or by duration) plus <code>history</code>, which keeps
+only the rules of the last windows (window numbers keep growing). Only <strong>complete</strong> windows are mined: by rows, when all their
+rows have arrived; by duration, when a row at or after the end has arrived. After feeding all the data the windows and rules are
+those of <code>window_rules</code> (the tests compare them for several chunk sizes), except that a final window by duration that ends
+exactly at the last row waits for a later row.</p>
 <h2 id="notes">Notes</h2>
 <ul>
 <li>Each window needs enough rows for the support threshold to mean something; very short windows produce noisy
   rules that look <code>intermittent</code>.</li>
 <li><code>slope</code> is a least-squares line over the windows in which the rule is present; use it to spot rules that are
   gaining or losing confidence, not to extrapolate.</li>
-<li>Windows are independent: rules are re-mined from scratch, so the cost is <code>W</code> times the cost of one window.</li>
+<li>Windows are independent: rules are re-mined from scratch, so the cost is <code>W</code> times the cost of one window. <code>RuleDriftMonitor</code> does not make a window cheaper, it avoids repeating the ones already mined.</li>
 </ul>
 <p>Command line: <a href="../../cli/#temporal-rules-and-rule-drift-sensor-csv-files"><code>armxtend rule-drift</code></a>.</p></div>
             </div>

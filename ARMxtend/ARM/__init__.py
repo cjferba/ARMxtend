@@ -40,6 +40,7 @@ from .rule_drift import (
     compare_rule_sets,
 )
 from .sequential_rules import sequential_rules, contains_rule
+from .explain import explain_row, explain_rule, rule_evidence
 from .rule_drift_stream import RuleDriftMonitor
 from .fuzzy_classification import FuzzyRuleClassifier, fuzzy_class_rules
 from .sequential_veto_rules import sequential_veto_rules, contains_veto_rule
@@ -93,6 +94,9 @@ __all__ = [
     "compare_rule_sets",
     "sequential_rules",
     "RuleDriftMonitor",
+    "explain_row",
+    "explain_rule",
+    "rule_evidence",
     "FuzzyRuleClassifier",
     "fuzzy_class_rules",
     "sequential_veto_rules",

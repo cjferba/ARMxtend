@@ -30,7 +30,7 @@ llevan **[tuyo]**.
 20. ~~Clasificación con reglas difusas (`ARM.fuzzy_class_rules`, `FuzzyRuleClassifier`).~~
 21. ~~Reglas sobre flujos: `rule_drift` incremental (`ARM.RuleDriftMonitor`).~~
 22. ~~Utilidad de la regla (no solo del itemset): `utility_confidence` y `consequent_utility_share`.~~
-23. Explicabilidad: por qué se dispara una regla y comparación con alternativas.
+23. ~~Explicabilidad: por qué se dispara una regla y comparación con alternativas (`ARM.explain_rule`, `explain_row`, `rule_evidence`).~~
 24. Reglas sobre grafos o datos relacionales.
 
 ## Calidad del proyecto

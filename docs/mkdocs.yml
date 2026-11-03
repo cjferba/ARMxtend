@@ -33,6 +33,7 @@ nav:
     - FFIM (FP-Growth): user_guide/FFIM.md
     - FIM.condensed (closed / maximal): user_guide/FIM/condensed.md
     - ARM.redundancy: user_guide/ARM/redundancy.md
+    - ARM.explain (why a rule fires): user_guide/ARM/explain.md
     - ARM.significance (p-values, FDR, permutation tests): user_guide/ARM/significance.md
   - Taxonomies, multilevel and quantitative rules:
     - FIM.taxonomy (item hierarchies, generalized itemsets): user_guide/FIM/taxonomy.md
