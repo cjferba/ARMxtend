@@ -57,6 +57,7 @@ from .quantitative_rules import IntervalPartition, partial_completeness_interval
 from .topk_rules import top_k_rules
 from .rare_rules import rare_rules
 from .utility_rules import high_utility_rules
+from .fuzzy_significance import fuzzy_rule_significance, fuzzy_significant_rules
 from .anomaly import rule_violations, anomaly_scores, detect_anomalies
 from .prediction import rule_scores, forecast_next, evaluate_forecast, predict_next_events, evaluate_next_events
 from .classification import class_association_rules, select_rules, RuleClassifier
@@ -99,6 +100,8 @@ __all__ = [
     "rare_rules",
     "high_utility_rules",
     "rule_significance",
+    "fuzzy_rule_significance",
+    "fuzzy_significant_rules",
     "adjust_pvalues",
     "candidate_rule_count",
     "significant_rules",

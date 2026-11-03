@@ -393,9 +393,10 @@ and times them (best of 3, one machine, <code>min_supp=0.05</code>, <code>min_co
 <th style="text-align: right;">transactions</th>
 <th style="text-align: right;">itemsets</th>
 <th style="text-align: right;">rules</th>
-<th style="text-align: right;">ARMxtend FP-Growth</th>
-<th style="text-align: right;">mlxtend FP-Growth</th>
-<th style="text-align: right;">mlxtend Apriori</th>
+<th style="text-align: right;">ARMxtend FP-Growth (lists)</th>
+<th style="text-align: right;">ARMxtend dense (table)</th>
+<th style="text-align: right;">mlxtend FP-Growth (table)</th>
+<th style="text-align: right;">mlxtend Apriori (table)</th>
 <th style="text-align: right;">ARMxtend rules</th>
 <th style="text-align: right;">mlxtend rules</th>
 </tr>
@@ -406,7 +407,8 @@ and times them (best of 3, one machine, <code>min_supp=0.05</code>, <code>min_co
 <td style="text-align: right;">537</td>
 <td style="text-align: right;">716</td>
 <td style="text-align: right;">0.015</td>
-<td style="text-align: right;">0.017</td>
+<td style="text-align: right;">0.003</td>
+<td style="text-align: right;">0.016</td>
 <td style="text-align: right;">0.004</td>
 <td style="text-align: right;">0.004</td>
 <td style="text-align: right;">0.004</td>
@@ -416,8 +418,9 @@ and times them (best of 3, one machine, <code>min_supp=0.05</code>, <code>min_co
 <td style="text-align: right;">508</td>
 <td style="text-align: right;">655</td>
 <td style="text-align: right;">0.052</td>
-<td style="text-align: right;">0.057</td>
-<td style="text-align: right;">0.010</td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: right;">0.008</td>
 <td style="text-align: right;">0.004</td>
 <td style="text-align: right;">0.003</td>
 </tr>
@@ -425,22 +428,27 @@ and times them (best of 3, one machine, <code>min_supp=0.05</code>, <code>min_co
 <td style="text-align: right;">50 000</td>
 <td style="text-align: right;">515</td>
 <td style="text-align: right;">679</td>
-<td style="text-align: right;">0.266</td>
-<td style="text-align: right;">0.259</td>
-<td style="text-align: right;">0.035</td>
+<td style="text-align: right;">0.251</td>
+<td style="text-align: right;">0.015</td>
+<td style="text-align: right;">0.246</td>
+<td style="text-align: right;">0.033</td>
 <td style="text-align: right;">0.004</td>
 <td style="text-align: right;">0.003</td>
 </tr>
 </tbody>
 </table>
-<p>In every case both libraries return the same itemsets (same supports) and the same rules (same confidences). (Before the
-optimization of version 0.1.0, ARMxtend's FP-Growth took 0.058, 0.262 and 1.368 s and its rules 0.014, 0.013 and 0.013 s.)</p>
+<p>Inputs differ as in each library's own use: ARMxtend's FP-Growth takes lists of baskets and the dense miner and mlxtend take a
+boolean table (with a list as input the dense miner needs 0.1 s at 50 000 transactions, almost all of it building the
+bit vectors). In every case all of them return the same itemsets (same supports) and the same rules (same confidences).
+(Before the optimization of version 0.1.0, ARMxtend's FP-Growth took 0.058, 0.262 and 1.368 s and its rules 0.014, 0.013 and 0.013 s.)</p>
 <h2 id="how-to-read-it">How to read it</h2>
 <ul>
 <li><strong>FP-Growth and rules are on par with mlxtend</strong> on this data. FP-Growth groups equal transactions and keeps each conditional
   path once with its weight; the rule measures are computed once, vectorized, over all candidate rules.</li>
-<li><strong>mlxtend's Apriori is still 7 to 8 times faster</strong> here: it works on a dense boolean matrix with numpy, which suits a table
-  of 60 items and short baskets. ARMxtend has no dense miner; with many more items that advantage disappears.</li>
+<li><strong>The dense miner (<code>FIM.dense_itemsets</code>) is about twice as fast as mlxtend's Apriori</strong> on a boolean table with few items:
+  level-wise Apriori over packed bit vectors, all the candidates of a level counted at once with numpy. It is the one to use
+  with tens or hundreds of items and many transactions; with thousands of sparse items <code>FFIM.fpgrowth</code> is better. Both are
+  exact and give the same result.</li>
 <li><strong>The reasons to use ARMxtend are what mlxtend does not have</strong>: fuzzy, gradual, sequential, temporal, quantitative, rare,
   high-utility and top-k rules, significance testing, anomaly detection and forecasting with rules, and the Spark versions.</li>
 <li><strong>It says nothing about quality or about Spark.</strong> It compares speed on one kind of synthetic data (60 items, many short

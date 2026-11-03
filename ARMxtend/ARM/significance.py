@@ -30,7 +30,8 @@ Ademas, ``confidence_intervals`` da intervalos de Wilson o bootstrap para el
 soporte, la confianza y el lift.
 
 Los tests por regla exigen frecuencias enteras (reglas crisp); para reglas
-difusas use los tests de permutacion, que valen con cualquier minero.
+difusas use ``ARM.fuzzy_significant_rules`` (test de permutacion regla a regla) o los
+tests de permutacion de este modulo, que valen con cualquier minero.
 
 @author Carlos Fernandez-Basso
 """

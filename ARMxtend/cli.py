@@ -4,6 +4,7 @@ Interfaz de linea de comandos de ARMxtend::
 
     armxtend rules transacciones.csv --min-supp 0.1 --min-threshold 0.7
     armxtend fuzzy-rules datos.csv --labels 3 --alpha 10 --metric certainty_factor
+    armxtend fuzzy-rules datos.csv --labels 3 --significance 0.05 --permutations 999   # solo reglas significativas
     armxtend gradual-rules datos.csv --min-supp 0.3 --min-threshold 0.8
     armxtend temporal-rules sensores.csv --time-column hora --max-lag 2 --targets calefaccion
     armxtend rule-drift sensores.csv --time-column hora --window 15D --max-lag 1
@@ -297,6 +298,11 @@ def _run_fuzzy_rules(args: argparse.Namespace) -> pd.DataFrame:
     frequent = fuzzy_fpgrowth(transactions, args.min_supp, args.alpha)
     rules = fuzzy_association_rules(frequent, args.alpha, metric=args.metric, min_threshold=args.min_threshold,
                                     measures=args.measures)
+    if args.significance is not None and len(rules):
+        from .ARM import fuzzy_significant_rules
+
+        rules = fuzzy_significant_rules(rules, transactions, args.significance, args.correction, args.permutations,
+                                        random_state=args.seed)
     return prune_redundant_rules(rules) if args.prune and len(rules) else rules
 
 
@@ -744,6 +750,13 @@ def build_parser() -> argparse.ArgumentParser:
     fuzzy.add_argument("--alpha", type=int, default=10, help="number of alpha-cuts (default: 10)")
     fuzzy.add_argument("--measures", nargs="+", help="extra interest measures to add as columns")
     fuzzy.add_argument("--prune", action="store_true", help="drop redundant rules")
+    fuzzy.add_argument("--significance", type=float, metavar="LEVEL",
+                       help="keep only the rules that pass a per-rule permutation test at this level, after correcting "
+                            "for multiple tests (adds fuzzy_confidence, p_value, p_adjusted)")
+    fuzzy.add_argument("--permutations", type=int, default=999, help="shuffles of the significance test (default: 999)")
+    fuzzy.add_argument("--correction", choices=("bonferroni", "holm", "fdr_bh", "fdr_by"), default="fdr_bh",
+                       help="multiple-testing correction for --significance (default: fdr_bh)")
+    fuzzy.add_argument("--seed", type=int, help="random seed of the significance test")
     fuzzy.add_argument("--html", metavar="FILE", help="also write the interactive VizARE viewer to FILE")
     fuzzy.set_defaults(run=_run_fuzzy_rules)
 

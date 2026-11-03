@@ -442,6 +442,7 @@ miner.get_feature_names_out()        # one text per rule, 'I5 =&gt; I1'
 </tr>
 </tbody>
 </table>
+<p><code>algorithm="dense"</code> (only with <code>"fpgrowth"</code>) searches the itemsets with <a href="../comparison/"><code>FIM.dense_itemsets</code></a>, a bit-vector Apriori that is faster on tables with few items; the rules are the same.</p>
 <p>Common to all: <code>min_lift</code>, <code>alpha</code> (keep only the <a href="../ARM/significance/">significant</a> rules, with <code>correction</code> and <code>test</code>)
 and <code>prune</code> (drop <a href="../ARM/redundancy/">redundant</a> rules). After <code>fit</code>: <code>rules_</code>, <code>n_transactions_</code> and, for
 <code>"fpgrowth"</code>, <code>itemsets_</code>. With <code>"top_k"</code> and <code>"rare"</code> the measure is the confidence and <code>min_supp</code> is only an optional floor.</p>

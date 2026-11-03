@@ -108,6 +108,30 @@ rules = permutation_p_values(rules, null)          # adds p_permutation
 In the [example](../../examples.md#statistical-significance-of-rules-armsignificance), 12 pairs of independent regime-switching series give 6 false alarms with
 Fisher (p < 0.01, some with p ~ 1e-100) and 1 with the circular-shift test (p < 0.05, the nominal rate).
 
+## 5. Fuzzy rules, rule by rule: `fuzzy_rule_significance`
+
+Fisher and chi-squared need integer counts. For fuzzy rules there is a per-rule permutation test:
+
+```python
+from ARMxtend.ARM import fuzzy_significant_rules
+
+rules = fuzzy_association_rules(frequent, 5, metric="confidence", min_threshold=0.5)   # has attrs['n_candidates']
+fuzzy_significant_rules(rules, transactions, alpha=0.05, n_permutations=999, random_state=0)
+```
+
+For every rule `A => B` the membership of each side in each transaction is the minimum of its items' degrees; the statistic
+is the **scalar-cardinality confidence** `sum(min(a, b)) / sum(a)` (not the alpha-cut aggregate `FConf`, but the same idea);
+the null hypothesis shuffles `b` among the transactions, and the p-value is `(1 + #shuffles >= observed) / (1 + n_permutations)`.
+Then `adjust_pvalues` corrects it, over `n_candidates` (the splits examined, now annotated by `fuzzy_association_rules`).
+`transactions` is the list of `(item, degree)` lists used to mine, or a table of degrees.
+
+- **The minimum p-value is `1 / (n_permutations + 1)`**: a Bonferroni correction over `m` tests needs at least `m / alpha`
+  shuffles to reject anything. Use `fdr_bh` or raise `n_permutations`.
+- **It tests one rule against shuffled data, not the maximum over all rules** (that is `permutation_null`): the correction takes
+  care of the multiplicity, not of the selection by thresholds, as with the crisp tests.
+- **Cost** is `n_permutations x transactions` per rule: 1000 shuffles of 10 000 transactions takes about 30 ms per rule.
+- Command line: `armxtend fuzzy-rules --significance 0.05 --permutations 999 --seed 1`.
+
 ## Choosing
 
 | Situation | Use |
@@ -115,7 +139,7 @@ Fisher (p < 0.01, some with p ~ 1e-100) and 1 with the circular-shift test (p < 
 | Independent transactions (baskets, records) and crisp rules | `significant_rules` (Fisher + `fdr_bh`) |
 | You want few false rules at the price of power | `correction="holm"` or the permutation test |
 | Time series, sensors, lagged rules | permutation test with `null="shift"` |
-| Fuzzy rules | permutation test with `measure="lift"` (or another measure) |
+| Fuzzy rules | `fuzzy_significant_rules` (per rule), or the max-statistic permutation test with `measure="lift"` |
 | Sequential rules | not covered (the contingency table is different); use a permutation test with your own miner |
 
 Command line: `--alpha`, `--correction` and `--test` in [`armxtend rules`](../cli.md#significance-of-the-rules),

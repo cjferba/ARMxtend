@@ -17,6 +17,7 @@ from ARMxtend.datasets import make_transactions
 from ARMxtend.estimators import TransactionEncoder
 from ARMxtend.FFIM import fpgrowth
 from ARMxtend.FIM._shared import key_to_itemset
+from ARMxtend.FIM.dense import dense_itemsets
 
 
 def best(function, repeat):
@@ -55,8 +56,11 @@ def main(argv=None):
         baskets = make_transactions(size, args.items, avg_length=7, random_state=args.seed)
         table = TransactionEncoder().fit_transform(baskets)
         t_arm, mine_arm = best(lambda: frame(fpgrowth(baskets, args.min_supp)), args.repeat)
+        t_dense, mine_dense = best(lambda: dense_itemsets(table, args.min_supp), args.repeat)
         t_fp, mine_fp = best(lambda: ml_fpgrowth(table, min_support=args.min_supp, use_colnames=True), args.repeat)
         t_ap, mine_ap = best(lambda: apriori(table, min_support=args.min_supp, use_colnames=True), args.repeat)
+        same_dense = ({row["itemsets"]: round(row["support"], 9) for _, row in mine_dense.iterrows()}
+                      == {row["itemsets"]: round(row["support"], 9) for _, row in mine_arm.iterrows()})
         same = ({row["itemsets"]: round(row["support"], 9) for _, row in mine_arm.iterrows()}
                 == {frozenset(row["itemsets"]): round(row["support"], 9) for _, row in mine_fp.iterrows()}
                 == {frozenset(row["itemsets"]): round(row["support"], 9) for _, row in mine_ap.iterrows()})
@@ -64,9 +68,9 @@ def main(argv=None):
         r_ml, rules_ml = best(lambda: ml_rules(mine_fp, metric="confidence", min_threshold=args.min_conf), args.repeat)
         same_rules = rule_keys(rules_arm) == rule_keys(rules_ml)
         rows.append({"transactions": size, "itemsets": len(mine_arm), "rules": len(rules_arm),
-                     "ARMxtend fpgrowth (s)": round(t_arm, 3), "mlxtend fpgrowth (s)": round(t_fp, 3),
+                     "ARMxtend fpgrowth (s)": round(t_arm, 3), "ARMxtend dense (s)": round(t_dense, 3), "mlxtend fpgrowth (s)": round(t_fp, 3),
                      "mlxtend apriori (s)": round(t_ap, 3), "ARMxtend rules (s)": round(r_arm, 3),
-                     "mlxtend rules (s)": round(r_ml, 3), "same itemsets": same, "same rules": same_rules})
+                     "mlxtend rules (s)": round(r_ml, 3), "same itemsets": same and same_dense, "same rules": same_rules})
     result = pd.DataFrame(rows)
     print(result.to_string(index=False))
     return result

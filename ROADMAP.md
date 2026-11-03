@@ -20,6 +20,8 @@ trabajar** (anomalías, predicción, clasificación), después **nuevos tipos de
 | 8 | **API estilo scikit-learn**, generadores sintéticos y conjuntos de datos de ejemplo (`estimators`, `datasets`, `armxtend generate`) | hecho |
 | 9 | **Proyecto**: `CITATION.cff` / Zenodo, cuadernos, comparativas con SPMF y mlxtend, idioma de la documentación | parcial: hechos `CITATION.cff`, cuaderno y comparativa con mlxtend; faltan Zenodo, SPMF y decidir el idioma; optimizados `fpgrowth` y `association_rules` |
 
+Mejoras posteriores al plan: ver [MEJORAS.md](MEJORAS.md).
+
 ## Notas por paso
 
 **1. Significación.** Entregado en `ARMxtend/ARM/significance.py`. Queda fuera: test por regla para reglas difusas y

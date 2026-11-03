@@ -33,6 +33,8 @@ One estimator for the three ways of asking for rules:
 | `"top_k"` | the `k` rules with the highest support ([`ARM.top_k_rules`](ARM/topk_rules.md)) | `k`, `min_threshold` (confidence), `max_len` |
 | `"rare"` | rules among frequent items that are rare together ([`ARM.rare_rules`](ARM/rare_rules.md)) | `max_supp`, `min_count`, `min_threshold` |
 
+`algorithm="dense"` (only with `"fpgrowth"`) searches the itemsets with [`FIM.dense_itemsets`](comparison.md), a bit-vector Apriori that is faster on tables with few items; the rules are the same.
+
 Common to all: `min_lift`, `alpha` (keep only the [significant](ARM/significance.md) rules, with `correction` and `test`)
 and `prune` (drop [redundant](ARM/redundancy.md) rules). After `fit`: `rules_`, `n_transactions_` and, for
 `"fpgrowth"`, `itemsets_`. With `"top_k"` and `"rare"` the measure is the confidence and `min_supp` is only an optional floor.

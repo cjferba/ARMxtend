@@ -105,6 +105,7 @@ def fuzzy_association_rules(freq_itemsets: Mapping[str, np.ndarray], num_alpha: 
 
     weights = alpha_weights(alpha_levels(num_alpha))
     rows = []
+    nCandidates = 0
 
     for itemsetKey, supportVectorAB in freq_itemsets.items():
         items = itemsetKey.split("-")
@@ -122,6 +123,7 @@ def fuzzy_association_rules(freq_itemsets: Mapping[str, np.ndarray], num_alpha: 
                 if supportVectorA is None or supportVectorB is None:
                     continue
 
+                nCandidates += 1
                 # FSupp(A -> B) = FSupp(A U B), Ec. (3): t(AUB)>=alpha <=> t(A)>=alpha and t(B)>=alpha
                 scores = {"support": weighted_alpha_aggregate(supportVectorAB, weights)}
                 for measure in computed:
@@ -138,4 +140,6 @@ def fuzzy_association_rules(freq_itemsets: Mapping[str, np.ndarray], num_alpha: 
                     row.update({column: scores[column] for column in columns})
                     rows.append(row)
 
-    return pd.DataFrame(rows, columns=["antecedents", "consequents"] + columns)
+    result = pd.DataFrame(rows, columns=["antecedents", "consequents"] + columns)
+    result.attrs["n_candidates"] = nCandidates      # particiones examinadas: la familia de hipotesis de ARM.fuzzy_significant_rules
+    return result

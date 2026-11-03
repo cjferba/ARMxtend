@@ -649,3 +649,14 @@ def test_generate_quantities_and_stdout(tmp_path, capsys):
     capsys.readouterr()
     assert main(["generate", "transactions", "-n", "5", "--items", "6", "--seed", "1"]) == 0
     assert len(capsys.readouterr().out.splitlines()) == 5
+
+
+def test_fuzzy_rules_significance_option(numeric_file, capsys):
+    base = ["fuzzy-rules", numeric_file, "--min-supp", "0.1", "--min-threshold", "0.5", "--format", "csv"]
+    assert main(base) == 0
+    everything = pd.read_csv(io.StringIO(capsys.readouterr().out))
+    assert main(base + ["--significance", "0.05", "--permutations", "199", "--seed", "1"]) == 0
+    kept = pd.read_csv(io.StringIO(capsys.readouterr().out))
+    assert 0 < len(kept) < len(everything) and "p_value" in kept.columns
+    assert main(base + ["--significance", "2"]) == 1
+    assert "alpha" in capsys.readouterr().err

@@ -243,3 +243,45 @@ def test_packaged_datasets():
 
     routines = load_dataset("routines")
     assert len(routines.data) == 6 and prefixspan(routines.data, 0.8).shape[0] > 0
+
+
+# ----- dense miner -----
+
+def test_dense_itemsets_match_fpgrowth_and_brute_force():
+    from itertools import combinations
+    from ARMxtend.FIM import dense_itemsets
+
+    rng = np.random.default_rng(0)
+    for trial in range(6):
+        baskets = [[c for c in "abcdefg" if rng.random() < 0.45] for _ in range(80 + trial * 10)]
+        found = dense_itemsets(baskets, 0.15)
+        expected = {}
+        for size in range(1, 8):
+            for itemset in combinations("abcdefg", size):
+                supp = sum(set(itemset) <= set(t) for t in baskets) / len(baskets)
+                if supp >= 0.15 - 1e-9:
+                    expected[frozenset(itemset)] = supp
+        assert {r.itemsets: r.support for r in found.itertuples()} == pytest.approx(expected) and found.attrs["n_transactions"] == len(baskets)
+
+
+def test_dense_itemsets_options_and_edge_cases():
+    from ARMxtend.FIM import dense_itemsets
+
+    baskets = make_transactions(300, 15, avg_length=5, random_state=2)
+    assert dense_itemsets(baskets, 0.1, max_len=2)["itemsets"].map(len).max() == 2
+    table = TransactionEncoder().fit_transform(baskets)
+    assert len(dense_itemsets(table, 0.1)) == len(dense_itemsets(baskets, 0.1))
+    assert len(dense_itemsets([], 0.5)) == 0 and len(dense_itemsets([[], []], 0.5)) == 0
+    assert len(dense_itemsets([["a"], ["b"]], 1.0)) == 0 and len(dense_itemsets([["a"], ["a"]], 1.0)) == 1
+    with pytest.raises(ValueError):
+        dense_itemsets(baskets, 0.0)
+    with pytest.raises(ValueError):
+        dense_itemsets(baskets, 0.1, max_len=0)
+
+
+def test_rule_miner_dense_algorithm_gives_the_same_rules():
+    same = RuleMiner(min_supp=0.1, min_threshold=0.6).fit(BASKETS).rules_
+    dense = RuleMiner(min_supp=0.1, min_threshold=0.6, algorithm="dense").fit(BASKETS).rules_
+    assert keys(dense) == keys(same) and len(dense) > 0
+    with pytest.raises(ValueError, match="algorithm"):
+        RuleMiner(algorithm="boom").fit(BASKETS)

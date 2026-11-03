@@ -106,6 +106,8 @@ class RuleMiner(ParamsMixin):
         alpha: si no es None, se conservan solo las reglas significativas a ese nivel (``ARM.significant_rules``),
             con la `correction` y el contraste `test` indicados
         prune: si es verdadero, se quitan las reglas redundantes (``ARM.prune_redundant_rules``)
+        algorithm: con ``"fpgrowth"``, como se buscan los itemsets: ``"fpgrowth"`` (``FFIM.fpgrowth``) o ``"dense"``
+            (``FIM.dense_itemsets``, mejor con pocos items y muchas transacciones); mismo resultado
 
     Atributos tras ``fit``: ``itemsets_`` (soporte e itemsets; solo con ``"fpgrowth"``), ``rules_`` (el formato de
     ``ARM.association_rules``), ``n_transactions_``.
@@ -117,8 +119,9 @@ class RuleMiner(ParamsMixin):
                  max_supp: Optional[float] = None, min_count: int = 2, metric: str = "confidence",
                  min_threshold: float = 0.6, min_lift: Optional[float] = None, max_len: Optional[int] = None,
                  alpha: Optional[float] = None, correction: str = "fdr_bh", test: str = "fisher",
-                 prune: bool = False) -> None:
+                 prune: bool = False, algorithm: str = "fpgrowth") -> None:
         self.method = method
+        self.algorithm = algorithm
         self.min_supp = min_supp
         self.k = k
         self.max_supp = max_supp
@@ -136,6 +139,7 @@ class RuleMiner(ParamsMixin):
         from .ARM import association_rules, prune_redundant_rules, rare_rules, significant_rules, top_k_rules
         from .FFIM import fpgrowth
         from .FIM._shared import key_to_itemset
+        from .FIM.dense import dense_itemsets
 
         if self.method not in self.METHODS:
             raise ValueError("method debe ser uno de {}".format(self.METHODS))
@@ -145,9 +149,14 @@ class RuleMiner(ParamsMixin):
         if self.method != "fpgrowth" and self.metric != "confidence":
             raise ValueError("con method='{}' la medida es la confianza (metric='confidence')".format(self.method))
         if self.method == "fpgrowth":
-            frequent = fpgrowth(transactions, self.min_supp)
-            self.itemsets_ = pd.DataFrame({"support": list(frequent.values()),
-                                           "itemsets": [key_to_itemset(key) for key in frequent]})
+            if self.algorithm == "dense":
+                self.itemsets_ = dense_itemsets(transactions, self.min_supp)
+            elif self.algorithm == "fpgrowth":
+                frequent = fpgrowth(transactions, self.min_supp)
+                self.itemsets_ = pd.DataFrame({"support": list(frequent.values()),
+                                               "itemsets": [key_to_itemset(key) for key in frequent]})
+            else:
+                raise ValueError("algorithm debe ser 'fpgrowth' o 'dense'")
             rules = association_rules(self.itemsets_, metric=self.metric, min_threshold=self.min_threshold)
             if self.min_lift is not None:
                 rules = rules[rules["lift"] >= self.min_lift].reset_index(drop=True)

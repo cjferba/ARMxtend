@@ -31,13 +31,29 @@ class Vertical(object):
         self.total = len(baskets)
         self.items: List[str] = sorted({item for basket in baskets for item in basket})
         position = {item: k for k, item in enumerate(self.items)}
+        rows = np.fromiter((r for r, basket in enumerate(baskets) for _ in basket), dtype=np.intp)
+        cols = np.fromiter((position[item] for basket in baskets for item in basket), dtype=np.intp)
         matrix = np.zeros((len(self.items), self.total), dtype=bool)
-        for row, basket in enumerate(baskets):
-            for item in basket:
-                matrix[position[item], row] = True
-        self.masks: List[np.ndarray] = [np.packbits(line) for line in matrix]
-        self.counts: List[int] = [int(line.sum()) for line in matrix]
+        matrix[cols, rows] = True
+        packed = np.packbits(matrix, axis=1)
+        self.masks: List[np.ndarray] = list(packed)
+        self.counts: List[int] = matrix.sum(axis=1).tolist()
         self._cache: Dict[Tuple[int, ...], int] = {}
+
+    @classmethod
+    def from_table(cls, table: Any) -> "Vertical":
+        """Desde una tabla booleana (o 0/1) de transacciones por items, sin pasar por listas de Python."""
+        values = np.asarray(table.to_numpy()).astype(bool)
+        vertical = cls.__new__(cls)
+        vertical.total = len(values)
+        vertical.items = [str(name) for name in table.columns]
+        order = sorted(range(len(vertical.items)), key=vertical.items.__getitem__)
+        vertical.items = [vertical.items[k] for k in order]
+        columns = values[:, order].T
+        vertical.masks = list(np.packbits(columns, axis=1))
+        vertical.counts = columns.sum(axis=1).tolist()
+        vertical._cache = {}
+        return vertical
 
     def mask_of(self, indices: Sequence[int]) -> np.ndarray:
         result = self.masks[indices[0]]

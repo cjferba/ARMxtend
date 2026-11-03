@@ -388,6 +388,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#5-fuzzy-rules-rule-by-rule-fuzzy_rule_significance" class="nav-link">5. Fuzzy rules, rule by rule: fuzzy_rule_significance</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#choosing" class="nav-link">Choosing</a>
               <ul class="nav flex-column">
               </ul>
@@ -515,6 +519,26 @@ rules = permutation_p_values(rules, null)          # adds p_permutation
 </ul>
 <p>In the <a href="../../../examples/#statistical-significance-of-rules-armsignificance">example</a>, 12 pairs of independent regime-switching series give 6 false alarms with
 Fisher (p &lt; 0.01, some with p ~ 1e-100) and 1 with the circular-shift test (p &lt; 0.05, the nominal rate).</p>
+<h2 id="5-fuzzy-rules-rule-by-rule-fuzzy_rule_significance">5. Fuzzy rules, rule by rule: <code>fuzzy_rule_significance</code></h2>
+<p>Fisher and chi-squared need integer counts. For fuzzy rules there is a per-rule permutation test:</p>
+<pre><code class="language-python">from ARMxtend.ARM import fuzzy_significant_rules
+
+rules = fuzzy_association_rules(frequent, 5, metric=&quot;confidence&quot;, min_threshold=0.5)   # has attrs['n_candidates']
+fuzzy_significant_rules(rules, transactions, alpha=0.05, n_permutations=999, random_state=0)
+</code></pre>
+<p>For every rule <code>A =&gt; B</code> the membership of each side in each transaction is the minimum of its items' degrees; the statistic
+is the <strong>scalar-cardinality confidence</strong> <code>sum(min(a, b)) / sum(a)</code> (not the alpha-cut aggregate <code>FConf</code>, but the same idea);
+the null hypothesis shuffles <code>b</code> among the transactions, and the p-value is <code>(1 + #shuffles &gt;= observed) / (1 + n_permutations)</code>.
+Then <code>adjust_pvalues</code> corrects it, over <code>n_candidates</code> (the splits examined, now annotated by <code>fuzzy_association_rules</code>).
+<code>transactions</code> is the list of <code>(item, degree)</code> lists used to mine, or a table of degrees.</p>
+<ul>
+<li><strong>The minimum p-value is <code>1 / (n_permutations + 1)</code></strong>: a Bonferroni correction over <code>m</code> tests needs at least <code>m / alpha</code>
+  shuffles to reject anything. Use <code>fdr_bh</code> or raise <code>n_permutations</code>.</li>
+<li><strong>It tests one rule against shuffled data, not the maximum over all rules</strong> (that is <code>permutation_null</code>): the correction takes
+  care of the multiplicity, not of the selection by thresholds, as with the crisp tests.</li>
+<li><strong>Cost</strong> is <code>n_permutations x transactions</code> per rule: 1000 shuffles of 10 000 transactions takes about 30 ms per rule.</li>
+<li>Command line: <code>armxtend fuzzy-rules --significance 0.05 --permutations 999 --seed 1</code>.</li>
+</ul>
 <h2 id="choosing">Choosing</h2>
 <table>
 <thead>
@@ -538,7 +562,7 @@ Fisher (p &lt; 0.01, some with p ~ 1e-100) and 1 with the circular-shift test (p
 </tr>
 <tr>
 <td>Fuzzy rules</td>
-<td>permutation test with <code>measure="lift"</code> (or another measure)</td>
+<td><code>fuzzy_significant_rules</code> (per rule), or the max-statistic permutation test with <code>measure="lift"</code></td>
 </tr>
 <tr>
 <td>Sequential rules</td>

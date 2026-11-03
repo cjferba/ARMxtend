@@ -283,12 +283,19 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
 
 ## 16. Proyecto (`CITATION.cff`, cuaderno, comparativa)
 
-- [ ] **Optimización de `FFIM.fpgrowth` y `association_rules`** (transacciones iguales agrupadas con peso, bases condicionales sin replicar caminos, medida vectorizada): resultados iguales (tests contra fuerza bruta) y tiempos a la par de mlxtend FP-Growth (5× y 3× más rápido que antes). El Apriori denso de mlxtend sigue ~7× por delante en esta tabla; ARMxtend no tiene minero denso. Los fuzzy usan este `fpgrowth` en cada alpha-corte, así que también se benefician (no medido).
+- [ ] **Optimización de `FFIM.fpgrowth` y `association_rules`** (transacciones iguales agrupadas con peso, bases condicionales sin replicar caminos, medida vectorizada): resultados iguales (tests contra fuerza bruta) y tiempos a la par de mlxtend FP-Growth (5× y 3× más rápido que antes). Nuevo `FIM.dense_itemsets` (Apriori por niveles sobre bits empaquetados): ~2× más rápido que el Apriori de mlxtend con una tabla booleana (60 items); desde listas de Python la conversión domina (0,1 s con 50 000 transacciones). Solo medido con datos sintéticos de 60 items; con miles de items dispersos no es la mejor opción. Los fuzzy usan este `fpgrowth` en cada alpha-corte, así que también se benefician (no medido).
 - [ ] **Sin SPMF** (necesita Java y su .jar, que no se incluye) **ni DOI de Zenodo** (hay que activarlo en GitHub al publicar la primera release; después se añade el DOI a `CITATION.cff`).
 - [ ] **`CITATION.cff`** cita los dos artículos Spark/streaming como referencias, no como `preferred-citation`; decide si el software debe citarse por uno de ellos. Autor y correo tomados del `pyproject.toml`.
 - [ ] El cuaderno está ejecutado con datos sintéticos (semilla fija); los números pueden variar con otras versiones de numpy.
 
-## 17. Documentación
+## 17. Significación de reglas difusas (`ARM.fuzzy_significance`)
+
+- [ ] **El estadístico no es `FConf`**: es la confianza por cardinal escalar con el mínimo como t-norma. Ordena parecido pero no igual; decide si prefieres contrastar la `FConf` agregada por alpha-cortes.
+- [ ] **Se baraja solo el consecuente** (conserva la distribución de cada lado). No controla la selección por umbrales como el máximo de `permutation_null`; la corrección se hace sobre `n_candidates`.
+- [ ] **Resolución mínima del p-valor `1/(B+1)`**: con Bonferroni hacen falta ≥ m/α barajados. El test sin correlación (300 filas, 4 columnas) da ≤ 1 falso descubrimiento, pero es un solo caso sintético.
+- [ ] **Sin referencia propia**: el p-valor `(1+r)/(1+B)` se atribuye a Phipson y Smyth (2010), de memoria; no hay artículo del método sobre reglas difusas.
+
+## 18. Documentación
 
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la
