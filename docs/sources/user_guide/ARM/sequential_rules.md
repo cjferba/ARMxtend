@@ -56,6 +56,22 @@ exhaustive enumeration). This is **not** the RuleGrowth algorithm of Fournier-Vi
 rules incrementally without enumerating all the itemsets), but it yields the same rules with the same support
 and confidence.
 
+## Is the order real? Significance
+
+A rule can look strong only because `X` and `Y` are frequent in the same sequences, in any order.
+`sequential_rule_significance` tests exactly that: each permutation shuffles the order of the elements inside every
+sequence (the items of each sequence are kept) and counts again the sequences where the rule is valid. The p-value is
+`(1 + #{permutations with at least as many valid sequences}) / (1 + n_permutations)`, corrected for multiple testing.
+
+```python
+from ARMxtend.ARM import sequential_rules, sequential_rule_significance, significant_sequential_rules
+
+rules = sequential_rules(sequences, min_supp=0.1, min_conf=0.3)
+table = sequential_rule_significance(sequences, rules, n_permutations=200, random_state=0)
+# extra columns: valid_sequences, null_mean, p_permutation, p_adjusted
+real = significant_sequential_rules(sequences, rules, alpha=0.05, n_permutations=200, random_state=0)
+```
+
 ## Notes
 
 - Keep `max_antecedent` and `max_consequent` small (1-3): the number of splits grows quickly, and long rules are

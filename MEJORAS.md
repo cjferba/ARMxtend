@@ -25,7 +25,7 @@ llevan **[tuyo]**.
 15. Reglas secuenciales con veto (reglas que descartan eventos).
 16. Elementos con varios items simultáneos en los patrones secuenciales difusos.
 17. Fuzzificar también el tiempo (Fiot et al.).
-18. Significación para reglas secuenciales.
+18. ~~Significación para reglas secuenciales (`ARM.sequential_rule_significance`, test de permutación del orden).~~
 19. CBA con soportes mínimos múltiples completos.
 20. Clasificación con reglas difusas.
 21. Reglas sobre flujos: `rule_drift` incremental.

@@ -8,6 +8,7 @@ project uses [semantic versioning](https://semver.org/).
 First version prepared for publication on PyPI (until then: `pip install git+https://github.com/cjferba/ARMxtend.git`).
 
 ### Added
+- **Sequential rule significance:** `ARM.sequential_rule_significance` / `significant_sequential_rules` (permutation of the element order, with multiple-testing correction).
 - **Documentation in several languages:** installation, quick start and home page in Spanish, French and Portuguese (`docs/sources/{es,fr,pt}`).
 - **Code in English:** docstrings, comments, error messages, CLI text, tests, examples and benchmarks.
 - **Rules:** rules with absent items, crisp and fuzzy (`ARM.negative_rules`); exception and anomalous rules
