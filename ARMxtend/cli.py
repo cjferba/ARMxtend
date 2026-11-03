@@ -287,6 +287,7 @@ def _run_high_utility_rules(args: argparse.Namespace) -> pd.DataFrame:
 def _run_fuzzy_rules(args: argparse.Namespace) -> pd.DataFrame:
     from .ARM import prune_redundant_rules
     from .FFIM import fuzzy_fpgrowth
+    from .FIM import dense_fuzzy_itemsets
     from .FIM.FARE import fuzzy_association_rules
     from .preprocessing import FuzzyLib
 
@@ -295,7 +296,8 @@ def _run_fuzzy_rules(args: argparse.Namespace) -> pd.DataFrame:
     library.AutoFuzzification(Atri=args.columns, n_labels=args.labels, method=args.method,
                               membership=args.membership)
     transactions = library.GetFuzzyTransactions()
-    frequent = fuzzy_fpgrowth(transactions, args.min_supp, args.alpha)
+    miner = dense_fuzzy_itemsets if args.algorithm == "dense" else fuzzy_fpgrowth
+    frequent = miner(transactions, args.min_supp, args.alpha)
     rules = fuzzy_association_rules(frequent, args.alpha, metric=args.metric, min_threshold=args.min_threshold,
                                     measures=args.measures)
     if args.significance is not None and len(rules):
@@ -749,6 +751,9 @@ def build_parser() -> argparse.ArgumentParser:
     fuzzy.add_argument("--membership", choices=("triangular", "trapezoidal", "gaussian"), default="triangular")
     fuzzy.add_argument("--alpha", type=int, default=10, help="number of alpha-cuts (default: 10)")
     fuzzy.add_argument("--measures", nargs="+", help="extra interest measures to add as columns")
+    fuzzy.add_argument("--algorithm", choices=("fpgrowth", "dense"), default="fpgrowth",
+                       help="itemset miner: 'dense' (bit vectors) is much faster with up to a few hundred "
+                            "fuzzy items; same rules (default: fpgrowth)")
     fuzzy.add_argument("--prune", action="store_true", help="drop redundant rules")
     fuzzy.add_argument("--significance", type=float, metavar="LEVEL",
                        help="keep only the rules that pass a per-rule permutation test at this level, after correcting "

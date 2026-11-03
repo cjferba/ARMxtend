@@ -300,3 +300,9 @@ lo que hay que contrastar antes de citarlos como implementaciones fieles.
 - [ ] Regenerar y publicar la web: `cd docs && python3 -m mkdocs gh-deploy` (yo no publico ni hago `push`).
 - [ ] El código y los docstrings están en español y el README mezcla español e inglés. Decide el idioma de la
   documentación pública antes de la primera versión.
+
+## 19. Minero denso difuso (`FIM.dense_fuzzy_itemsets`)
+
+- Mismos itemsets y bit-lists que `FFIM.fuzzy_fpgrowth` (tests contra la definición y contra `fuzzy_fpgrowth`); la poda por FSupp es exacta porque FSupp es antimonótona.
+- La medida de 45x–280x es con datos sintéticos (Beta(2, 2)) y 30–200 ítems; no se ha probado con miles de ítems dispersos, donde `fuzzy_fpgrowth` puede ganar. Memoria: `ítems × alpha-cortes × transacciones / 8` bytes de máscaras de base más los bloques de candidatos (64 MB como máximo).
+- El umbral se compara con una tolerancia de 1e-12, por lo que un itemset con FSupp exactamente igual a `min_supp` entra aunque el redondeo le reste una millonésima.

@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Minero de itemsets frecuentes DENSO (una sola maquina): Apriori por niveles sobre vectores de bits empaquetados, con
-los candidatos de cada nivel contados de una vez con operaciones de numpy (AND y recuento de bits) en lugar de un
-bucle de Python por candidato.
+DENSE frequent-itemset miner (single machine): level-wise Apriori over packed bit vectors, with the candidates of
+each level counted at once with numpy operations (AND and bit count) instead of a Python loop per candidate.
 
-Es la mejor opcion cuando hay pocos items (decenas o cientos) y muchas transacciones; con miles de items y datos
-muy dispersos, ``FFIM.fpgrowth`` suele ser mejor. Los resultados son los mismos que los de ``fpgrowth`` y de
-cualquier otro minero exacto (los tests los comparan con la definicion).
+It is the best choice with few items (tens or hundreds) and many transactions; with thousands of items and very
+sparse data, ``FFIM.fpgrowth`` is usually better. The results are the same as those of ``fpgrowth`` and of any other
+exact miner (the tests compare them with the definition).
 
 @author Carlos Fernandez-Basso
 """
@@ -18,13 +17,13 @@ import pandas as pd
 
 from ._vertical import _POPCOUNT, Vertical
 
-_CHUNK_BYTES = 64 * 1024 * 1024         # memoria maxima, aproximada, de las mascaras de un bloque de candidatos
+_CHUNK_BYTES = 64 * 1024 * 1024         # approximate maximum memory of the masks of a block of candidates
 
 
 def _join(level: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Pares (i, j) de itemsets del nivel (filas ordenadas lexicograficamente) que comparten todos los items salvo el
-    ultimo, y el candidato resultante. Devuelve los indices i, j y las filas de candidatos.
+    Pairs (i, j) of itemsets of the level (rows sorted lexicographically) that share all items but the last one, and
+    the resulting candidate. Returns the indices i, j and the rows of candidates.
     """
     size = level.shape[1]
     firsts: List[np.ndarray] = []
@@ -48,23 +47,34 @@ def _join(level: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     return first, second, np.concatenate([level[first], level[second][:, -1:]], axis=1)
 
 
+def _prune(level: np.ndarray, first: np.ndarray, second: np.ndarray, candidates: np.ndarray,
+           size: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Apriori pruning: drop the candidates that have an infrequent subset of the previous level."""
+    if size < 2 or not len(candidates):
+        return first, second, candidates
+    known: Set[Tuple[int, ...]] = {tuple(row) for row in level.tolist()}
+    ok = np.fromiter((all(subset in known for subset in combinations(row, size))
+                      for row in candidates.tolist()), dtype=bool, count=len(candidates))
+    return first[ok], second[ok], candidates[ok]
+
+
 def dense_itemsets(transactions: Iterable[Iterable[Any]], min_supp: float, max_len: Optional[int] = None) -> pd.DataFrame:
     """
-    Itemsets frecuentes (soporte relativo >= `min_supp`) por Apriori sobre vectores de bits.
+    Frequent itemsets (relative support >= `min_supp`) by Apriori over bit vectors.
 
-    Argumentos:
-        transactions: una transaccion por elemento, cada una una coleccion de items (o una tabla booleana)
-        min_supp (float): soporte minimo relativo, en (0, 1]
-        max_len (int, opcional): longitud maxima de los itemsets
+    Args:
+        transactions: one transaction per element, each a collection of items (or a boolean table)
+        min_supp (float): minimum relative support, in (0, 1]
+        max_len (int, optional): maximum length of the itemsets
 
-    Retorna:
-        pandas.DataFrame con 'support' e 'itemsets' (frozenset), por longitud y luego por soporte decreciente;
-        ``attrs['n_transactions']`` guarda el numero de transacciones.
+    Returns:
+        pandas.DataFrame with 'support' and 'itemsets' (frozenset), by length and then by decreasing support;
+        ``attrs['n_transactions']`` holds the number of transactions.
     """
     if not 0 < min_supp <= 1:
-        raise ValueError("min_supp debe estar en (0, 1]")
+        raise ValueError("min_supp must be in (0, 1]")
     if max_len is not None and max_len < 1:
-        raise ValueError("max_len debe ser >= 1")
+        raise ValueError("max_len must be >= 1")
     if isinstance(transactions, pd.DataFrame):
         vertical = Vertical.from_table(transactions)
     else:
@@ -83,11 +93,7 @@ def dense_itemsets(transactions: Iterable[Iterable[Any]], min_supp: float, max_l
     size = 1
     while len(level) > 1 and (max_len is None or size < max_len):
         first, second, candidates = _join(level)
-        if size >= 2 and len(candidates):                               # poda: todos los subconjuntos deben ser frecuentes
-            known: Set[Tuple[int, ...]] = {tuple(row) for row in level.tolist()}
-            ok = np.fromiter((all(subset in known for subset in combinations(row, size))
-                              for row in candidates.tolist()), dtype=bool, count=len(candidates))
-            first, second, candidates = first[ok], second[ok], candidates[ok]
+        first, second, candidates = _prune(level, first, second, candidates, size)
         if not len(candidates):
             break
         width = masks.shape[1]

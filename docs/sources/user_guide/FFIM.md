@@ -70,3 +70,28 @@ fuzzy_transactions = [
 ]
 fuzzy_fpgrowth(fuzzy_transactions, min_supp=0.3, num_alpha=10)
 ```
+
+## Faster: `FIM.dense_fuzzy_itemsets`
+
+`fuzzy_fpgrowth` runs FP-Growth once per alpha-cut and then re-scans the transactions for every candidate. When the number of
+fuzzy items is moderate (tens to a few hundred) there is a much faster exact miner with the **same input and output**:
+
+```python
+from ARMxtend.FIM import dense_fuzzy_itemsets
+
+dense_fuzzy_itemsets(fuzzy_transactions, min_supp=0.3, num_alpha=10)    # same dict as fuzzy_fpgrowth
+```
+
+It keeps one packed bit vector per item *and* alpha-cut, and counts the candidates of each Apriori level with a bitwise AND and a
+bit count. The aggregated support FSupp is anti-monotone (it is a non-negative weighted sum of supports that are), so pruning on it
+is exact. Measured with `benchmarks/fuzzy_dense.py` (10 alpha-cuts, `min_supp=0.03`, synthetic data, best of 2):
+
+| transactions | items | itemsets | `fuzzy_fpgrowth` | `dense_fuzzy_itemsets` |
+|---:|---:|---:|---:|---:|
+| 2 000 | 30 | 353 | 2.317 s | 0.009 s |
+| 2 000 | 200 | 135 | 0.524 s | 0.012 s |
+| 5 000 | 30 | 354 | 5.735 s | 0.020 s |
+| 5 000 | 200 | 138 | 1.338 s | 0.023 s |
+
+The output is checked to be identical in every run. With thousands of very sparse items keep `fuzzy_fpgrowth`. From the command
+line: `armxtend fuzzy-rules data.csv --algorithm dense`.

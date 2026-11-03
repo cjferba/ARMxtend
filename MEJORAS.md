@@ -17,7 +17,7 @@ llevan **[tuyo]**.
 9. ~~Minero denso por bits (`FIM.dense_itemsets`), más rápido que el Apriori de mlxtend con una tabla booleana.~~
 10. Eclat distribuido de verdad (hoy `DECLAT`/`FuzzyDECLAT` recogen las TID-lists en el driver).
 11. Medir en un clúster Spark real (todo es `local[n]`).
-12. Minero denso difuso (los difusos usan `fpgrowth` por alpha-corte; medir si se benefician de la optimización).
+12. ~~Minero denso difuso (`FIM.dense_fuzzy_itemsets`): mismos itemsets que `fuzzy_fpgrowth`, de 45x a 280x más rápido.~~
 
 ## Investigación
 13. ~~Significación de reglas difusas, regla a regla (`ARM.fuzzy_significant_rules`).~~

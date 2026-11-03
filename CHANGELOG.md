@@ -28,6 +28,9 @@ First version prepared for publication on PyPI (until then: `pip install git+htt
 - **Project:** `CITATION.cff`, an executed quick-start notebook (`examples/notebooks/quickstart.ipynb`) and a comparison with
   mlxtend (`benchmarks/compare_mlxtend.py`: identical itemsets and rules). `FFIM.fpgrowth` (equal transactions grouped, weighted conditional
   paths) and `ARM.association_rules` (measure computed once, vectorized) are 5x and 3x faster, on par with mlxtend FP-Growth.
+- **Dense fuzzy miner:** `FIM.dense_fuzzy_itemsets` (level-wise Apriori over one bit vector per item and alpha-cut, pruning on the
+  anti-monotone FSupp) returns exactly what `FFIM.fuzzy_fpgrowth` returns, 45x-280x faster in `benchmarks/fuzzy_dense.py`;
+  `armxtend fuzzy-rules --algorithm dense`.
 - **Fuzzy significance:** per-rule permutation test for fuzzy rules over scalar-cardinality confidence, corrected for multiple
   tests (`ARM.fuzzy_rule_significance`, `ARM.fuzzy_significant_rules`); `fuzzy_association_rules` annotates `n_candidates`;
   `armxtend fuzzy-rules --significance`.
