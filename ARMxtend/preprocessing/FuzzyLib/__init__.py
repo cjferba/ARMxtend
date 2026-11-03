@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Utilidades de fuzzificacion de datos tabulares, como paso de preprocesado
-previo a los algoritmos difusos de mineria de itemsets/reglas de asociacion
-de ARMxtend (FIM.BD_FARE, FIM.FARE, FFIM).
+Fuzzification utilities for tabular data, as a preprocessing step before the fuzzy itemset / association rule mining
+algorithms of ARMxtend (FIM.BD_FARE, FIM.FARE, FFIM).
 
-Admite particiones triangulares (de Ruspini), trapezoidales y gaussianas,
-definidas a mano (`FuzzyLib.Fuzzification`) o calculadas automaticamente a
-partir de los datos por reparto uniforme, cuantiles o k-means
-(`FuzzyLib.AutoFuzzification`); ver ``preprocessing.membership``.
+It supports triangular (Ruspini), trapezoidal and Gaussian partitions, defined by hand (`FuzzyLib.Fuzzification`) or
+computed automatically from the data by uniform spacing, quantiles or k-means (`FuzzyLib.AutoFuzzification`); see
+``preprocessing.membership``.
 
 @author Carlos Fernandez-Basso
 """
@@ -24,28 +22,26 @@ from ..membership import (
     triangular_partition,
 )
 
-# Nombre historico (privado) de la particion triangular
+# Historical (private) name of the triangular partition
 _triangular_partition = triangular_partition
 
 
 class FuzzyLib(object):
     """
-    Carga un conjunto de datos tabular y permite fuzzificar sus atributos
-    numericos en conjuntos difusos con nombre (p.ej. 'Temperature' -> 'cold',
-    'comfort', 'warm'), anadiendo una columna de grado de pertenencia por
-    cada etiqueta difusa.
+    Load a tabular dataset and allow fuzzifying its numeric attributes into named fuzzy sets (e.g. 'Temperature' ->
+    'cold', 'comfort', 'warm'), adding one membership-degree column per fuzzy label.
     """
 
     def __init__(self):
         self.data = pd.DataFrame()
         self.atributes: list = []
         self.types: Any = []
-        # {atributo: {'membership', 'labels', 'params', 'columns'}} de cada atributo fuzzificado
+        # {attribute: {'membership', 'labels', 'params', 'columns'}} of each fuzzified attribute
         self.partitions = {}
 
     def LoadData(self, File=""):
         if File == "":
-            raise ValueError("Debe especificarse la ruta del fichero de datos a cargar")
+            raise ValueError("The path of the data file to load must be specified")
         self.data = pd.read_csv(File)
         self.atributes = list(self.data.columns)
         self.types = self.data.dtypes
@@ -72,28 +68,21 @@ class FuzzyLib(object):
 
     def Fuzzification(self, Atri=None, thresholds=None, FuzzyLabel=None, membership="triangular"):
         """
-        Fuzzifica un conjunto de atributos numericos del dataset cargado,
-        anadiendo una columna nueva '<atributo>_<etiqueta>' por cada
-        etiqueta difusa, con el grado de pertenencia de cada fila a dicha
-        etiqueta.
+        Fuzzify a set of numeric attributes of the loaded dataset, adding a new column '<attribute>_<label>' for each
+        fuzzy label, with the membership degree of each row in that label.
 
-        Argumentos:
-            Atri (list[str]): nombres de los atributos numericos a fuzzificar
-            thresholds (list[list]): para cada atributo de `Atri`, los
-                parametros de sus conjuntos difusos (uno por etiqueta),
-                segun `membership`:
-                'triangular'  -> los picos (float) de una particion de
-                                 Ruspini (suma de grados = 1)
-                'trapezoidal' -> tuplas (a, b, c, d) (ver
-                                 `preprocessing.membership.trapezoidal_membership`)
-                'gaussian'    -> tuplas (centro, sigma)
-            FuzzyLabel (list[list[str]]): para cada atributo de `Atri`, los
-                nombres de las etiquetas difusas
-            membership (str): 'triangular' (por defecto), 'trapezoidal' o
-                'gaussian'
+        Args:
+            Atri (list[str]): names of the numeric attributes to fuzzify
+            thresholds (list[list]): for each attribute of `Atri`, the parameters of its fuzzy sets (one per label),
+                according to `membership`:
+                'triangular'  -> the peaks (float) of a Ruspini partition (sum of degrees = 1)
+                'trapezoidal' -> tuples (a, b, c, d) (see `preprocessing.membership.trapezoidal_membership`)
+                'gaussian'    -> tuples (center, sigma)
+            FuzzyLabel (list[list[str]]): for each attribute of `Atri`, the names of the fuzzy labels
+            membership (str): 'triangular' (default), 'trapezoidal' or 'gaussian'
 
-        Retorna:
-            La lista de nombres de las columnas difusas anadidas al dataset
+        Returns:
+            The list of names of the fuzzy columns added to the dataset
         """
         if membership not in MEMBERSHIPS:
             raise ValueError("membership debe ser uno de {}, recibido: '{}'".format(MEMBERSHIPS, membership))
@@ -102,7 +91,7 @@ class FuzzyLib(object):
         FuzzyLabel = FuzzyLabel or []
 
         if not (len(Atri) == len(thresholds) == len(FuzzyLabel)):
-            raise ValueError("Atri, thresholds y FuzzyLabel deben tener la misma longitud")
+            raise ValueError("Atri, thresholds and FuzzyLabel must have the same length")
 
         partitions: Dict[str, Callable[[Any, Any], Any]] = {
             "triangular": triangular_partition,
@@ -126,25 +115,20 @@ class FuzzyLib(object):
     def AutoFuzzification(self, Atri=None, n_labels=3, method="quantile", FuzzyLabel=None,
                           membership="triangular"):
         """
-        Como `Fuzzification`, pero calculando automaticamente la particion de
-        cada atributo a partir de sus datos (ver
-        `preprocessing.membership.automatic_partition`). Los parametros
-        calculados quedan en `self.partitions[atributo]['params']`, por si
-        se quieren reutilizar con `Fuzzification` sobre otros datos.
+        Like `Fuzzification`, but computing the partition of each attribute automatically from its data (see
+        `preprocessing.membership.automatic_partition`). The computed parameters are left in
+        `self.partitions[attribute]['params']`, in case you want to reuse them with `Fuzzification` on other data.
 
-        Argumentos:
-            Atri (list[str], opcional): atributos a fuzzificar (por
-                defecto, todas las columnas numericas)
-            n_labels (int): numero de conjuntos difusos por atributo
-            method (str): 'uniform', 'quantile' (por defecto) o 'kmeans'
-            FuzzyLabel (list[str], opcional): nombres de las etiquetas,
-                comunes a todos los atributos (por defecto, 'low',
-                'medium', 'high' para 3, etc.)
-            membership (str): 'triangular' (por defecto), 'trapezoidal'
-                o 'gaussian'
+        Args:
+            Atri (list[str], optional): attributes to fuzzify (all the numeric columns by default)
+            n_labels (int): number of fuzzy sets per attribute
+            method (str): 'uniform', 'quantile' (default) or 'kmeans'
+            FuzzyLabel (list[str], optional): names of the labels, common to all the attributes (by default, 'low',
+                'medium', 'high' for 3, etc.)
+            membership (str): 'triangular' (default), 'trapezoidal' or 'gaussian'
 
-        Retorna:
-            La lista de nombres de las columnas difusas anadidas al dataset
+        Returns:
+            The list of names of the fuzzy columns added to the dataset
         """
         if Atri is None:
             Atri = list(self.data.select_dtypes("number").columns)
@@ -165,19 +149,16 @@ class FuzzyLib(object):
 
     def GetFuzzyTransactions(self, columns=None, min_degree=0.0):
         """
-        Convierte columnas de grados de pertenencia en transacciones difusas,
-        el formato de entrada de `FFIM.fuzzy_fpgrowth` (y de los algoritmos
-        difusos de Big Data tras paralelizarlas): una lista de pares
-        (item, grado) por fila.
+        Convert membership-degree columns into fuzzy transactions, the input format of `FFIM.fuzzy_fpgrowth` (and of the
+        Big Data fuzzy algorithms once parallelized): a list of (item, degree) pairs per row.
 
-        Argumentos:
-            columns (list[str], opcional): columnas a usar (por defecto,
-                todas las anadidas por `Fuzzification`/`AutoFuzzification`)
-            min_degree (float): solo se incluyen los items con grado
-                estrictamente mayor que este valor (0.0 omite los
-                items con pertenencia nula)
+        Args:
+            columns (list[str], optional): columns to use (by default, all those added by
+                `Fuzzification`/`AutoFuzzification`)
+            min_degree (float): only the items with degree strictly greater than this value are included (0.0 omits
+                the items with null membership)
 
-        Retorna:
+        Returns:
             list[list[tuple[str, float]]]
         """
         if columns is None:

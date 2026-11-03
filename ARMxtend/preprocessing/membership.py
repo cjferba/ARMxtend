@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Funciones de pertenencia y particiones difusas de un atributo numerico:
+Membership functions and fuzzy partitions of a numeric attribute:
 
-* triangular (particion de Ruspini): `triangular_partition`
+* triangular (Ruspini partition): `triangular_partition`
 * trapezoidal: `trapezoidal_membership` / `trapezoidal_partition`
-* gaussiana: `gaussian_membership` / `gaussian_partition`
-* calculo AUTOMATICO de los puntos de la particion a partir de los datos,
-  por reparto uniforme, por cuantiles o por k-means 1-D: `automatic_peaks`,
-  `automatic_partition`
+* Gaussian: `gaussian_membership` / `gaussian_partition`
+* AUTOMATIC computation of the points of the partition from the data, by uniform spacing, by quantiles or by 1-D
+  k-means: `automatic_peaks`, `automatic_partition`
 
-Todas las funciones son puras (numpy) y devuelven una matriz de forma
-(n_valores, n_etiquetas) con grados de pertenencia en [0, 1]; son la entrada
-de ``preprocessing.FuzzyLib`` y, a traves de el, de los algoritmos difusos de
-ARMxtend (``FFIM.fuzzy_fpgrowth``, ``FIM.FARE``, ...).
+All the functions are pure (numpy) and return a matrix of shape (n_values, n_labels) with membership degrees in
+[0, 1]; they are the input of ``preprocessing.FuzzyLib`` and, through it, of the fuzzy algorithms of ARMxtend
+(``FFIM.fuzzy_fpgrowth``, ``FIM.FARE``, ...).
 
 @author Carlos Fernandez-Basso
 """
@@ -30,43 +28,39 @@ _LABELS = {
     5: ["very_low", "low", "medium", "high", "very_high"],
 }
 
-# FWHM = 2 sqrt(2 ln 2) sigma: con sigma = separacion / FWHM_FACTOR, dos
-# gaussianas vecinas se cruzan exactamente en grado 0.5 en el punto medio.
+# FWHM = 2 sqrt(2 ln 2) sigma: with sigma = spacing / FWHM_FACTOR, two
+# neighboring Gaussians cross exactly at degree 0.5 at the midpoint.
 _FWHM_FACTOR = 2.0 * np.sqrt(2.0 * np.log(2.0))
 
 
 def default_labels(n_labels: int) -> List[str]:
-    """Etiquetas por defecto de una particion de `n_labels` conjuntos ('low', 'medium', 'high', ...)."""
+    """Default labels of a partition of `n_labels` sets ('low', 'medium', 'high', ...)."""
     return list(_LABELS.get(n_labels, ["L{}".format(i + 1) for i in range(n_labels)]))
 
 
 def triangular_partition(values: ArrayLike, peaks: Union[Sequence[float], np.ndarray]) -> np.ndarray:
     """
-    Particion difusa triangular de Ruspini: dado un conjunto de picos
-    ordenados ascendentemente, devuelve el grado de pertenencia de cada
-    valor a cada uno de los `len(peaks)` conjuntos difusos definidos, de
-    forma que los grados de todos los conjuntos suman siempre 1 para
-    cualquier valor.
+    Ruspini triangular fuzzy partition: given a set of peaks sorted in ascending order, it returns the membership
+    degree of each value in each of the `len(peaks)` defined fuzzy sets, so that the degrees of all the sets always
+    add up to 1 for any value.
 
-    Los dos conjuntos extremos son "hombros" (mantienen pertenencia total
-    fuera de su ultimo tramo de pendiente); los conjuntos intermedios son
-    triangulos con vertice en su pico correspondiente.
+    The two extreme sets are "shoulders" (they keep full membership outside their last sloping section); the
+    intermediate sets are triangles with their vertex at the corresponding peak.
 
-    Argumentos:
-        values (array-like): valores numericos a fuzzificar
-        peaks (Sequence[float]): picos, ordenados ascendentemente, de cada
-            conjunto difuso (uno por etiqueta)
+    Args:
+        values (array-like): numeric values to fuzzify
+        peaks (Sequence[float]): peaks, sorted in ascending order, of each fuzzy set (one per label)
 
-    Retorna:
-        numpy.ndarray de forma (len(values), len(peaks))
+    Returns:
+        numpy.ndarray of shape (len(values), len(peaks))
     """
     values = np.asarray(values, dtype=float)
     peaks = np.asarray(sorted(peaks), dtype=float)
     n = len(peaks)
     if n < 2:
-        raise ValueError("Se necesitan al menos 2 picos/etiquetas para fuzzificar un atributo")
+        raise ValueError("At least 2 peaks/labels are needed to fuzzify an attribute")
     if np.any(np.diff(peaks) <= 0):
-        raise ValueError("Los picos de la particion triangular deben ser estrictamente crecientes: {}".format(peaks))
+        raise ValueError("The peaks of the triangular partition must be strictly increasing: {}".format(peaks))
 
     memberships = np.zeros((len(values), n))
 
@@ -89,18 +83,16 @@ def triangular_partition(values: ArrayLike, peaks: Union[Sequence[float], np.nda
 
 def trapezoidal_membership(values: ArrayLike, a: float, b: float, c: float, d: float) -> np.ndarray:
     """
-    Funcion de pertenencia trapezoidal: 0 hasta `a`, sube linealmente hasta
-    1 en `b`, vale 1 entre `b` y `c`, y baja linealmente hasta 0 en `d`.
-    Admite lados verticales (a == b, c == d) y "hombros" infinitos
-    (a = b = -inf: pertenencia 1 a la izquierda de `c`; c = d = +inf:
-    pertenencia 1 a la derecha de `b`).
+    Trapezoidal membership function: 0 up to `a`, rises linearly to 1 at `b`, is 1 between `b` and `c`, and falls
+    linearly to 0 at `d`. It admits vertical sides (a == b, c == d) and infinite "shoulders" (a = b = -inf: membership 1
+    to the left of `c`; c = d = +inf: membership 1 to the right of `b`).
 
-    Argumentos:
-        values (array-like): valores a evaluar
-        a, b, c, d (float): vertices del trapecio, con a <= b <= c <= d
+    Args:
+        values (array-like): values to evaluate
+        a, b, c, d (float): vertices of the trapezoid, with a <= b <= c <= d
 
-    Retorna:
-        numpy.ndarray de grados de pertenencia en [0, 1]
+    Returns:
+        numpy.ndarray of membership degrees in [0, 1]
     """
     if not (a <= b <= c <= d):
         raise ValueError("Un trapecio requiere a <= b <= c <= d, recibido: {}".format((a, b, c, d)))
@@ -114,15 +106,15 @@ def trapezoidal_membership(values: ArrayLike, a: float, b: float, c: float, d: f
 
 def trapezoidal_partition(values: ArrayLike, params: Sequence[Tuple[float, float, float, float]]) -> np.ndarray:
     """
-    Grados de pertenencia a cada trapecio de `params`.
+    Membership degrees in each trapezoid of `params`.
 
-    Argumentos:
-        values (array-like): valores a fuzzificar
-        params (Sequence[Tuple[float, float, float, float]]): un
-            (a, b, c, d) por etiqueta (ver `trapezoidal_membership`)
+    Args:
+        values (array-like): values to fuzzify
+        params (Sequence[Tuple[float, float, float, float]]): one (a, b, c, d) per label (see
+            `trapezoidal_membership`)
 
-    Retorna:
-        numpy.ndarray de forma (len(values), len(params))
+    Returns:
+        numpy.ndarray of shape (len(values), len(params))
     """
     return np.column_stack([trapezoidal_membership(values, *vertices) for vertices in params])
 
@@ -137,14 +129,14 @@ def gaussian_membership(values: ArrayLike, center: float, sigma: float) -> np.nd
 
 def gaussian_partition(values: ArrayLike, params: Sequence[Tuple[float, float]]) -> np.ndarray:
     """
-    Grados de pertenencia a cada gaussiana de `params`.
+    Membership degrees in each Gaussian of `params`.
 
-    Argumentos:
-        values (array-like): valores a fuzzificar
-        params (Sequence[Tuple[float, float]]): un (centro, sigma) por etiqueta
+    Args:
+        values (array-like): values to fuzzify
+        params (Sequence[Tuple[float, float]]): one (center, sigma) per label
 
-    Retorna:
-        numpy.ndarray de forma (len(values), len(params))
+    Returns:
+        numpy.ndarray of shape (len(values), len(params))
     """
     return np.column_stack([gaussian_membership(values, center, sigma) for center, sigma in params])
 
@@ -163,24 +155,20 @@ def _kmeans_1d(values, initial_centers, max_iter=100):
 
 def automatic_peaks(values: ArrayLike, n_labels: int = 3, method: str = "quantile") -> np.ndarray:
     """
-    Calcula `n_labels` picos para una particion de los datos.
+    Compute `n_labels` peaks for a partition of the data.
 
-    Argumentos:
-        values (array-like): valores del atributo (los NaN se ignoran)
-        n_labels (int): numero de conjuntos difusos, >= 2
+    Args:
+        values (array-like): values of the attribute (NaNs are ignored)
+        n_labels (int): number of fuzzy sets, >= 2
         method (str):
-            'uniform'  -> equiespaciados entre el minimo y el maximo
-            'quantile' -> cuantiles equiespaciados (min, ..., max): cada
-                          conjunto cubre aproximadamente el mismo numero
-                          de datos
-            'kmeans'   -> centros de k-means 1-D, inicializado en los
-                          cuantiles (determinista)
+            'uniform'  -> equally spaced between the minimum and the maximum
+            'quantile' -> equally spaced quantiles (min, ..., max): each set covers roughly the same number of data
+            'kmeans'   -> centers of 1-D k-means, initialized at the quantiles (deterministic)
 
-    Retorna:
-        numpy.ndarray de `n_labels` picos estrictamente crecientes
+    Returns:
+        numpy.ndarray of `n_labels` strictly increasing peaks
 
-    Lanza ValueError si los datos no tienen suficientes valores distintos
-    para `n_labels` picos distintos.
+    Raises ValueError if the data do not have enough distinct values for `n_labels` distinct peaks.
     """
     if method not in METHODS:
         raise ValueError("method debe ser uno de {}, recibido: '{}'".format(METHODS, method))
@@ -189,7 +177,7 @@ def automatic_peaks(values: ArrayLike, n_labels: int = 3, method: str = "quantil
     values = np.asarray(values, dtype=float)
     values = values[~np.isnan(values)]
     if len(values) == 0:
-        raise ValueError("No hay valores con los que calcular la particion")
+        raise ValueError("There are no values to compute the partition with")
 
     if method == "uniform":
         peaks = np.linspace(values.min(), values.max(), n_labels)
@@ -200,34 +188,31 @@ def automatic_peaks(values: ArrayLike, n_labels: int = 3, method: str = "quantil
 
     if np.any(np.diff(peaks) <= 0):
         raise ValueError(
-            "Los datos no tienen suficiente variabilidad para {} etiquetas con el metodo '{}' "
-            "(picos repetidos: {}); pruebe con 'uniform' o menos etiquetas".format(n_labels, method, peaks))
+            "The data do not have enough variability for {} labels with method '{}' "
+            "(repeated peaks: {}); try 'uniform' or fewer labels".format(n_labels, method, peaks))
     return peaks
 
 
 def automatic_partition(values: ArrayLike, n_labels: int = 3, method: str = "quantile",
                         membership: str = "triangular") -> Tuple[np.ndarray, list]:
     """
-    Particion difusa calculada automaticamente a partir de los datos.
+    Fuzzy partition computed automatically from the data.
 
-    Argumentos:
-        values (array-like): valores del atributo
-        n_labels, method: ver `automatic_peaks`
+    Args:
+        values (array-like): values of the attribute
+        n_labels, method: see `automatic_peaks`
         membership (str):
-            'triangular'  -> particion de Ruspini con vertices en los picos
-            'trapezoidal' -> particion de Ruspini trapezoidal: en cada
-                             hueco entre dos picos consecutivos, la
-                             transicion ocupa su mitad central y cada
-                             conjunto tiene un nucleo (pertenencia 1) de
-                             un cuarto del hueco a cada lado de su pico
-            'gaussian'    -> una gaussiana por pico, con sigma tal que dos
-                             vecinas se cruzan en 0.5 (no suma 1)
+            'triangular'  -> Ruspini partition with vertices at the peaks
+            'trapezoidal' -> trapezoidal Ruspini partition: in each gap between two consecutive peaks, the transition
+                             occupies its central half and each set has a core (membership 1) of a quarter of the gap
+                             on each side of its peak
+            'gaussian'    -> one Gaussian per peak, with sigma such that two neighbors cross at 0.5 (does not add up
+                             to 1)
 
-    Retorna:
-        (memberships, params): la matriz (len(values), n_labels) de grados y
-        los parametros de cada conjunto ('triangular': los picos;
-        'trapezoidal': tuplas (a, b, c, d); 'gaussian': tuplas
-        (centro, sigma)), reutilizables con `FuzzyLib.Fuzzification`.
+    Returns:
+        (memberships, params): the (len(values), n_labels) matrix of degrees and the parameters of each set
+        ('triangular': the peaks; 'trapezoidal': tuples (a, b, c, d); 'gaussian': tuples (center, sigma)), reusable
+        with `FuzzyLib.Fuzzification`.
     """
     if membership not in MEMBERSHIPS:
         raise ValueError("membership debe ser uno de {}, recibido: '{}'".format(MEMBERSHIPS, membership))
@@ -238,7 +223,7 @@ def automatic_partition(values: ArrayLike, n_labels: int = 3, method: str = "qua
         return triangular_partition(values, peaks), [float(p) for p in peaks]
 
     if membership == "gaussian":
-        # separacion local: media de los huecos vecinos
+        # local spacing: mean of the neighboring gaps
         spacing = np.array([gaps[0]] + [(gaps[i - 1] + gaps[i]) / 2.0 for i in range(1, n_labels - 1)] + [gaps[-1]])
         gaussians = [(float(c), float(s / _FWHM_FACTOR)) for c, s in zip(peaks, spacing)]
         return gaussian_partition(values, gaussians), gaussians

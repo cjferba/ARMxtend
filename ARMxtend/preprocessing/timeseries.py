@@ -1,30 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-Preparacion de series temporales y datos de sensores para la mineria de
-reglas de asociacion: convierte columnas numericas o categoricas ordenadas en
-el tiempo en ITEMS (simbolos discretos, eventos, variables de calendario), y
-construye los items con retardo ("lag") sobre los que trabajan
-``ARM.temporal_rules`` y ``ARM.rule_drift``.
+Preparation of time series and sensor data for association rule mining: it converts numeric or categorical columns
+ordered in time into ITEMS (discrete symbols, events, calendar variables), and builds the lagged items ("lag") on
+which ``ARM.temporal_rules`` and ``ARM.rule_drift`` work.
 
-Convenciones:
+Conventions:
 
-* Un conjunto de items es un ``pandas.DataFrame`` con una fila por instante y
-  una columna por item. Si es booleano, el item esta presente o ausente; si es
-  numerico en [0, 1], son grados de pertenencia (items difusos, p.ej. los de
+* A set of items is a ``pandas.DataFrame`` with one row per instant and one column per item. If it is boolean, the
+  item is present or absent; if it is numeric in [0, 1], they are membership degrees (fuzzy items, e.g. those of
   ``preprocessing.FuzzyLib``).
-* Los items categoricos se nombran ``columna=valor`` (``temp=high``).
-* El item ``x`` visto ``k`` pasos antes se llama ``x@lagk`` (``temp=high@lag2``);
-  el instante actual (lag 0) conserva el nombre sin sufijo.
+* Categorical items are named ``column=value`` (``temp=high``).
+* The item ``x`` seen ``k`` steps earlier is called ``x@lagk`` (``temp=high@lag2``); the current instant (lag 0) keeps
+  the name without suffix.
 
-NOTA: los nombres de item no deben contener '-', que es el separador de items
-en las claves de itemset de ``FIM._shared``; ``to_items`` lo sustituye por '_'.
+NOTE: item names must not contain '-', which is the item separator in the itemset keys of ``FIM._shared``;
+``to_items`` replaces it by '_'.
 
-La simbolizacion ``method="sax"`` sigue la idea de SAX (Lin, Keogh, Wei &
-Lonardi, 2007, "Experiencing SAX: a novel symbolic representation of time
-series", Data Mining and Knowledge Discovery 15): normalizar la serie (media 0,
-desviacion 1) y partirla con los puntos de corte que dejan la misma
-probabilidad a cada simbolo bajo una normal. Aqui se aplica punto a punto, sin
-la agregacion por tramos (PAA) del articulo original.
+The symbolization ``method="sax"`` follows the idea of SAX (Lin, Keogh, Wei & Lonardi, 2007, "Experiencing SAX: a
+novel symbolic representation of time series", Data Mining and Knowledge Discovery 15): normalize the series (mean 0,
+deviation 1) and split it with the cut points that leave the same probability to each symbol under a normal. Here it
+is applied point by point, without the piecewise aggregation (PAA) of the original paper.
 
 @author Carlos Fernandez-Basso
 """
@@ -47,12 +42,12 @@ _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
 
 
 def lagged(item: str, lag: int) -> str:
-    """Nombre del item `item` visto `lag` pasos antes ('temp=high', 2 -> 'temp=high@lag2'; lag 0 no cambia el nombre)."""
+    """Name of the item `item` seen `lag` steps earlier ('temp=high', 2 -> 'temp=high@lag2'; lag 0 does not change the name)."""
     return item if lag == 0 else "{}{}{}".format(item, LAG_MARK, lag)
 
 
 def split_lag(item: str) -> Tuple[str, int]:
-    """Inversa de `lagged`: 'temp=high@lag2' -> ('temp=high', 2); un item sin sufijo tiene lag 0."""
+    """Inverse of `lagged`: 'temp=high@lag2' -> ('temp=high', 2); an item without suffix has lag 0."""
     base, mark, lag = item.rpartition(LAG_MARK)
     if mark and lag.isdigit():
         return base, int(lag)
@@ -60,7 +55,7 @@ def split_lag(item: str) -> Tuple[str, int]:
 
 
 def item_variable(item: str) -> str:
-    """Variable de un item, sin retardo ni valor: 'temp=high@lag2' -> 'temp'; 'door_open' -> 'door_open'."""
+    """Variable of an item, without lag or value: 'temp=high@lag2' -> 'temp'; 'door_open' -> 'door_open'."""
     return split_lag(item)[0].split(VALUE_SEP, 1)[0]
 
 
@@ -72,7 +67,7 @@ def _symbol_labels(n_symbols: int, labels: Optional[Sequence[str]]) -> List[str]
         raise ValueError("labels debe tener {} etiquetas, recibidas: {}".format(n_symbols, len(names)))
     for name in names:
         if "-" in name or VALUE_SEP in name:
-            raise ValueError("las etiquetas no pueden contener '-' ni '{}': '{}'".format(VALUE_SEP, name))
+            raise ValueError("labels cannot contain '-' or '{}': '{}'".format(VALUE_SEP, name))
     return names
 
 
@@ -88,24 +83,22 @@ def _breakpoints(values: np.ndarray, n_symbols: int, method: str) -> np.ndarray:
 def symbolize(values: Union[pd.Series, Sequence[float], np.ndarray], n_symbols: int = 3, method: str = "quantile",
               labels: Optional[Sequence[str]] = None) -> pd.Series:
     """
-    Convierte una serie numerica en simbolos discretos ('low', 'medium', 'high', ...).
+    Convert a numeric series into discrete symbols ('low', 'medium', 'high', ...).
 
-    Argumentos:
-        values: serie numerica; los valores ausentes (NaN) siguen ausentes
-        n_symbols (int): numero de simbolos, >= 2
-        method (str): como se calculan los puntos de corte:
-            'quantile' (por defecto) -- simbolos con la misma frecuencia;
-            'uniform' -- intervalos de igual anchura entre el minimo y el maximo;
-            'sax' -- normaliza la serie (media 0, desviacion 1) y usa los
-            cuantiles de la normal (ver el docstring del modulo)
-        labels (Sequence[str], opcional): nombres de los simbolos, de menor a
-            mayor; por defecto los de ``preprocessing.membership.default_labels``
+    Args:
+        values: numeric series; missing values (NaN) stay missing
+        n_symbols (int): number of symbols, >= 2
+        method (str): how the cut points are computed:
+            'quantile' (default) -- symbols with the same frequency;
+            'uniform' -- intervals of equal width between the minimum and the maximum;
+            'sax' -- normalizes the series (mean 0, deviation 1) and uses the quantiles of the normal (see the module
+            docstring)
+        labels (Sequence[str], optional): names of the symbols, from lowest to highest; by default those of
+            ``preprocessing.membership.default_labels``
 
-    Retorna:
-        pandas.Series de etiquetas (dtype object), con el mismo indice y nombre
-        que la entrada. Con 'quantile' y muchos empates puede haber menos de
-        `n_symbols` simbolos distintos, y una serie constante recibe un unico
-        simbolo.
+    Returns:
+        pandas.Series of labels (dtype object), with the same index and name as the input. With 'quantile' and many
+        ties there can be fewer than `n_symbols` distinct symbols, and a constant series gets a single symbol.
     """
     if method not in _SYMBOLIZE_METHODS:
         raise ValueError("method debe ser uno de {}, recibido: '{}'".format(_SYMBOLIZE_METHODS, method))
@@ -128,16 +121,15 @@ def symbolize(values: Union[pd.Series, Sequence[float], np.ndarray], n_symbols: 
 def discretize(df: pd.DataFrame, columns: Optional[Iterable[str]] = None, n_symbols: int = 3,
                method: str = "quantile", labels: Optional[Sequence[str]] = None) -> pd.DataFrame:
     """
-    Aplica `symbolize` a varias columnas numericas, dejando intactas las demas.
+    Apply `symbolize` to several numeric columns, leaving the others untouched.
 
-    Argumentos:
-        df (pandas.DataFrame): tabla con una fila por instante
-        columns (Iterable[str], opcional): columnas a simbolizar; por defecto,
-            todas las numericas no booleanas
-        n_symbols, method, labels: ver `symbolize`
+    Args:
+        df (pandas.DataFrame): table with one row per instant
+        columns (Iterable[str], optional): columns to symbolize; by default, all the non-boolean numeric ones
+        n_symbols, method, labels: see `symbolize`
 
-    Retorna:
-        pandas.DataFrame, copia de `df` con las columnas elegidas convertidas en simbolos
+    Returns:
+        pandas.DataFrame, copy of `df` with the chosen columns converted into symbols
     """
     if columns is None:
         columns = [name for name in df.columns
@@ -150,22 +142,22 @@ def discretize(df: pd.DataFrame, columns: Optional[Iterable[str]] = None, n_symb
 
 def to_items(df: pd.DataFrame, columns: Optional[Iterable[str]] = None, sep: str = VALUE_SEP) -> pd.DataFrame:
     """
-    Convierte columnas categoricas (o booleanas) en items booleanos.
+    Convert categorical (or boolean) columns into boolean items.
 
-    * Una columna categorica produce un item ``columna=valor`` por cada valor
-      que aparece (los valores ausentes no producen item).
-    * Una columna booleana produce un unico item con el nombre de la columna,
-      presente cuando vale True (eventos de sensores: 'door_open', 'motion', ...).
+    * A categorical column produces one item ``column=value`` for each value that appears (missing values produce no
+      item).
+    * A boolean column produces a single item with the name of the column, present when it is True (sensor events:
+      'door_open', 'motion', ...).
 
-    Los '-' de los nombres se sustituyen por '_' (ver el docstring del modulo).
+    The '-' in names are replaced by '_' (see the module docstring).
 
-    Argumentos:
-        df (pandas.DataFrame): tabla con una fila por instante
-        columns (Iterable[str], opcional): columnas a convertir; por defecto, todas
-        sep (str): separador entre columna y valor
+    Args:
+        df (pandas.DataFrame): table with one row per instant
+        columns (Iterable[str], optional): columns to convert; by default, all
+        sep (str): separator between column and value
 
-    Retorna:
-        pandas.DataFrame booleano con el mismo indice que `df`
+    Returns:
+        boolean pandas.DataFrame with the same index as `df`
     """
     names = list(df.columns) if columns is None else list(columns)
     items = {}
@@ -185,20 +177,16 @@ def to_items(df: pd.DataFrame, columns: Optional[Iterable[str]] = None, sep: str
 def calendar_items(index: Union[pd.DatetimeIndex, Sequence[Any]],
                    parts: Sequence[str] = ("hour", "weekday")) -> pd.DataFrame:
     """
-    Items de calendario de cada instante, para descubrir reglas que solo
-    valen a ciertas horas, dias o meses.
+    Calendar items of each instant, to discover rules that only hold at certain hours, days or months.
 
-    Argumentos:
-        index: instantes (``pandas.DatetimeIndex`` o algo convertible)
-        parts (Sequence[str]): que partes del calendario incluir:
-            'hour' (``hour=08``), 'weekday' (``weekday=Mon``), 'daytype'
-            (``daytype=weekend`` / ``daytype=workday``), 'month'
-            (``month=Jan``) y 'part_of_day' (``part_of_day=morning``: night
-            0-5, morning 6-11, afternoon 12-17, evening 18-23)
+    Args:
+        index: instants (``pandas.DatetimeIndex`` or something convertible)
+        parts (Sequence[str]): which parts of the calendar to include: 'hour' (``hour=08``), 'weekday'
+            (``weekday=Mon``), 'daytype' (``daytype=weekend`` / ``daytype=workday``), 'month' (``month=Jan``) and
+            'part_of_day' (``part_of_day=morning``: night 0-5, morning 6-11, afternoon 12-17, evening 18-23)
 
-    Retorna:
-        pandas.DataFrame booleano indexado por `index`; solo se incluyen los
-        items que aparecen en algun instante
+    Returns:
+        boolean pandas.DataFrame indexed by `index`; only the items that appear at some instant are included
     """
     unknown = [part for part in parts if part not in _CALENDAR_PARTS]
     if unknown:
@@ -227,29 +215,27 @@ def _as_array(df: pd.DataFrame) -> np.ndarray:
         try:
             values = values.astype(float)       # columnas booleanas y numericas mezcladas
         except (TypeError, ValueError):
-            raise ValueError("los items deben ser booleanos o numericos (grados de pertenencia); "
-                             "use to_items(...) para convertir columnas categoricas") from None
+            raise ValueError("the items must be boolean or numeric (membership degrees); "
+                             "use to_items(...) to convert categorical columns") from None
     return values
 
 
 def lag_items(df: pd.DataFrame, lags: Iterable[int], drop_incomplete: bool = True) -> pd.DataFrame:
     """
-    Anade a cada instante los items de los `k` instantes anteriores, para cada
-    retardo `k` de `lags` (el item ``x`` visto ``k`` pasos antes se llama ``x@lagk``).
+    Add to each instant the items of the `k` previous instants, for each lag `k` of `lags` (the item ``x`` seen ``k``
+    steps earlier is called ``x@lagk``).
 
-    Argumentos:
-        df (pandas.DataFrame): items booleanos, o grados de pertenencia en
-            [0, 1], con una fila por instante (ordenadas en el tiempo)
-        lags (Iterable[int]): retardos, >= 0; el 0 conserva los items actuales
-        drop_incomplete (bool): si True (por defecto), descarta las primeras
-            ``max(lags)`` filas, para las que no hay datos anteriores, de modo
-            que todas las filas devueltas tengan todos los retardos; si False,
-            se conservan y lo que quedaria antes del inicio se toma como ausente
+    Args:
+        df (pandas.DataFrame): boolean items, or membership degrees in [0, 1], with one row per instant (ordered in
+            time)
+        lags (Iterable[int]): lags, >= 0; 0 keeps the current items
+        drop_incomplete (bool): if True (default), drop the first ``max(lags)`` rows, for which there is no previous
+            data, so that all the returned rows have all the lags; if False, they are kept and whatever would fall
+            before the start is taken as absent
 
-    Retorna:
-        pandas.DataFrame con una columna por (retardo, item), ordenadas por
-        retardo y luego por columna original; booleano si `df` lo es, y de
-        floats en otro caso
+    Returns:
+        pandas.DataFrame with one column per (lag, item), sorted by lag and then by original column; boolean if `df`
+        is, and floats otherwise
     """
     requested = list(lags)
     steps = sorted({int(lag) for lag in requested})
@@ -258,7 +244,7 @@ def lag_items(df: pd.DataFrame, lags: Iterable[int], drop_incomplete: bool = Tru
     values = _as_array(df)
     rows = len(values)
     if drop_incomplete and rows <= steps[-1]:
-        raise ValueError("se necesitan mas de {} filas para usar retardos hasta {}; hay {}".format(
+        raise ValueError("more than {} rows are needed to use lags up to {}; there are {}".format(
             steps[-1], steps[-1], rows))
 
     zero = np.zeros((1,) + values.shape[1:], dtype=values.dtype)
@@ -277,22 +263,19 @@ def lag_items(df: pd.DataFrame, lags: Iterable[int], drop_incomplete: bool = Tru
 
 def window_items(df: pd.DataFrame, width: int, step: int = 1, how: str = "any") -> pd.DataFrame:
     """
-    Resume cada ventana de `width` instantes consecutivos en una unica fila de
-    items, para minar co-ocurrencias "dentro de una ventana" (episodios) sin
-    fijar el orden de los eventos.
+    Summarize each window of `width` consecutive instants into a single row of items, to mine co-occurrences "within a
+    window" (episodes) without fixing the order of the events.
 
-    Argumentos:
-        df (pandas.DataFrame): items booleanos o grados de pertenencia
-        width (int): numero de filas de cada ventana
-        step (int): desplazamiento entre ventanas consecutivas (1 = ventana deslizante)
-        how (str): 'any' -- el item esta si aparece en algun instante de la
-            ventana (el maximo de sus grados, si son difusos); 'all' -- si
-            aparece en todos (el minimo); 'mean' -- fraccion de la ventana en
-            que esta (devuelve floats)
+    Args:
+        df (pandas.DataFrame): boolean items or membership degrees
+        width (int): number of rows of each window
+        step (int): displacement between consecutive windows (1 = sliding window)
+        how (str): 'any' -- the item is present if it appears at some instant of the window (the maximum of its
+            degrees, if fuzzy); 'all' -- if it appears at all of them (the minimum); 'mean' -- fraction of the window
+            in which it is present (returns floats)
 
-    Retorna:
-        pandas.DataFrame con una fila por ventana, indexada por el ultimo
-        instante de la ventana
+    Returns:
+        pandas.DataFrame with one row per window, indexed by the last instant of the window
     """
     if how not in ("any", "all", "mean"):
         raise ValueError("how debe ser 'any', 'all' o 'mean', recibido: '{}'".format(how))
@@ -300,7 +283,7 @@ def window_items(df: pd.DataFrame, width: int, step: int = 1, how: str = "any") 
         raise ValueError("width y step deben ser >= 1")
     values = _as_array(df)
     if len(values) < width:
-        raise ValueError("la tabla tiene {} filas, menos que width={}".format(len(values), width))
+        raise ValueError("the table has {} rows, fewer than width={}".format(len(values), width))
     windows = sliding_window_view(values, width, axis=0)[::step]
     if how == "any":
         reduced = windows.max(axis=-1)
@@ -312,7 +295,7 @@ def window_items(df: pd.DataFrame, width: int, step: int = 1, how: str = "any") 
 
 
 def to_transactions(items: pd.DataFrame) -> List[Set[str]]:
-    """Transacciones crisp (conjuntos de items presentes) de un DataFrame booleano, una por fila."""
+    """Crisp transactions (sets of present items) of a boolean DataFrame, one per row."""
     names = np.array(items.columns, dtype=object)
     values = _as_array(items).astype(bool)
     return [set(names[row]) for row in values]
@@ -320,9 +303,8 @@ def to_transactions(items: pd.DataFrame) -> List[Set[str]]:
 
 def to_fuzzy_transactions(memberships: pd.DataFrame, min_degree: float = 0.0) -> List[List[Tuple[str, float]]]:
     """
-    Transacciones difusas, una por fila: lista de pares (item, grado) con grado
-    estrictamente mayor que `min_degree`. Es el formato de entrada de
-    ``FFIM.fuzzy_fpgrowth``.
+    Fuzzy transactions, one per row: list of (item, degree) pairs with degree strictly greater than `min_degree`. It
+    is the input format of ``FFIM.fuzzy_fpgrowth``.
     """
     names = list(memberships.columns)
     degrees = _as_array(memberships).astype(float)
@@ -330,8 +312,8 @@ def to_fuzzy_transactions(memberships: pd.DataFrame, min_degree: float = 0.0) ->
 
 
 def check_item_names(names: Iterable[str]) -> None:
-    """Lanza ValueError si algun nombre de item contiene '-' (el separador de items de ``FIM._shared``)."""
+    """Raise ValueError if any item name contains '-' (the item separator of ``FIM._shared``)."""
     bad = [name for name in names if "-" in str(name)]
     if bad:
-        raise ValueError("los nombres de item no pueden contener '-' (p.ej. {!r}); "
-                         "use to_items(...) o renombre las columnas".format(bad[0]))
+        raise ValueError("item names cannot contain '-' (e.g. {!r}); "
+                         "use to_items(...) or rename the columns".format(bad[0]))

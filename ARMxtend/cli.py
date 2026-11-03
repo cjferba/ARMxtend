@@ -1,34 +1,33 @@
 # -*- coding: utf-8 -*-
 """
-Interfaz de linea de comandos de ARMxtend::
+Command-line interface of ARMxtend::
 
-    armxtend rules transacciones.csv --min-supp 0.1 --min-threshold 0.7
-    armxtend fuzzy-rules datos.csv --labels 3 --alpha 10 --metric certainty_factor
-    armxtend fuzzy-rules datos.csv --labels 3 --significance 0.05 --permutations 999   # solo reglas significativas
-    armxtend gradual-rules datos.csv --min-supp 0.3 --min-threshold 0.8
-    armxtend temporal-rules sensores.csv --time-column hora --max-lag 2 --targets calefaccion
-    armxtend rule-drift sensores.csv --time-column hora --window 15D --max-lag 1
-    armxtend sequences rutinas.txt --min-supp 0.3
-    armxtend sequential-rules rutinas.txt --min-supp 0.3 --min-threshold 0.8
-    armxtend rules transacciones.csv --min-supp 0.05 --alpha 0.05      # solo reglas significativas
-    armxtend temporal-rules sensores.csv --time-column hora --permutations 200 --alpha 0.05
-    armxtend quantitative-rules clientes.csv --intervals 10 --max-supp 0.4 --min-supp 0.05 --interest 1.3
-    armxtend generalized-rules cesta.txt --taxonomy jerarquia.csv --min-supp 0.2 --level-supp 3=0.05 --interest 1.1
-    armxtend top-k-rules cesta.txt -k 20 --min-conf 0.7
-    armxtend rare-rules cesta.txt --max-supp 0.1 --min-count 3 --min-conf 0.6 --alpha 0.05
-    armxtend high-utility-rules ventas.csv --profits beneficios.csv --min-utility 0.05 --min-conf 0.5
-    armxtend fuzzy-sequences sensores.csv --sequence-column dia --time-column hora --min-supp 0.3
-    armxtend fuzzy-sequential-rules sensores.csv --sequence-column dia --time-column hora --min-threshold 0.8
-    armxtend anomalies sensores.csv --time-column hora --train-fraction 0.5 --max-lag 1 --min-threshold 0.95
-    armxtend forecast sensores.csv --time-column hora --train-fraction 0.7 --max-lag 2 --targets calefaccion
-    armxtend next-events rutinas.txt --min-supp 0.2 --min-threshold 0.3 --history "alarma;bano"
-    armxtend classify pacientes.csv --class-column diagnostico --test-fraction 0.3
-    armxtend generate transactions -n 5000 --items 80 --seed 1 -o cesta.txt     # datos sinteticos para probar
+    armxtend rules transactions.csv --min-supp 0.1 --min-threshold 0.7
+    armxtend fuzzy-rules data.csv --labels 3 --alpha 10 --metric certainty_factor
+    armxtend fuzzy-rules data.csv --labels 3 --significance 0.05 --permutations 999   # only significant rules
+    armxtend gradual-rules data.csv --min-supp 0.3 --min-threshold 0.8
+    armxtend temporal-rules sensors.csv --time-column time --max-lag 2 --targets heating
+    armxtend rule-drift sensors.csv --time-column time --window 15D --max-lag 1
+    armxtend sequences routines.txt --min-supp 0.3
+    armxtend sequential-rules routines.txt --min-supp 0.3 --min-threshold 0.8
+    armxtend rules transactions.csv --min-supp 0.05 --alpha 0.05      # only significant rules
+    armxtend temporal-rules sensors.csv --time-column time --permutations 200 --alpha 0.05
+    armxtend quantitative-rules customers.csv --intervals 10 --max-supp 0.4 --min-supp 0.05 --interest 1.3
+    armxtend generalized-rules basket.txt --taxonomy hierarchy.csv --min-supp 0.2 --level-supp 3=0.05 --interest 1.1
+    armxtend top-k-rules basket.txt -k 20 --min-conf 0.7
+    armxtend rare-rules basket.txt --max-supp 0.1 --min-count 3 --min-conf 0.6 --alpha 0.05
+    armxtend high-utility-rules sales.csv --profits profits.csv --min-utility 0.05 --min-conf 0.5
+    armxtend fuzzy-sequences sensors.csv --sequence-column day --time-column time --min-supp 0.3
+    armxtend fuzzy-sequential-rules sensors.csv --sequence-column day --time-column time --min-threshold 0.8
+    armxtend anomalies sensors.csv --time-column time --train-fraction 0.5 --max-lag 1 --min-threshold 0.95
+    armxtend forecast sensors.csv --time-column time --train-fraction 0.7 --max-lag 2 --targets heating
+    armxtend next-events routines.txt --min-supp 0.2 --min-threshold 0.3 --history "alarm;bathroom"
+    armxtend classify patients.csv --class-column diagnosis --test-fraction 0.3
+    armxtend generate transactions -n 5000 --items 80 --seed 1 -o basket.txt     # synthetic data to try things out
 
-Tambien se puede invocar como ``python -m ARMxtend``. Todos los comandos
-trabajan en una sola maquina (sin Spark) y escriben el resultado en una tabla
-de texto (por defecto), CSV o JSON; `rules` y `fuzzy-rules` pueden ademas
-generar el visor HTML interactivo VizARE (`--html`).
+It can also be invoked as ``python -m ARMxtend``. All the commands work on a single machine (no Spark) and write the
+result as a text table (default), CSV or JSON; `rules` and `fuzzy-rules` can also generate the interactive HTML viewer
+VizARE (`--html`).
 
 @author Carlos Fernandez-Basso
 """
@@ -45,7 +44,7 @@ _ITEM_COLUMNS = ("antecedents", "consequents")
 
 
 def _read_lines(path: str) -> List[str]:
-    """Las lineas no vacias de un fichero (o de la entrada estandar si es '-'), sin espacios en los extremos."""
+    """The non-empty lines of a file (or of standard input if it is '-'), stripped at the ends."""
     stream = sys.stdin if path == "-" else open(path, encoding="utf-8")
     try:
         lines = [line.strip() for line in stream]
@@ -56,15 +55,14 @@ def _read_lines(path: str) -> List[str]:
 
 
 def _read_transactions(path: str, delimiter: str) -> List[List[str]]:
-    """Una transaccion por linea, items separados por `delimiter`; se ignoran las lineas vacias."""
+    """One transaction per line, items separated by `delimiter`; empty lines are ignored."""
     return [[item.strip() for item in line.split(delimiter) if item.strip()] for line in _read_lines(path)]
 
 
 def _read_sequences(args: argparse.Namespace) -> list:
     """
-    Secuencias desde un fichero de texto (una secuencia por linea, elementos separados por
-    `--element-delimiter` e items de un elemento por `--delimiter`) o, con `--sequence-column`,
-    desde un registro de eventos en CSV.
+    Sequences from a text file (one sequence per line, elements separated by `--element-delimiter` and items of an
+    element by `--delimiter`) or, with `--sequence-column`, from an event log in CSV.
     """
     from .FIM.sequential import sequences_from_events
 
@@ -81,20 +79,20 @@ def _read_sequences(args: argparse.Namespace) -> list:
 
 def _read_items(args: argparse.Namespace) -> pd.DataFrame:
     """
-    Tabla de items booleanos desde un CSV de sensores: las columnas numericas se simbolizan
-    (`--symbols`, `--method`), las 0/1 y las booleanas son eventos, las de texto dan items
-    ``columna=valor``; `--time-column` fija el indice temporal y `--calendar` anade items de calendario.
+    Table of boolean items from a sensor CSV: numeric columns are symbolized (`--symbols`, `--method`), 0/1 and boolean
+    ones are events, text ones give ``column=value`` items; `--time-column` sets the time index and `--calendar` adds
+    calendar items.
     """
     table = pd.read_csv(args.input, sep=args.delimiter)
     if args.time_column:
         if args.time_column not in table.columns:
-            raise ValueError("la columna de tiempo '{}' no existe".format(args.time_column))
+            raise ValueError("the time column '{}' does not exist".format(args.time_column))
         table = table.set_index(pd.to_datetime(table.pop(args.time_column))).sort_index()
     return _items_from_table(table, args)
 
 
 def _items_from_table(table: pd.DataFrame, args: argparse.Namespace) -> pd.DataFrame:
-    """Items booleanos de una tabla: ver `_read_items`."""
+    """Boolean items from a table: see `_read_items`."""
     from .preprocessing.timeseries import calendar_items, discretize, to_items
 
     columns = list(args.columns) if args.columns else list(table.columns)
@@ -132,7 +130,7 @@ def _format_items(items, pretty: bool = False) -> str:
 
 
 def _emit(rules: pd.DataFrame, args: argparse.Namespace) -> None:
-    """Ordena, recorta y escribe las reglas en el formato pedido."""
+    """Sort, trim and write the rules in the requested format."""
     sortBy = args.sort_by or ("" if getattr(args, "keep_order", False) else args.metric)
     if len(rules) and sortBy and sortBy in rules.columns:
         rules = rules.sort_values(sortBy, ascending=False)
@@ -239,7 +237,7 @@ def _run_quantitative_rules(args: argparse.Namespace) -> pd.DataFrame:
 
 
 def _special_rules(rules: pd.DataFrame, args: argparse.Namespace, n_transactions: int, extra: Sequence[str] = ()) -> pd.DataFrame:
-    """Significacion opcional y columnas de la tabla de las reglas top-k, raras y de utilidad (ya vienen ordenadas)."""
+    """Optional significance and columns of the table of top-k, rare and utility rules (they already come sorted)."""
     from .ARM import significant_rules
 
     if args.alpha is not None and len(rules):
@@ -276,7 +274,7 @@ def _run_high_utility_rules(args: argparse.Namespace) -> pd.DataFrame:
     if args.profits:
         table = pd.read_csv(args.profits, sep=args.delimiter)
         if table.shape[1] < 2:
-            raise ValueError("--profits espera un CSV con el item en la primera columna y su beneficio en la segunda")
+            raise ValueError("--profits expects a CSV with the item in the first column and its profit in the second")
         profits = dict(zip(table.iloc[:, 0].astype(str), table.iloc[:, 1]))
     rules = high_utility_rules(quantities, profits, args.min_utility, absolute=args.absolute, min_conf=args.min_conf,
                                min_lift=args.min_lift, max_antecedent=args.max_antecedent,
@@ -344,9 +342,9 @@ def _run_temporal_rules(args: argparse.Namespace) -> pd.DataFrame:
 
 def _read_fuzzy_sequences(args: argparse.Namespace) -> list:
     """
-    Secuencias difusas desde un CSV de series: las columnas numericas se fuzzifican
-    (`--labels`, `--method`, `--membership`), cada fila es un elemento y `--sequence-column`
-    (por ejemplo el dia) agrupa las filas en secuencias, ordenadas por `--time-column`.
+    Fuzzy sequences from a series CSV: numeric columns are fuzzified (`--labels`, `--method`, `--membership`), each row
+    is an element and `--sequence-column` (for example the day) groups the rows into sequences, ordered by
+    `--time-column`.
     """
     from .FIM.fuzzy_sequential import fuzzy_sequences_from_memberships
     from .preprocessing import FuzzyLib
@@ -354,7 +352,7 @@ def _read_fuzzy_sequences(args: argparse.Namespace) -> list:
     table = pd.read_csv(args.input, sep=args.delimiter)
     for name in [args.time_column, args.sequence_column]:
         if name and name not in table.columns:
-            raise ValueError("la columna '{}' no existe".format(name))
+            raise ValueError("column '{}' does not exist".format(name))
     if args.time_column:
         table[args.time_column] = pd.to_datetime(table[args.time_column])
         table = table.sort_values([c for c in [args.sequence_column, args.time_column] if c], kind="mergesort")
@@ -383,17 +381,17 @@ def _run_fuzzy_sequential_rules(args: argparse.Namespace) -> pd.DataFrame:
 
 
 def _train_cut(rows: int, fraction: float) -> int:
-    """Primera fila de la parte de prueba cuando las `fraction` primeras filas son de entrenamiento."""
+    """First row of the test part when the first `fraction` rows are training."""
     if not 0 < fraction < 1:
         raise ValueError("--train-fraction debe estar en (0, 1)")
     cut = int(rows * fraction)
     if cut < 2 or rows - cut < 2:
-        raise ValueError("hay muy pocas filas ({}) para repartirlas con --train-fraction {}".format(rows, fraction))
+        raise ValueError("there are too few rows ({}) to split them with --train-fraction {}".format(rows, fraction))
     return cut
 
 
 def _mine_normal_rules(items: pd.DataFrame, args: argparse.Namespace) -> pd.DataFrame:
-    """Reglas del periodo de entrenamiento para `anomalies` y `forecast` (solo con antecedente del pasado)."""
+    """Rules of the training period for `anomalies` and `forecast` (only with antecedent from the past)."""
     from .ARM import crisp_rule_miner, prune_unproductive_rules, significant_rules, temporal_association_rules
 
     if args.max_lag > 0:
@@ -456,7 +454,7 @@ def _run_next_events(args: argparse.Namespace) -> pd.DataFrame:
         cut = len(sequences) - max(1, int(len(sequences) * args.test_fraction))
         training = sequences[:cut]
     elif not args.history:
-        raise ValueError("indique --history (los eventos ya ocurridos) o --test-fraction (para evaluar)")
+        raise ValueError("give --history (the events that have already happened) or --test-fraction (to evaluate)")
     rules = sequential_rules(training, args.min_supp, min_conf=args.min_threshold, max_antecedent=args.max_antecedent,
                              max_consequent=args.max_consequent)
     print("{} sequential rules learned from {} sequences".format(len(rules), len(training)), file=sys.stderr)
@@ -478,7 +476,7 @@ def _run_classify(args: argparse.Namespace) -> pd.DataFrame:
 
     table = pd.read_csv(args.input, sep=args.delimiter)
     if args.class_column not in table.columns:
-        raise ValueError("la columna de clase '{}' no existe".format(args.class_column))
+        raise ValueError("the class column '{}' does not exist".format(args.class_column))
     labels = table.pop(args.class_column)
     items = _items_from_table(table, args)
     if not 0 <= args.test_fraction < 1:
@@ -578,7 +576,7 @@ def _significance_options(parser: argparse.ArgumentParser, permutations: bool = 
 
 
 def _rule_filters(parser: argparse.ArgumentParser, min_conf: float) -> None:
-    """Opciones de las reglas top-k, raras y de alta utilidad: filtros, significacion y salida."""
+    """Options of the top-k, rare and high-utility rules: filters, significance and output."""
     parser.add_argument("-d", "--delimiter", default=",", help="field/item delimiter (default: ',')")
     parser.add_argument("--min-conf", type=float, default=min_conf, help="minimum confidence (default: %(default)s)")
     parser.add_argument("--min-lift", type=float, help="minimum lift")
@@ -589,7 +587,7 @@ def _rule_filters(parser: argparse.ArgumentParser, min_conf: float) -> None:
 
 
 def _series_options(parser: argparse.ArgumentParser) -> None:
-    """Opciones para convertir un CSV de sensores en items (temporal-rules y rule-drift)."""
+    """Options to convert a sensor CSV into items (temporal-rules and rule-drift)."""
     parser.add_argument("input", help="CSV file with a header, one row per time step")
     parser.add_argument("--time-column", help="column with the timestamps (becomes the index; rows are sorted by it)")
     parser.add_argument("--columns", nargs="+", help="columns to use (default: all)")
@@ -602,7 +600,7 @@ def _series_options(parser: argparse.ArgumentParser) -> None:
 
 
 def _fuzzy_sequence_options(parser: argparse.ArgumentParser) -> None:
-    """Opciones de entrada de fuzzy-sequences y fuzzy-sequential-rules."""
+    """Input options of fuzzy-sequences and fuzzy-sequential-rules."""
     parser.add_argument("input", help="CSV file with a header; numeric columns are fuzzified, one row per time step")
     parser.add_argument("-d", "--delimiter", default=",", help="CSV delimiter (default: ',')")
     parser.add_argument("--sequence-column",
@@ -621,7 +619,7 @@ def _fuzzy_sequence_options(parser: argparse.ArgumentParser) -> None:
 
 
 def _normal_rules_options(parser: argparse.ArgumentParser) -> None:
-    """Opciones de las reglas del funcionamiento normal (anomalies y forecast)."""
+    """Options of the rules of normal operation (anomalies and forecast)."""
     parser.add_argument("--train-fraction", type=float, default=0.5,
                         help="share of the first rows used to learn the rules; the rest is analysed (default: 0.5)")
     parser.add_argument("--max-lag", type=int, default=1,
@@ -637,7 +635,7 @@ def _normal_rules_options(parser: argparse.ArgumentParser) -> None:
 
 
 def _sequence_options(parser: argparse.ArgumentParser) -> None:
-    """Opciones de entrada de sequences y sequential-rules."""
+    """Input options of sequences and sequential-rules."""
     parser.add_argument("input", help="text file, one sequence per line: elements separated by --element-delimiter, "
                                       "items of an element by --delimiter ('-' = stdin); or, with --sequence-column, "
                                       "a CSV event log")
@@ -928,7 +926,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _run_generate(args: argparse.Namespace) -> None:
-    """Escribe datos sinteticos (con los mismos formatos de entrada que `rules` y `sequences`) en un fichero o en stdout."""
+    """Write synthetic data (with the same input formats as `rules` and `sequences`) to a file or to stdout."""
     from .datasets import make_quantities, make_sequences, make_transactions
 
     if args.kind == "transactions":
@@ -951,7 +949,7 @@ def _run_generate(args: argparse.Namespace) -> None:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    """Punto de entrada de la CLI; devuelve el codigo de salida (0 = correcto)."""
+    """CLI entry point; returns the exit code (0 = success)."""
     args = build_parser().parse_args(argv)
     try:
         rules = args.run(args)

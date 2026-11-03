@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-Estimadores con la interfaz de scikit-learn (``fit`` / ``transform`` / ``get_params``), sin depender de
+Estimators with the scikit-learn interface (``fit`` / ``transform`` / ``get_params``), without depending on
 scikit-learn:
 
-* ``TransactionEncoder``: transacciones (listas de items) <-> tabla booleana, una columna por item. Es el formato
-  de entrada de casi todo ARMxtend (``ARM.association_rules`` lee itemsets, ``anomaly``/``prediction``/
-  ``classification`` leen tablas booleanas) y el de ``mlxtend.preprocessing.TransactionEncoder``.
-* ``RuleMiner``: extrae las reglas de una coleccion de transacciones, con el algoritmo elegido (`method`):
-  ``"fpgrowth"`` (umbral de soporte `min_supp`), ``"top_k"`` (las `k` de mayor soporte) o ``"rare"`` (combinaciones
-  raras de items frecuentes, `max_supp`). Deja ``itemsets_`` y ``rules_`` tras ``fit``; ``transform`` convierte
-  transacciones en una tabla de reglas que se cumplen, util como atributos de otro modelo en un ``Pipeline``.
+* ``TransactionEncoder``: transactions (lists of items) <-> boolean table, one column per item. It is the input
+  format of almost all of ARMxtend (``ARM.association_rules`` reads itemsets, ``anomaly``/``prediction``/
+  ``classification`` read boolean tables) and that of ``mlxtend.preprocessing.TransactionEncoder``.
+* ``RuleMiner``: extracts the rules of a collection of transactions, with the chosen algorithm (`method`):
+  ``"fpgrowth"`` (support threshold `min_supp`), ``"top_k"`` (the `k` of highest support) or ``"rare"`` (rare
+  combinations of frequent items, `max_supp`). It leaves ``itemsets_`` and ``rules_`` after ``fit``; ``transform``
+  converts transactions into a table of rules that hold, useful as features of another model in a ``Pipeline``.
 
-Los estimadores guardan sus parametros sin tocarlos (``ParamsMixin``): ``sklearn.base.clone`` y ``GridSearchCV``
-funcionan con ellos, y ``ARM.RuleClassifier`` (CBA) sigue el mismo protocolo.
+The estimators store their parameters untouched (``ParamsMixin``): ``sklearn.base.clone`` and ``GridSearchCV`` work
+with them, and ``ARM.RuleClassifier`` (CBA) follows the same protocol.
 
 @author Carlos Fernandez-Basso
 """
@@ -28,12 +28,12 @@ Transactions = Union[Iterable[Iterable[Any]], pd.DataFrame]
 
 
 def as_transactions(data: Transactions) -> List[List[Any]]:
-    """Transacciones como lista de listas: una tabla booleana (o 0/1) da, por fila, las columnas que valen verdadero."""
+    """Transactions as a list of lists: a boolean (or 0/1) table gives, per row, the columns that are true."""
     if isinstance(data, pd.DataFrame):
         values = data.to_numpy()
         if values.dtype != bool:
             if not np.isin(values, (0, 1)).all():
-                raise ValueError("una tabla de entrada debe ser booleana (o 0/1): una columna por item")
+                raise ValueError("an input table must be boolean (or 0/1): one column per item")
             values = values.astype(bool)
         names = list(data.columns)
         return [[names[position] for position in np.flatnonzero(row)] for row in values]
@@ -42,13 +42,13 @@ def as_transactions(data: Transactions) -> List[List[Any]]:
 
 class TransactionEncoder(ParamsMixin):
     """
-    Transacciones -> tabla booleana (una fila por transaccion, una columna por item, en orden alfabetico).
+    Transactions -> boolean table (one row per transaction, one column per item, in alphabetical order).
 
-    Argumentos:
-        handle_unknown: que hacer en ``transform`` con items que no se vieron en ``fit``: ``"ignore"`` (se descartan,
-            por defecto) o ``"error"``
+    Args:
+        handle_unknown: what to do in ``transform`` with items not seen in ``fit``: ``"ignore"`` (they are dropped,
+            default) or ``"error"``
 
-    Atributos tras ``fit``: ``columns_`` (lista ordenada de items).
+    Attributes after ``fit``: ``columns_`` (sorted list of items).
     """
 
     def __init__(self, handle_unknown: str = "ignore") -> None:
@@ -66,7 +66,7 @@ class TransactionEncoder(ParamsMixin):
 
     def transform(self, X: Transactions) -> pd.DataFrame:
         if not hasattr(self, "columns_"):
-            raise ValueError("el codificador no esta ajustado: llame antes a fit")
+            raise ValueError("the encoder is not fitted: call fit first")
         position = {item: index for index, item in enumerate(self.columns_)}
         transactions = as_transactions(X)
         table = np.zeros((len(transactions), len(self.columns_)), dtype=bool)
@@ -83,34 +83,34 @@ class TransactionEncoder(ParamsMixin):
         return self.fit(X).transform(X)
 
     def inverse_transform(self, table: pd.DataFrame) -> List[List[Any]]:
-        """De la tabla booleana a las transacciones (items en orden alfabetico)."""
+        """From the boolean table to transactions (items in alphabetical order)."""
         return as_transactions(table)
 
 
 class RuleMiner(ParamsMixin):
     """
-    Extrae reglas de asociacion de transacciones (una lista de listas de items o una tabla booleana).
+    Extract association rules from transactions (a list of lists of items or a boolean table).
 
-    Argumentos:
-        method: ``"fpgrowth"`` (todas las reglas con soporte >= `min_supp`), ``"top_k"`` (las `k` de mayor soporte,
-            sin umbral) o ``"rare"`` (reglas entre items frecuentes que juntos son raros; `max_supp` define que es
-            frecuente)
-        min_supp: soporte minimo (con ``"fpgrowth"``; con ``"top_k"`` y ``"rare"`` es un suelo opcional)
-        k: numero de reglas (``"top_k"``)
-        max_supp: umbral frecuente/raro (``"rare"``)
-        min_count: apariciones minimas de una combinacion rara (``"rare"``)
-        metric, min_threshold: medida de interes y su umbral minimo (ver ``ARM.association_rules``); con
-            ``"top_k"`` y ``"rare"`` el umbral se aplica a la confianza (`metric` debe ser ``"confidence"``)
-        min_lift: lift minimo, opcional
-        max_len: items maximos de una regla (``"top_k"``, ``"rare"``)
-        alpha: si no es None, se conservan solo las reglas significativas a ese nivel (``ARM.significant_rules``),
-            con la `correction` y el contraste `test` indicados
-        prune: si es verdadero, se quitan las reglas redundantes (``ARM.prune_redundant_rules``)
-        algorithm: con ``"fpgrowth"``, como se buscan los itemsets: ``"fpgrowth"`` (``FFIM.fpgrowth``) o ``"dense"``
-            (``FIM.dense_itemsets``, mejor con pocos items y muchas transacciones); mismo resultado
+    Args:
+        method: ``"fpgrowth"`` (all the rules with support >= `min_supp`), ``"top_k"`` (the `k` of highest support, no
+            threshold) or ``"rare"`` (rules between frequent items that are rare together; `max_supp` defines what is
+            frequent)
+        min_supp: minimum support (with ``"fpgrowth"``; with ``"top_k"`` and ``"rare"`` it is an optional floor)
+        k: number of rules (``"top_k"``)
+        max_supp: frequent/rare threshold (``"rare"``)
+        min_count: minimum occurrences of a rare combination (``"rare"``)
+        metric, min_threshold: interest measure and its minimum threshold (see ``ARM.association_rules``); with
+            ``"top_k"`` and ``"rare"`` the threshold applies to confidence (`metric` must be ``"confidence"``)
+        min_lift: minimum lift, optional
+        max_len: maximum items of a rule (``"top_k"``, ``"rare"``)
+        alpha: if not None, only the rules significant at that level are kept (``ARM.significant_rules``), with the
+            indicated `correction` and `test`
+        prune: if true, redundant rules are removed (``ARM.prune_redundant_rules``)
+        algorithm: with ``"fpgrowth"``, how the itemsets are searched: ``"fpgrowth"`` (``FFIM.fpgrowth``) or ``"dense"``
+            (``FIM.dense_itemsets``, better with few items and many transactions); same result
 
-    Atributos tras ``fit``: ``itemsets_`` (soporte e itemsets; solo con ``"fpgrowth"``), ``rules_`` (el formato de
-    ``ARM.association_rules``), ``n_transactions_``.
+    Attributes after ``fit``: ``itemsets_`` (support and itemsets; only with ``"fpgrowth"``), ``rules_`` (the format
+    of ``ARM.association_rules``), ``n_transactions_``.
     """
 
     METHODS = ("fpgrowth", "top_k", "rare")
@@ -147,7 +147,7 @@ class RuleMiner(ParamsMixin):
         self.n_transactions_ = len(transactions)
         self.itemsets_ = pd.DataFrame({"support": [], "itemsets": []})
         if self.method != "fpgrowth" and self.metric != "confidence":
-            raise ValueError("con method='{}' la medida es la confianza (metric='confidence')".format(self.method))
+            raise ValueError("with method='{}' the measure is confidence (metric='confidence')".format(self.method))
         if self.method == "fpgrowth":
             if self.algorithm == "dense":
                 self.itemsets_ = dense_itemsets(transactions, self.min_supp)
@@ -180,11 +180,11 @@ class RuleMiner(ParamsMixin):
 
     def transform(self, X: Transactions) -> pd.DataFrame:
         """
-        Tabla booleana con una columna por regla de ``rules_`` (``0``, ``1``...): verdadero cuando la transaccion cumple
-        el antecedente de la regla. Si hay items de las reglas que no estan en `X`, la regla no se cumple.
+        Boolean table with one column per rule of ``rules_`` (``0``, ``1``...): true when the transaction satisfies the
+        antecedent of the rule. If there are items of the rules that are not in `X`, the rule does not hold.
         """
         if not hasattr(self, "rules_"):
-            raise ValueError("el estimador no esta ajustado: llame antes a fit")
+            raise ValueError("the estimator is not fitted: call fit first")
         transactions = as_transactions(X)
         known = sorted({item for _, rule in self.rules_.iterrows() for item in rule["antecedents"]}, key=str)
         encoded = TransactionEncoder(handle_unknown="ignore").fit([known]).transform(transactions)
@@ -197,6 +197,6 @@ class RuleMiner(ParamsMixin):
         return self.fit(X).transform(X)
 
     def get_feature_names_out(self) -> List[str]:
-        """Texto de cada regla de ``rules_``, en el orden de las columnas de ``transform``."""
+        """Text of each rule of ``rules_``, in the order of the columns of ``transform``."""
         return ["{} => {}".format(",".join(sorted(map(str, a))), ",".join(sorted(map(str, c))))
                 for a, c in zip(self.rules_["antecedents"], self.rules_["consequents"])]

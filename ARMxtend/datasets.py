@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-Datos para probar y comparar: generadores sinteticos con patrones plantados (de modo que se sabe que deberia
-encontrar un algoritmo) y unos pocos conjuntos de ejemplo pequenos, incluidos en el paquete (no se descarga nada).
+Data to test and compare: synthetic generators with planted patterns (so that it is known what an algorithm should
+find) and a few small example datasets, included in the package (nothing is downloaded).
 
-Generadores (todos reproducibles con `random_state`):
+Generators (all reproducible with `random_state`):
 
-* ``make_transactions``: cestas de la compra al estilo del generador de IBM Quest (Agrawal y Srikant, 1994): se
-  eligen unos patrones frecuentes, y cada transaccion es una mezcla de patrones (con algun item perdido) y de items
-  sueltos.
-* ``make_sequences``: secuencias de elementos (conjuntos de items) con patrones secuenciales plantados.
-* ``make_quantities``: cantidades compradas y beneficios unitarios, para ``ARM.high_utility_rules``.
-* ``make_labeled_items``: tabla booleana y clase, donde la clase depende de unas pocas condiciones, para
+* ``make_transactions``: shopping baskets in the style of the IBM Quest generator (Agrawal and Srikant, 1994): some
+  frequent patterns are chosen, and each transaction is a mixture of patterns (with some item lost) and of loose
+  items.
+* ``make_sequences``: sequences of elements (sets of items) with planted sequential patterns.
+* ``make_quantities``: purchased quantities and unit profits, for ``ARM.high_utility_rules``.
+* ``make_labeled_items``: boolean table and class, where the class depends on a few conditions, for
   ``ARM.RuleClassifier``.
 
-Conjuntos de ejemplo (``load_dataset``): ``"han"`` (9 transacciones, el ejemplo de Han y Kamber), ``"weather"`` (14
-dias de la tabla del tenis de Quinlan, con la clase), ``"sales"`` (cantidades y beneficios, el ejemplo de utilidad) y
-``"routines"`` (secuencias de eventos de una casa).
+Example datasets (``load_dataset``): ``"han"`` (9 transactions, the example of Han and Kamber), ``"weather"`` (14 days
+of Quinlan's tennis table, with the class), ``"sales"`` (quantities and profits, the utility example) and
+``"routines"`` (event sequences of a house).
 
 @author Carlos Fernandez-Basso
 """
@@ -43,7 +43,7 @@ def _check_positive(**values: float) -> None:
 
 
 def _planted(rng: np.random.Generator, items: List[str], n_patterns: int, pattern_length: int) -> List[List[str]]:
-    # popularidad de los items decreciente (tipo Zipf): los patrones usan sobre todo los primeros
+    # decreasing item popularity (Zipf-like): the patterns mostly use the first ones
     weights = 1.0 / np.arange(1, len(items) + 1)
     weights /= weights.sum()
     size = min(pattern_length, len(items))
@@ -55,19 +55,19 @@ def make_transactions(n_transactions: int = 1000, n_items: int = 100, avg_length
                       pattern_length: int = 4, corruption: float = 0.2, random_state: Seed = None,
                       return_patterns: bool = False) -> Union[List[List[str]], Tuple[List[List[str]], List[List[str]]]]:
     """
-    Transacciones sinteticas con patrones frecuentes plantados.
+    Synthetic transactions with planted frequent patterns.
 
-    Argumentos:
-        n_transactions, n_items: tamano de los datos (los items se llaman ``i00``, ``i01``...)
-        avg_length: items medios por transaccion (Poisson, al menos 1)
-        n_patterns, pattern_length: patrones plantados y su longitud; su frecuencia sigue una exponencial, de modo
-            que unos pocos son muy frecuentes y otros raros
-        corruption: probabilidad de perder cada item de un patron al ponerlo en una transaccion
-        return_patterns: si es verdadero, devuelve tambien los patrones plantados
+    Args:
+        n_transactions, n_items: size of the data (the items are called ``i00``, ``i01``...)
+        avg_length: average items per transaction (Poisson, at least 1)
+        n_patterns, pattern_length: planted patterns and their length; their frequency follows an exponential, so a few
+            are very frequent and others rare
+        corruption: probability of losing each item of a pattern when putting it in a transaction
+        return_patterns: if true, also return the planted patterns
 
-    Retorna:
-        Lista de transacciones (listas de items sin repetir, ordenadas); con `return_patterns` la tupla
-        ``(transacciones, patrones)``.
+    Returns:
+        List of transactions (lists of items without repeats, sorted); with `return_patterns` the tuple
+        ``(transactions, patterns)``.
     """
     _check_positive(n_transactions=n_transactions, n_items=n_items, n_patterns=n_patterns, pattern_length=pattern_length)
     if not 0 <= corruption < 1:
@@ -87,7 +87,7 @@ def make_transactions(n_transactions: int = 1000, n_items: int = 100, avg_length
             if rng.random() < 0.5:
                 pattern = patterns[rng.choice(n_patterns, p=weights)]
                 basket.update(item for item in pattern if rng.random() >= corruption)
-            else:                                           # un item suelto que aun no este, segun su popularidad
+            else:                                           # a loose item not yet present, according to its popularity
                 free = np.array([item not in basket for item in items])
                 chance = popularity * free
                 basket.add(items[rng.choice(n_items, p=chance / chance.sum())])
@@ -99,13 +99,13 @@ def make_sequences(n_sequences: int = 500, n_items: int = 30, avg_elements: floa
                    n_patterns: int = 5, pattern_length: int = 3, random_state: Seed = None,
                    return_patterns: bool = False) -> Union[list, Tuple[list, list]]:
     """
-    Secuencias sinteticas (listas de elementos, cada uno una lista de items) con patrones secuenciales plantados.
+    Synthetic sequences (lists of elements, each a list of items) with planted sequential patterns.
 
-    Cada secuencia es una serie de elementos al azar; con probabilidad 1/2 se intercala un patron plantado, en
-    orden, con otros elementos entre medias. Un patron es una lista de items (un item por elemento).
+    Each sequence is a series of random elements; with probability 1/2 a planted pattern is interleaved, in order, with
+    other elements in between. A pattern is a list of items (one item per element).
 
-    Retorna:
-        Lista de secuencias; con `return_patterns` la tupla ``(secuencias, patrones)``.
+    Returns:
+        List of sequences; with `return_patterns` the tuple ``(sequences, patterns)``.
     """
     _check_positive(n_sequences=n_sequences, n_items=n_items, n_patterns=n_patterns, pattern_length=pattern_length)
     rng = _rng(random_state)
@@ -129,7 +129,7 @@ def make_sequences(n_sequences: int = 500, n_items: int = 30, avg_elements: floa
 
 
 def _interleave(sequence: list, pattern: List[str], rng: np.random.Generator) -> list:
-    """Sequence con los items de `pattern` en elementos distintos y en el mismo orden."""
+    """Sequence with the items of `pattern` in distinct elements and in the same order."""
     cuts = sorted(rng.choice(len(sequence) + 1, size=len(pattern), replace=True))
     result: list = []
     done = 0
@@ -145,8 +145,8 @@ def _interleave(sequence: list, pattern: List[str], rng: np.random.Generator) ->
 def make_quantities(n_transactions: int = 1000, n_items: int = 30, avg_length: float = 5.0, max_quantity: int = 5,
                     random_state: Seed = None) -> Tuple[pd.DataFrame, Dict[str, float]]:
     """
-    Cantidades compradas (una fila por transaccion, una columna por item, 0 si no se compro) y beneficio unitario
-    de cada item, para ``ARM.high_utility_rules``. Los beneficios siguen una log-normal: pocos items valen mucho.
+    Purchased quantities (one row per transaction, one column per item, 0 if not bought) and unit profit of each item,
+    for ``ARM.high_utility_rules``. The profits follow a log-normal: few items are worth a lot.
     """
     _check_positive(n_transactions=n_transactions, n_items=n_items, max_quantity=max_quantity)
     rng = _rng(random_state)
@@ -165,11 +165,11 @@ def make_quantities(n_transactions: int = 1000, n_items: int = 30, avg_length: f
 def make_labeled_items(n_samples: int = 500, n_features: int = 12, n_classes: int = 2, n_rules: int = 4,
                        noise: float = 0.05, random_state: Seed = None) -> Tuple[pd.DataFrame, pd.Series]:
     """
-    Tabla booleana ``items`` (columnas ``f00``, ``f01``...) y la clase ``labels`` de cada fila.
+    Boolean table ``items`` (columns ``f00``, ``f01``...) and the class ``labels`` of each row.
 
-    La clase la deciden `n_rules` reglas de dos condiciones, ``f_a y f_b -> clase`` (la primera que se cumpla); si
-    ninguna, la clase 0. Con probabilidad `noise` la clase de una fila se cambia por otra al azar, de modo que una
-    exactitud cercana a ``1 - noise`` es lo mejor que se puede esperar.
+    The class is decided by `n_rules` rules of two conditions, ``f_a and f_b -> class`` (the first one that holds); if
+    none holds, class 0. With probability `noise` the class of a row is changed to another at random, so an accuracy
+    close to ``1 - noise`` is the best that can be expected.
     """
     _check_positive(n_samples=n_samples, n_features=n_features, n_rules=n_rules)
     if n_classes < 2 or n_features < 2:
@@ -192,7 +192,7 @@ def make_labeled_items(n_samples: int = 500, n_features: int = 12, n_classes: in
 
 
 class Dataset(dict):
-    """Un conjunto de datos: un diccionario cuyas claves se leen tambien como atributos (``data.data``)."""
+    """A dataset: a dictionary whose keys are also read as attributes (``data.data``)."""
 
     def __getattr__(self, name: str) -> Any:
         try:
@@ -228,8 +228,8 @@ _ROUTINES = [[["alarm"], ["bathroom"], ["kitchen", "coffee"], ["leave"]],
 
 def load_dataset(name: str) -> Dataset:
     """
-    Un conjunto de ejemplo del paquete (ver ``list_datasets``). Devuelve un ``Dataset`` con ``data``, ``description`` y,
-    segun el caso, ``target`` (la clase), ``profits``... Cada llamada devuelve copias: se pueden modificar.
+    An example dataset of the package (see ``list_datasets``). It returns a ``Dataset`` with ``data``, ``description``
+    and, depending on the case, ``target`` (the class), ``profits``... Each call returns copies: they can be modified.
     """
     if name == "han":
         return Dataset(name=name, data=[list(basket) for basket in _HAN], description=(
@@ -251,9 +251,9 @@ def load_dataset(name: str) -> Dataset:
     if name == "routines":
         return Dataset(name=name, data=[[list(element) for element in sequence] for sequence in _ROUTINES],
                        description="6 days of events of a house, one sequence per day (alarm, bathroom, kitchen...).")
-    raise ValueError("conjunto desconocido '{}'; los disponibles son {}".format(name, list_datasets()))
+    raise ValueError("unknown dataset '{}'; the available ones are {}".format(name, list_datasets()))
 
 
 def list_datasets() -> List[str]:
-    """Nombres de los conjuntos de ejemplo de ``load_dataset``."""
+    """Names of the example datasets of ``load_dataset``."""
     return ["han", "weather", "sales", "routines"]
