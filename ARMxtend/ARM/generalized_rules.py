@@ -87,7 +87,7 @@ def interesting_rules(rules: pd.DataFrame, taxonomy: Optional[Taxonomy] = None, 
     if taxonomy is None or supports is None:
         raise ValueError("the taxonomy and the supports of the itemsets are needed (rules.attrs, or the arguments)")
     if interest < 1:
-        raise ValueError("interest debe ser >= 1")
+        raise ValueError("interest must be >= 1")
     result = rules.copy()
     result["interest"] = np.nan
     if len(rules) == 0:

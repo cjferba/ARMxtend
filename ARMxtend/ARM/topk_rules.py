@@ -47,11 +47,11 @@ def top_k_rules(transactions: Iterable[Iterable[Any]], k: int, min_conf: float =
         ``ARM.significance``). If fewer than `k` rules qualify, all of them come out
     """
     if k < 1:
-        raise ValueError("k debe ser >= 1")
+        raise ValueError("k must be >= 1")
     if not 0 <= min_conf <= 1 or not 0 <= min_supp <= 1:
-        raise ValueError("min_conf y min_supp deben estar en [0, 1]")
+        raise ValueError("min_conf and min_supp must be in [0, 1]")
     if (max_antecedent is not None and max_antecedent < 1) or (max_consequent is not None and max_consequent < 1):
-        raise ValueError("max_antecedent y max_consequent deben ser >= 1")
+        raise ValueError("max_antecedent and max_consequent must be >= 1")
     vertical = Vertical(transactions)
     total = vertical.total
     rows: List[Tuple[int, dict]] = []

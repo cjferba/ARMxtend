@@ -82,7 +82,7 @@ def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow):
     print("")
     print("Estado Actual - Intervalo de tiempo {} ({}):".format(slidingWindow.timeWindow, current_datetime))
 
-    # Solo presentar total de itemsets identificados
+    # Only show the total number of itemsets identified
     print("Total de Itemsets Frecuentes: {}".format(Actual_FIMoTS_Structure.frequentItemsetsBounds.getItemsetsCount()))
     print("Total de Itemsets Infrecuentes: {}".format(
         Actual_FIMoTS_Structure.infrequentItemsetsBounds.getItemsetsCount()))

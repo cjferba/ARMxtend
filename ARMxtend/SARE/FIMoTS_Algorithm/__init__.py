@@ -171,7 +171,7 @@ def FIMoTS_Initial(keyCurrentItemNode, currentItemNode, algStructure, slidingWin
         rightSiblingsCurrentNode = algStructure.itemsetsTree.getRightSiblings(keyCurrentItemNode, currentItemNode)
         newLevelCandidates = []
 
-        # Para cada nodo hermano derecho
+        # For each right sibling node
         for keyRightSibling, rightSibling in rightSiblingsCurrentNode.items():
 
             # If the itemset associated with the sibling node is frequent
@@ -366,7 +366,7 @@ def FIMoTS_UpdateBoundsList(currentItemNode, algStructure, minSupportElems, wind
     if currentItemNode.relativeSupport < minSupport:
         currentItemList = algStructure.infrequentItemsetsBounds
 
-    # Si el itemset infrecuente ha cambiado a frecuente
+    # If the infrequent itemset has become frequent
     else:
         currentItemList = algStructure.frequentItemsetsBounds
 
@@ -604,7 +604,7 @@ def FIMoTS_Main(deletedTransacSize, addedTransacSize, algStructure, slidingWindo
             # Actualizar cotas transformadoras del nodo en listas
             FIMoTS_UpdateBoundsList(currentFreqItemNode, algStructure, relSupportElems, windowSize)
 
-            # Si el itemset frecuente ha cambiado a infrecuente
+            # If the frequent itemset has become infrequent
             if currentFreqItemNode.relativeSupport < minRelSupport:
                 # Prune the child subtrees of the node
                 algStructure.deleteChildNodes(currentFreqItemKey)
@@ -641,7 +641,7 @@ def FIMoTS_Main(deletedTransacSize, addedTransacSize, algStructure, slidingWindo
             # Actualizar cotas transformadoras del nodo en listas
             FIMoTS_UpdateBoundsList(currentInfreqItemNode, algStructure, relSupportElems, windowSize)
 
-            # Si el itemset infrecuente ha cambiado a frecuente
+            # If the infrequent itemset has become frequent
             if currentInfreqItemNode.relativeSupport >= minRelSupport:
                 newFrequentItemsKeys.append(currentInfreqItemNode.getItemsetKey())
 

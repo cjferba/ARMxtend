@@ -44,10 +44,10 @@ from .significance import count_candidates
 
 def _lag_set(max_lag: int, lags: Optional[Iterable[int]]) -> List[int]:
     if max_lag < 1:
-        raise ValueError("max_lag debe ser >= 1, recibido: {}".format(max_lag))
+        raise ValueError("max_lag must be >= 1, got: {}".format(max_lag))
     chosen = range(1, max_lag + 1) if lags is None else sorted({int(lag) for lag in lags})
     if any(lag < 1 or lag > max_lag for lag in chosen):
-        raise ValueError("lags debe estar contenido en 1..{}, recibido: {}".format(max_lag, list(chosen)))
+        raise ValueError("lags must be within 1..{}, got: {}".format(max_lag, list(chosen)))
     return [0] + list(chosen)
 
 

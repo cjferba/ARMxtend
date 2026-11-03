@@ -217,7 +217,7 @@ class AREtoGraph(object):
             list[str]: the identifiers of the summary nodes created
         """
         if signature not in _VALID_SIGNATURES:
-            raise ValueError("signature debe ser uno de {}, recibido: {}".format(_VALID_SIGNATURES, signature))
+            raise ValueError("signature must be one of {}, got: {}".format(_VALID_SIGNATURES, signature))
         measures = list(measures) if measures is not None else self.MeasuresRules
 
         groups: Dict[tuple, dict] = {}
@@ -468,7 +468,7 @@ class AREtoGraph(object):
             return self.graph
         else:
             raise ValueError(
-                "type debe ser 0 (JGF), 1 (GraphML), 2 (DOT) o 3 (networkx.DiGraph), recibido: {}".format(type))
+                "type debe ser 0 (JGF), 1 (GraphML), 2 (DOT) o 3 (networkx.DiGraph), got: {}".format(type))
 
     def _sanitized_graph(self):
         """Copy of the graph with list-type attributes serialized as text (GraphML does not admit lists)."""

@@ -221,9 +221,9 @@ def evaluate_next_events(sequences: Iterable[SequenceLike], rules: pd.DataFrame,
     """
     _check_combine(combine)
     if k < 1 or min_prefix < 1:
-        raise ValueError("k y min_prefix deben ser >= 1")
+        raise ValueError("k and min_prefix must be >= 1")
     if target not in ("future", "next"):
-        raise ValueError("target debe ser 'future' o 'next', recibido: '{}'".format(target))
+        raise ValueError("target must be 'future' or 'next', got: '{}'".format(target))
     compiled = _compile(rules)
     popularity: List[str] = []
     if train is not None:

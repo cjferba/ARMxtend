@@ -35,7 +35,7 @@ from ...ARM._measures import MEASURES
 # 'support' (FSupp) is computed from the bit-list of the itemset A u B; the rest are
 # functions of (supp(AB), supp(A), supp(B)) evaluated at each alpha-cut and
 # aggregated with the weights (alpha_i - alpha_i+1), according to the RL-theory. The
-# confianza difusa usa ademas la convencion 0/0 := 1 (ver
+# fuzzy confidence also uses the convention 0/0 := 1 (see
 # `_confidence_per_level`).
 _DEFAULT_COLUMNS = ("support", "confidence", "certainty_factor")
 _METRICS = ("support",) + tuple(MEASURES)
@@ -81,7 +81,7 @@ def fuzzy_association_rules(freq_itemsets: Mapping[str, np.ndarray], num_alpha: 
         `min_threshold` in `metric`.
     """
     if metric not in _METRICS:
-        raise ValueError("metric debe ser uno de {}, recibido: '{}'".format(_METRICS, metric))
+        raise ValueError("metric must be one of {}, got: '{}'".format(_METRICS, metric))
     extraMeasures = [m for m in (measures or []) if m not in _DEFAULT_COLUMNS]
     for measure in extraMeasures:
         if measure not in _METRICS:

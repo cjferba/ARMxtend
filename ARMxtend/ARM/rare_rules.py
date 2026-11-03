@@ -39,9 +39,9 @@ def rare_rules(transactions: Iterable[Iterable[Any]], max_supp: float, min_supp:
         holds 'n_transactions' and 'n_candidates' (partitions examined)
     """
     if not 0 <= min_conf <= 1:
-        raise ValueError("min_conf debe estar en [0, 1]")
+        raise ValueError("min_conf must be in [0, 1]")
     if (max_antecedent is not None and max_antecedent < 1) or (max_consequent is not None and max_consequent < 1):
-        raise ValueError("max_antecedent y max_consequent deben ser >= 1")
+        raise ValueError("max_antecedent and max_consequent must be >= 1")
     baskets = [list(transaction) for transaction in transactions]
     itemsets = minimal_rare_itemsets(baskets, max_supp, min_supp, min_count=min_count, min_len=2, max_len=max_len)
     vertical = Vertical(baskets)

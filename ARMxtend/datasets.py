@@ -39,7 +39,7 @@ def _names(prefix: str, count: int) -> List[str]:
 def _check_positive(**values: float) -> None:
     for name, value in values.items():
         if value < 1:
-            raise ValueError("{} debe ser >= 1".format(name))
+            raise ValueError("{} must be >= 1".format(name))
 
 
 def _planted(rng: np.random.Generator, items: List[str], n_patterns: int, pattern_length: int) -> List[List[str]]:
@@ -71,7 +71,7 @@ def make_transactions(n_transactions: int = 1000, n_items: int = 100, avg_length
     """
     _check_positive(n_transactions=n_transactions, n_items=n_items, n_patterns=n_patterns, pattern_length=pattern_length)
     if not 0 <= corruption < 1:
-        raise ValueError("corruption debe estar en [0, 1)")
+        raise ValueError("corruption must be in [0, 1)")
     rng = _rng(random_state)
     items = _names("i", n_items)
     patterns = _planted(rng, items, n_patterns, pattern_length)
@@ -173,9 +173,9 @@ def make_labeled_items(n_samples: int = 500, n_features: int = 12, n_classes: in
     """
     _check_positive(n_samples=n_samples, n_features=n_features, n_rules=n_rules)
     if n_classes < 2 or n_features < 2:
-        raise ValueError("n_classes y n_features deben ser >= 2")
+        raise ValueError("n_classes and n_features must be >= 2")
     if not 0 <= noise < 1:
-        raise ValueError("noise debe estar en [0, 1)")
+        raise ValueError("noise must be in [0, 1)")
     rng = _rng(random_state)
     names = _names("f", n_features)
     items = pd.DataFrame(rng.random((n_samples, n_features)) < 0.4, columns=names)

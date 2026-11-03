@@ -198,7 +198,7 @@ def extend_transactions(transactions: Iterable[Iterable[Any]], taxonomy: Taxonom
 def generalize_transactions(transactions: Iterable[Iterable[Any]], taxonomy: Taxonomy, level: int) -> List[FrozenSet[str]]:
     """Each item replaced by its ancestor at level `level` (those of lower or equal level stay)."""
     if level < 1:
-        raise ValueError("level debe ser >= 1")
+        raise ValueError("level must be >= 1")
     return [frozenset(general for item in basket for general in taxonomy.at_level(item, level))
             for basket in _as_baskets(transactions)]
 
@@ -213,7 +213,7 @@ def _level_thresholds(min_supp: MinSupp, levels: Sequence[int]) -> Dict[int, flo
         listed = {1: float(min_supp)}
     for value in listed.values():
         if not 0 < value <= 1:
-            raise ValueError("min_supp debe estar en (0, 1]")
+            raise ValueError("min_supp must be in (0, 1]")
     ordered = sorted(listed)
     return {level: listed[max([k for k in ordered if k <= level] or [ordered[0]])] for level in levels}
 
@@ -241,7 +241,7 @@ def generalized_itemsets(transactions: Iterable[Iterable[Any]], taxonomy: Taxono
     baskets = _as_baskets(transactions)
     total = len(baskets)
     if max_len is not None and max_len < 1:
-        raise ValueError("max_len debe ser >= 1")
+        raise ValueError("max_len must be >= 1")
     empty = pd.DataFrame({"support": [], "itemsets": []})
     empty.attrs["n_transactions"] = total
     _level_thresholds(min_supp, [1])                                          # valida min_supp

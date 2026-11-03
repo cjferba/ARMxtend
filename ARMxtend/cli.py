@@ -68,7 +68,7 @@ def _read_sequences(args: argparse.Namespace) -> list:
 
     if args.sequence_column:
         if not (args.time_column and args.item_column):
-            raise ValueError("--sequence-column necesita tambien --time-column y --item-column")
+            raise ValueError("--sequence-column also needs --time-column and --item-column")
         events = pd.read_csv(args.input, sep=args.delimiter)
         if args.time_column in events.columns and events[args.time_column].dtype == object:
             events[args.time_column] = pd.to_datetime(events[args.time_column])
@@ -98,7 +98,7 @@ def _items_from_table(table: pd.DataFrame, args: argparse.Namespace) -> pd.DataF
     columns = list(args.columns) if args.columns else list(table.columns)
     missing = [name for name in columns if name not in table.columns]
     if missing:
-        raise ValueError("columnas inexistentes: {}".format(", ".join(missing)))
+        raise ValueError("nonexistent columns: {}".format(", ".join(missing)))
     table = table[columns].copy()
     numeric = []
     for name in columns:
@@ -112,7 +112,7 @@ def _items_from_table(table: pd.DataFrame, args: argparse.Namespace) -> pd.DataF
     items = to_items(discretize(table, numeric, n_symbols=args.symbols, method=args.method))
     if args.calendar:
         if not isinstance(items.index, pd.DatetimeIndex):
-            raise ValueError("--calendar necesita --time-column")
+            raise ValueError("--calendar needs --time-column")
         items = items.join(calendar_items(items.index, args.calendar))
     return items
 
@@ -205,7 +205,7 @@ def _run_generalized_rules(args: argparse.Namespace) -> pd.DataFrame:
         for entry in args.level_supp:
             level, _, value = entry.partition("=")
             if not value:
-                raise ValueError("--level-supp espera NIVEL=SOPORTE, recibido '{}'".format(entry))
+                raise ValueError("--level-supp espera NIVEL=SOPORTE, got '{}'".format(entry))
             min_supp[int(level)] = float(value)
     rules = generalized_rules(transactions, taxonomy, min_supp, metric=args.metric, min_threshold=args.min_threshold,
                               max_len=args.max_len, interest=args.interest)
@@ -383,7 +383,7 @@ def _run_fuzzy_sequential_rules(args: argparse.Namespace) -> pd.DataFrame:
 def _train_cut(rows: int, fraction: float) -> int:
     """First row of the test part when the first `fraction` rows are training."""
     if not 0 < fraction < 1:
-        raise ValueError("--train-fraction debe estar en (0, 1)")
+        raise ValueError("--train-fraction must be in (0, 1)")
     cut = int(rows * fraction)
     if cut < 2 or rows - cut < 2:
         raise ValueError("there are too few rows ({}) to split them with --train-fraction {}".format(rows, fraction))
@@ -450,7 +450,7 @@ def _run_next_events(args: argparse.Namespace) -> pd.DataFrame:
     training = sequences
     if args.test_fraction:
         if not 0 < args.test_fraction < 1:
-            raise ValueError("--test-fraction debe estar en (0, 1)")
+            raise ValueError("--test-fraction must be in (0, 1)")
         cut = len(sequences) - max(1, int(len(sequences) * args.test_fraction))
         training = sequences[:cut]
     elif not args.history:
@@ -480,7 +480,7 @@ def _run_classify(args: argparse.Namespace) -> pd.DataFrame:
     labels = table.pop(args.class_column)
     items = _items_from_table(table, args)
     if not 0 <= args.test_fraction < 1:
-        raise ValueError("--test-fraction debe estar en [0, 1)")
+        raise ValueError("--test-fraction must be in [0, 1)")
     order = np.random.RandomState(args.seed).permutation(len(items))
     cut = len(items) - int(len(items) * args.test_fraction)
     train, test = order[:cut], order[cut:]
@@ -557,7 +557,7 @@ def _common_output_options(parser: argparse.ArgumentParser, metric: str, min_thr
 
 
 def _significance_options(parser: argparse.ArgumentParser, permutations: bool = False, what: str = "rules") -> None:
-    """Opciones de significacion estadistica (ver ARM.significance)."""
+    """Statistical significance options (see ARM.significance)."""
     parser.add_argument("--alpha", type=float,
                         help="keep only the {} that are statistically significant at this level, after "
                              "correcting for multiple tests".format(what))

@@ -41,7 +41,7 @@ def _weights(rules: pd.DataFrame, weight: str, floor: float) -> np.ndarray:
     if weight == "confidence":
         return confidence
     if not 0 < floor < 1:
-        raise ValueError("floor debe estar en (0, 1)")
+        raise ValueError("floor must be in (0, 1)")
     return -np.log2(np.maximum(1.0 - confidence, floor))
 
 

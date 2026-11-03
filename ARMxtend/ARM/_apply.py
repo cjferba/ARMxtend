@@ -68,7 +68,7 @@ def max_lag(itemsets: Iterable[Iterable[str]]) -> int:
 def require_columns(rules: pd.DataFrame, *names: str) -> None:
     missing = [name for name in names if name not in rules.columns]
     if missing:
-        raise ValueError("a `rules` le faltan las columnas {}".format(missing))
+        raise ValueError("`rules` is missing the columns {}".format(missing))
 
 
 def describe_rule(antecedent: Iterable[str], consequent: Iterable[str]) -> str:

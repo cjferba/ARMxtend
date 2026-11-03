@@ -85,7 +85,7 @@ class FuzzyLib(object):
             The list of names of the fuzzy columns added to the dataset
         """
         if membership not in MEMBERSHIPS:
-            raise ValueError("membership debe ser uno de {}, recibido: '{}'".format(MEMBERSHIPS, membership))
+            raise ValueError("membership must be one of {}, got: '{}'".format(MEMBERSHIPS, membership))
         Atri = Atri or []
         thresholds = thresholds or []
         FuzzyLabel = FuzzyLabel or []
@@ -104,7 +104,7 @@ class FuzzyLib(object):
         for attr, params, labels in zip(Atri, thresholds, FuzzyLabel):
             if len(params) != len(labels):
                 raise ValueError(
-                    "El atributo '{}' tiene {} picos pero {} etiquetas".format(attr, len(params), len(labels)))
+                    "Attribute '{}' has {} peaks but {} labels".format(attr, len(params), len(labels)))
 
             memberships = partition(self.data[attr].values, params)
             addedColumns.extend(self._add_memberships(attr, labels, memberships, membership, params))
@@ -134,14 +134,14 @@ class FuzzyLib(object):
             Atri = list(self.data.select_dtypes("number").columns)
         labels = list(FuzzyLabel) if FuzzyLabel is not None else default_labels(n_labels)
         if len(labels) != n_labels:
-            raise ValueError("Se piden {} etiquetas pero se dan {} nombres".format(n_labels, len(labels)))
+            raise ValueError("{} labels were requested but {} names were given".format(n_labels, len(labels)))
 
         addedColumns = []
         for attr in Atri:
             try:
                 memberships, params = automatic_partition(self.data[attr].values, n_labels, method, membership)
             except ValueError as error:
-                raise ValueError("Atributo '{}': {}".format(attr, error))
+                raise ValueError("Attribute '{}': {}".format(attr, error))
             addedColumns.extend(self._add_memberships(attr, labels, memberships, membership, params))
 
         self.atributes = list(self.data.columns)

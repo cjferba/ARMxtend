@@ -62,7 +62,7 @@ def _windows(index: pd.Index, width: Width, step: Optional[Width]) -> Iterator[T
     if isinstance(width, (int, np.integer)):
         stride = int(width) if step is None else int(cast(int, step))
         if width < 1 or stride < 1:
-            raise ValueError("width y step deben ser >= 1")
+            raise ValueError("width and step must be >= 1")
         for start in range(0, rows - width + 1, stride):
             yield start, start + width
         return
@@ -72,7 +72,7 @@ def _windows(index: pd.Index, width: Width, step: Optional[Width]) -> Iterator[T
     span = pd.Timedelta(width)
     stride_time = span if step is None else pd.Timedelta(step)
     if span <= pd.Timedelta(0) or stride_time <= pd.Timedelta(0):
-        raise ValueError("width y step deben ser duraciones positivas")
+        raise ValueError("width and step must be positive durations")
     cursor, last = index[0], index[-1]
     while cursor <= last:
         yield int(index.searchsorted(cursor, side="left")), int(index.searchsorted(cursor + span, side="left"))
@@ -120,7 +120,7 @@ def window_rules(data: pd.DataFrame, width: Width, step: Optional[Width] = None,
         frames.append(rules)
         count += 1
     if not frames:
-        raise ValueError("ninguna ventana tiene al menos {} filas".format(min_rows))
+        raise ValueError("no window has at least {} rows".format(min_rows))
     result = pd.concat(frames, ignore_index=True)
     result.attrs["n_windows"] = count
     return result

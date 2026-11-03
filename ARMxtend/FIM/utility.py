@@ -30,7 +30,7 @@ def utility_tables(quantities: Quantities, profits: Optional[Mapping[Any, float]
     table = quantities.copy() if isinstance(quantities, pd.DataFrame) else pd.DataFrame(list(quantities))
     table.columns = [str(name) for name in table.columns]
     if not all(pd.api.types.is_numeric_dtype(table[name]) for name in table.columns):
-        raise ValueError("las cantidades deben ser numericas")
+        raise ValueError("the quantities must be numeric")
     amounts = table.fillna(0.0).to_numpy(dtype=float)
     if (amounts < 0).any():
         raise ValueError("quantities cannot be negative")
@@ -44,7 +44,7 @@ def utility_tables(quantities: Quantities, profits: Optional[Mapping[Any, float]
             raise ValueError("the profits of {} are missing".format(missing))
         gain = np.array([by_name[item] for item in items])
         if (gain < 0).any():
-            raise ValueError("los beneficios deben ser >= 0")
+            raise ValueError("the profits must be >= 0")
     return items, amounts, amounts * gain
 
 
@@ -72,14 +72,14 @@ def high_utility_itemsets(quantities: Quantities, profits: Optional[Mapping[Any,
     total_utility = float(transaction_utility.sum())
     if absolute:
         if min_utility <= 0:
-            raise ValueError("min_utility debe ser > 0")
+            raise ValueError("min_utility must be > 0")
         threshold = float(min_utility)
     else:
         if not 0 < min_utility <= 1:
             raise ValueError("min_utility must be in (0, 1] (a fraction of the total utility)")
         threshold = min_utility * total_utility
     if max_len is not None and max_len < 1:
-        raise ValueError("max_len debe ser >= 1")
+        raise ValueError("max_len must be >= 1")
     present = amounts > 0
     cutoff = threshold - _EPS * max(1.0, abs(threshold))
     found: List[Tuple[float, Tuple[int, ...], float]] = []

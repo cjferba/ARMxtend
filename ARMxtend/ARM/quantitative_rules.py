@@ -46,7 +46,7 @@ def partial_completeness_intervals(n_quantitative: int, min_supp: float, complet
         completeness (float): level K of partial completeness, > 1 (the closer to 1, the more intervals)
     """
     if n_quantitative < 1 or not 0 < min_supp <= 1 or completeness <= 1:
-        raise ValueError("hace falta n_quantitative >= 1, min_supp en (0, 1] y completeness > 1")
+        raise ValueError("n_quantitative >= 1, min_supp in (0, 1] and completeness > 1 are required")
     return int(math.ceil(2 * n_quantitative / (min_supp * (completeness - 1))))
 
 
@@ -75,11 +75,11 @@ class IntervalPartition(object):
     def __init__(self, n_intervals: int = 8, method: str = "quantile", max_supp: float = 0.5,
                  columns: Optional[Sequence[str]] = None, quantitative: Optional[Sequence[str]] = None):
         if n_intervals < 1:
-            raise ValueError("n_intervals debe ser >= 1")
+            raise ValueError("n_intervals must be >= 1")
         if method not in ("quantile", "uniform"):
-            raise ValueError("method debe ser 'quantile' o 'uniform', recibido: '{}'".format(method))
+            raise ValueError("method must be 'quantile' or 'uniform', got: '{}'".format(method))
         if not 0 < max_supp <= 1:
-            raise ValueError("max_supp debe estar en (0, 1]")
+            raise ValueError("max_supp must be in (0, 1]")
         self.n_intervals, self.method, self.max_supp = n_intervals, method, max_supp
         self.columns, self.quantitative = columns, quantitative
 
@@ -87,7 +87,7 @@ class IntervalPartition(object):
         columns = list(self.columns) if self.columns is not None else list(table.columns)
         missing = [name for name in columns if name not in table.columns]
         if missing:
-            raise ValueError("columnas inexistentes: {}".format(", ".join(map(str, missing))))
+            raise ValueError("nonexistent columns: {}".format(", ".join(map(str, missing))))
         if self.quantitative is not None:
             numeric = list(self.quantitative)
             wrong = [name for name in numeric if name not in columns or not pd.api.types.is_numeric_dtype(table[name])]
@@ -151,7 +151,7 @@ class IntervalPartition(object):
             raise ValueError("fit must be called before transform")
         missing = [name for name in self._numeric + self.categorical_ if name not in table.columns]
         if missing:
-            raise ValueError("faltan las columnas {}".format(missing))
+            raise ValueError("missing the columns {}".format(missing))
         baskets: List[List[str]] = [[] for _ in range(len(table))]
         for name in self._numeric:
             edges = self.edges_[str(name)]

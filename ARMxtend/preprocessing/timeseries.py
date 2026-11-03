@@ -61,10 +61,10 @@ def item_variable(item: str) -> str:
 
 def _symbol_labels(n_symbols: int, labels: Optional[Sequence[str]]) -> List[str]:
     if n_symbols < 2:
-        raise ValueError("n_symbols debe ser >= 2, recibido: {}".format(n_symbols))
+        raise ValueError("n_symbols must be >= 2, got: {}".format(n_symbols))
     names = list(labels) if labels is not None else default_labels(n_symbols)
     if len(names) != n_symbols:
-        raise ValueError("labels debe tener {} etiquetas, recibidas: {}".format(n_symbols, len(names)))
+        raise ValueError("labels must have {} labels, got: {}".format(n_symbols, len(names)))
     for name in names:
         if "-" in name or VALUE_SEP in name:
             raise ValueError("labels cannot contain '-' or '{}': '{}'".format(VALUE_SEP, name))
@@ -101,7 +101,7 @@ def symbolize(values: Union[pd.Series, Sequence[float], np.ndarray], n_symbols: 
         ties there can be fewer than `n_symbols` distinct symbols, and a constant series gets a single symbol.
     """
     if method not in _SYMBOLIZE_METHODS:
-        raise ValueError("method debe ser uno de {}, recibido: '{}'".format(_SYMBOLIZE_METHODS, method))
+        raise ValueError("method must be one of {}, got: '{}'".format(_SYMBOLIZE_METHODS, method))
     names = _symbol_labels(n_symbols, labels)
     series = values if isinstance(values, pd.Series) else pd.Series(np.asarray(values, dtype=float))
     data = series.to_numpy(dtype=float)
@@ -190,7 +190,7 @@ def calendar_items(index: Union[pd.DatetimeIndex, Sequence[Any]],
     """
     unknown = [part for part in parts if part not in _CALENDAR_PARTS]
     if unknown:
-        raise ValueError("partes de calendario desconocidas {}; validas: {}".format(unknown, _CALENDAR_PARTS))
+        raise ValueError("unknown calendar parts {}; valid ones: {}".format(unknown, _CALENDAR_PARTS))
     stamps = index if isinstance(index, pd.DatetimeIndex) else pd.DatetimeIndex(list(index))
 
     labels = {
@@ -240,7 +240,7 @@ def lag_items(df: pd.DataFrame, lags: Iterable[int], drop_incomplete: bool = Tru
     requested = list(lags)
     steps = sorted({int(lag) for lag in requested})
     if not steps or steps[0] < 0:
-        raise ValueError("lags debe contener enteros >= 0, recibido: {}".format(requested))
+        raise ValueError("lags must contain integers >= 0, got: {}".format(requested))
     values = _as_array(df)
     rows = len(values)
     if drop_incomplete and rows <= steps[-1]:
@@ -278,9 +278,9 @@ def window_items(df: pd.DataFrame, width: int, step: int = 1, how: str = "any") 
         pandas.DataFrame with one row per window, indexed by the last instant of the window
     """
     if how not in ("any", "all", "mean"):
-        raise ValueError("how debe ser 'any', 'all' o 'mean', recibido: '{}'".format(how))
+        raise ValueError("how must be 'any', 'all' or 'mean', got: '{}'".format(how))
     if width < 1 or step < 1:
-        raise ValueError("width y step deben ser >= 1")
+        raise ValueError("width and step must be >= 1")
     values = _as_array(df)
     if len(values) < width:
         raise ValueError("the table has {} rows, fewer than width={}".format(len(values), width))

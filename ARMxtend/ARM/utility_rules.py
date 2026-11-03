@@ -39,9 +39,9 @@ def high_utility_rules(quantities: Quantities, profits: Optional[Mapping[str, fl
         'n_transactions', 'total_utility' and 'n_candidates'
     """
     if not 0 <= min_conf <= 1:
-        raise ValueError("min_conf debe estar en [0, 1]")
+        raise ValueError("min_conf must be in [0, 1]")
     if (max_antecedent is not None and max_antecedent < 1) or (max_consequent is not None and max_consequent < 1):
-        raise ValueError("max_antecedent y max_consequent deben ser >= 1")
+        raise ValueError("max_antecedent and max_consequent must be >= 1")
     items, amounts, _ = utility_tables(quantities, profits)
     itemsets = high_utility_itemsets(quantities, profits, min_utility, absolute, min_len=2, max_len=max_len)
     total_utility = itemsets.attrs["total_utility"]

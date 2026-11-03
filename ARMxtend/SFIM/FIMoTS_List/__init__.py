@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-SFIM comparte con SARE la implementacion de FIMoTS (la unica diferencia entre ambos es que
-SARE ademas extrae reglas de asociacion): este modulo reexporta `ARMxtend.SARE.FIMoTS_List`.
-Antes habia aqui una copia identica que termino divergiendo cuando solo se corrigio una.
+SFIM shares the FIMoTS implementation with SARE (the only difference between them is that
+SARE also extracts association rules): this module re-exports `ARMxtend.SARE.FIMoTS_List`.
+There used to be an identical copy here that ended up diverging when only one was fixed.
 """
 from ...SARE.FIMoTS_List import *  # noqa: F401,F403

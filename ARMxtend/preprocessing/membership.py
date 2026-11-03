@@ -95,7 +95,7 @@ def trapezoidal_membership(values: ArrayLike, a: float, b: float, c: float, d: f
         numpy.ndarray of membership degrees in [0, 1]
     """
     if not (a <= b <= c <= d):
-        raise ValueError("Un trapecio requiere a <= b <= c <= d, recibido: {}".format((a, b, c, d)))
+        raise ValueError("A trapezoid requires a <= b <= c <= d, got: {}".format((a, b, c, d)))
     values = np.asarray(values, dtype=float)
 
     with np.errstate(invalid="ignore", divide="ignore"):
@@ -122,7 +122,7 @@ def trapezoidal_partition(values: ArrayLike, params: Sequence[Tuple[float, float
 def gaussian_membership(values: ArrayLike, center: float, sigma: float) -> np.ndarray:
     """exp(-(x - center)^2 / (2 sigma^2)). Vale 1 en `center`; sigma > 0."""
     if sigma <= 0:
-        raise ValueError("sigma debe ser > 0, recibido: {}".format(sigma))
+        raise ValueError("sigma must be > 0, got: {}".format(sigma))
     values = np.asarray(values, dtype=float)
     return np.exp(-0.5 * ((values - center) / sigma) ** 2)
 
@@ -171,9 +171,9 @@ def automatic_peaks(values: ArrayLike, n_labels: int = 3, method: str = "quantil
     Raises ValueError if the data do not have enough distinct values for `n_labels` distinct peaks.
     """
     if method not in METHODS:
-        raise ValueError("method debe ser uno de {}, recibido: '{}'".format(METHODS, method))
+        raise ValueError("method must be one of {}, got: '{}'".format(METHODS, method))
     if n_labels < 2:
-        raise ValueError("n_labels debe ser >= 2, recibido: {}".format(n_labels))
+        raise ValueError("n_labels must be >= 2, got: {}".format(n_labels))
     values = np.asarray(values, dtype=float)
     values = values[~np.isnan(values)]
     if len(values) == 0:
@@ -215,7 +215,7 @@ def automatic_partition(values: ArrayLike, n_labels: int = 3, method: str = "qua
         with `FuzzyLib.Fuzzification`.
     """
     if membership not in MEMBERSHIPS:
-        raise ValueError("membership debe ser uno de {}, recibido: '{}'".format(MEMBERSHIPS, membership))
+        raise ValueError("membership must be one of {}, got: '{}'".format(MEMBERSHIPS, membership))
     peaks = automatic_peaks(values, n_labels, method)
     gaps = np.diff(peaks)
 

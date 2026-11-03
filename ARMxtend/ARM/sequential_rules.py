@@ -75,7 +75,7 @@ def sequential_rules(sequences: Iterable[Iterable[Union[str, Iterable[str]]]], m
     if metric not in MEASURES and metric != "support":
         raise ValueError("metric must be 'support' or one of {}, received: '{}'".format(sorted(MEASURES), metric))
     if max_antecedent < 1 or max_consequent < 1:
-        raise ValueError("max_antecedent y max_consequent deben ser >= 1")
+        raise ValueError("max_antecedent and max_consequent must be >= 1")
     vocabulary = sorted({item for sequence in database for element in sequence for item in element})
     check_item_names(vocabulary)
 

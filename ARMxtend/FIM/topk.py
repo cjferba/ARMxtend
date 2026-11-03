@@ -59,9 +59,9 @@ def top_k_itemsets(transactions: Iterable[Iterable[Any]], k: int, min_len: int =
         proportional to transactions x items plus the frontier of the search
     """
     if k < 1:
-        raise ValueError("k debe ser >= 1")
+        raise ValueError("k must be >= 1")
     if not 0 <= min_supp <= 1:
-        raise ValueError("min_supp debe estar en [0, 1]")
+        raise ValueError("min_supp must be in [0, 1]")
     vertical = Vertical(transactions)
     found: List[Tuple[float, frozenset]] = []
     if vertical.total:

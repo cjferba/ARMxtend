@@ -92,7 +92,7 @@ def _fisher_pvalue(n_ac: int, n_a: int, n_c: int, n: int, alternative: str) -> f
     greater = _hypergeom_upper(n_ac, n_a, n_c, n)
     if alternative == "greater":
         return greater
-    # P(X <= k) = P(Y >= n_a - k) con Y = extracciones - X ~ Hipergeometrica(n, n - n_c, n_a)
+    # P(X <= k) = P(Y >= n_a - k) with Y = draws - X ~ Hypergeometric(n, n - n_c, n_a)
     less = _hypergeom_upper(n_a - n_ac, n_a, n - n_c, n)
     if alternative == "less":
         return less
@@ -123,7 +123,7 @@ def _rule_counts(rules: pd.DataFrame, n_transactions: Optional[int]) -> Tuple[np
                          "temporal_association_rules already carry it in rules.attrs)")
     n = int(n)
     if n < 1:
-        raise ValueError("n_transactions debe ser >= 1, recibido: {}".format(n))
+        raise ValueError("n_transactions must be >= 1, got: {}".format(n))
     missing = [column for column in ("support", "antecedent support", "consequent support") if column not in rules.columns]
     if missing:
         raise ValueError("the rules need the columns {}: this test is for crisp rules "
@@ -163,9 +163,9 @@ def rule_significance(rules: pd.DataFrame, n_transactions: Optional[int] = None,
         ``permutation_null``.
     """
     if method not in TESTS:
-        raise ValueError("method debe ser uno de {}, recibido: '{}'".format(TESTS, method))
+        raise ValueError("method must be one of {}, got: '{}'".format(TESTS, method))
     if alternative not in ALTERNATIVES:
-        raise ValueError("alternative debe ser uno de {}, recibido: '{}'".format(ALTERNATIVES, alternative))
+        raise ValueError("alternative must be one of {}, got: '{}'".format(ALTERNATIVES, alternative))
     nAC, nA, nC, n = _rule_counts(rules, n_transactions)
     test = _fisher_pvalue if method == "fisher" else _chi2_pvalue
     result = rules.copy()
@@ -193,7 +193,7 @@ def adjust_pvalues(p_values: Union[Iterable[float], np.ndarray], method: str = "
         numpy.ndarray with the adjusted p-values, in the input order and in [0, 1].
     """
     if method not in CORRECTIONS:
-        raise ValueError("method debe ser uno de {}, recibido: '{}'".format(CORRECTIONS, method))
+        raise ValueError("method must be one of {}, got: '{}'".format(CORRECTIONS, method))
     p = np.asarray(list(p_values) if not isinstance(p_values, np.ndarray) else p_values, dtype=float)
     count = len(p)
     total = count if n_tests is None else int(n_tests)
@@ -202,7 +202,7 @@ def adjust_pvalues(p_values: Union[Iterable[float], np.ndarray], method: str = "
     if count == 0:
         return p.copy()
     if np.any((p < 0) | (p > 1)) or np.any(np.isnan(p)):
-        raise ValueError("los p-valores deben estar en [0, 1]")
+        raise ValueError("the p-values must be in [0, 1]")
     order = np.argsort(p, kind="mergesort")
     sortedP = p[order]
     ranks = np.arange(1, count + 1, dtype=float)
@@ -251,7 +251,7 @@ def significant_rules(rules: pd.DataFrame, alpha: float = 0.05, correction: str 
         sorted by adjusted p-value.
     """
     if not 0 < alpha < 1:
-        raise ValueError("alpha debe estar en (0, 1), recibido: {}".format(alpha))
+        raise ValueError("alpha must be in (0, 1), got: {}".format(alpha))
     family = n_tests if n_tests is not None else rules.attrs.get("n_candidates")
     scored = rule_significance(rules, n_transactions, method, alternative)
     family = max(int(family), len(scored)) if family is not None else len(scored)
@@ -304,9 +304,9 @@ def confidence_intervals(rules: pd.DataFrame, n_transactions: Optional[int] = No
         intervals are too narrow.
     """
     if not 0 < level < 1:
-        raise ValueError("level debe estar en (0, 1), recibido: {}".format(level))
+        raise ValueError("level must be in (0, 1), got: {}".format(level))
     if method not in ("wilson", "bootstrap"):
-        raise ValueError("method debe ser 'wilson' o 'bootstrap', recibido: '{}'".format(method))
+        raise ValueError("method must be 'wilson' or 'bootstrap', got: '{}'".format(method))
     nAC, nA, nC, n = _rule_counts(rules, n_transactions)
     result = rules.copy()
     columns = ["support_low", "support_high", "confidence_low", "confidence_high", "lift_low", "lift_high"]
@@ -358,7 +358,7 @@ def shuffled_items(items: pd.DataFrame, null: str = "shift", random_state: Union
         random_state: seed or ``numpy.random.Generator``
     """
     if null not in NULLS:
-        raise ValueError("null debe ser uno de {}, recibido: '{}'".format(NULLS, null))
+        raise ValueError("null must be one of {}, got: '{}'".format(NULLS, null))
     rng = random_state if isinstance(random_state, np.random.Generator) else np.random.default_rng(random_state)
     values = items.to_numpy()
     rows = len(values)
@@ -399,7 +399,7 @@ def permutation_null(items: pd.DataFrame, miner: Miner, measure: str = "p_value"
         'max_<measure>' (NaN if no rule came out).
     """
     if n_permutations < 1:
-        raise ValueError("n_permutations debe ser >= 1")
+        raise ValueError("n_permutations must be >= 1")
     pvalues = measure == "p_value"
     column = "min_p_value" if pvalues else "max_" + measure
     rng = np.random.default_rng(random_state)

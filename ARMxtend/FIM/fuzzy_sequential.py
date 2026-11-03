@@ -114,7 +114,7 @@ def fuzzy_prefixspan(sequences: Iterable[Iterable[Any]], min_supp: float, max_le
     """
     combine = _check_tnorm(tnorm)
     if not 0 < min_supp <= 1:
-        raise ValueError("min_supp debe estar en (0, 1]")
+        raise ValueError("min_supp must be in (0, 1]")
     database = normalize(sequences)
     total = len(database)
     if total == 0:

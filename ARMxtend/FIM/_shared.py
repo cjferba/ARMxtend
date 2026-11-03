@@ -79,7 +79,7 @@ def alpha_levels(num_alpha: int) -> np.ndarray:
         numpy.ndarray of length `num_alpha`, decreasing, with the first value equal to 1.0
     """
     if num_alpha < 1:
-        raise ValueError("El numero de alpha-cortes debe ser >= 1, recibido: {}".format(num_alpha))
+        raise ValueError("The number of alpha-cuts must be >= 1, got: {}".format(num_alpha))
     return np.arange(num_alpha, 0, -1) / float(num_alpha)
 
 
@@ -133,7 +133,7 @@ def alpha_cuts(value: float, num_alpha: int) -> np.ndarray:
         numpy.ndarray of integers (0/1) of length `num_alpha`, non-increasing
     """
     if not 0.0 <= value <= 1.0:
-        raise ValueError("El grado de pertenencia difuso debe estar en [0, 1], recibido: {}".format(value))
+        raise ValueError("The fuzzy membership degree must be in [0, 1], got: {}".format(value))
 
     return (value >= alpha_levels(num_alpha)).astype(int)
 

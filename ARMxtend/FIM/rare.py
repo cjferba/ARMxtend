@@ -41,9 +41,9 @@ def minimal_rare_itemsets(transactions: Iterable[Iterable[Any]], max_supp: float
         mining)
     """
     if not 0 < max_supp <= 1 or not 0 <= min_supp < max_supp:
-        raise ValueError("hace falta 0 <= min_supp < max_supp <= 1")
+        raise ValueError("0 <= min_supp < max_supp <= 1 is required")
     if min_count < 1:
-        raise ValueError("min_count debe ser >= 1")
+        raise ValueError("min_count must be >= 1")
     vertical = Vertical(transactions)
     total = vertical.total
     found: List[Tuple[int, Tuple[int, ...]]] = []

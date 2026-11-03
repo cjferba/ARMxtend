@@ -133,7 +133,7 @@ def association_rules(df: pd.DataFrame, metric: str = "confidence",
     frozenset_vect = np.vectorize(lambda x: frozenset(x), otypes=[object])
     frequent_items_dict = dict(zip(frozenset_vect(keys), values))
 
-    # candidatos: todas las particiones antecedente/consecuente de cada itemset frecuente
+    # candidates: every antecedent/consequent partition of each frequent itemset
     rule_antecedents = []
     rule_consequents = []
     rule_supports = []
@@ -170,7 +170,7 @@ def association_rules(df: pd.DataFrame, metric: str = "confidence",
                 rule_consequents.append(consequent)
                 rule_supports.append([sAC, sA, sC])
 
-    # la medida se evalua una sola vez, vectorizada, sobre todos los candidatos y despues se filtra
+    # the measure is evaluated once, vectorized, over all the candidates and then filtered
     if rule_supports:
         if support_only:
             scores = np.array([row[0] for row in rule_supports], dtype=float)
@@ -209,6 +209,6 @@ def association_rules(df: pd.DataFrame, metric: str = "confidence",
             for m in columns_ordered:
                 df_res[m] = metric_dict[m](sAC, sA, sC)
 
-        # numero de reglas candidatas probadas: la familia de hipotesis de ARM.significance
+        # number of candidate rules tested: the hypothesis family of ARM.significance
         df_res.attrs["n_candidates"] = n_candidates
         return df_res

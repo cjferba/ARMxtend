@@ -56,7 +56,7 @@ class TransactionEncoder(ParamsMixin):
 
     def fit(self, X: Transactions, y: Any = None) -> "TransactionEncoder":
         if self.handle_unknown not in ("ignore", "error"):
-            raise ValueError("handle_unknown debe ser 'ignore' o 'error'")
+            raise ValueError("handle_unknown must be 'ignore' or 'error'")
         items = {item for transaction in as_transactions(X) for item in transaction}
         try:
             self.columns_ = sorted(items)
@@ -75,7 +75,7 @@ class TransactionEncoder(ParamsMixin):
                 if item in position:
                     table[row, position[item]] = True
                 elif self.handle_unknown == "error":
-                    raise ValueError("item no visto en fit: {!r}".format(item))
+                    raise ValueError("item not seen in fit: {!r}".format(item))
         index = X.index if isinstance(X, pd.DataFrame) else None
         return pd.DataFrame(table, columns=self.columns_, index=index)
 
@@ -142,7 +142,7 @@ class RuleMiner(ParamsMixin):
         from .FIM.dense import dense_itemsets
 
         if self.method not in self.METHODS:
-            raise ValueError("method debe ser uno de {}".format(self.METHODS))
+            raise ValueError("method must be one of {}".format(self.METHODS))
         transactions = as_transactions(X)
         self.n_transactions_ = len(transactions)
         self.itemsets_ = pd.DataFrame({"support": [], "itemsets": []})
@@ -156,18 +156,18 @@ class RuleMiner(ParamsMixin):
                 self.itemsets_ = pd.DataFrame({"support": list(frequent.values()),
                                                "itemsets": [key_to_itemset(key) for key in frequent]})
             else:
-                raise ValueError("algorithm debe ser 'fpgrowth' o 'dense'")
+                raise ValueError("algorithm must be 'fpgrowth' or 'dense'")
             rules = association_rules(self.itemsets_, metric=self.metric, min_threshold=self.min_threshold)
             if self.min_lift is not None:
                 rules = rules[rules["lift"] >= self.min_lift].reset_index(drop=True)
         elif self.method == "top_k":
             if self.k is None:
-                raise ValueError("method='top_k' necesita el parametro k")
+                raise ValueError("method='top_k' needs the parameter k")
             rules = top_k_rules(transactions, self.k, min_conf=self.min_threshold, min_lift=self.min_lift,
                                 max_len=self.max_len, min_supp=self.min_supp)
         else:
             if self.max_supp is None:
-                raise ValueError("method='rare' necesita el parametro max_supp")
+                raise ValueError("method='rare' needs the parameter max_supp")
             rules = rare_rules(transactions, self.max_supp, min_supp=self.min_supp, min_count=self.min_count,
                                min_conf=self.min_threshold, min_lift=self.min_lift, max_len=self.max_len)
         if self.alpha is not None and len(rules):

@@ -168,7 +168,7 @@ class FuzzyDECLAT(object):
             memberships, tid = pair
             for _, degree in memberships:
                 if not 0.0 <= degree <= 1.0:
-                    raise ValueError("El grado de pertenencia difuso debe estar en [0, 1], recibido: {}".format(degree))
+                    raise ValueError("The fuzzy membership degree must be in [0, 1], got: {}".format(degree))
             return [(item, (tid, float(degree))) for item, degree in memberships]
 
         def compact(pairs):

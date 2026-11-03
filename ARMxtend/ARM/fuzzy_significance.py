@@ -82,7 +82,7 @@ def fuzzy_rule_significance(rules: pd.DataFrame, transactions: FuzzyTransactions
         'n_permutations' and 'n_transactions'.
     """
     if n_permutations < 1:
-        raise ValueError("n_permutations debe ser >= 1")
+        raise ValueError("n_permutations must be >= 1")
     rng = random_state if isinstance(random_state, np.random.Generator) else np.random.default_rng(random_state)
     result = rules.copy()
     result.attrs.update(rules.attrs)
@@ -127,7 +127,7 @@ def fuzzy_significant_rules(rules: pd.DataFrame, transactions: FuzzyTransactions
     adjusted p-value.
     """
     if not 0 < alpha < 1:
-        raise ValueError("alpha debe estar en (0, 1), recibido: {}".format(alpha))
+        raise ValueError("alpha must be in (0, 1), got: {}".format(alpha))
     scored = fuzzy_rule_significance(rules, transactions, n_permutations, random_state)
     family = n_tests if n_tests is not None else rules.attrs.get("n_candidates")
     family = max(int(family), len(scored)) if family is not None else len(scored)

@@ -127,7 +127,7 @@ def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow, minConf
     print("")
     print("Estado Actual - Intervalo de tiempo {} ({}):".format(slidingWindow.timeWindow, current_datetime))
 
-    # Solo presentar total de itemsets identificados
+    # Only show the total number of itemsets identified
     print("Total de Itemsets Frecuentes: {}".format(Actual_FIMoTS_Structure.frequentItemsetsBounds.getItemsetsCount()))
     print("Total de Itemsets Infrecuentes: {}".format(
         Actual_FIMoTS_Structure.infrequentItemsetsBounds.getItemsetsCount()))
@@ -152,7 +152,7 @@ def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow, minConf
     if minConf is not None:
         rules = extractAssociationRules(Actual_FIMoTS_Structure, min_threshold=minConf)
         print("")
-        print("Reglas de Asociacion (confianza >= {}):".format(minConf))
+        print("Association rules (confidence >= {}):".format(minConf))
         for _, rule in rules.iterrows():
             print("{} --> {} (confianza: {:.3f})".format(
                 ', '.join(rule['antecedents']), ', '.join(rule['consequents']), rule['confidence']))

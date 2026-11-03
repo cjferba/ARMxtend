@@ -44,7 +44,7 @@ def _classes(labels: Union[Sequence[Any], np.ndarray, pd.Series]) -> Tuple[np.nd
     """Labels as a vector and sorted list of distinct classes."""
     values = np.asarray(labels, dtype=object)
     if pd.isna(values).any():
-        raise ValueError("`labels` no puede tener valores nulos")
+        raise ValueError("`labels` cannot have null values")
     classes = list(pd.unique(values))
     try:
         classes.sort()
@@ -55,7 +55,7 @@ def _classes(labels: Union[Sequence[Any], np.ndarray, pd.Series]) -> Tuple[np.nd
 
 def _check_inputs(items: pd.DataFrame, labels: Union[Sequence[Any], np.ndarray, pd.Series]) -> None:
     if len(items) != len(labels):
-        raise ValueError("`items` tiene {} filas y `labels` {}".format(len(items), len(labels)))
+        raise ValueError("`items` has {} rows and `labels` {}".format(len(items), len(labels)))
     check_item_names(items.columns)
 
 
@@ -85,9 +85,9 @@ def class_association_rules(items: pd.DataFrame, labels: Union[Sequence[Any], np
         ('n_candidates': frequent antecedents of each class), which ``significant_rules`` uses
     """
     if support not in ("class", "global"):
-        raise ValueError("support debe ser 'class' o 'global', recibido: '{}'".format(support))
+        raise ValueError("support must be 'class' or 'global', got: '{}'".format(support))
     if max_len < 1:
-        raise ValueError("max_len debe ser >= 1")
+        raise ValueError("max_len must be >= 1")
     _check_inputs(items, labels)
     table = ItemTable(items)
     values, classes = _classes(labels)
