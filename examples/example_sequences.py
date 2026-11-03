@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Ejemplo: patrones y reglas secuenciales sobre el registro de eventos de una
-casa sensorizada -- que hace habitualmente la persona, en que orden, y que
-suele ocurrir despues de un evento.
+Example: sequential patterns and rules over the event log of a
+sensorized house -- what the person usually does, in what order, and what
+usually happens after an event.
 """
 import numpy as np
 import pandas as pd
@@ -13,13 +13,13 @@ from ARMxtend.FIM import format_sequence, prefixspan, sequences_from_events
 
 def simulated_events(days=120, seed=0):
     """
-    Registro de eventos (una fila por evento) de una persona durante `days` dias:
+    Event log (one row per event) of a person during `days` days:
 
-    * Todas las mananas: suena la alarma, va al bano y pasa a la cocina.
-    * Dia con prisa (el 75 % de los dias laborables y el 15 % del fin de semana):
-      sale de casa justo despues (puerta), sin tomar cafe.
-    * Dia tranquilo: toma cafe (95 %) y despues ve la television (85 %).
-    * Cualquier dia puede haber llamadas de telefono a cualquier hora (ruido).
+    * Every morning: the alarm rings, they go to the bathroom and move on to the kitchen.
+    * Rushed day (75 % of weekdays and 15 % of weekends):
+      they leave the house right afterwards (door), without having coffee.
+    * Quiet day: they have coffee (95 %) and then watch television (85 %).
+    * Any day there may be phone calls at any hour (noise).
     """
     rng = np.random.RandomState(seed)
     rows = []
@@ -56,27 +56,27 @@ def _fmt(items):
 def main():
     events = simulated_events()
 
-    # 1. Una secuencia por dia, con sus eventos ordenados por hora ---------------------------
+    # 1. One sequence per day, with its events ordered by time ---------------------------
     sequences = sequences_from_events(events, "day", "time", "event")
     print("Secuencias:", len(sequences), "| primer dia:", " ".join("{" + _fmt(e) + "}" for e in sequences[0]))
 
     # 2. Patrones secuenciales frecuentes (PrefixSpan) --------------------------------------
     patterns = prefixspan(sequences, min_supp=0.3, min_len=4)
-    print("\nPatrones frecuentes de 4 o mas eventos (soporte >= 0.3):")
+    print("\nFrequent patterns of 4 or more events (support >= 0.3):")
     for _, pattern in patterns.head(4).iterrows():
         print("  {}  support={:.2f}".format(format_sequence(pattern["sequence"]), pattern["support"]))
 
-    # 3. Reglas secuenciales: "si X, despues Y" con su confianza; el lift separa lo informativo -
+    # 3. Sequential rules: "if X, then Y" with their confidence; lift separates the informative -
     every = sequential_rules(sequences, min_supp=0.2, min_conf=0.0, max_antecedent=1, max_consequent=1)
     rules = every[every["confidence"] >= 0.7].sort_values("lift", ascending=False, kind="mergesort")
-    print("\nReglas secuenciales con confianza >= 0.7, por lift decreciente:")
+    print("\nSequential rules with confidence >= 0.7, by decreasing lift:")
     for _, rule in rules.head(4).iterrows():
         print("  {} => {}  support={:.2f} confidence={:.2f} lift={:.2f}".format(
             _fmt(rule["antecedents"]), _fmt(rule["consequents"]), rule["support"], rule["confidence"], rule["lift"]))
 
-    # 4. El orden importa: coffee => tv se cumple, tv => coffee no ----------------------------
+    # 4. Order matters: coffee => tv holds, tv => coffee does not ----------------------------
     byRule = {(_fmt(r["antecedents"]), _fmt(r["consequents"])): r["confidence"] for _, r in every.iterrows()}
-    print("\nconfianza de coffee => tv: {:.2f}; de tv => coffee: {:.2f}".format(
+    print("\nconfidence of coffee => tv: {:.2f}; of tv => coffee: {:.2f}".format(
         byRule.get(("coffee", "tv"), 0.0), byRule.get(("tv", "coffee"), 0.0)))
 
     return sequences, patterns, every

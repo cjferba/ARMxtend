@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Tests de regresion para las utilidades de alpha-cortes de
+Regression tests for the alpha-cut utilities of
 ARMxtend.FIM._shared (alpha_levels, alpha_weights, alpha_cuts,
-weighted_alpha_aggregate) y ARMxtend.ARM._measures.certainty_factor,
-verificados contra los ejemplos numericos textuales y la Tabla 6 de:
+weighted_alpha_aggregate) and ARMxtend.ARM._measures.certainty_factor,
+verified against the textual numerical examples and Table 6 of:
 
     Delgado, M., Ruiz, M.D., Sanchez, D., Serrano, J.M. (2011). "A formal
     model for mining fuzzy rules using the RL representation theory".
@@ -11,11 +11,11 @@ verificados contra los ejemplos numericos textuales y la Tabla 6 de:
 
     Ruiz, M.D., et al. (2016). "Meta-association rules for mining
     interesting associations in multiple datasets". Applied Soft Computing,
-    49, 212-223 (Seccion 4.4, Tabla 6).
+    49, 212-223 (Section 4.4, Table 6).
 
     Fernandez-Basso, C., Ruiz, M.D., Martin-Bautista, M.J. (2021). "Spark
     solutions for discovering fuzzy association rules in Big Data". Int. J.
-    of Approximate Reasoning, 137, 94-112 (Seccion 3.1.1).
+    of Approximate Reasoning, 137, 94-112 (Section 3.1.1).
 """
 import numpy as np
 import pytest
@@ -38,7 +38,7 @@ def test_alpha_cuts_matches_fuzzytoarray_textual_example():
 def test_alpha_cuts_boundary_values():
     assert list(alpha_cuts(1.0, 4)) == [1, 1, 1, 1]
     assert list(alpha_cuts(0.0, 4)) == [0, 0, 0, 0]
-    # en el limite (>=), un valor igual al nivel alpha lo satisface
+    # at the limit (>=), a value equal to the alpha level satisfies it
     assert list(alpha_cuts(0.5, 4)) == [0, 0, 1, 1]
 
 
@@ -56,7 +56,7 @@ def test_alpha_weights_equidistant_levels_are_uniform():
 
 
 def test_weighted_alpha_aggregate_matches_paper_fsupp():
-    # Tabla 6: a_i para A={i1,i3} en cada uno de los 5 niveles, N=6
+    # Table 6: a_i for A={i1,i3} at each of the 5 levels, N=6
     a = np.array([0, 1, 1, 3, 3])
     weights = alpha_weights(alpha_levels(5))
     fsupp = weighted_alpha_aggregate(a / 6, weights)
@@ -64,7 +64,7 @@ def test_weighted_alpha_aggregate_matches_paper_fsupp():
 
 
 def test_certainty_factor_matches_paper_table6_per_level_values():
-    # Tabla 6 (a, b, c, d) por nivel para A={i1,i3} -> B={i4}, N=6
+    # Table 6 (a, b, c, d) per level for A={i1,i3} -> B={i4}, N=6
     a = np.array([0, 1, 1, 3, 3])
     b = np.array([1, 1, 1, 1, 1])
     c = np.array([0, 0, 1, 0, 0])
@@ -82,7 +82,7 @@ def test_certainty_factor_matches_paper_table6_per_level_values():
 
 
 def test_certainty_factor_scalar_matches_definition():
-    # Delgado et al. 2011, Definicion 1: signo del CF segun creencia
+    # Delgado et al. 2011, Definition 1: sign of the CF according to belief
     increases = certainty_factor(support_AB=0.4, support_A=0.5, support_B=0.2)
     assert increases > 0  # Conf=0.8 > supp(B)=0.2 -> la creencia aumenta
 

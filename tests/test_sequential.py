@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Tests de ``FIM.sequential`` (PrefixSpan) y ``ARM.sequential_rules``: los
-resultados se comparan con una enumeracion exhaustiva (oraculo), con ejemplos
-calculados a mano y, para Spark, con el PrefixSpan de MLlib.
+Tests of ``FIM.sequential`` (PrefixSpan) and ``ARM.sequential_rules``: the
+results are compared with an exhaustive enumeration (oracle), with hand-computed
+examples and, for Spark, with the PrefixSpan of MLlib.
 """
 import itertools
 import random
@@ -25,7 +25,7 @@ def random_database(count=50, seed=0):
 
 
 def all_patterns(max_items):
-    """Todos los patrones secuenciales sobre ITEMS con a lo sumo `max_items` items en total."""
+    """All the sequential patterns over ITEMS with at most `max_items` items in total."""
     elements = [frozenset(c) for size in range(1, max_items + 1) for c in itertools.combinations(ITEMS, size)]
     patterns = []
 
@@ -75,8 +75,8 @@ def test_prefixspan_distinguishes_simultaneous_items_from_ordered_items():
     database = [[{"a", "b"}, "c"], [{"a", "b"}, "c"], ["a", "b", "c"]]
     mined = as_dict(prefixspan(database, 0.3))
     f = frozenset
-    assert mined[(f("ab"),)] == pytest.approx(2 / 3)                  # {a, b} a la vez: solo en dos secuencias
-    assert mined[(f("a"), f("b"))] == pytest.approx(1 / 3)           # a y luego b: solo en la tercera
+    assert mined[(f("ab"),)] == pytest.approx(2 / 3)                  # {a, b} at the same time: only in two sequences
+    assert mined[(f("a"), f("b"))] == pytest.approx(1 / 3)           # a and then b: only in the third
     assert mined[(f("ab"), f("c"))] == pytest.approx(2 / 3)
     assert mined[(f("a"), f("c"))] == pytest.approx(1.0)
     assert (f("b"), f("a")) not in mined
@@ -85,7 +85,7 @@ def test_prefixspan_distinguishes_simultaneous_items_from_ordered_items():
 def test_prefixspan_counts_each_sequence_once():
     mined = as_dict(prefixspan([["a", "a", "a", "a"], ["b"]], 0.5))
     assert mined[(frozenset("a"),)] == pytest.approx(0.5)
-    assert (frozenset("a"), frozenset("a")) in mined                  # a ... a esta en la primera secuencia
+    assert (frozenset("a"), frozenset("a")) in mined                  # a ... a is in the first sequence
     assert mined[(frozenset("a"), frozenset("a"))] == pytest.approx(0.5)
 
 
@@ -121,7 +121,7 @@ def test_sequences_from_events():
     assert exact == [[{"cough"}, {"fever"}, {"rest", "water"}], [{"fever"}, {"rest"}]]
     binned = sequences_from_events(events, "patient", "time", "event", bin="1h")
     assert binned[0] == [{"cough", "fever"}, {"rest", "water"}]
-    with pytest.raises(ValueError, match="columna"):
+    with pytest.raises(ValueError, match="does not exist"):
         sequences_from_events(events, "nobody", "time", "event")
 
 
@@ -133,7 +133,7 @@ def test_sequences_from_items_splits_by_group_and_skips_empty_rows():
     assert one == [[{"door"}, {"light"}, {"door"}, {"light"}]]
     byDay = sequences_from_items(items, by=lambda stamps: stamps.date)
     assert byDay == [[{"door"}, {"light"}], [{"door"}, {"light"}]]
-    with pytest.raises(ValueError, match="una entrada por fila"):
+    with pytest.raises(ValueError, match="one entry per row"):
         sequences_from_items(items, by=[1, 2])
 
 
@@ -188,11 +188,11 @@ def test_sequential_rules_hand_computed_example_and_measures():
     rules = sequential_rules(database, 0.25, 0.0, 1, 1)
     byRule = {(tuple(r["antecedents"]), tuple(r["consequents"])): r for _, r in rules.iterrows()}
     ab, ba = byRule[(("a",), ("b",))], byRule[(("b",), ("a",))]
-    assert ab["support"] == pytest.approx(2 / 4) and ab["confidence"] == pytest.approx(2 / 4)   # a antes de b: 2 de 4
+    assert ab["support"] == pytest.approx(2 / 4) and ab["confidence"] == pytest.approx(2 / 4)   # a before b: 2 of 4
     assert ba["support"] == pytest.approx(1 / 4) and ba["confidence"] == pytest.approx(1 / 4)
     assert ab["antecedent support"] == pytest.approx(1.0) and ab["consequent support"] == pytest.approx(1.0)
     assert ab["lift"] == pytest.approx(0.5)
-    # a y b en el mismo elemento no cuenta como "a antes de b"
+    # a and b in the same element does not count as "a before b"
     assert not contains_rule([{"a", "b"}], ["a"], ["b"])
     assert contains_rule([{"a"}, {"c"}, {"b", "a"}], ["a", "c"], ["a", "b"])        # a, c antes de (a, b)
     assert not contains_rule([{"a"}, {"c"}, {"b"}], ["a", "c"], ["a", "b"])
@@ -227,7 +227,7 @@ def test_sequential_rules_validation_and_empty_cases():
 
 
 def test_sequential_rules_from_a_planted_routine():
-    """Cada dia: puerta, luego cocina, luego cafe (90 %), con ruido en medio."""
+    """Each day: door, then kitchen, then coffee (90 %), with noise in between."""
     rng = np.random.RandomState(0)
     days = []
     for _ in range(100):

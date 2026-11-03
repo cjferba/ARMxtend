@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Doble local (sin dependencia de una JVM/cluster real) de la minima API de
-Spark (RDD + SparkContext.broadcast) usada por los algoritmos de
-ARMxtend.FIM en Big Data. Permite testear la logica de esos algoritmos en
-CI/entornos sin Java, ejecutando exactamente el mismo codigo de produccion
-que se ejecutaria sobre un SparkContext real.
+Local stand-in (with no dependency on a real JVM/cluster) for the minimal
+Spark API (RDD + SparkContext.broadcast) used by the Big Data algorithms of
+ARMxtend.FIM. It makes it possible to test the logic of those algorithms in
+CI/environments without Java, running exactly the same production code that
+would run on a real SparkContext.
 
-Uso exclusivo en tests -- no forma parte de la libreria.
+For use in tests only -- it is not part of the library.
 """
 from collections import defaultdict
 

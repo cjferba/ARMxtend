@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de ARM.exception_rules: reglas de excepcion (Suzuki, 1997) y reglas anomalas."""
+"""Tests of ARM.exception_rules: exception rules (Suzuki, 1997) and anomalous rules."""
 import pytest
 
 from ARMxtend.ARM import association_rules
@@ -10,10 +10,10 @@ def _repeat(items, times):
     return [set(items) for _ in range(times)]
 
 
-# Regla comun: fever -> rest (60/70). Excepciones: con must_work no hay descanso
-# (must_work solo, en cambio, casi siempre descansa: referencia debil); con
-# sick_leave_denied tampoco, pero esa condicion implica ya "sin descanso" por
-# si sola (referencia fuerte) y por eso NO es una excepcion interesante.
+# Common rule: fever -> rest (60/70). Exceptions: with must_work there is no rest
+# (must_work alone, on the other hand, almost always rests: weak reference); with
+# sick_leave_denied neither, but that condition already implies "no rest" by
+# itself (strong reference) and so it is NOT an interesting exception.
 EXCEPTION_DATA = (
     _repeat({"fever", "rest"}, 60)
     + _repeat({"fever", "must_work"}, 5)
@@ -21,8 +21,8 @@ EXCEPTION_DATA = (
     + _repeat({"fever", "sick_leave_denied"}, 5)
 )
 
-# Regla comun: fever -> rest (60/70). Los 10 casos con fiebre y sin descanso
-# acaban todos en el hospital, algo que no es habitual con solo fiebre.
+# Common rule: fever -> rest (60/70). The 10 cases with fever and no rest
+# all end up in hospital, which is not usual with fever alone.
 ANOMALY_DATA = (
     _repeat({"fever", "rest"}, 60)
     + _repeat({"fever", "hospital"}, 10)
@@ -50,7 +50,7 @@ def test_reference_rule_discards_conditions_that_already_imply_the_opposite():
     assert frozenset(["must_work"]) in conditions
     assert frozenset(["sick_leave_denied"]) not in conditions
 
-    # relajando la referencia, esa condicion si entra
+    # relaxing the reference, that condition does get in
     relaxed = exception_rules(EXCEPTION_DATA, min_supp=0.3, min_conf=0.8, min_exception_supp=0.01,
                               min_exception_conf=0.8, max_reference_conf=1.0)
     assert frozenset(["sick_leave_denied"]) in set(relaxed["condition"])
@@ -76,8 +76,8 @@ def test_exception_rules_accept_precomputed_common_rules():
 
 
 def test_exception_rules_condition_size_two():
-    # z1 ^ z2 aparecen tambien juntos con b (10 transacciones): la referencia
-    # {z1,z2} -> ~b es debil (5/15) y la condicion de tamano 2 es valida
+    # z1 ^ z2 also appear together with b (10 transactions): the reference
+    # {z1,z2} -> ~b is weak (5/15) and the size-2 condition is valid
     data = (_repeat({"a", "b"}, 50) + _repeat({"a", "z1", "z2"}, 5) + _repeat({"z1", "z2", "b"}, 10)
             + _repeat({"z1", "b"}, 20) + _repeat({"z2", "b"}, 20))
     single = exception_rules(data, min_supp=0.3, min_exception_supp=0.01)
@@ -101,7 +101,7 @@ def test_anomalous_rule_found_and_matches_hand_computed_measures():
 
 
 def test_anomalous_rule_requires_reference_rule_to_be_weak():
-    # si "hospital" ya fuera habitual con fiebre (A -> C fuerte) no caracteriza la anomalia
+    # if "hospital" were already usual with fever (strong A -> C) it does not characterize the anomaly
     data = _repeat({"fever", "rest", "hospital"}, 60) + _repeat({"fever", "hospital"}, 10) + _repeat({"rest"}, 30)
     result = anomalous_rules(data, min_supp=0.3, min_conf=0.8, min_anomalous_supp=0.05)
     assert frozenset(["hospital"]) not in set(result["anomaly"])
@@ -110,5 +110,5 @@ def test_anomalous_rule_requires_reference_rule_to_be_weak():
 def test_empty_inputs_return_empty_frames_with_columns():
     assert len(exception_rules([])) == 0 and "exception_confidence" in exception_rules([]).columns
     assert len(anomalous_rules([])) == 0 and "anomalous_confidence" in anomalous_rules([]).columns
-    # sin reglas comunes fuertes
+    # without strong common rules
     assert len(exception_rules([{"a"}, {"b"}], min_supp=0.9)) == 0

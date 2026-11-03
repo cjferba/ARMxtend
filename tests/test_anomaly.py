@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Tests de ``ARM.anomaly``: violaciones de reglas (con y sin retardo) frente a tablas calculadas a
-mano, pesos de las reglas, explicaciones, y deteccion de fallos plantados con reglas minadas.
+Tests of ``ARM.anomaly``: rule violations (with and without lag) against hand-computed tables,
+rule weights, explanations, and detection of planted faults with mined rules.
 """
 import math
 
@@ -15,7 +15,7 @@ ITEMS = pd.DataFrame({"a": [1, 1, 0, 1, 0], "b": [1, 0, 0, 1, 1], "c": [0, 1, 1,
 
 
 def make_rules(*rules):
-    """Reglas (antecedente, consecuente, confianza) como DataFrame."""
+    """Rules (antecedent, consequent, confidence) as a DataFrame."""
     return pd.DataFrame({"antecedents": [frozenset(a) for a, _, _ in rules],
                          "consequents": [frozenset(c) for _, c, _ in rules],
                          "confidence": [p for _, _, p in rules]})
@@ -24,7 +24,7 @@ def make_rules(*rules):
 def test_violations_match_a_hand_computed_table():
     rules = make_rules(({"a"}, {"b"}, 0.75), ({"a", "b"}, {"c"}, 0.9))
     table = rule_violations(ITEMS, rules)
-    # a => b: la fila 1 tiene a y no b. a,b => c: la fila 0 tiene a y b y no c (la 3 si tiene c)
+    # a => b: row 1 has a and not b. a,b => c: row 0 has a and b and not c (row 3 does have c)
     assert table[0].tolist() == [False, True, False, False, False]
     assert table[1].tolist() == [True, False, False, False, False]
     assert table.index.equals(ITEMS.index) and list(table.columns) == [0, 1]
@@ -32,7 +32,7 @@ def test_violations_match_a_hand_computed_table():
 
 def test_lagged_rule_reads_the_previous_rows_and_skips_the_first_ones():
     rules = make_rules(({"a@lag1"}, {"b"}, 0.9))
-    # fila t: a en t-1 y no b en t; la fila 0 no tiene pasado y no puede violar
+    # row t: a at t-1 and not b at t; row 0 has no past and cannot violate
     assert rule_violations(ITEMS, rules)[0].tolist() == [False, True, True, False, False]
 
 
@@ -41,7 +41,7 @@ def test_scores_weights_and_applicable_counts():
     surprise = anomaly_scores(ITEMS, rules)
     assert surprise["score"].tolist() == pytest.approx([-math.log2(0.1), -math.log2(0.25), 0, 0, 0])
     assert surprise["violations"].tolist() == [1, 1, 0, 0, 0]
-    # a se cumple en las filas 0, 1 y 3; a y b juntas, en las 0 y 3
+    # a holds in rows 0, 1 and 3; a and b together, in rows 0 and 3
     assert surprise["applicable"].tolist() == [2, 1, 0, 2, 0]
     assert anomaly_scores(ITEMS, rules, weight="count")["score"].tolist() == [1, 1, 0, 0, 0]
     assert anomaly_scores(ITEMS, rules, weight="confidence")["score"].tolist() == pytest.approx([0.9, 0.75, 0, 0, 0])
@@ -87,20 +87,20 @@ def test_input_errors():
         anomaly_scores(ITEMS, rules, weight="bits")
     with pytest.raises(ValueError, match="floor"):
         anomaly_scores(ITEMS, rules, floor=0.0)
-    with pytest.raises(ValueError, match="no es una columna"):
+    with pytest.raises(ValueError, match="is not a column"):
         rule_violations(ITEMS, make_rules(({"zzz"}, {"b"}, 0.9)))
-    with pytest.raises(ValueError, match="booleanos"):
+    with pytest.raises(ValueError, match="boolean"):
         rule_violations(ITEMS.astype(float) * 0.5, rules)
     with pytest.raises(ValueError, match="confidence"):
         anomaly_scores(ITEMS, rules[["antecedents", "consequents"]])
-    with pytest.raises(ValueError, match="columnas"):
+    with pytest.raises(ValueError, match="missing the columns"):
         rule_violations(ITEMS, rules[["antecedents"]])
     # los 0/1 enteros valen
     assert not rule_violations(ITEMS.astype(int), rules).empty
 
 
 def faulty_log(rows, faults, seed):
-    """a al azar; b es exactamente a un paso antes, salvo en `faults` instantes en que falla."""
+    """a at random; b is exactly a one step earlier, except at `faults` instants where it fails."""
     rng = np.random.RandomState(seed)
     a = rng.rand(rows) < 0.3
     b = np.r_[False, a[:-1]]
@@ -138,7 +138,7 @@ def test_surprise_separates_faults_better_than_counting_when_a_weak_rule_is_ofte
         top = np.argsort(-score, kind="stable")[:fault.sum()]          # empates: orden cronologico
         return fault[top].mean()
 
-    # con 'surprise' las 30 primeras filas son los 30 fallos; contando reglas, los fallos se
-    # confunden con las ~180 violaciones esperadas de la regla debil (todas puntuan 1)
+    # with 'surprise' the first 30 rows are the 30 faults; when counting rules, the faults
+    # are mixed up with the ~180 expected violations of the weak rule (all score 1)
     assert precision_at_faults(anomaly_scores(items, rules)["score"].to_numpy()) == 1.0
     assert precision_at_faults(anomaly_scores(items, rules, weight="count")["score"].to_numpy()) < 0.5

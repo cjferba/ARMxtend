@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Prueba de extremo a extremo de los programas principales de FIMoTS (``SARE.main`` y ``SFIM.main``)
-sobre un Spark real, cada uno en su propio proceso (``main`` crea su SparkContext, y solo puede
-haber uno por proceso): el modo TEXTFILE (ventana deslizante sobre ficheros) y el modo STREAMING
-(Spark Streaming vigilando un directorio al que van llegando ficheros nuevos).
+End-to-end test of the main programs of FIMoTS (``SARE.main`` and ``SFIM.main``)
+on a real Spark, each in its own process (``main`` creates its SparkContext, and there can be only
+one per process): the TEXTFILE mode (sliding window over files) and the STREAMING mode
+(Spark Streaming watching a directory into which new files keep arriving).
 """
 import os
 import subprocess
@@ -17,7 +17,7 @@ from conftest import java_available
 
 pytest.importorskip("pyspark")
 if not java_available():
-    pytest.skip("No hay JDK disponible (defina JAVA_HOME)", allow_module_level=True)
+    pytest.skip("No JDK available (set JAVA_HOME)", allow_module_level=True)
 
 from test_fimots_streaming import brute_force_frequent  # noqa: E402
 
@@ -31,12 +31,12 @@ def _write(path, lines):
 
 
 def _frequent_itemsets_printed(output):
-    """Itemsets bajo la ultima cabecera 'Itemsets Frecuentes:' de la salida de FIMoTS (hasta la linea en blanco)."""
+    """Itemsets under the last 'Frequent itemsets:' header of the FIMoTS output (up to the blank line)."""
     lines = output.replace("\r", "\n").splitlines()
-    start = max(i for i, line in enumerate(lines) if line.startswith("Itemsets Frecuentes:"))
+    start = max(i for i, line in enumerate(lines) if line.startswith("Frequent itemsets:"))
     items = set()
     for line in lines[start + 1:]:
-        if not line.strip() or line.startswith(("Reglas", "Transacciones", "Estado")):
+        if not line.strip() or line.startswith(("Association", "Received", "Current")):
             break
         items.add("_".join(line.split()))
     return items
@@ -44,7 +44,7 @@ def _frequent_itemsets_printed(output):
 
 @pytest.mark.parametrize("package", ["SARE", "SFIM"])
 def test_textfile_mode_mines_a_directory_of_files(tmp_path, package):
-    # filesDir SIN barra final: antes las rutas se construian con dirPath + fileName y fallaban
+    # filesDir WITHOUT a trailing slash: paths used to be built with dirPath + fileName and failed
     _write(tmp_path / "batch1.txt", BATCH_ONE)
     _write(tmp_path / "batch2.txt", BATCH_TWO)
     code = ("from ARMxtend.{} import main; main(minSuppNum=3, minSuppDen=10, mode='TEXTFILE', intervals=2, "
@@ -70,12 +70,12 @@ def test_streaming_mode_processes_files_that_arrive_over_time(tmp_path):
     try:
         deadline = time.time() + 150
         sent = 0
-        # Hasta que el algoritmo haya publicado itemsets frecuentes y reglas (arranque de Spark incluido)
+        # Until the algorithm has published frequent itemsets and rules (Spark startup included)
         while time.time() < deadline:
             text = "".join(output).replace("\r", "\n")
-            if "b --> a" in text and "Total de Itemsets Frecuentes: 0" not in text.rsplit("Estado Actual", 1)[-1]:
+            if "b --> a" in text and "Total frequent itemsets: 0" not in text.rsplit("Current state", 1)[-1]:
                 break
-            if sent < 12 and "Estado Actual" in text:
+            if sent < 12 and "Current state" in text:
                 staging = tmp_path / "staging.txt"
                 _write(staging, BATCH_ONE if sent % 2 == 0 else BATCH_TWO)
                 os.rename(staging, watched / "batch{}.txt".format(sent))     # aparicion atomica
@@ -90,6 +90,6 @@ def test_streaming_mode_processes_files_that_arrive_over_time(tmp_path):
             process.kill()
 
     assert "Traceback" not in text
-    assert "Transacciones Recibidas: 20" in text
+    assert "Received transactions: 20" in text
     assert {"a", "b", "a_b"} <= _frequent_itemsets_printed(text)
-    assert "Reglas de Asociacion (confianza >= 0.8):" in text
+    assert "Association rules (confidence >= 0.8):" in text

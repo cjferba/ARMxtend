@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Tests de regresion para FFIM (FP-Growth crisp y difuso), verificados contra
-el mismo dataset de ejemplo (Tabla 2) usado en test_fim_apriori_eclat.py y,
-para el caso difuso, contra ARMxtend.FIM.Eclat.FuzzyDECLAT.
+Regression tests for FFIM (crisp and fuzzy FP-Growth), verified against
+the same example dataset (Table 2) used in test_fim_apriori_eclat.py and,
+for the fuzzy case, against ARMxtend.FIM.Eclat.FuzzyDECLAT.
 """
 import numpy as np
 import pytest
@@ -54,7 +54,7 @@ def test_fuzzy_fpgrowth_matches_fuzzy_declat_on_partial_membership():
 
 
 def test_fpgrowth_with_many_repeated_transactions_matches_brute_force():
-    """Las transacciones iguales se agrupan con pesos: el resultado debe ser el de contar una a una."""
+    """Equal transactions are grouped with weights: the result must be that of counting one by one."""
     from itertools import combinations
     from ARMxtend.FFIM import fpgrowth
     from ARMxtend.FIM._shared import key_to_itemset

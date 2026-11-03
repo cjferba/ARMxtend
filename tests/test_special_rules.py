@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de FIM.topk / ARM.topk_rules, FIM.rare / ARM.rare_rules y FIM.utility / ARM.utility_rules."""
+"""Tests of FIM.topk / ARM.topk_rules, FIM.rare / ARM.rare_rules and FIM.utility / ARM.utility_rules."""
 from itertools import chain, combinations
 
 import numpy as np
@@ -21,7 +21,7 @@ def random_baskets(seed, rows=60, items=ITEMS, density=(0.1, 0.6)):
 
 
 def all_itemsets(baskets, max_len=None):
-    """{frozenset: numero de transacciones} de todos los itemsets no vacios con algun soporte."""
+    """{frozenset: number of transactions} of all the non-empty itemsets with some support."""
     items = sorted({item for basket in baskets for item in basket})
     counts = {}
     for size in range(1, (max_len or len(items)) + 1):
@@ -158,7 +158,7 @@ def test_minimal_rare_itemsets_equal_the_brute_force_definition(seed, max_supp, 
 def test_minimal_rare_itemsets_are_a_compact_basis_hand_checked():
     baskets = [["a", "b"]] * 4 + [["a", "c"]] * 3 + [["b", "c"]] * 3 + [["a", "b", "c"]] + [["d"]]
     found = minimal_rare_itemsets(baskets, 0.3)
-    # a, b, c son frecuentes (8, 8, 7 de 12); {a,b} 5, {a,c} 4, {b,c} 4 tambien (>= 3.6); {a,b,c} = 1 es raro y minimal; d = 1 es raro
+    # a, b, c are frequent (8, 8, 7 of 12); {a,b} 5, {a,c} 4, {b,c} 4 also (>= 3.6); {a,b,c} = 1 is rare and minimal; d = 1 is rare
     assert set(found["itemsets"]) == {frozenset("abc"), frozenset("d")}
     assert minimal_rare_itemsets(baskets, 0.3, min_len=2)["itemsets"].tolist() == [frozenset("abc")]
     assert len(minimal_rare_itemsets(baskets, 0.3, min_count=2)) == 0
@@ -191,7 +191,7 @@ def test_rare_rules_equal_the_brute_force_splits(seed):
 
 
 def test_rare_rules_options_and_errors():
-    # a y d son frecuentes (0.30) y juntos no (0.15): el par es raro y minimal, y de el salen dos reglas
+    # a and d are frequent (0.30) and together are not (0.15): the pair is rare and minimal, and two rules come out of it
     baskets = [["a", "d"]] * 15 + [["a"]] * 15 + [["d"]] * 15 + [["b"]] * 55
     rules = rare_rules(baskets, 0.2, min_count=2, min_conf=0.5)
     assert set(zip(rules["antecedents"], rules["consequents"])) == {(frozenset("a"), frozenset("d")), (frozenset("d"), frozenset("a"))}
@@ -216,7 +216,7 @@ QUANTITIES = [{"a": 1, "c": 1, "d": 1}, {"a": 2, "c": 6, "e": 2, "g": 5}, {"a": 
 
 
 def brute_utilities(table, profits):
-    """{itemset: utilidad} de todos los itemsets con alguna transaccion, por definicion."""
+    """{itemset: utility} of all the itemsets with some transaction, by definition."""
     items = sorted({item for row in table for item in row})
     result = {}
     for size in range(1, len(items) + 1):
@@ -260,10 +260,10 @@ def test_high_utility_itemsets_equal_the_brute_force_enumeration(seed, fraction)
 
 
 def test_utility_is_not_frequency():
-    """El par caro es de alta utilidad sin ser frecuente; el par barato y frecuente no lo es."""
+    """The expensive pair is high-utility without being frequent; the cheap and frequent pair is not."""
     table = pd.DataFrame([{"gem": 1, "gold": 1}] * 3 + [{"gem": 0, "gold": 0, "pen": 2, "cap": 1}] * 40, columns=["gem", "gold", "pen", "cap"])
     profits = {"gem": 500, "gold": 400, "pen": 1, "cap": 1}
-    found = high_utility_itemsets(table, profits, 0.5)       # utilidad total 2820: el par vale 2700 y la gema sola 1500
+    found = high_utility_itemsets(table, profits, 0.5)       # total utility 2820: the pair is worth 2700 and the gem alone 1500
     assert set(found["itemsets"]) == {frozenset({"gem", "gold"}), frozenset({"gem"})}
     assert found.attrs["total_utility"] == 2820 and found.iloc[0]["utility"] == 2700
     assert dict(zip(found["itemsets"], found["support"]))[frozenset({"gem", "gold"})] == pytest.approx(3 / 43)
@@ -272,10 +272,10 @@ def test_utility_is_not_frequency():
 def test_high_utility_input_forms_and_errors():
     as_frame = pd.DataFrame(QUANTITIES)
     assert len(high_utility_itemsets(as_frame, PROFITS, 30, absolute=True)) == len(high_utility_itemsets(QUANTITIES, PROFITS, 30, absolute=True))
-    assert len(high_utility_itemsets(as_frame, None, 0.3)) > 0                              # beneficio 1 para todos
+    assert len(high_utility_itemsets(as_frame, None, 0.3)) > 0                              # profit 1 for all
     empty = high_utility_itemsets(as_frame.iloc[:0], PROFITS, 0.5)                          # sin transacciones
     assert len(empty) == 0 and empty.attrs["total_utility"] == 0 and empty.attrs["n_transactions"] == 0
-    assert len(high_utility_itemsets(as_frame, {item: 0 for item in PROFITS}, 0.5)) == 0   # sin beneficio no hay utilidad
+    assert len(high_utility_itemsets(as_frame, {item: 0 for item in PROFITS}, 0.5)) == 0   # without profit there is no utility
     assert len(high_utility_itemsets(as_frame, {item: 0 for item in PROFITS}, 1, absolute=True)) == 0
     for call in (lambda: high_utility_itemsets(as_frame, PROFITS, 0), lambda: high_utility_itemsets(as_frame, PROFITS, 2),
                  lambda: high_utility_itemsets(as_frame, PROFITS, 0, absolute=True),

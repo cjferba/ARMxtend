@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Tests de integracion con un Spark REAL (SparkContext en modo local[2]), a
-diferencia del resto de tests de Big Data, que corren contra el doble en
-memoria ``tests/spark_stub.py``.
+Integration tests with a REAL Spark (SparkContext in local[2] mode), unlike
+the rest of the Big Data tests, which run against the in-memory stand-in
+``tests/spark_stub.py``.
 
-Para cada algoritmo se comprueba que el resultado sobre Spark real coincide
-con (a) el resultado obtenido con el doble local, es decir, que el stub es
-fiel, y (b) una implementacion secuencial independiente (FP-Growth /
-``generate_rules``) o los valores calculados a mano. Spark ejecuta los
-closures en procesos Python distintos, por lo que estos tests detectan
-problemas que el stub no puede ver: closures no serializables, variables
-broadcast leidas en el sitio equivocado, reduccion entre particiones, etc.
+For each algorithm it is checked that the result on real Spark matches
+(a) the result obtained with the local stand-in, that is, that the stub is
+faithful, and (b) an independent sequential implementation (FP-Growth /
+``generate_rules``) or the hand-computed values. Spark runs the
+closures in different Python processes, so these tests detect
+problems the stub cannot see: non-serializable closures, broadcast
+variables read in the wrong place, reduction between partitions, etc.
 
-Se omiten automaticamente si no hay ``pyspark`` o un JDK (>= 17) disponible.
-En local: ``export JAVA_HOME=$(/usr/libexec/java_home)`` o equivalente.
+They are skipped automatically if there is no ``pyspark`` or JDK (>= 17) available.
+Locally: ``export JAVA_HOME=$(/usr/libexec/java_home)`` or equivalent.
 """
 import os
 import sys
@@ -37,7 +37,7 @@ TABLE2_TRANSACTIONS = [
     "B,D", "A,B,C", "B,C,D", "A,B,D", "B,C,D",
 ]
 
-# Tabla 2 de Ruiz et al. (2016): grado de pertenencia de i1..i5 en t1..t6
+# Table 2 of Ruiz et al. (2016): membership degree of i1..i5 in t1..t6
 _DEGREES = {
     "i1": [1, 1, 0.4, 0.6, 0.4, 0],
     "i2": [0.2, 1, 0.1, 0, 0.1, 1],
@@ -47,7 +47,7 @@ _DEGREES = {
 }
 FUZZY_TRANSACTIONS = [[(item, _DEGREES[item][t]) for item in _DEGREES] for t in range(6)]
 NUM_ALPHA = 5
-PARTITIONS = 3  # varias particiones: fuerza la reduccion entre particiones
+PARTITIONS = 3  # several partitions: forces the reduction between partitions
 
 
 @pytest.fixture
@@ -93,7 +93,7 @@ def test_fuzzy_algorithms_on_real_spark_match_stub_and_fuzzy_fpgrowth(sc, algori
 
 
 def test_declat_vertical_arrays_on_real_spark_match_fpgrowth_on_many_partitions(sc):
-    """Los arrays numpy se construyen en los ejecutores, viajan al driver y se difunden: mismo resultado que FP-Growth."""
+    """The numpy arrays are built on the executors, travel to the driver and are broadcast: same result as FP-Growth."""
     rng = np.random.RandomState(7)
     probability = rng.uniform(0.4, 0.85, 9)
     lines = [",".join("i{}".format(k) for k in range(9) if rng.rand() < probability[k]) for _ in range(400)]
@@ -119,7 +119,7 @@ def test_fuzzy_declat_vertical_arrays_on_real_spark_match_fuzzy_fpgrowth_on_many
 
 
 def test_fuzzy_declat_on_real_spark_rejects_degrees_outside_the_unit_interval(sc):
-    with pytest.raises(Exception, match="grado de pertenencia"):
+    with pytest.raises(Exception, match="membership degree"):
         FuzzyDECLAT.run(sc, sc.parallelize([[("a", 0.5), ("b", 1.5)]] * 4, 2), min_supp=0.1, num_alpha=3)
 
 
@@ -167,7 +167,7 @@ def test_fuzzy_algorithms_read_struct_and_parallel_columns(sc, tmp_path):
     with pytest.raises(ValueError):
         fuzzy_transactions_from_dataframe(parallel, "nope")
     bad = session.createDataFrame([(["a", "b"], [0.5])], "items array<string>, degrees array<double>")
-    with pytest.raises(Exception, match="mismo tamano"):
+    with pytest.raises(Exception, match="same size"):
         fuzzy_transactions_from_dataframe(bad, "items", "degrees").collect()
 
 

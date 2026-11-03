@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de preprocessing.membership y de la fuzzificacion trapezoidal/gaussiana/automatica de FuzzyLib."""
+"""Tests of preprocessing.membership and of the trapezoidal/gaussian/automatic fuzzification of FuzzyLib."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -54,10 +54,10 @@ def test_automatic_peaks_methods():
     x = np.arange(0, 101, dtype=float)
     assert automatic_peaks(x, 3, "uniform").tolist() == pytest.approx([0, 50, 100])
     assert automatic_peaks(x, 5, "quantile").tolist() == pytest.approx([0, 25, 50, 75, 100])
-    # datos en tres grupos claros: k-means encuentra el centro de cada uno
+    # data in three clear groups: k-means finds the center of each one
     clusters = np.r_[np.full(40, 1.0), np.full(40, 5.0), np.full(40, 9.0)] + np.tile([-0.1, 0.0, 0.1, 0.0], 30)
     assert automatic_peaks(clusters, 3, "kmeans").tolist() == pytest.approx([1.0, 5.0, 9.0], abs=0.05)
-    # los cuantiles, en cambio, no reflejan los grupos: sus extremos son min y max
+    # quantiles, on the other hand, do not reflect the groups: their ends are min and max
     assert automatic_peaks(clusters, 3, "quantile")[0] == pytest.approx(clusters.min())
 
 
@@ -65,8 +65,8 @@ def test_quantile_partition_balances_the_data():
     rng = np.random.RandomState(0)
     skewed = rng.exponential(scale=2.0, size=2000)
     memberships, _ = automatic_partition(skewed, 3, "quantile")
-    # con picos en min/mediana/max, cada etiqueta "domina" a un numero similar de datos
-    # que con 'uniform', donde casi todos caen en la etiqueta baja
+    # with peaks at min/median/max, each label "dominates" a similar number of data points
+    # than with 'uniform', where almost all fall in the low label
     uniformMemberships, _ = automatic_partition(skewed, 3, "uniform")
     quantileShare = np.bincount(memberships.argmax(axis=1), minlength=3) / len(skewed)
     uniformShare = np.bincount(uniformMemberships.argmax(axis=1), minlength=3) / len(skewed)
@@ -100,12 +100,12 @@ def test_trapezoidal_partition_has_cores_of_full_membership():
     peaks = [0.0, 6.0, 12.0]
     for column, peak in enumerate(peaks):
         assert memberships[np.argmin(np.abs(values - peak)), column] == pytest.approx(1.0)
-    # el nucleo del conjunto central ocupa un cuarto de hueco a cada lado del pico
+    # the core of the central set occupies a quarter of the gap on each side of the peak
     assert memberships[np.argmin(np.abs(values - 7.4)), 1] == pytest.approx(1.0)
 
 
 def test_automatic_partition_errors():
-    with pytest.raises(ValueError, match="variabilidad"):
+    with pytest.raises(ValueError, match="variability"):
         automatic_peaks([1.0, 1.0, 1.0, 1.0], 3, "quantile")
     with pytest.raises(ValueError):
         automatic_peaks([1.0, 2.0], 1, "quantile")
@@ -178,14 +178,14 @@ def test_auto_fuzzification_custom_labels_and_errors():
     assert lib.AutoFuzzification(["x"], n_labels=2, FuzzyLabel=["no", "si"]) == ["x_no", "x_si"]
     with pytest.raises(ValueError):
         lib.AutoFuzzification(["x"], n_labels=3, FuzzyLabel=["a", "b"])
-    with pytest.raises(ValueError, match="Atributo 'c'"):
+    with pytest.raises(ValueError, match="Attribute 'c'"):
         _lib(c=[5.0] * 10).AutoFuzzification(["c"], n_labels=3)
 
 
 def test_get_fuzzy_transactions_feed_the_fuzzy_miners():
     rng = np.random.RandomState(4)
     x = rng.uniform(0, 10, 200)
-    lib = _lib(x=x, y=x * 2 + rng.normal(0, 0.5, 200))          # y crece con x
+    lib = _lib(x=x, y=x * 2 + rng.normal(0, 0.5, 200))          # and grows with x
     lib.AutoFuzzification(n_labels=3, method="quantile")
 
     transactions = lib.GetFuzzyTransactions()
@@ -197,6 +197,6 @@ def test_get_fuzzy_transactions_feed_the_fuzzy_miners():
 
     itemsets = fuzzy_fpgrowth(transactions, min_supp=0.1, num_alpha=5)
     rules = fuzzy_association_rules(itemsets, 5, metric="confidence", min_threshold=0.7)
-    # la dependencia monotona entre x e y aparece como regla entre etiquetas bajas
+    # the monotonic dependence between x and y appears as a rule between low labels
     lowRules = rules[(rules["antecedents"] == frozenset(["x_low"])) & (rules["consequents"] == frozenset(["y_low"]))]
     assert len(lowRules) == 1

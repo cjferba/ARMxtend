@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Tests de los patrones y reglas secuenciales difusos (``FIM.fuzzy_sequential``,
-``ARM.fuzzy_sequential_rules``): frente a enumeraciones por fuerza bruta, frente a las versiones
-crisp cuando los grados son 0/1, y frente a valores calculados a mano.
+Tests of the fuzzy sequential patterns and rules (``FIM.fuzzy_sequential``,
+``ARM.fuzzy_sequential_rules``): against brute-force enumerations, against the
+crisp versions when the degrees are 0/1, and against hand-computed values.
 """
 from itertools import combinations, product
 
@@ -37,7 +37,7 @@ def random_sequences(seed, count=25, crisp=False, max_length=6):
 
 
 def brute_degree(sequence, pattern, tnorm):
-    """Mejor encaje por enumeracion de todas las posiciones estrictamente crecientes."""
+    """Best fit by enumerating all the strictly increasing positions."""
     best = 0.0
     for positions in combinations(range(len(sequence)), len(pattern)):
         degrees = [sequence[p].get(item, 0.0) for p, item in zip(positions, pattern)]
@@ -60,7 +60,7 @@ def test_hand_computed_supports():
     found = fuzzy_prefixspan(sequences, 0.1)
     support = {tuple(next(iter(e)) for e in row["sequence"]): row["support"] for _, row in found.iterrows()}
     assert support[("a",)] == pytest.approx((0.8 + 1.0 + 0.4) / 3)
-    assert support[("a", "b")] == pytest.approx(0.6 / 3)                 # solo en la primera: min(0.8, 0.6)
+    assert support[("a", "b")] == pytest.approx(0.6 / 3)                 # only in the first: min(0.8, 0.6)
     assert support[("a", "c")] == pytest.approx((0.8 + 0.5) / 3)
     assert support[("b", "a")] == pytest.approx(0.4 / 3)                 # tercera: b (0.9) y despues a (0.4)
     assert support[("a", "b", "c")] == pytest.approx(0.6 / 3)
@@ -108,7 +108,7 @@ def test_output_format_ordering_and_limits():
     assert fuzzy_prefixspan(sequences, 0.1, max_len=2)["length"].max() == 2
     assert fuzzy_prefixspan(sequences, 0.1, min_len=2)["length"].min() == 2
     assert fuzzy_prefixspan([], 0.5).empty
-    # antimonotonia: el soporte de un patron nunca supera el de su prefijo
+    # anti-monotonicity: the support of a pattern never exceeds that of its prefix
     bySequence = {row["sequence"]: row["support"] for _, row in found.iterrows()}
     assert all(support <= bySequence[pattern[:-1]] + 1e-12 for pattern, support in bySequence.items()
                if len(pattern) > 1)
@@ -133,8 +133,8 @@ def test_sequences_from_memberships_groups_rows_and_thresholds_degrees():
     memberships = pd.DataFrame({"hot": [0.9, 0.0, 0.2, 0.7], "on": [0.0, 0.5, 0.0, 1.0]})
     assert fuzzy_sequences_from_memberships(memberships) == [[{"hot": 0.9}, {"on": 0.5}, {"hot": 0.2}, {"hot": 0.7, "on": 1.0}]]
     byDay = fuzzy_sequences_from_memberships(memberships, by=["d2", "d2", "d1", "d1"], min_degree=0.3)
-    assert byDay == [[{"hot": 0.9}, {"on": 0.5}], [{"hot": 0.7, "on": 1.0}]]       # la fila 2 (hot 0.2) no da elemento
-    with pytest.raises(ValueError, match="entrada por fila"):
+    assert byDay == [[{"hot": 0.9}, {"on": 0.5}], [{"hot": 0.7, "on": 1.0}]]       # row 2 (hot 0.2) gives no element
+    with pytest.raises(ValueError, match="one entry per row"):
         fuzzy_sequences_from_memberships(memberships, by=["x"])
     with pytest.raises(ValueError, match=r"\[0, 1\]"):
         fuzzy_sequences_from_memberships(memberships * 2)
@@ -240,6 +240,6 @@ def test_fuzzy_rules_recover_a_planted_routine_with_noisy_degrees():
         sequences.append(sequence)
     rules = fuzzy_sequential_rules(sequences, 0.3, min_conf=0.6, max_antecedent=1, max_consequent=1)
     planted = rules[(rules["antecedents"] == {"temp_high"}) & (rules["consequents"] == {"heater_on"})].iloc[0]
-    assert 0.78 < planted["confidence"] < 0.92 and planted["lift"] > 1.0       # el 90 % de los dias, con grados algo menores
+    assert 0.78 < planted["confidence"] < 0.92 and planted["lift"] > 1.0       # 90 % of the days, with somewhat lower degrees
     reverse = rules[(rules["antecedents"] == {"heater_on"}) & (rules["consequents"] == {"temp_high"})]
     assert reverse.empty                                                          # el orden importa

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de FIM.taxonomy y ARM.generalized_rules: taxonomias, itemsets generalizados y reglas R-interesantes."""
+"""Tests of FIM.taxonomy and ARM.generalized_rules: taxonomies, generalized itemsets and R-interesting rules."""
 from itertools import combinations, permutations
 
 import numpy as np
@@ -12,12 +12,12 @@ from ARMxtend.FIM import Taxonomy, extend_transactions, generalize_transactions,
 
 SHOP = Taxonomy.from_paths(["Clothes/Outerwear/Jacket", "Clothes/Outerwear/Ski Pants", "Clothes/Shirts",
                             "Footwear/Shoes", "Footwear/Hiking Boots"])
-# El ejemplo de Srikant y Agrawal (1995)
+# The Srikant and Agrawal (1995) example
 SHOP_BASKETS = [["Shirts"], ["Jacket", "Hiking Boots"], ["Ski Pants", "Hiking Boots"], ["Shoes"], ["Shoes"], ["Jacket"]]
 
 
 def random_taxonomy(seed, dag=False):
-    """18 items: 12 hojas, 4 categorias y 2 raices (con `dag`, algunas hojas y categorias tienen un segundo padre)."""
+    """18 items: 12 leaves, 4 categories and 2 roots (with `dag`, some leaves and categories have a second parent)."""
     rng = np.random.RandomState(seed)
     pairs = [("m{}".format(m), "r{}".format(m % 2)) for m in range(4)]
     pairs += [("l{}".format(leaf), "m{}".format(rng.randint(4))) for leaf in range(12)]
@@ -62,13 +62,13 @@ def test_taxonomy_levels_and_at_level_with_several_parents():
 
 
 def test_taxonomy_validation():
-    with pytest.raises(ValueError, match="ciclo"):
+    with pytest.raises(ValueError, match="cycle"):
         Taxonomy([("a", "b"), ("b", "c"), ("c", "a")])
-    with pytest.raises(ValueError, match="propio padre"):
+    with pytest.raises(ValueError, match="its own parent"):
         Taxonomy([("a", "a")])
     with pytest.raises(ValueError):
         Taxonomy([("a-b", "c")])
-    with pytest.raises(ValueError, match="dos columnas"):
+    with pytest.raises(ValueError, match="two columns"):
         Taxonomy(pd.DataFrame({"child": ["a"]}))
 
 
@@ -85,7 +85,7 @@ def test_extend_and_generalize_transactions():
 # ------------------------------------------------------------------- itemsets generalizados
 
 def brute_itemsets(baskets, taxonomy, min_supp, max_len):
-    """Enumeracion exhaustiva: sobre las transacciones extendidas, sin itemsets con un item y un antecesor suyo."""
+    """Exhaustive enumeration: over the extended transactions, without itemsets with an item and an ancestor of it."""
     extended = extend_transactions(baskets, taxonomy)
     vocabulary = sorted(set().union(*extended))
     levels = sorted({taxonomy.level(i) for i in vocabulary})
@@ -139,8 +139,8 @@ def test_never_an_item_with_its_ancestor_and_hand_checked_supports():
 
 def test_support_per_level_uses_the_threshold_of_the_most_general_item():
     found = generalized_itemsets(SHOP_BASKETS, SHOP, {1: 0.6, 2: 0.3})
-    # nivel 1 (Clothes, Footwear: 4/6) necesita 0.6; los niveles 2 y 3 (Outerwear 3/6, Hiking Boots, Shoes, Jacket: 2/6), 0.3;
-    # {Outerwear, Footwear} y {Clothes, Hiking Boots} tienen 2/6 pero heredan el 0.6 de su item mas general
+    # level 1 (Clothes, Footwear: 4/6) needs 0.6; levels 2 and 3 (Outerwear 3/6, Hiking Boots, Shoes, Jacket: 2/6), 0.3;
+    # {Outerwear, Footwear} and {Clothes, Hiking Boots} have 2/6 but inherit the 0.6 of their most general item
     assert set(found["itemsets"]) == {frozenset({"Clothes"}), frozenset({"Footwear"}), frozenset({"Outerwear"}),
                                       frozenset({"Hiking Boots"}), frozenset({"Shoes"}), frozenset({"Jacket"}),
                                       frozenset({"Outerwear", "Hiking Boots"})}
@@ -199,7 +199,7 @@ def test_rules_equal_association_rules_on_the_brute_force_itemsets():
 
 
 def brute_interesting(rules, baskets, taxonomy, interest):
-    """R-interesantes por definicion: antecesoras por biyeccion de items, soportes contados sobre las transacciones."""
+    """R-interesting by definition: ancestors by bijection of items, supports counted over the transactions."""
     extended = extend_transactions(baskets, taxonomy)
 
     def sup(items):
@@ -207,7 +207,7 @@ def brute_interesting(rules, baskets, taxonomy, interest):
 
     sets = [(frozenset(a), frozenset(c)) for a, c in zip(rules["antecedents"], rules["consequents"])]
 
-    def replaces(ancestor_side, side):             # `ancestor_side` sale de `side` sustituyendo items por si mismos o por antecesores
+    def replaces(ancestor_side, side):             # `ancestor_side` comes from `side` by replacing items with themselves or with ancestors
         return len(ancestor_side) == len(side) and any(
             all(g == i or taxonomy.is_ancestor(g, i) for g, i in zip(perm, sorted(side))) for perm in permutations(sorted(ancestor_side)))
 
@@ -264,26 +264,26 @@ def test_generalized_rules_with_interest_downstream_and_errors():
 
     nothing = generalized_rules(baskets, taxonomy, 0.9, interest=1.2)
     assert len(nothing) == 0 and "level" in nothing.columns
-    with pytest.raises(ValueError, match="taxonomia"):
+    with pytest.raises(ValueError, match="taxonomy"):
         interesting_rules(pd.DataFrame(rules.values, columns=rules.columns))           # sin attrs
     with pytest.raises(ValueError, match="interest"):
         interesting_rules(rules, interest=0.5)
 
 
 def test_categories_reveal_rules_that_no_single_product_reaches():
-    """Cada categoria se reparte entre 4 productos: ningun producto alcanza el soporte, la categoria si."""
+    """Each category is split among 4 products: no product reaches the support, the category does."""
     rng = np.random.RandomState(0)
     taxonomy = Taxonomy([("a{}".format(i), "A") for i in range(4)] + [("b{}".format(i), "B") for i in range(4)])
     baskets = []
     for _ in range(1000):
-        if rng.rand() < 0.5:                                                  # compra de A, y casi siempre tambien de B
+        if rng.rand() < 0.5:                                                  # purchase of A, and almost always of B too
             basket = ["a{}".format(rng.randint(4))]
             if rng.rand() < 0.9:
                 basket.append("b{}".format(rng.randint(4)))
         else:
             basket = ["b{}".format(rng.randint(4))] if rng.rand() < 0.3 else ["x"]
         baskets.append(basket)
-    assert set(fpgrowth(baskets, 0.2)) == {"x"}                               # de los productos, solo 'x' es frecuente
+    assert set(fpgrowth(baskets, 0.2)) == {"x"}                               # of the products, only 'x' is frequent
     rules = generalized_rules(baskets, taxonomy, 0.2, min_threshold=0.8)
     assert set(by_rule(rules, "support")) == {(("A",), ("B",))}              # B => A tiene confianza 0.75
     assert by_rule(rules, "confidence")[(("A",), ("B",))] == pytest.approx(0.9, abs=0.05)

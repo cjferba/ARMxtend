@@ -14,7 +14,7 @@ from ._shared import generate_candidates, key_to_itemset
 
 
 class DApriori(object):
-    """Mineria de itemsets frecuentes en Spark inspirada en Apriori (DApriori)."""
+    """Frequent itemset mining on Spark inspired by Apriori (DApriori)."""
 
     item_sep = ","
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Ejemplo: meta-reglas de asociacion (ARM.meta_rules), crisp y difusas, sobre
-tres datasets sinteticos que comparten (con distinta fuerza) la regla
-A -> B, siguiendo:
+Example: association meta-rules (ARM.meta_rules), crisp and fuzzy, on
+three synthetic datasets that share (with different strength) the rule
+A -> B, following:
 
     Ruiz, M.D., Gomez-Romero, J., Molina-Solana, M., Campana, J.R.,
     Martin-Bautista, M.J. (2016). "Meta-association rules for mining
@@ -15,8 +15,8 @@ from ARMxtend.ARM.meta_rules import (
     fuzzy_meta_association_rules,
 )
 
-# Tres datasets D1, D2, D3 en los que A -> B es una regla fuerte y
-# consistente (aparece siempre que aparece A), y C -> D solo aparece,
+# Three datasets D1, D2, D3 in which A -> B is a strong and
+# consistent rule (it appears whenever A appears), and C -> D only appears,
 # debilmente, en D3.
 DATASETS = [
     [["A", "B"], ["A", "B"], ["A", "B"], ["C"]],
@@ -28,20 +28,20 @@ DATASETS = [
 def main():
     ruleMeasuresPerDataset = mine_primary_rule_measures(DATASETS, min_supp=0.4, min_conf=0.5)
 
-    print("Reglas primarias minadas en cada dataset:")
+    print("Primary rules mined in each dataset:")
     for datasetIndex, ruleMeasures in enumerate(ruleMeasuresPerDataset):
         print("  D{}: {}".format(datasetIndex + 1, ruleMeasures))
 
     crispMetaRules = crisp_meta_association_rules(
         ruleMeasuresPerDataset, min_supp=0.6, min_conf=0.6)
-    print("\nMeta-reglas crisp (co-ocurrencia de reglas entre datasets):")
+    print("\nCrisp meta-rules (co-occurrence of rules between datasets):")
     for _, rule in crispMetaRules.iterrows():
         print("  {} -> {}  support={:.2f} confidence={:.2f}".format(
             set(rule["antecedents"]), set(rule["consequents"]), rule["support"], rule["confidence"]))
 
     fuzzyMetaRules = fuzzy_meta_association_rules(
         ruleMeasuresPerDataset, num_alpha=5, min_supp=0.3, min_conf=0.5)
-    print("\nMeta-reglas difusas (ponderadas por la fuerza de cada regla primaria):")
+    print("\nFuzzy meta-rules (weighted by the strength of each primary rule):")
     for _, rule in fuzzyMetaRules.iterrows():
         print("  {} -> {}  FSupp={:.2f} FConf={:.2f}".format(
             set(rule["antecedents"]), set(rule["consequents"]), rule["support"], rule["confidence"]))

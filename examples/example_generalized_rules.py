@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Ejemplo: reglas multinivel con una taxonomia de productos. Un supermercado vende
-12 productos agrupados en categorias (``Food/Dairy/milk``, ``Drinks/Juice/apple_juice``...).
-Quien compra pan (de cualquier tipo) suele comprar algun lacteo, pero se reparte entre
-muchos productos y ninguno alcanza por separado un soporte alto; y el croissant, en
-concreto, va con zumo mucho mas que el resto del pan. Las reglas generalizadas ven las
-categorias; las R-interesantes descartan las que solo repiten, con un producto concreto,
-lo que ya dice la categoria.
+Example: multilevel rules with a product taxonomy. A supermarket sells
+12 products grouped in categories (``Food/Dairy/milk``, ``Drinks/Juice/apple_juice``...).
+Whoever buys bread (of any kind) usually buys some dairy product, but it is spread over
+many products and none reaches a high support on its own; and the croissant, in
+particular, goes with juice much more than the rest of the bread. Generalized rules see the
+categories; R-interesting ones discard those that only repeat, with a specific product,
+what the category already says.
 """
 import numpy as np
 import pandas as pd
@@ -27,14 +27,14 @@ PATHS = [
 
 def supermarket(rows=3000, seed=0):
     """
-    Cestas de ``rows`` clientes:
+    Baskets of ``rows`` customers:
 
-    * el 50 % compra un pan (blanco, integral o croissant, a partes iguales);
-    * lacteo (uno de los tres): el 80 % de quien compro pan y el 25 % del resto;
-    * zumo (naranja o manzana): el 90 % de quien compro croissant y el 20 % del resto;
-    * carne (40 %) y refresco (30 %) al azar.
+    * 50 % buy a bread (white, whole-wheat or croissant, in equal parts);
+    * dairy (one of the three): 80 % of those who bought bread and 25 % of the rest;
+    * juice (orange or apple): 90 % of those who bought a croissant and 20 % of the rest;
+    * meat (40 %) and soda (30 %) at random.
 
-    Devuelve la taxonomia y las cestas no vacias.
+    Returns the taxonomy and the non-empty baskets.
     """
     rng = np.random.RandomState(seed)
     taxonomy = Taxonomy.from_paths(PATHS)
@@ -70,27 +70,27 @@ def main():
     print("{} cestas; taxonomia: {} items en {} niveles ({})".format(len(baskets), len(taxonomy), taxonomy.depth,
                                                                       ", ".join(taxonomy.roots())))
 
-    # 1. Sin taxonomia: solo productos sueltos, con el soporte repartido -------------------------------------
+    # 1. Without a taxonomy: only individual products, with the support spread out -------------------------------------
     frequent = fpgrowth(baskets, 0.04)
     flat = association_rules(pd.DataFrame({"support": list(frequent.values()), "itemsets": [key_to_itemset(k) for k in frequent]}),
                              min_threshold=0.4)
     flat = flat[flat["lift"] >= 1.2]
-    print("\nSin taxonomia (soporte 0.04, confianza 0.4, lift 1.2): {} reglas, todas entre productos concretos".format(len(flat)))
+    print("\nWithout a taxonomy (support 0.04, confidence 0.4, lift 1.2): {} rules, all between specific products".format(len(flat)))
 
-    # 2. Con taxonomia: soporte reducido en los niveles profundos (Han y Fu) ----------------------------------
+    # 2. With a taxonomy: reduced support at the deep levels (Han and Fu) ----------------------------------
     rules = generalized_rules(baskets, taxonomy, {1: 0.2, 2: 0.1, 3: 0.04}, min_threshold=0.4)
     rules = rules[rules["lift"] >= 1.2]
-    print("Con taxonomia (soporte 0.2 / 0.1 / 0.04 por nivel): {} reglas, {} de ellas entre categorias (nivel 1 o 2)".format(
+    print("With taxonomy (support 0.2 / 0.1 / 0.04 per level): {} rules, {} of them between categories (level 1 or 2)".format(
         len(rules), int((rules["level"] <= 2).sum())))
 
-    # 3. R-interesantes: fuera las que solo repiten lo que dice la categoria ---------------------------------
+    # 3. R-interesting: out go those that only repeat what the category says ---------------------------------
     kept = interesting_rules(generalized_rules(baskets, taxonomy, {1: 0.2, 2: 0.1, 3: 0.04}, min_threshold=0.4), interest=1.2)
     kept = kept[kept["lift"] >= 1.2].sort_values("lift", ascending=False)
     dropped = rules.loc[~rules.index.isin(kept.index)]
-    print("\nR-interesantes (R=1.2): quedan {} de {}. Por lift:".format(len(kept), len(rules)))
+    print("\nR-interesting (R=1.2): {} of {} remain. By lift:".format(len(kept), len(rules)))
     for line in describe(kept.head(6)):
         print("  " + line)
-    print("\nDescartadas por repetir lo que ya dicen sus antecesoras, por ejemplo:")
+    print("\nDiscarded for repeating what their ancestors already say, for example:")
     for line in describe(dropped[dropped["level"] == 3].sort_values("lift", ascending=False).head(4)):
         print("  " + line)
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Tests de las reglas con items ausentes (ARM.negative_rules), crisp y
-difusas, segun la seccion 4 de Delgado, Ruiz, Sanchez & Serrano (2011).
+Tests of the rules with absent items (ARM.negative_rules), crisp and
+fuzzy, according to section 4 of Delgado, Ruiz, Sanchez & Serrano (2011).
 """
 import numpy as np
 import pytest
@@ -39,9 +39,9 @@ def test_crisp_finds_rule_with_absent_consequent():
     rules = negative_association_rules(TRANSACTIONS, min_supp=0.3, min_threshold=0.9)
     rule = _rule(rules, {"A"}, {"~C"})
     assert rule is not None
-    assert rule["support"] == pytest.approx(4 / 6)       # A y no C: T1, T2, T3, T6
+    assert rule["support"] == pytest.approx(4 / 6)       # A and not C: T1, T2, T3, T6
     assert rule["confidence"] == pytest.approx(1.0)
-    # el consecuente de A es la ausencia de C, y C -> ~A es la regla simetrica
+    # the consequent of A is the absence of C, and C -> ~A is the symmetric rule
     assert _rule(rules, {"C"}, {"~A"}) is not None
 
 
@@ -103,9 +103,9 @@ def test_fuzzy_with_crisp_degrees_matches_crisp_negative_rules():
 
 def test_fuzzy_absence_is_level_complement_not_one_minus_degree():
     """
-    Ec. (27) de Delgado et al.: en cada nivel, supp(X ^ ~A) = supp(X) - supp(X ^ A),
-    luego FSupp(X ^ A) + FSupp(X ^ ~A) = FSupp(X). Con la negacion de
-    conjuntos difusos (1 - grado) esta identidad no se cumpliria.
+    Eq. (27) of Delgado et al.: at each level, supp(X ^ ~A) = supp(X) - supp(X ^ A),
+    so FSupp(X ^ A) + FSupp(X ^ ~A) = FSupp(X). With the negation of
+    fuzzy sets (1 - degree) this identity would not hold.
     """
     rng = np.random.RandomState(0)
     transactions = [[("X", float(rng.choice([0.3, 0.6, 1.0]))), ("A", float(rng.rand()))] for _ in range(30)]
@@ -124,8 +124,8 @@ def test_fuzzy_absence_is_level_complement_not_one_minus_degree():
 
 
 def test_fuzzy_complement_values_for_single_transaction():
-    # un solo grado 0.6 con Lambda={1,.8,.6,.4,.2}: A vale en los niveles .6,.4,.2 (FSupp=.6);
-    # ~A vale en 1 y .8 (FSupp=.4 = 1 - .6). Con 1 - grado seria [0,0,0,1,1].
+    # a single degree 0.6 with Lambda={1,.8,.6,.4,.2}: A holds at levels .6,.4,.2 (FSupp=.6);
+    # ~A holds at 1 and .8 (FSupp=.4 = 1 - .6). With 1 - degree it would be [0,0,0,1,1].
     transactions = [[("A", 0.6), ("B", 1.0)]]
     rules = fuzzy_negative_association_rules(transactions, min_supp=0.01, num_alpha=5, metric="support",
                                              min_threshold=0.0, only_negative=False)

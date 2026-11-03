@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Tests de regresion para ARMxtend.FIM.FARE (reglas de asociacion difusas via
-alpha-cortes / RL-theory).
+Regression tests for ARMxtend.FIM.FARE (fuzzy association rules via
+alpha-cuts / RL-theory).
 
-El test principal reproduce, cifra a cifra, el ejemplo numerico de la
-Seccion 4.4 de:
+The main test reproduces, figure by figure, the numerical example of
+Section 4.4 of:
     Ruiz, M.D., Gomez-Romero, J., Molina-Solana, M., Campana, J.R.,
     Martin-Bautista, M.J. (2016). "Meta-association rules for mining
     interesting associations in multiple datasets". Applied Soft Computing,
     49, 212-223.
 
-usando la base de datos difusa de la Tabla 2 de ese articulo (5 items, 6
-transacciones), los alpha-cortes Lambda={1, 0.8, 0.6, 0.4, 0.2} de la Tabla 6,
-y el itemset A={i1,i3} -> B={i4}, para el que el articulo reporta
-FSupp=0.266, FConf=0.5 y FCF=0.33.
+using the fuzzy database of Table 2 of that paper (5 items, 6
+transactions), the alpha-cuts Lambda={1, 0.8, 0.6, 0.4, 0.2} of Table 6,
+and the itemset A={i1,i3} -> B={i4}, for which the paper reports
+FSupp=0.266, FConf=0.5 and FCF=0.33.
 """
 import sys
 
@@ -26,7 +26,7 @@ from spark_stub import FakeSparkContext  # noqa: E402
 from ARMxtend.FIM.Eclat import FuzzyDECLAT  # noqa: E402
 from ARMxtend.FIM.FARE import fuzzy_association_rules  # noqa: E402
 
-# Tabla 2 del articulo: grado de pertenencia de cada item i1..i5 en cada
+# Table 2 of the paper: membership degree of each item i1..i5 in each
 # transaccion t1..t6
 _DEGREES = {
     "i1": [1, 1, 0.4, 0.6, 0.4, 0],
@@ -59,7 +59,7 @@ def test_fsupp_fconf_fcf_match_paper_worked_example(freq_itemsets):
 
 
 def test_rule_support_equals_union_itemset_support(freq_itemsets):
-    """FSupp(A -> B) debe coincidir exactamente con FSupp(A U B) (Ec. 3)."""
+    """FSupp(A -> B) must match FSupp(A U B) exactly (Eq. 3)."""
     rules = fuzzy_association_rules(freq_itemsets, num_alpha=_NUM_ALPHA, metric="support", min_threshold=0.0)
     rule = rules[(rules["antecedents"] == frozenset(["i1", "i3"])) & (rules["consequents"] == frozenset(["i4"]))]
     assert rule.iloc[0]["support"] == pytest.approx(freq_itemsets["i1-i3-i4"] @
@@ -75,6 +75,6 @@ def test_min_threshold_filters_rules(freq_itemsets):
 
 
 def test_invalid_metric_raises(freq_itemsets):
-    # 'conviction' no se admite en el caso difuso: es no acotada nivel a nivel
+    # 'conviction' is not supported in the fuzzy case: it is unbounded level by level
     with pytest.raises(ValueError):
         fuzzy_association_rules(freq_itemsets, num_alpha=_NUM_ALPHA, metric="conviction", min_threshold=0.5)

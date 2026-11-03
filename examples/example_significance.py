@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Ejemplo: significacion estadistica de las reglas -- cuantas de las reglas que
-superan los umbrales son solo ruido, como quedarse con las que no lo son
-(test exacto de Fisher + correccion por pruebas multiples, y tests de
-permutacion) y por que con series temporales hay que barajar con
-desplazamientos circulares.
+Example: statistical significance of rules -- how many of the rules that
+pass the thresholds are just noise, how to keep those that are not
+(Fisher's exact test + multiple-testing correction, and permutation
+tests) and why with time series one has to shuffle with
+circular shifts.
 """
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ from ARMxtend.FIM._shared import key_to_itemset
 
 
 def basket_data(rows=300, items=12, seed=1):
-    """Cestas aleatorias e independientes (cada item con probabilidad 0.3) con una unica asociacion real: i00 -> i01."""
+    """Random, independent baskets (each item with probability 0.3) with a single real association: i00 -> i01."""
     rng = np.random.RandomState(seed)
     table = pd.DataFrame(rng.rand(rows, items) < 0.3, columns=["i{:02d}".format(i) for i in range(items)])
     table["i01"] = table["i01"] | (table["i00"].to_numpy() & (rng.rand(rows) < 0.6))
@@ -32,29 +32,29 @@ def mine(table, min_supp=0.03, min_conf=0.45):
 
 
 def regimes(rng, rows, length):
-    """Serie booleana con tramos largos de valor constante (muy autocorrelacionada)."""
+    """Boolean series with long stretches of constant value (highly autocorrelated)."""
     return np.repeat(rng.rand(rows // length + 1) < 0.4, length)[:rows]
 
 
 def _spurious(rules):
-    """Reglas que no relacionan i00 con i01: lo unico real que hay en los datos."""
+    """Rules that do not relate i00 with i01: the only real thing in the data."""
     return sum(not {"i00", "i01"} <= rule["antecedents"] | rule["consequents"] for _, rule in rules.iterrows())
 
 
 def main():
-    # 1. Cestas independientes con una asociacion real: el umbral de confianza deja pasar mucho ruido -----
+    # 1. Independent baskets with one real association: the confidence threshold lets a lot of noise through -----
     table = basket_data()
     rules = mine(table)
-    print("Cestas:", len(table), "| reglas con confianza >= 0.45:", len(rules), "| sin i00 e i01 juntos (ruido):", _spurious(rules))
+    print("Baskets:", len(table), "| rules with confidence >= 0.45:", len(rules), "| without i00 and i01 together (noise):", _spurious(rules))
 
     fisher = significant_rules(rules, alpha=0.05, correction="fdr_bh", n_transactions=len(table))
-    print("Con test de Fisher y FDR (alpha=0.05): {} reglas, {} de ruido".format(len(fisher), _spurious(fisher)))
+    print("With Fisher's test and FDR (alpha=0.05): {} rules, {} of them noise".format(len(fisher), _spurious(fisher)))
 
     miner = crisp_rule_miner(0.03, "confidence", 0.45)
     null = permutation_null(table, miner, n_permutations=50, null="permute", random_state=0)
     permuted = permutation_p_values(rules, null, n_transactions=len(table))
     best = permuted[permuted["p_permutation"] <= 0.05]
-    print("Con permutacion (50 copias barajadas): {} reglas, {} de ruido; en los datos barajados salen {:.0f} reglas de media".format(
+    print("With permutation (50 shuffled copies): {} rules, {} of them noise; in the shuffled data {:.0f} rules come out on average".format(
         len(best), _spurious(best), null["n_rules"].mean()))
 
     planted = confidence_intervals(rule_significance(rules, len(table)), n_transactions=len(table))
@@ -63,7 +63,7 @@ def main():
         planted["support"], planted["confidence"], planted["confidence_low"], planted["confidence_high"],
         planted["lift"], planted["p_value"]))
 
-    # 2. Series temporales: dos series INDEPENDIENTES con regimenes largos parecen asociadas -------------
+    # 2. Time series: two INDEPENDENT series with long regimes look associated -------------
     fisher_alarms, shift_alarms, pairs = 0, 0, 0
     miner = crisp_rule_miner(0.05, "confidence", 0.0)
     for seed in range(12):
@@ -77,8 +77,8 @@ def main():
         fisher_alarms += int(rule_significance(found, len(series))["p_value"].iloc[0] < 0.01)
         shifted = permutation_null(series, miner, n_permutations=60, null="shift", random_state=seed)
         shift_alarms += int(permutation_p_values(found, shifted, n_transactions=len(series))["p_permutation"].iloc[0] < 0.05)
-    print("\n{} pares de series independientes: Fisher (supone filas independientes) da {} falsas alarmas (p < 0.01); "
-          "el test de permutacion circular, {} (p < 0.05)".format(pairs, fisher_alarms, shift_alarms))
+    print("\n{} pairs of independent series: Fisher (assumes independent rows) gives {} false alarms (p < 0.01); "
+          "the circular permutation test, {} (p < 0.05)".format(pairs, fisher_alarms, shift_alarms))
 
     return rules, fisher, permuted, (pairs, fisher_alarms, shift_alarms)
 

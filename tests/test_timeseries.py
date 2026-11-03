@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de ``preprocessing.timeseries``: simbolizacion, items, calendario, retardos y ventanas."""
+"""Tests of ``preprocessing.timeseries``: symbolization, items, calendar, lags and windows."""
 from statistics import NormalDist
 
 import numpy as np
@@ -14,7 +14,7 @@ def test_lag_naming_roundtrip():
     assert ts.lagged("temp=high", 2) == "temp=high@lag2"
     assert ts.split_lag("temp=high@lag2") == ("temp=high", 2)
     assert ts.split_lag("temp=high") == ("temp=high", 0)
-    assert ts.split_lag("door@lagx") == ("door@lagx", 0)          # sufijo no numerico: no es un retardo
+    assert ts.split_lag("door@lagx") == ("door@lagx", 0)          # non-numeric suffix: it is not a lag
     assert ts.item_variable("temp=high@lag2") == "temp"
     assert ts.item_variable("door_open") == "door_open"
 
@@ -38,7 +38,7 @@ def test_symbolize_sax_uses_gaussian_breakpoints():
     symbols = ts.symbolize(data, 3, "sax")
     share = symbols.value_counts(normalize=True)
     assert all(abs(share[label] - 1 / 3) < 0.02 for label in ("low", "medium", "high"))
-    # la frontera esta en el cuantil 1/3 de la normal, sobre la serie normalizada
+    # the boundary is at the 1/3 quantile of the normal, over the normalized series
     cut = NormalDist().inv_cdf(1 / 3)
     z = (data - data.mean()) / data.std()
     assert (symbols[z < cut - 1e-9] == "low").all() and (symbols[z > cut + 1e-9] != "low").all()
@@ -49,7 +49,7 @@ def test_symbolize_keeps_missing_values_and_index():
     symbols = ts.symbolize(series, 2, "uniform")
     assert symbols.name == "temp" and list(symbols.index) == list("abcd")
     assert symbols["b"] is None
-    assert symbols.dropna().tolist() == ["low", "high", "high"]        # un valor sobre el corte pasa al simbolo alto
+    assert symbols.dropna().tolist() == ["low", "high", "high"]        # a value above the cut moves to the high symbol
 
 
 def test_symbolize_constant_series_gets_a_single_symbol():
@@ -74,7 +74,7 @@ def test_discretize_only_touches_numeric_columns_by_default():
     assert result["temp"].tolist() == ["low", "low", "high", "high"]
     assert result["room"].tolist() == list("abab")
     assert result["door"].tolist() == [True, False, True, False]
-    assert table["temp"].tolist() == [1.0, 2.0, 3.0, 4.0]          # no modifica la entrada
+    assert table["temp"].tolist() == [1.0, 2.0, 3.0, 4.0]          # does not modify the input
 
 
 def test_to_items_categorical_boolean_and_missing():
@@ -95,8 +95,8 @@ def test_calendar_items_values():
     assert items.loc[index[1], ["hour=13", "weekday=Mon", "daytype=workday", "part_of_day=afternoon"]].all()
     assert items.loc[index[2], ["month=Jul", "part_of_day=evening", "weekday=Wed"]].all()
     assert items.sum(axis=1).tolist() == [5, 5, 5]
-    assert "hour=00" not in items.columns                           # solo items que aparecen
-    with pytest.raises(ValueError, match="calendario"):
+    assert "hour=00" not in items.columns                           # only items that appear
+    with pytest.raises(ValueError, match="calendar"):
         ts.calendar_items(index, ["century"])
 
 
@@ -132,9 +132,9 @@ def test_lag_items_validation():
     table = pd.DataFrame({"a": [True, False, True]})
     with pytest.raises(ValueError, match=">= 0"):
         ts.lag_items(table, [-1])
-    with pytest.raises(ValueError, match="mas de"):
+    with pytest.raises(ValueError, match="more than"):
         ts.lag_items(table, [0, 3])
-    with pytest.raises(ValueError, match="categoricas"):
+    with pytest.raises(ValueError, match="categorical"):
         ts.lag_items(pd.DataFrame({"a": ["x", "y", "z"]}), [0, 1])
 
 

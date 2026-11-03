@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Compara ARMxtend con mlxtend (una sola maquina): comprueba que dan los MISMOS itemsets y reglas y mide el tiempo.
+Compares ARMxtend with mlxtend (a single machine): checks that they give the SAME itemsets and rules and measures the time.
 
     python benchmarks/compare_mlxtend.py --sizes 2000 10000 50000 --items 60 --min-supp 0.05
 
-Necesita ``pip install mlxtend``. Cada medida es la mejor de `--repeat` ejecuciones. No incluye SPMF (necesita Java y
-su .jar, que no se distribuyen con ARMxtend).
+Needs ``pip install mlxtend``. Each measurement is the best of `--repeat` runs. It does not include SPMF (it needs Java and
+its .jar, which are not distributed with ARMxtend).
 """
 import argparse
 import time

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de la interfaz de linea de comandos (ARMxtend.cli)."""
+"""Tests of the command line interface (ARMxtend.cli)."""
 import io
 import json
 import subprocess
@@ -43,7 +43,7 @@ def test_rules_table_output(transactions_file, capsys):
     assert main(["rules", transactions_file, "--min-supp", "0.3", "--min-threshold", "0.7"]) == 0
     lines = capsys.readouterr().out.strip().splitlines()
     assert lines[0].split() == ["antecedents", "consequents", "support", "confidence", "lift", "certainty_factor"]
-    assert len(lines) == 4                                               # cabecera + las 3 reglas de la Tabla 2
+    assert len(lines) == 4                                               # header + the 3 rules of Table 2
     assert lines[1].split()[:2] == ["D", "B"]                            # ordenadas por confianza descendente
 
 
@@ -63,7 +63,7 @@ def test_rules_other_metric_sort_and_output_file(transactions_file, tmp_path, ca
                  "--format", "csv", "-o", str(target)]) == 0
     assert capsys.readouterr().out == ""
     frame = pd.read_csv(target)
-    # el lift es simetrico: salen A -> C y C -> A, y solo ellas
+    # lift is symmetric: A -> C and C -> A come out, and only those
     assert set(frame["antecedents"]) == {"A", "C"} and (frame["lift"] > 1.1).all()
 
 
@@ -117,7 +117,7 @@ def test_fuzzy_rules_constant_column_is_a_clean_error(tmp_path, capsys):
     path = tmp_path / "const.csv"
     pd.DataFrame({"x": [1.0] * 20, "y": range(20)}).to_csv(path, index=False)
     assert main(["fuzzy-rules", str(path)]) == 1
-    assert "Atributo 'x'" in capsys.readouterr().err
+    assert "Attribute 'x'" in capsys.readouterr().err
 
 
 def test_module_entry_point(transactions_file):
@@ -126,11 +126,11 @@ def test_module_entry_point(transactions_file):
     assert result.returncode == 0 and "antecedents" in result.stdout
 
 
-# ------------------------------------------------- reglas temporales y secuencias
+# ------------------------------------------------- temporal rules and sequences
 
 @pytest.fixture
 def sensors_file(tmp_path):
-    """Hora a hora durante 40 dias: la calefaccion se enciende una hora despues de abrirse la puerta; la temperatura es ruido."""
+    """Hour by hour for 40 days: the heating turns on one hour after the door is opened; the temperature is noise."""
     rng = np.random.RandomState(1)
     index = pd.date_range("2024-01-01", periods=40 * 24, freq="h")
     door = rng.rand(len(index)) < 0.3
@@ -146,7 +146,7 @@ def test_temporal_rules_finds_the_lagged_rule(sensors_file, capsys):
     assert main(["temporal-rules", sensors_file, "--time-column", "time", "--max-lag", "1", "--min-supp", "0.05",
                  "--min-threshold", "0.95", "--targets", "heater", "--exclude-persistence"]) == 0
     out = capsys.readouterr().out
-    assert "door (t-1)" in out and "heater" in out                       # formato legible en la tabla
+    assert "door (t-1)" in out and "heater" in out                       # readable format in the table
 
     main(["temporal-rules", sensors_file, "--time-column", "time", "--min-supp", "0.05", "--min-threshold", "0.95",
           "--targets", "heater", "--exclude-persistence", "--format", "json"])
@@ -169,7 +169,7 @@ def test_temporal_rules_calendar_and_errors(sensors_file, capsys):
 
 
 def test_rule_drift_reports_statuses(sensors_file, tmp_path, capsys):
-    # la segunda mitad cambia la dinamica: la calefaccion deja de seguir a la puerta
+    # the second half changes the dynamics: the heating no longer follows the door
     table = pd.read_csv(sensors_file)
     table.loc[table.index >= len(table) // 2, "heater"] = 0
     changed = tmp_path / "changed.csv"
@@ -229,9 +229,9 @@ def test_sequential_rules_command(sequences_file, capsys):
                  "--max-antecedent", "1", "--max-consequent", "1", "--format", "csv"]) == 0
     frame = pd.read_csv(io.StringIO(capsys.readouterr().out))
     byRule = {(r["antecedents"], r["consequents"]): r for _, r in frame.iterrows()}
-    assert byRule[("door", "kitchen")]["confidence"] == pytest.approx(1.0)        # 4 de las 4 secuencias con 'door'
+    assert byRule[("door", "kitchen")]["confidence"] == pytest.approx(1.0)        # 4 of the 4 sequences with 'door'
     assert byRule[("door", "kitchen")]["support"] == pytest.approx(0.8)
-    assert byRule[("kitchen", "coffee")]["confidence"] == pytest.approx(0.75)     # 3 de las 4 con 'kitchen'
+    assert byRule[("kitchen", "coffee")]["confidence"] == pytest.approx(0.75)     # 3 of the 4 with 'kitchen'
     assert byRule[("kitchen", "coffee")]["support"] == pytest.approx(0.6)
     assert ("coffee", "door") not in byRule and (frame["confidence"] >= 0.7).all()
     assert main(["sequential-rules", sequences_file, "--min-supp", "0.4", "--min-threshold", "0.7", "--top", "1"]) == 0
@@ -244,7 +244,7 @@ def test_sequential_rules_command(sequences_file, capsys):
 
 @pytest.fixture
 def noisy_transactions(tmp_path):
-    """300 cestas aleatorias de 12 items (p = 0.3) con una asociacion plantada i00 -> i01."""
+    """300 random baskets of 12 items (p = 0.3) with a planted association i00 -> i01."""
     rng = np.random.RandomState(1)
     table = rng.rand(300, 12) < 0.3
     table[:, 1] |= table[:, 0] & (rng.rand(300) < 0.6)
@@ -280,7 +280,7 @@ def test_temporal_rules_alpha_and_permutations(sensors_file, capsys):
     assert permuted["p_permutation"].min() == pytest.approx(1 / 16)
 
     assert main(["temporal-rules", sensors_file, "--time-column", "time", "--min-supp", "0.05", "--min-threshold", "0.95",
-                 "--targets", "heater", "--permutations", "5", "--format", "csv"]) == 0         # sin alpha: no filtra
+                 "--targets", "heater", "--permutations", "5", "--format", "csv"]) == 0         # without alpha: no filtering
     assert "p_permutation" in pd.read_csv(io.StringIO(capsys.readouterr().out)).columns
 
 
@@ -297,7 +297,7 @@ def test_rule_drift_with_alpha(sensors_file, capsys):
 
 @pytest.fixture
 def faulty_sensors_file(tmp_path):
-    """Como sensors_file, pero la segunda mitad tiene 8 fallos: la calefaccion no se enciende tras abrirse la puerta."""
+    """Like sensors_file, but the second half has 8 faults: the heating does not turn on after the door is opened."""
     rng = np.random.RandomState(1)
     index = pd.date_range("2024-01-01", periods=40 * 24, freq="h")
     door = rng.rand(len(index)) < 0.3
@@ -382,7 +382,7 @@ def test_classify_command_learns_the_class_rules(patients_file, capsys):
     captured = capsys.readouterr()
     assert "held-out" not in captured.err and len(captured.out.strip().splitlines()) == 2
     assert main(["classify", patients_file, "--class-column", "nope"]) == 1
-    assert "columna de clase" in capsys.readouterr().err
+    assert "class column" in capsys.readouterr().err
     assert main(["classify", patients_file, "--class-column", "diagnosis", "--test-fraction", "1.5"]) == 1
 
 
@@ -390,7 +390,7 @@ def test_classify_command_learns_the_class_rules(patients_file, capsys):
 
 @pytest.fixture
 def daily_file(tmp_path):
-    """40 dias de 6 lecturas cada 4 h: los dias calurosos la temperatura sube por la manana y el consumo despues; filas desordenadas."""
+    """40 days of 6 readings every 4 h: on hot days the temperature rises in the morning and the consumption afterwards; shuffled rows."""
     rng = np.random.RandomState(3)
     rows = []
     for day in range(40):
@@ -440,7 +440,7 @@ def test_fuzzy_sequential_rules_command(daily_file, capsys):
 
 def test_fuzzy_sequences_one_sequence_and_errors(daily_file, capsys):
     assert main(["fuzzy-sequences", daily_file, "--columns", "temp", "--time-column", "time", "--min-supp", "0.5",
-                 "--max-len", "1", "--top", "2"]) == 0                      # sin --sequence-column: una sola secuencia
+                 "--max-len", "1", "--top", "2"]) == 0                      # without --sequence-column: a single sequence
     assert len(capsys.readouterr().out.strip().splitlines()) == 3
     assert main(["fuzzy-sequences", daily_file, "--sequence-column", "nope"]) == 1
     assert "'nope'" in capsys.readouterr().err
@@ -452,7 +452,7 @@ def test_fuzzy_sequences_one_sequence_and_errors(daily_file, capsys):
 
 @pytest.fixture
 def shop_files(tmp_path):
-    """El ejemplo de Srikant y Agrawal: seis cestas y una taxonomia de ropa y calzado."""
+    """The Srikant and Agrawal example: six baskets and a taxonomy of clothing and footwear."""
     baskets = tmp_path / "shop.txt"
     baskets.write_text("Shirts\nJacket,Hiking Boots\nSki Pants,Hiking Boots\nShoes\nShoes\nJacket\n")
     taxonomy = tmp_path / "taxonomy.csv"
@@ -470,7 +470,7 @@ def test_generalized_rules_command(shop_files, capsys):
                           ("Hiking Boots", "Clothes")}
     assert rules[("Outerwear", "Hiking Boots")]["confidence"] == pytest.approx(2 / 3) and rules[("Hiking Boots", "Clothes")]["level"] == 2
 
-    assert main(base + ["--interest", "1.5", "--format", "json"]) == 0           # Hiking Boots => Outerwear no supera lo esperado por 1.5
+    assert main(base + ["--interest", "1.5", "--format", "json"]) == 0           # Hiking Boots => Outerwear does not exceed what is expected by 1.5
     kept = {(r["antecedents"], r["consequents"]): r for r in json.loads(capsys.readouterr().out)}
     assert set(kept) == set(rules) - {("Hiking Boots", "Outerwear")}
     assert kept[("Outerwear", "Hiking Boots")]["interest"] == pytest.approx(2.0)
@@ -485,13 +485,13 @@ def test_generalized_rules_levels_alpha_and_errors(shop_files, capsys):
     assert main(["generalized-rules", baskets, "--taxonomy", taxonomy, "--min-supp", "0.6", "--level-supp", "2=0.3", "3=0.3",
                  "--min-threshold", "0.6", "--max-len", "2", "--format", "json"]) == 0
     rules = json.loads(capsys.readouterr().out)
-    # con 0.6 solo en el nivel 1, solo sobreviven las reglas entre items de los niveles 2-3 (umbral 0.3)
+    # with 0.6 only at level 1, only the rules between items of levels 2-3 survive (threshold 0.3)
     assert {(r["antecedents"], r["consequents"]) for r in rules} == {("Hiking Boots", "Outerwear"), ("Outerwear", "Hiking Boots")}
     assert main(["generalized-rules", baskets, "--taxonomy", taxonomy, "--alpha", "0.5", "--min-supp", "0.3",
                  "--min-threshold", "0.6", "--prune"]) == 0
     capsys.readouterr()
     assert main(["generalized-rules", baskets, "--taxonomy", taxonomy, "--level-supp", "2:0.1"]) == 1
-    assert "NIVEL=SOPORTE" in capsys.readouterr().err
+    assert "LEVEL=SUPPORT" in capsys.readouterr().err
     assert main(["generalized-rules", baskets, "--taxonomy", taxonomy, "--interest", "0.5"]) == 1
     assert "interest" in capsys.readouterr().err
     assert main(["generalized-rules", baskets, "--taxonomy", baskets + ".missing"]) == 1
@@ -504,7 +504,7 @@ def test_generalized_rules_levels_alpha_and_errors(shop_files, capsys):
 
 @pytest.fixture
 def customers_file(tmp_path):
-    """La edad entre 30 y 45 anos marca los ingresos altos; las mujeres con ingresos altos compran."""
+    """Age between 30 and 45 marks high income; women with high income buy."""
     rng = np.random.RandomState(0)
     rows = 2000
     age = rng.uniform(18, 70, rows)
@@ -534,15 +534,15 @@ def test_quantitative_rules_command(customers_file, capsys):
                         "--alpha", "0.05"]) == 0
     capsys.readouterr()
     assert main(base + ["--columns", "nope"]) == 1
-    assert "inexistentes" in capsys.readouterr().err
+    assert "nonexistent" in capsys.readouterr().err
     assert main(base + ["--interest", "0.5"]) == 1
 
 
-# ------------------------------------------- reglas top-k, raras y de alta utilidad
+# ------------------------------------------- top-k, rare and high-utility rules
 
 @pytest.fixture
 def pairs_file(tmp_path):
-    """a y d son frecuentes por separado (0.30) y juntos no (0.15); b es muy frecuente y va solo."""
+    """a and d are frequent separately (0.30) and not together (0.15); b is very frequent and goes alone."""
     path = tmp_path / "pairs.txt"
     path.write_text("\n".join(["a,d"] * 15 + ["a"] * 15 + ["d"] * 15 + ["b"] * 55) + "\n")
     return str(path)
@@ -550,7 +550,7 @@ def pairs_file(tmp_path):
 
 @pytest.fixture
 def gems_files(tmp_path):
-    """3 ventas de una gema y un oro, y 40 de un boligrafo y una gorra: lo que vale no es lo que se vende mas."""
+    """3 sales of a gem and a gold item, and 40 of a pen and a cap: what is worth the most is not what sells the most."""
     rows = [{"gem": 1, "gold": 1, "pen": 0, "cap": 0}] * 3 + [{"gem": 0, "gold": 0, "pen": 2, "cap": 1}] * 40
     quantities, profits = tmp_path / "sales.csv", tmp_path / "profits.csv"
     pd.DataFrame(rows).to_csv(quantities, index=False)
@@ -564,13 +564,13 @@ def test_top_k_rules_command(pairs_file, capsys):
     assert [(r["antecedents"], r["consequents"]) for r in rules] == [("a", "d"), ("d", "a")]
     assert all(abs(r["support"] - 0.15) < 1e-9 and abs(r["confidence"] - 0.5) < 1e-9 for r in rules)
     assert main(["top-k-rules", pairs_file, "-k", "1", "--min-conf", "0.5", "--max-len", "0"]) == 0
-    assert len(capsys.readouterr().out.strip().splitlines()) == 2                      # cabecera y una regla
+    assert len(capsys.readouterr().out.strip().splitlines()) == 2                      # header and one rule
     assert main(["top-k-rules", pairs_file, "-k", "5", "--min-conf", "0.5", "--alpha", "0.05"]) == 0
     assert "p_adjusted" in capsys.readouterr().out
     assert main(["top-k-rules", pairs_file, "-k", "5", "--min-conf", "0.5", "--min-lift", "2"]) == 0
     assert "no rules found" in capsys.readouterr().out
     assert main(["top-k-rules", pairs_file, "-k", "0"]) == 1
-    assert "k debe ser" in capsys.readouterr().err
+    assert "k must be" in capsys.readouterr().err
     with pytest.raises(SystemExit):
         main(["top-k-rules", pairs_file])                                              # -k es obligatorio
 
@@ -598,7 +598,7 @@ def test_high_utility_rules_command(gems_files, capsys):
     rules = json.loads(capsys.readouterr().out)
     assert {(r["antecedents"], r["consequents"]) for r in rules} == {("gem", "gold"), ("gold", "gem")}
     assert all(r["utility"] == 2700 and abs(r["utility_share"] - 2700 / 2820) < 1e-9 for r in rules)
-    # sin beneficios todos valen 1: ahora el valioso es lo que mas se vende
+    # without profits everything is worth 1: now the valuable one is what sells the most
     assert main(["high-utility-rules", sales, "--min-utility", "0.5", "--min-conf", "0.9", "--format", "json"]) == 0
     unit = json.loads(capsys.readouterr().out)
     assert {(r["antecedents"], r["consequents"]) for r in unit} == {("pen", "cap"), ("cap", "pen")}
@@ -615,11 +615,11 @@ def test_high_utility_rules_errors(gems_files, tmp_path, capsys):
     short = tmp_path / "short.csv"
     short.write_text("gem,gold\n500,400\n")
     assert main(["high-utility-rules", sales, "--profits", str(short)]) == 1                 # faltan pen y cap
-    assert "faltan los beneficios" in capsys.readouterr().err
+    assert "are missing" in capsys.readouterr().err
     one_column = tmp_path / "one.csv"
     one_column.write_text("gem\n500\n")
     assert main(["high-utility-rules", sales, "--profits", str(one_column)]) == 1
-    assert "primera columna" in capsys.readouterr().err
+    assert "first column" in capsys.readouterr().err
     assert main(["high-utility-rules", str(tmp_path / "nothing.csv")]) == 1
 
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Tests de regresion para ARMxtend.ARM.meta_rules (meta-reglas de asociacion
-crisp y difusas), siguiendo los Algoritmos 3 y 4 de:
+Regression tests for ARMxtend.ARM.meta_rules (crisp and fuzzy
+association meta-rules), following Algorithms 3 and 4 of:
     Ruiz, M.D., Gomez-Romero, J., Molina-Solana, M., Campana, J.R.,
     Martin-Bautista, M.J. (2016). "Meta-association rules for mining
     interesting associations in multiple datasets". Applied Soft Computing,
@@ -41,7 +41,7 @@ def test_build_crisp_meta_database_shape():
 
 
 def test_crisp_meta_association_rules_finds_co_occurring_primary_rules():
-    # 'A=>B' y 'C=>D' co-ocurren siempre que aparecen (3 de 4 datasets);
+    # 'A=>B' and 'C=>D' co-occur whenever they appear (3 of 4 datasets);
     # 'E=>F' aparece aislado en un unico dataset.
     ruleSets = [
         {"A=>B", "C=>D"},
@@ -61,7 +61,7 @@ def test_crisp_meta_association_rules_finds_co_occurring_primary_rules():
     assert rule["support"] == pytest.approx(3 / 4)
     assert rule["confidence"] == pytest.approx(1.0)
 
-    # 'E=>F' solo aparece en 1/4 datasets: por debajo de min_supp, no genera meta-reglas
+    # 'E=>F' only appears in 1/4 datasets: below min_supp, it generates no meta-rules
     assert not any("E=>F" in antecedent or "E=>F" in consequent for antecedent, consequent in found)
 
 
@@ -76,8 +76,8 @@ def test_crisp_meta_association_rules_with_attributes():
 
 
 def test_fuzzy_meta_database_reflects_rule_strength_not_just_presence():
-    # 'A=>B' esta SIEMPRE presente (4/4), pero con confianza baja y variable;
-    # 'C=>D' esta presente en 3/4, siempre con confianza muy alta.
+    # 'A=>B' is ALWAYS present (4/4), but with low and variable confidence;
+    # 'C=>D' is present in 3/4, always with very high confidence.
     ruleMeasureSets = [
         {"A=>B": 0.2, "C=>D": 0.95},
         {"A=>B": 0.3, "C=>D": 0.9},
@@ -89,7 +89,7 @@ def test_fuzzy_meta_database_reflects_rule_strength_not_just_presence():
     assert list(metaDb["A=>B"]) == [0.2, 0.3, 0.25, 0.15]
     assert list(metaDb["C=>D"]) == [0.95, 0.9, 0.92, 0.0]
 
-    # Version crisp: 'A=>B' se ve tan "fuerte" como 'C=>D' (ambas simplemente presentes)
+    # Crisp version: 'A=>B' looks as "strong" as 'C=>D' (both simply present)
     ruleSets = [set(rm.keys()) for rm in ruleMeasureSets]
     crispDb = build_crisp_meta_database(ruleSets)
     assert list(crispDb["A=>B"]) == [1, 1, 1, 1]

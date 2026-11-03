@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Tests de ``ARM.temporal_rules``: las medidas de cada regla se comparan con un
-recuento directo sobre los datos originales (oraculo), y se comprueba que un
-patron con retardo plantado se recupera.
+Tests of ``ARM.temporal_rules``: the measures of each rule are compared with a
+direct count over the original data (oracle), and it is checked that a
+planted pattern with lag is recovered.
 """
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ from ARMxtend.preprocessing.timeseries import split_lag
 
 
 def planted_series(rows=1500, seed=0):
-    """A y C aleatorios; B ocurre dos pasos despues de A el 90 % de las veces."""
+    """A and C random; B occurs two steps after A 90 % of the time."""
     rng = np.random.RandomState(seed)
     a = rng.rand(rows) < 0.3
     b = np.zeros(rows, dtype=bool)
@@ -27,7 +27,7 @@ def planted_series(rows=1500, seed=0):
 
 
 def count_rule(table, antecedent, consequent, max_lag):
-    """Soporte y confianza de la regla contando directamente, sobre las filas con todos los retardos."""
+    """Support and confidence of the rule by counting directly, over the rows with all the lags."""
     def holds(names, t):
         return all(table[base].iloc[t - lag] for base, lag in (split_lag(name) for name in names))
 
@@ -54,9 +54,9 @@ def test_the_planted_lag_two_rule_is_found_and_the_reverse_is_not():
     assert len(found) == 1
     assert found.iloc[0]["confidence"] == pytest.approx(0.9, abs=0.03)
     assert found.iloc[0]["lags"] == (2,) and found.iloc[0]["max_lag"] == 2
-    # B no predice A: no hay ninguna regla con A de consecuente
+    # B does not predict A: there is no rule with A as consequent
     assert not any("A" in consequent for consequent in rules["consequents"])
-    # y la aleatoria C no aparece en reglas con confianza alta
+    # and the random C does not appear in rules with high confidence
     assert not any("C" in consequent for consequent in rules["consequents"])
 
 
@@ -66,7 +66,7 @@ def test_structure_of_the_rules():
     for _, rule in rules.iterrows():
         assert all(split_lag(item)[1] == 0 for item in rule["consequents"])
         antecedentLags = sorted({split_lag(item)[1] for item in rule["antecedents"] if split_lag(item)[1] > 0})
-        assert antecedentLags, "el antecedente debe mirar al pasado"
+        assert antecedentLags, "the antecedent must look to the past"
         assert rule["lags"] == tuple(antecedentLags) and rule["max_lag"] == max(antecedentLags)
         assert max(antecedentLags) <= 3
 
@@ -134,7 +134,7 @@ def test_input_validation():
     table = planted_series(rows=50)
     with pytest.raises(ValueError, match="'-'"):
         temporal_association_rules(table.rename(columns={"A": "a-b"}), 2, 0.1)
-    with pytest.raises(ValueError, match="mas de"):
+    with pytest.raises(ValueError, match="more than"):
         temporal_association_rules(table.iloc[:2], 3, 0.1)
 
 
@@ -199,7 +199,7 @@ def test_rule_profile_finds_a_rule_that_only_holds_at_some_hours():
     door = rng.rand(len(index)) < 0.5
     light = np.zeros(len(index), dtype=bool)
     evening = index.hour >= 18
-    light[1:] = np.where(evening[1:], door[:-1], rng.rand(len(index) - 1) < 0.5)      # solo de tarde sigue a la puerta
+    light[1:] = np.where(evening[1:], door[:-1], rng.rand(len(index) - 1) < 0.5)      # only in the afternoon does it follow the door
     table = pd.DataFrame({"door": door, "light": light}, index=index)
 
     profile = rule_profile(table, ["door@lag1"], ["light"], lambda stamps: stamps.hour)
@@ -213,7 +213,7 @@ def test_rule_profile_finds_a_rule_that_only_holds_at_some_hours():
 
 def test_rule_profile_validation():
     table = planted_series(rows=20)
-    with pytest.raises(ValueError, match="columnas"):
+    with pytest.raises(ValueError, match="not columns"):
         rule_profile(table, ["Z"], ["B"], np.zeros(20))
-    with pytest.raises(ValueError, match="una entrada por fila"):
+    with pytest.raises(ValueError, match="one entry per row"):
         rule_profile(table, ["A"], ["B"], np.zeros(5))

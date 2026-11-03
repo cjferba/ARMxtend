@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Tests de ``ARM.significance``: los p-valores frente a una enumeracion exacta con enteros, las
-correcciones por pruebas multiples frente a valores calculados a mano (y a los de R), el control
-de falsos descubrimientos sobre ruido, los intervalos y los tests de permutacion.
+Tests of ``ARM.significance``: the p-values against an exact enumeration with integers, the
+multiple-testing corrections against hand-computed values (and those of R), the control
+of false discoveries on noise, the intervals and the permutation tests.
 """
 import itertools
 import math
@@ -25,7 +25,7 @@ from ARMxtend.preprocessing.timeseries import lag_items, split_lag
 
 
 def rules_from_counts(tables, n):
-    """Reglas sintéticas con las frecuencias (n_ac, n_a, n_c) dadas, sobre n transacciones."""
+    """Synthetic rules with the given frequencies (n_ac, n_a, n_c), over n transactions."""
     rules = pd.DataFrame({
         "antecedents": [frozenset({"a{}".format(i)}) for i in range(len(tables))],
         "consequents": [frozenset({"c{}".format(i)}) for i in range(len(tables))],
@@ -37,7 +37,7 @@ def rules_from_counts(tables, n):
 
 
 def exact_greater(n_ac, n_a, n_c, n):
-    """P(X >= n_ac) de la hipergeometrica, con enteros y fracciones (sin logaritmos ni recurrencias)."""
+    """P(X >= n_ac) of the hypergeometric, with integers and fractions (no logarithms or recurrences)."""
     total = math.comb(n, n_a)
     hit = sum(math.comb(n_c, x) * math.comb(n - n_c, n_a - x) for x in range(n_ac, min(n_a, n_c) + 1)
               if 0 <= n_a - x <= n - n_c)
@@ -64,7 +64,7 @@ def valid_tables(n, count, seed):
 # ----------------------------------------------------------------- tests 2x2
 
 def test_fisher_matches_the_known_tea_tasting_value():
-    # la "dama del te" de Fisher: 3 aciertos de 4 con 4 tazas de cada tipo -> p = 17/70 (una cola)
+    # Fisher's "lady tasting tea": 3 hits out of 4 with 4 cups of each type -> p = 17/70 (one tail)
     rules = rules_from_counts([(3, 4, 4)], 8)
     assert rule_significance(rules)["p_value"].iloc[0] == pytest.approx(17 / 70)
     assert rule_significance(rules, alternative="less")["p_value"].iloc[0] == pytest.approx(69 / 70)   # P(X <= 3) = 1 - P(X = 4)
@@ -85,7 +85,7 @@ def test_fisher_matches_exact_integer_enumeration(n):
 
 
 def test_fisher_on_large_tables_and_with_small_chunks(monkeypatch):
-    """El corte por terminos despreciables y el trabajo por bloques no cambian el resultado exacto."""
+    """The cut of negligible terms and the work in blocks do not change the exact result."""
     n = 6000
     tables = [(300, 900, 1800), (101, 500, 1200), (480, 900, 1800), (5, 20, 3000), (900, 900, 1800)]
     rules = rules_from_counts(tables, n)
@@ -94,7 +94,7 @@ def test_fisher_on_large_tables_and_with_small_chunks(monkeypatch):
         monkeypatch.setattr(significance, "_CHUNK", chunk)
         got = rule_significance(rules, n_transactions=n)["p_value"].to_numpy()
         assert got == pytest.approx(expected, rel=1e-8, abs=1e-300)
-    assert expected[0] < 0.05 and 0.3 < expected[1] <= 1.0           # hay un caso significativo y otro que no
+    assert expected[0] < 0.05 and 0.3 < expected[1] <= 1.0           # there is one significant case and another that is not
 
 
 def test_chi2_matches_an_independent_formula():
@@ -119,7 +119,7 @@ def test_chi2_and_fisher_agree_on_large_counts_and_degenerate_tables_give_one():
     chi2 = rule_significance(rules, method="chi2")["p_value"].to_numpy()
     assert np.log10(chi2[0]) == pytest.approx(np.log10(fisher[0]), abs=0.6)
     assert chi2[1] == pytest.approx(fisher[1], abs=0.02)
-    constant = rules_from_counts([(50, 50, 100)], 100)               # el consecuente esta en todas las transacciones
+    constant = rules_from_counts([(50, 50, 100)], 100)               # the consequent is in all the transactions
     assert rule_significance(constant, method="chi2")["p_value"].iloc[0] == 1.0
     assert rule_significance(constant, method="fisher")["p_value"].iloc[0] == pytest.approx(1.0)
 
@@ -134,7 +134,7 @@ def test_rule_significance_counts_from_real_rules_and_validation():
     assert row["p_value"] == pytest.approx(exact_greater(30, 40, 40, 100))
     with pytest.raises(ValueError, match="n_transactions"):
         rule_significance(rules)
-    with pytest.raises(ValueError, match="multiplos"):
+    with pytest.raises(ValueError, match="multiples"):
         rule_significance(rules, n_transactions=77)
     with pytest.raises(ValueError, match="method"):
         rule_significance(rules, 100, method="magic")
@@ -142,7 +142,7 @@ def test_rule_significance_counts_from_real_rules_and_validation():
         rule_significance(rules, 100, alternative="up")
     with pytest.raises(ValueError, match="crisp"):
         rule_significance(rules.drop(columns="antecedent support"), 100)
-    assert "p_value" not in rules.columns                              # no modifica la entrada
+    assert "p_value" not in rules.columns                              # does not modify the input
 
 
 # ------------------------------------------------------------ correcciones
@@ -166,7 +166,7 @@ def test_adjust_pvalues_properties(method):
     adjusted = adjust_pvalues(p, method)
     assert np.all(adjusted >= p - 1e-15) and np.all(adjusted <= 1.0)
     order = np.argsort(p)
-    assert np.all(np.diff(adjusted[order]) >= -1e-15)                  # conserva el orden de los p-valores
+    assert np.all(np.diff(adjusted[order]) >= -1e-15)                  # keeps the order of the p-values
     bigger = adjust_pvalues(p, method, n_tests=500)
     assert np.all(bigger >= adjusted - 1e-15) and bigger.min() > adjusted.min()
     assert adjust_pvalues(p, method, n_tests=len(p)) == pytest.approx(adjusted)
@@ -185,7 +185,7 @@ def test_adjust_pvalues_ordering_of_methods_and_validation():
         adjust_pvalues(P, n_tests=2)
 
 
-# ------------------------------------------------- reglas minadas y familias
+# ------------------------------------------------- mined rules and families
 
 def mine(table, min_supp, min_conf):
     transactions = [set(table.columns[row]) for row in table.to_numpy()]
@@ -217,8 +217,8 @@ def test_noise_produces_many_naive_rules_but_almost_no_significant_ones():
         naive += len(rules)
         discoveries += len(found)
         runs_with_discoveries += int(len(found) > 0)
-    assert naive > 300                                                    # el umbral de confianza solo deja pasar ruido
-    assert runs_with_discoveries <= 4 and discoveries <= 25               # con alpha = 0.05 se espera ~1 ejecucion de 20
+    assert naive > 300                                                    # the confidence threshold only lets noise through
+    assert runs_with_discoveries <= 4 and discoveries <= 25               # with alpha = 0.05, ~1 run out of 20 is expected
 
 
 def test_planted_association_survives_the_correction():
@@ -232,7 +232,7 @@ def test_planted_association_survives_the_correction():
     top = found.iloc[0]
     assert top["p_adjusted"] < 1e-6 and found["p_adjusted"].is_monotonic_increasing
     assert (found["p_adjusted"] <= 0.05).all() and len(found) < len(rules)
-    # el p-valor de una regla es el del test exacto sobre las frecuencias contadas en los datos
+    # the p-value of a rule is that of the exact test on the frequencies counted in the data
     row = found[(found["antecedents"] == frozenset({"i00"})) & (found["consequents"] == frozenset({"i01"}))].iloc[0]
     n_a, n_c = int(table["i00"].sum()), int(table["i01"].sum())
     n_ac = int((table["i00"] & table["i01"]).sum())
@@ -256,7 +256,7 @@ def test_temporal_rules_carry_their_transactions_and_candidates():
     rules = temporal_association_rules(items, max_lag=2, min_supp=0.03, min_threshold=0.5, targets=["heater"],
                                        exclude_persistence=True)
     assert rules.attrs["n_transactions"] == rows - 2
-    # la familia son las particiones validas de los itemsets frecuentes, contadas aqui con otra implementacion
+    # the family is the valid partitions of the frequent itemsets, counted here with another implementation
     lagged = lag_items(items, [0, 1, 2])
     frequent = fpgrowth([set(lagged.columns[row]) for row in lagged.to_numpy()], 0.03)
     brute = 0
@@ -308,7 +308,7 @@ def test_bootstrap_intervals_contain_the_estimate_and_follow_the_data():
 
 
 def test_multinomial_bootstrap_equals_resampling_rows():
-    """Para una regla basta remuestrear sus cuatro celdas: coincide con remuestrear las filas de verdad."""
+    """For one rule it is enough to resample its four cells: it matches resampling the rows for real."""
     rng = np.random.RandomState(5)
     n = 400
     antecedent = rng.rand(n) < 0.4
@@ -346,16 +346,16 @@ def test_shuffled_items_keep_each_column_but_break_the_alignment():
     for null in ("permute", "shift"):
         shuffled = shuffled_items(items, null, random_state=1)
         assert (shuffled.index == items.index).all() and list(shuffled.columns) == list(items.columns)
-        assert (shuffled.sum() == items.sum()).all()                    # misma frecuencia de cada item
+        assert (shuffled.sum() == items.sum()).all()                    # same frequency of each item
         assert not shuffled.equals(items)
     shifted = shuffled_items(items, "shift", random_state=1)
-    for name in items.columns:                                          # cada columna es una rotacion de la original
+    for name in items.columns:                                          # each column is a rotation of the original
         assert any(np.array_equal(np.roll(items[name].to_numpy(), k), shifted[name].to_numpy()) for k in range(1, 200))
     same = lambda x: int((x[1:] == x[:-1]).sum())                       # noqa: E731 -- repeticiones consecutivas
     assert [same(shifted[n].to_numpy()) for n in items] in ([same(items[n].to_numpy()) + d for n, d in zip(items, ds)]
                                                             for ds in itertools.product([-1, 0, 1], repeat=3))
     permuted = shuffled_items(items, "permute", random_state=1)
-    assert same(permuted["c"].to_numpy()) != same(items["c"].to_numpy())  # permutar si destruye la autocorrelacion
+    assert same(permuted["c"].to_numpy()) != same(items["c"].to_numpy())  # permuting does destroy the autocorrelation
     pd.testing.assert_frame_equal(shuffled_items(items, "shift", random_state=7), shuffled_items(items, "shift", random_state=7))
     with pytest.raises(ValueError, match="null"):
         shuffled_items(items, "zigzag")
@@ -364,7 +364,7 @@ def test_shuffled_items_keep_each_column_but_break_the_alignment():
 
 
 def test_permutation_p_value_arithmetic_with_a_deterministic_miner():
-    """p = (1 + #{nulos al menos tan buenos}) / (1 + B), comprobado recontando a mano la distribucion nula."""
+    """p = (1 + #{nulls at least as good}) / (1 + B), checked by recounting the null distribution by hand."""
     rng = np.random.RandomState(2)
     items = pd.DataFrame({"a": rng.rand(300) < 0.4, "b": rng.rand(300) < 0.4})
     items["b"] = items["b"] | (items["a"] & (rng.rand(300) < 0.5))
@@ -407,7 +407,7 @@ def test_minp_permutation_separates_planted_from_noise_rules():
 
 
 def test_shift_null_exposes_false_alarms_that_the_iid_test_gives_on_autocorrelated_series():
-    """Dos series independientes con regimenes largos parecen asociadas para Fisher; el desplazamiento circular lo desmiente."""
+    """Two independent series with long regimes look associated to Fisher; the circular shift refutes it."""
     def regimes(rng, rows, length):
         blocks = rng.rand(rows // length + 1) < 0.4
         return np.repeat(blocks, length)[:rows]
@@ -424,8 +424,8 @@ def test_shift_null_exposes_false_alarms_that_the_iid_test_gives_on_autocorrelat
         fisher_alarms += int(rule_significance(rules, 2000)["p_value"].iloc[0] < 0.01)
         null = permutation_null(items, miner, n_permutations=60, null="shift", random_state=seed)
         shift_alarms += int(permutation_p_values(rules, null, n_transactions=2000)["p_permutation"].iloc[0] < 0.05)
-    assert fisher_alarms >= 6          # el test que supone independencia da falsas alarmas a menudo
-    assert shift_alarms <= 3           # la permutacion circular, cerca del 5 % nominal
+    assert fisher_alarms >= 6          # the test that assumes independence often gives false alarms
+    assert shift_alarms <= 3           # the circular permutation, close to the nominal 5 %
 
 
 # ------------------------------------------------------ minero y ventanas
@@ -447,7 +447,7 @@ def test_significant_miner_in_windows_drops_the_trivial_rules():
     plain = window_rules(table, 20, min_supp=0.3, min_threshold=0.9)
     filtered = window_rules(table, 20, miner=significant_miner(crisp_rule_miner(0.3, "confidence", 0.9), alpha=0.05))
     keys = lambda frame: {(tuple(sorted(a)), tuple(sorted(c))) for a, c in zip(frame["antecedents"], frame["consequents"])}   # noqa: E731
-    assert (("D",), ("E",)) in keys(plain) and (("D",), ("E",)) not in keys(filtered)      # E esta siempre: nada que contrastar
+    assert (("D",), ("E",)) in keys(plain) and (("D",), ("E",)) not in keys(filtered)      # E is always present: nothing to test
     assert (("A",), ("B",)) in keys(filtered) and "p_adjusted" in filtered.columns
     assert filtered["p_adjusted"].max() <= 0.05
     empty = significant_miner(lambda t: pd.DataFrame(columns=["antecedents", "consequents"]))(table)

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Estimadores estilo scikit-learn y datos sinteticos: codificar transacciones, extraer reglas con ``RuleMiner``,
-usar las reglas como atributos y comprobar que se recuperan los patrones plantados.
+Scikit-learn style estimators and synthetic data: encode transactions, extract rules with ``RuleMiner``,
+use the rules as features and check that the planted patterns are recovered.
 
-Ejecutar:  python examples/example_estimators.py
+Run:  python examples/example_estimators.py
 """
 from ARMxtend.ARM import RuleClassifier
 from ARMxtend.datasets import load_dataset, make_labeled_items, make_transactions

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de ARM.gradual_rules (reglas graduales, soporte por pares al estilo Hullermeier)."""
+"""Tests of ARM.gradual_rules (gradual rules, pairwise support in the Hullermeier style)."""
 import itertools
 
 import numpy as np
@@ -12,7 +12,7 @@ from ARMxtend.ARM.gradual_rules import (
 
 
 def _brute_force_support(table, itemset):
-    """Cuenta pares NO ordenados que satisfacen el itemset en alguna orientacion."""
+    """Counts UNORDERED pairs that satisfy the itemset in some orientation."""
     n = len(table)
     count = 0
     for i, j in itertools.combinations(range(n), 2):
@@ -39,7 +39,7 @@ def test_pair_support_matches_brute_force(random_table):
 def test_perfectly_monotone_attributes():
     table = pd.DataFrame({"A": range(10), "B": range(10), "C": range(10, 0, -1)})
     itemsets = gradual_itemsets(table, min_supp=0.99)
-    assert itemsets[(("A", "+"), ("B", "+"))] == pytest.approx(1.0)       # cuanto mas A, mas B
+    assert itemsets[(("A", "+"), ("B", "+"))] == pytest.approx(1.0)       # the more A, the more B
     assert itemsets[(("A", "+"), ("C", "-"))] == pytest.approx(1.0)       # cuanto mas A, menos C
     assert (("A", "+"), ("C", "+")) not in itemsets                       # opuesto: soporte 0
     assert (("A", "+"), ("B", "+"), ("C", "-")) in itemsets
@@ -61,7 +61,7 @@ def test_support_is_antimonotone_so_min_supp_prunes(random_table):
     strict = gradual_itemsets(random_table, min_supp=0.3)
     assert set(strict) <= set(loose)
     assert all(support >= 0.3 for support in strict.values())
-    # lo que el umbral estricto descarta no esta en el resultado aunque sea valido en el laxo
+    # what the strict threshold discards is not in the result even if it is valid in the loose one
     assert any(s < 0.3 for s in loose.values())
 
 

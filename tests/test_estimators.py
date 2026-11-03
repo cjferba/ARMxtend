@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de los estimadores estilo scikit-learn (ARMxtend.estimators, ARMxtend.base) y de ARMxtend.datasets."""
+"""Tests of the scikit-learn style estimators (ARMxtend.estimators, ARMxtend.base) and of ARMxtend.datasets."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -31,7 +31,7 @@ def test_params_get_set_repr_and_clone():
     assert toy.set_params(b="y") is toy and toy.b == "y"
     clone = Toy(**toy.get_params())
     assert clone.get_params() == toy.get_params() and clone is not toy
-    with pytest.raises(ValueError, match="parametro no valido"):
+    with pytest.raises(ValueError, match="invalid parameter"):
         toy.set_params(c=1)
 
 
@@ -63,12 +63,12 @@ def test_encoder_round_trip_and_unknown_items():
     assert table.to_numpy().tolist() == [[True, True, False], [False, False, True], [False] * 3, [True, False, True]]
     assert encoder.inverse_transform(table) == [["a", "b"], ["c"], [], ["a", "c"]]
     assert encoder.transform([["a", "zzz"]]).to_numpy().tolist() == [[True, False, False]]
-    with pytest.raises(ValueError, match="no visto"):
+    with pytest.raises(ValueError, match="not seen"):
         TransactionEncoder(handle_unknown="error").fit(baskets).transform([["zzz"]])
 
 
 def test_encoder_errors_and_mixed_item_types():
-    with pytest.raises(ValueError, match="no esta ajustado"):
+    with pytest.raises(ValueError, match="is not fitted"):
         TransactionEncoder().transform([["a"]])
     with pytest.raises(ValueError, match="handle_unknown"):
         TransactionEncoder(handle_unknown="boom").fit([["a"]])
@@ -79,7 +79,7 @@ def test_encoder_keeps_the_index_of_a_table_and_rejects_non_boolean():
     frame = pd.DataFrame({"a": [1, 0], "b": [0, 1]}, index=["x", "y"])
     assert as_transactions(frame) == [["a"], ["b"]]
     assert list(TransactionEncoder().fit_transform(frame).index) == ["x", "y"]
-    with pytest.raises(ValueError, match="booleana"):
+    with pytest.raises(ValueError, match="boolean"):
         as_transactions(pd.DataFrame({"a": [0.5, 1.0]}))
 
 
@@ -122,13 +122,13 @@ def test_accepts_a_boolean_table_and_gives_the_same_rules():
 def test_miner_errors():
     with pytest.raises(ValueError, match="method"):
         RuleMiner(method="boom").fit(BASKETS)
-    with pytest.raises(ValueError, match="necesita el parametro k"):
+    with pytest.raises(ValueError, match="needs the parameter k"):
         RuleMiner(method="top_k").fit(BASKETS)
-    with pytest.raises(ValueError, match="necesita el parametro max_supp"):
+    with pytest.raises(ValueError, match="needs the parameter max_supp"):
         RuleMiner(method="rare").fit(BASKETS)
-    with pytest.raises(ValueError, match="confianza"):
+    with pytest.raises(ValueError, match="confidence"):
         RuleMiner(method="top_k", k=3, metric="lift").fit(BASKETS)
-    with pytest.raises(ValueError, match="no esta ajustado"):
+    with pytest.raises(ValueError, match="is not fitted"):
         RuleMiner().transform(BASKETS)
 
 

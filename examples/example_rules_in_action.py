@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Ejemplo: reglas en accion -- usar reglas ya minadas para detectar anomalias
-(fallos de un actuador), predecir lo que ocurrira (siguiente instante de unos
-sensores y siguientes eventos de una rutina) y clasificar con reglas de
-asociacion de clase (CBA).
+Example: rules in action -- use already mined rules to detect anomalies
+(faults of an actuator), predict what will happen (next instant of some
+sensors and next events of a routine) and classify with class
+association rules (CBA).
 """
 import numpy as np
 import pandas as pd
@@ -20,15 +20,15 @@ from example_sequences import simulated_events
 
 def sensor_log(steps, faults=0, seed=0):
     """
-    Cuatro sensores booleanos, un dato cada 10 minutos:
+    Four boolean sensors, one reading every 10 minutes:
 
-    * ``motion`` (movimiento, 30 % de los instantes) y ``door`` (puerta, 20 %) al azar;
-    * ``light``: si hubo movimiento en el instante anterior se enciende el 99 % de las veces,
-      y si no, el 10 %;
-    * ``chime`` (timbre): si se abrio la puerta en el instante anterior suena el 80 %, y si no, el 5 %;
-    * con ``faults`` > 0, en ese numero de instantes tras un movimiento la luz NO se enciende (fallo).
+    * ``motion`` (30 % of the instants) and ``door`` (20 %) at random;
+    * ``light``: if there was motion in the previous instant it turns on 99 % of the time,
+      and otherwise 10 %;
+    * ``chime`` (doorbell): if the door was opened in the previous instant it rings 80 %, and otherwise 5 %;
+    * with ``faults`` > 0, in that number of instants after a motion the light does NOT turn on (fault).
 
-    Devuelve los items y una serie booleana que marca los instantes con fallo.
+    Returns the items and a boolean series marking the instants with a fault.
     """
     rng = np.random.RandomState(seed)
     motion, door = rng.rand(steps) < 0.3, rng.rand(steps) < 0.2
@@ -46,7 +46,7 @@ def sensor_log(steps, faults=0, seed=0):
 
 
 def auc(score, positive):
-    """Area bajo la curva ROC: probabilidad de que una fila anomala puntue mas que una normal (los empates, medio punto)."""
+    """Area under the ROC curve: probability that an anomalous row scores higher than a normal one (ties count half)."""
     ranks = pd.Series(np.asarray(score, dtype=float)).rank().to_numpy()
     positive = np.asarray(positive, dtype=bool)
     n_pos, n_neg = positive.sum(), (~positive).sum()
@@ -55,8 +55,8 @@ def auc(score, positive):
 
 def patients(rows=1200, seed=2):
     """
-    Diez sintomas booleanos y una clase: 'flu' si hay fiebre y tos (95 %), si no 'allergy' si hay picor
-    y estornudos (90 %), y si no 'healthy' (el 93 % de las veces; el resto, al azar entre las tres).
+    Ten boolean symptoms and a class: 'flu' if there is fever and cough (95 %), otherwise 'allergy' if there is itching
+    and sneezing (90 %), and otherwise 'healthy' (93 % of the time; the rest, at random among the three).
     """
     rng = np.random.RandomState(seed)
     names = ["fever", "cough", "itchy", "sneezing", "fatigue", "headache", "nausea", "rash", "dizzy", "sore"]
@@ -68,14 +68,14 @@ def patients(rows=1200, seed=2):
 
 
 def main():
-    # 1. Anomalias: reglas aprendidas con el funcionamiento normal, aplicadas a datos nuevos con fallos ---
+    # 1. Anomalies: rules learned from normal operation, applied to new data with faults ---
     train, _ = sensor_log(3000, seed=1)
     test, fault = sensor_log(2000, faults=30, seed=2)
     rules = temporal_association_rules(train, 1, 0.02, min_threshold=0.75, targets=["light", "chime"],
                                        exclude_persistence=True, same_time_antecedent=False)
     rules = significant_rules(rules, alpha=0.05)
     rules = prune_unproductive_rules(rules[rules["consequents"].map(len) == 1], min_improvement=0.05)
-    print("Reglas del funcionamiento normal ({} instantes):".format(len(train)))
+    print("Rules from normal operation ({} instants):".format(len(train)))
     for _, rule in rules.iterrows():
         print("  {} (t-1) => {} (t)  confidence={:.2f}".format(
             ", ".join(sorted(i.split("@")[0] for i in rule["antecedents"])), ", ".join(sorted(rule["consequents"])),
@@ -85,45 +85,45 @@ def main():
     found = int(fault.loc[flagged.index].sum())
     surprise = anomaly_scores(test, rules)["score"]
     counted = anomaly_scores(test, rules, weight="count")["score"]
-    print("\nDatos nuevos: {} instantes con {} fallos de la luz. {} instantes superan los 6 bits de sorpresa y "
-          "contienen {} de los fallos".format(len(test), int(fault.sum()), len(flagged), found))
-    print("AUC con peso 'surprise': {:.3f}; con peso 'count': {:.3f}".format(auc(surprise, fault), auc(counted, fault)))
+    print("\nNew data: {} instants with {} light faults. {} instants exceed the 6 bits of surprise and "
+          "contain {} of the faults".format(len(test), int(fault.sum()), len(flagged), found))
+    print("AUC with weight 'surprise': {:.3f}; with weight 'count': {:.3f}".format(auc(surprise, fault), auc(counted, fault)))
     first = flagged.iloc[0]
-    print("El mas anomalo, {}: score={:.1f} por {}".format(flagged.index[0], first["score"], "; ".join(first["rules"])))
+    print("The most anomalous, {}: score={:.1f} for {}".format(flagged.index[0], first["score"], "; ".join(first["rules"])))
 
-    # 2. Prediccion del siguiente instante con las mismas reglas ----------------------------------------
+    # 2. Prediction of the next instant with the same rules ----------------------------------------
     quality = evaluate_forecast(test, rules, threshold=0.7)
-    print("\nPrediccion de cada sensor con las reglas (umbral 0.7), sobre datos nuevos:")
+    print("\nPrediction of each sensor with the rules (threshold 0.7), on new data:")
     for item, row in quality.iterrows():
-        print("  {:<6} precision={:.2f} recall={:.2f} (el sensor se activa el {:.0%} de las veces)".format(
+        print("  {:<6} precision={:.2f} recall={:.2f} (the sensor activates {:.0%} of the time)".format(
             item, row["precision"], row["recall"], row["base_rate"]))
     upcoming = forecast_next(test, rules)
-    print("Prevision para el instante siguiente al ultimo dato (hubo movimiento: {}, puerta: {}): {}".format(
-        "si" if test["motion"].iloc[-1] else "no", "si" if test["door"].iloc[-1] else "no",
-        ", ".join("{} ({:.2f})".format(item, score) for item, score in upcoming.items()) or "nada previsto"))
+    print("Forecast for the instant after the last reading (motion: {}, door: {}): {}".format(
+        "yes" if test["motion"].iloc[-1] else "no", "yes" if test["door"].iloc[-1] else "no",
+        ", ".join("{} ({:.2f})".format(item, score) for item, score in upcoming.items()) or "nothing forecast"))
 
-    # 3. Siguiente evento de una rutina, con reglas secuenciales ------------------------------------------
+    # 3. Next event of a routine, with sequential rules ------------------------------------------
     events = simulated_events(days=120, seed=0)
     sequences = sequences_from_events(events, "day", "time", "event")
     learned, unseen = sequences[:80], sequences[80:]
     routine = sequential_rules(learned, min_supp=0.2, min_conf=0.3, max_antecedent=2, max_consequent=1)
     after_coffee = predict_next_events([["alarm"], ["bathroom"], ["kitchen"], ["coffee"]], routine)
-    print("\nTras alarm, bathroom, kitchen, coffee se espera: {}".format(
+    print("\nAfter alarm, bathroom, kitchen, coffee the expected next is: {}".format(
         ", ".join("{} ({:.2f})".format(item, score) for item, score in after_coffee.head(2).items())))
     hits = evaluate_next_events(unseen, routine, k=2, min_prefix=3, train=learned, target="next")
-    print("En {} cortes de {} dias nuevos (con 3 o mas eventos ya ocurridos), los 2 eventos previstos incluyen el "
-          "siguiente el {:.0%} de las veces (prediciendo los 2 mas frecuentes: {:.0%})".format(
+    print("On {} cuts of {} new days (with 3 or more events already occurred), the 2 predicted events include the "
+          "next one {:.0%} of the time (predicting the 2 most frequent: {:.0%})".format(
               hits["cases"], len(unseen), hits["hit_rate"], hits["baseline_hit_rate"]))
 
-    # 4. Clasificacion con reglas de asociacion de clase (CBA) ---------------------------------------------
+    # 4. Classification with class association rules (CBA) ---------------------------------------------
     cases, diagnosis = patients()
     cut = 800
     classifier = RuleClassifier(min_supp=0.05, min_conf=0.7, max_len=3, min_improvement=0.1)
     classifier.fit(cases.iloc[:cut], diagnosis.iloc[:cut])
     majority = float((diagnosis.iloc[cut:] == diagnosis.iloc[:cut].mode()[0]).mean())
     accuracy = classifier.score(cases.iloc[cut:], diagnosis.iloc[cut:])
-    print("\nClasificador CBA: {} reglas de clase candidatas, {} seleccionadas; exactitud {:.2f} en {} casos nuevos "
-          "(clase mayoritaria: {:.2f})".format(len(classifier.candidate_rules_), len(classifier.rules_), accuracy,
+    print("\nCBA classifier: {} candidate class rules, {} selected; accuracy {:.2f} on {} new cases "
+          "(majority class: {:.2f})".format(len(classifier.candidate_rules_), len(classifier.rules_), accuracy,
                                                 len(cases) - cut, majority))
     for _, rule in classifier.rules_.iterrows():
         print("  si {} => {}  confidence={:.2f} support={:.2f}".format(

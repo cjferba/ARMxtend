@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de la significacion de reglas difusas (ARM.fuzzy_significance)."""
+"""Tests of the significance of fuzzy rules (ARM.fuzzy_significance)."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -85,11 +85,11 @@ def test_edge_cases_and_validation():
     zero = pd.DataFrame({"a": [0.0] * 5, "b": [0.5] * 5})
     result = fuzzy_rule_significance(never, zero, 9)
     assert result["p_value"].iloc[0] == 1.0 and result["fuzzy_confidence"].iloc[0] == 0.0
-    with pytest.raises(ValueError, match="no estan"):
+    with pytest.raises(ValueError, match="are not in"):
         fuzzy_rule_significance(never, pd.DataFrame({"a": [0.5]}), 9)
     with pytest.raises(ValueError, match="n_permutations"):
         fuzzy_rule_significance(rules, table, 0)
-    with pytest.raises(ValueError, match="no hay transacciones"):
+    with pytest.raises(ValueError, match="there are no transactions"):
         fuzzy_rule_significance(never, [], 9)
     with pytest.raises(ValueError, match=r"\[0, 1\]"):
         fuzzy_rule_significance(never, pd.DataFrame({"a": [2.0], "b": [0.5]}), 9)

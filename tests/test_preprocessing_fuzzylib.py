@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de regresion para ARMxtend.preprocessing.FuzzyLib."""
+"""Regression tests for ARMxtend.preprocessing.FuzzyLib."""
 import pandas as pd
 import pytest
 
@@ -14,9 +14,9 @@ def test_fuzzification_triangular_partition_sums_to_one():
 
     assert addedColumns == ["Temperature_cold", "Temperature_comfort", "Temperature_warm"]
     assert fuzzyLib.data[addedColumns].sum(axis=1).round(9).tolist() == [1.0] * 6
-    # por debajo del primer pico, pertenencia total al primer conjunto (hombro)
+    # below the first peak, full membership in the first set (shoulder)
     assert fuzzyLib.data.loc[0, "Temperature_cold"] == pytest.approx(1.0)
-    # exactamente en un pico, pertenencia total a su conjunto
+    # exactly at a peak, full membership in its set
     assert fuzzyLib.data.loc[3, "Temperature_comfort"] == pytest.approx(1.0)
     assert fuzzyLib.data.loc[4, "Temperature_warm"] == pytest.approx(0.75)
 

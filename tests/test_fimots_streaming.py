@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Verificacion del algoritmo FIMoTS (SARE/SFIM) sobre Spark real: tras CADA
-desplazamiento de la ventana, los itemsets frecuentes que mantiene el algoritmo
-incremental deben coincidir exactamente con los calculados por fuerza bruta
-sobre las transacciones de la ventana.
+Verification of the FIMoTS algorithm (SARE/SFIM) on a real Spark: after EVERY
+shift of the window, the frequent itemsets kept by the incremental
+algorithm must match exactly those computed by brute force
+over the transactions of the window.
 
-Los escenarios incluyen "deriva de concepto" (las frecuencias de los items
-cambian a mitad del flujo, lo que hace que itemsets infrecuentes pasen a ser
-frecuentes y viceversa) e items cuyo nombre es prefijo de otro ('milk' y
+The scenarios include "concept drift" (the item frequencies
+change halfway through the stream, which makes infrequent itemsets become
+frequent and vice versa) and items whose name is a prefix of another ('milk' and
 'milkshake').
 """
 import itertools
@@ -41,8 +41,8 @@ def brute_force_frequent(lines, min_support, max_len=4):
 
 def check_batches(sc, batches, intervals, numerator=3, denominator=10):
     """
-    Alimenta FIMoTS con una lista de lotes (cada uno, una lista de lineas de transaccion) y devuelve los
-    desajustes con la fuerza bruta tras cada desplazamiento: [(paso, faltan, sobran)].
+    Feeds FIMoTS with a list of batches (each one a list of transaction lines) and returns the
+    mismatches with brute force after each shift: [(step, missing, extra)].
     """
     size = len(batches[0])
     minSupport = DecimalFraction(numerator, denominator)
@@ -69,11 +69,11 @@ def check_batches(sc, batches, intervals, numerator=3, denominator=10):
 
 
 def run_stream(sc, seed, items, probs, intervals=3, size=25, steps=9, numerator=3, denominator=10):
-    """Flujo aleatorio con deriva de concepto a mitad del recorrido (ver `check_batches`)."""
+    """Random stream with concept drift halfway through (see `check_batches`)."""
     rng = random.Random(seed)
     batches = []
     for step in range(steps):
-        drift = step >= steps // 2           # a mitad del flujo cambian las frecuencias
+        drift = step >= steps // 2           # halfway through the stream the frequencies change
         lines = []
         for _ in range(size):
             transaction = {item for item, p in zip(items, probs)
@@ -95,7 +95,7 @@ def test_window_sizes_and_support_thresholds_other_than_the_default(real_sc):
     assert run_stream(real_sc, 12, *LETTERS, intervals=4, size=15, steps=10, numerator=2, denominator=5) == []
 
 
-# --- el arbol de itemsets ------------------------------------------------------------------
+# --- the itemset tree ------------------------------------------------------------------
 
 def _tree(*keys):
     nodes = {"-1": FIMoTS_Node([], -1.0, None, None, 0, 0)}
@@ -109,7 +109,7 @@ def test_siblings_are_matched_by_exact_parent_not_by_text_prefix():
     tree = _tree("milk", "milkshake", "milk_a", "milk_b", "milkshake_a", "milkshake_z")
     assert sorted(tree.getRightSiblings("milk_a")) == ["milk_b"]
     assert sorted(tree.getLeftSiblings("milk_b")) == ["milk_a"]
-    assert sorted(tree.getLeftSiblings("milkshake_z")) == ["milkshake_a"]       # no 'milk_a' ni 'milk_b'
+    assert sorted(tree.getLeftSiblings("milkshake_z")) == ["milkshake_a"]       # not 'milk_a' nor 'milk_b'
     assert sorted(tree.getRightSiblings("milk")) == ["milkshake"]
     assert sorted(tree.getLeftSiblings("milkshake")) == ["milk"]
 
@@ -133,14 +133,14 @@ def test_delete_child_nodes_removes_every_descendant_but_not_look_alikes():
 # --- escenarios deterministas ---------------------------------------------------------------
 
 def test_an_item_that_first_appears_after_the_initial_window_is_tracked(real_sc):
-    # 'c' no existe en la ventana inicial; despues aparece junto a 'a' y se vuelve frecuente
+    # 'c' does not exist in the initial window; later it appears together with 'a' and becomes frequent
     early = ["a b"] * 10 + ["a"] * 5 + ["b"] * 5
     late = ["a b c"] * 8 + ["a c"] * 6 + ["b"] * 6
     assert check_batches(real_sc, [early, early, late, late, late], intervals=2) == []
 
 
 def test_two_sibling_itemsets_that_become_frequent_in_the_same_window(real_sc):
-    # 'c' y 'd' son raros al principio y pasan a ser frecuentes a la vez (y siempre juntos)
+    # 'c' and 'd' are rare at the beginning and become frequent at the same time (and always together)
     rare = ["a"] * 17 + ["c", "d", "a b"]
     common = ["a c d"] * 8 + ["a"] * 6 + ["c d"] * 4 + ["b"] * 2
     assert check_batches(real_sc, [rare, rare, common, common, common, rare, rare], intervals=2) == []
@@ -153,7 +153,7 @@ def test_an_itemset_that_stops_being_frequent_is_removed_with_all_its_descendant
 
 
 def test_sfim_reuses_the_single_fimots_implementation_of_sare():
-    # SFIM y SARE llegaron a tener copias identicas que divergieron al corregir solo una
+    # SFIM and SARE once had identical copies that diverged when only one was fixed
     from ARMxtend.SFIM.FIMoTS_Algorithm import FIMoTS_Main as sfimMain
     from ARMxtend.SFIM.FIMoTS_Tree import FIMoTS_Tree as sfimTree
     from ARMxtend.SFIM.WindowData import WindowData as sfimWindow

@@ -205,7 +205,7 @@ def _run_generalized_rules(args: argparse.Namespace) -> pd.DataFrame:
         for entry in args.level_supp:
             level, _, value = entry.partition("=")
             if not value:
-                raise ValueError("--level-supp espera NIVEL=SOPORTE, got '{}'".format(entry))
+                raise ValueError("--level-supp expects LEVEL=SUPPORT, got '{}'".format(entry))
             min_supp[int(level)] = float(value)
     rules = generalized_rules(transactions, taxonomy, min_supp, metric=args.metric, min_threshold=args.min_threshold,
                               max_len=args.max_len, interest=args.interest)
@@ -497,7 +497,7 @@ def _run_classify(args: argparse.Namespace) -> pd.DataFrame:
 
 
 def _window_size(text: str):
-    """'20' -> 20 filas; '7D', '12h', ... -> duracion (``window_rules`` exige un indice temporal)."""
+    """'20' -> 20 rows; '7D', '12h', ... -> duration (``window_rules`` requires a time index)."""
     return int(text) if text.isdigit() else text
 
 

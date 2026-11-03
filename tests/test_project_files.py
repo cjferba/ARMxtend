@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Ficheros del proyecto: CITATION.cff, cuaderno de ejemplo y comparativa con mlxtend."""
+"""Project files: CITATION.cff, example notebook and comparison with mlxtend."""
 import json
 import os
 import re

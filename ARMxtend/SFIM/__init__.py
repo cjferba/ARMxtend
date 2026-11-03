@@ -50,7 +50,7 @@ def runStreamingFIMoTSAlgorithm(addedTransactions, slidingWindow, intervals, Act
         deletedTransacsSize = slidingWindow.deleteTransacInterval()
 
     addedTransacsSize = addedTransactions.count()
-    print("Transacciones Recibidas: {}".format(addedTransacsSize))
+    print("Received transactions: {}".format(addedTransacsSize))
 
     slidingWindow.addTransacInterval([addedTransactions, addedTransacsSize])
 
@@ -80,26 +80,26 @@ def FIMoTS_PrintIterationResults(Actual_FIMoTS_Structure, slidingWindow):
     current_time = time.time()
     current_datetime = datetime.datetime.fromtimestamp(current_time).strftime('%d/%m/%Y %H:%M:%S')
     print("")
-    print("Estado Actual - Intervalo de tiempo {} ({}):".format(slidingWindow.timeWindow, current_datetime))
+    print("Current state - time interval {} ({}):".format(slidingWindow.timeWindow, current_datetime))
 
     # Only show the total number of itemsets identified
-    print("Total de Itemsets Frecuentes: {}".format(Actual_FIMoTS_Structure.frequentItemsetsBounds.getItemsetsCount()))
-    print("Total de Itemsets Infrecuentes: {}".format(
+    print("Total frequent itemsets: {}".format(Actual_FIMoTS_Structure.frequentItemsetsBounds.getItemsetsCount()))
+    print("Total infrequent itemsets: {}".format(
         Actual_FIMoTS_Structure.infrequentItemsetsBounds.getItemsetsCount()))
-    print("Total de Itemsets: {}".format(Actual_FIMoTS_Structure.itemsetsTree.getItemsetsCount()))
+    print("Total itemsets: {}".format(Actual_FIMoTS_Structure.itemsetsTree.getItemsetsCount()))
 
     # Show details about all the identified itemsets
     # print('Current Itemset Tree - {}:'.format(slidingWindow.timeWindow))
     # print Actual_FIMoTS_Structure
     # print("")
-    # print("Itemsets Frecuentes: ")
+    # print("Frequent itemsets: ")
     # print(Actual_FIMoTS_Structure.frequentItemsetsBounds.getItemsetsKeys())
     # print("")
-    # print("Itemsets Infrecuentes: ")
+    # print("Infrequent itemsets: ")
     # print(Actual_FIMoTS_Structure.infrequentItemsetsBounds.getItemsetsKeys())
 
     # Presentar solo itemsets frecuentes en formato simple
-    print("Itemsets Frecuentes:")
+    print("Frequent itemsets:")
     freqItemsetsKeys = Actual_FIMoTS_Structure.frequentItemsetsBounds.getItemsetsKeys()
     for freqItemsetKey in freqItemsetsKeys:
         print(' '.join(freqItemsetKey.split("_")))

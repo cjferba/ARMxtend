@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Test de regresion para el puente SARE.extractAssociationRules, que conecta
-el arbol de itemsets frecuentes (FIT) de FIMoTS con ARM.association_rules.
+Regression test for the SARE.extractAssociationRules bridge, which connects
+the frequent itemset tree (FIT) of FIMoTS with ARM.association_rules.
 
-Se construye a mano una FIMoTS_Structure con los itemsets frecuentes ya
-conocidos (y verificados en otros tests) del dataset de ejemplo (Tabla 2) de
-Fernandez-Basso, Ruiz & Martin-Bautista (2024), sin necesidad de ejecutar el
-algoritmo FIMoTS completo (que requiere Spark Streaming).
+A FIMoTS_Structure is built by hand with the already known frequent itemsets
+(verified in other tests) of the example dataset (Table 2) of
+Fernandez-Basso, Ruiz & Martin-Bautista (2024), without needing to run the
+full FIMoTS algorithm (which requires Spark Streaming).
 """
 import pytest
 
-pytest.importorskip("pyspark")  # SARE importa pyspark al cargarse (es parte del extra "spark")
+pytest.importorskip("pyspark")  # SARE imports pyspark when loaded (it is part of the "spark" extra)
 
 from ARMxtend.SARE import extractAssociationRules  # noqa: E402
 from ARMxtend.SARE.FIMoTS_Node import FIMoTS_Node

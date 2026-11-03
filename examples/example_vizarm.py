@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Ejemplo: transformar un conjunto de reglas de asociacion (ARM.association_rules)
-en el grafo tipado (item/rule) VizARE, siguiendo:
+Example: transform a set of association rules (ARM.association_rules)
+into the typed (item/rule) VizARE graph, following:
 
     Fernandez-Basso, C., Ruiz, M.D., Molina-Solana, M., Martin-Bautista,
     M.J. (2026). "VizARE: An Intermediate Representation to Support the
     Visualization of Association Rules in Data Mining". Future Internet,
     18(7), 374.
 
-y exportarlo al formato intermedio propuesto (JSON Graph Format), ademas de
-GraphML/DOT (Gephi/Cytoscape/Graphviz/NetworkX) y a la capa de resumen
-opcional (Seccion 4.2) para inspeccionar grandes conjuntos de reglas.
+and export it to the proposed intermediate format (JSON Graph Format), as well as
+GraphML/DOT (Gephi/Cytoscape/Graphviz/NetworkX) and to the optional
+summary layer (Section 4.2) to inspect large sets of rules.
 """
 import pandas as pd
 
@@ -40,8 +40,8 @@ def main():
     print("Grafo: {} nodos item, {} nodos rule, {} aristas".format(
         len(itemNodes), len(ruleNodes), graph.graph.number_of_edges()))
 
-    # Cada regla es un nodo propio, conectado a sus items por aristas
-    # 'antecedent'/'consequent' -- no hay arista directa item -> item.
+    # Each rule is a node of its own, connected to its items by edges
+    # 'antecedent'/'consequent' -- there is no direct item -> item edge.
     for ruleId in ruleNodes:
         data = graph.graph.nodes[ruleId]
         antecedent = sorted(graph.graph.predecessors(ruleId))
@@ -52,17 +52,17 @@ def main():
     print("\nJGF (formato intermedio propuesto, primeras lineas):")
     print("\n".join(graph.to_jgf().splitlines()[:12]))
 
-    # Capa de resumen (Seccion 4.2): agrupa las reglas con el mismo consecuente.
+    # Summary layer (Section 4.2): groups the rules with the same consequent.
     summaryIds = graph.summarize(signature="consequent", measures=("confidence", "lift"))
-    print("\nResumen por consecuente ({} grupos):".format(len(summaryIds)))
+    print("\nSummary by consequent ({} groups):".format(len(summaryIds)))
     for summaryId in summaryIds:
         data = graph.graph.nodes[summaryId]
-        print("  {} reglas -> {}  confidence en [{:.2f}, {:.2f}] (media {:.2f})".format(
+        print("  {} rules -> {}  confidence in [{:.2f}, {:.2f}] (mean {:.2f})".format(
             data["rule_count"], sorted(graph.graph.successors(summaryId)),
             data["confidence_min"], data["confidence_max"], data["confidence_mean"]))
 
-    # Visor interactivo autocontenido: un unico fichero HTML, sin red ni dependencias
-    # (con path="reglas.html" se escribe en disco y se abre en cualquier navegador).
+    # Self-contained interactive viewer: a single HTML file, no network or dependencies
+    # (with path="rules.html" it is written to disk and opened in any browser).
     html = graph.to_html(title="ARMxtend - VizARE")
     print("\nVisor HTML interactivo: {} bytes, grafo JGF embebido".format(len(html)))
 

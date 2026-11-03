@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Ejecuta cada script de ``examples/`` como parte de la suite de tests, para
-que la integracion continua (ver .github/workflows/ci.yml) detecte si un
-cambio en la libreria rompe alguno de los ejemplos documentados en
+Runs each script in ``examples/`` as part of the test suite, so that
+continuous integration (see .github/workflows/ci.yml) detects whether a
+change in the library breaks any of the examples documented in
 docs/sources/examples.md.
 """
 import importlib
@@ -51,9 +51,9 @@ def test_example_runs_without_error(module_name, capsys):
 
 def test_fuzzy_example_reproduces_paper_values(capsys):
     """
-    example_fuzzy_association_rules.py debe reproducir exactamente los
-    valores de FSupp/FConf/FCF publicados para {i1,i3} -> {i4} en Delgado,
-    Ruiz, Sanchez & Serrano (2011) / Ruiz et al. (2016, Seccion 4.4).
+    example_fuzzy_association_rules.py must reproduce exactly the
+    FSupp/FConf/FCF values published for {i1,i3} -> {i4} in Delgado,
+    Ruiz, Sanchez & Serrano (2011) / Ruiz et al. (2016, Section 4.4).
     """
     module = importlib.import_module("example_fuzzy_association_rules")
     _, rulesDf = module.main()
@@ -76,7 +76,7 @@ def test_rule_types_example_finds_the_planted_patterns():
     # la excepcion plantada a "fever -> rest"
     assert ((exceptions["antecedents"] == frozenset(["fever"])) & (exceptions["condition"] == frozenset(["must_work"]))).any()
     assert frozenset(["hospital"]) in set(anomalies["anomaly"])
-    # cuanto mas edad y menos ejercicio, mas colesterol
+    # the more age and the less exercise, the more cholesterol
     planted = (gradual["antecedents"] == frozenset([("age", "+"), ("exercise", "-")])) \
         & (gradual["consequents"] == frozenset([("cholesterol", "+")]))
     assert planted.any()
@@ -86,7 +86,7 @@ def test_rule_types_example_finds_the_planted_patterns():
 
 
 def test_temporal_example_recovers_the_planted_behaviour(capsys):
-    """La casa simulada tiene una regla de la tarde (puerta -> calefaccion) y una regla que emerge en la segunda mitad."""
+    """The simulated house has an evening rule (door -> heating) and a rule that emerges in the second half."""
     module = importlib.import_module("example_temporal_rules")
     _, rules, profile, drift = module.main()
 
@@ -99,7 +99,7 @@ def test_temporal_example_recovers_the_planted_behaviour(capsys):
 
 
 def test_sequences_example_recovers_the_planted_routine(capsys):
-    """Los dias tranquilos tienen cafe y luego television; el telefono es ruido y no genera reglas informativas."""
+    """Quiet days have coffee and then television; the phone is noise and generates no informative rules."""
     module = importlib.import_module("example_sequences")
     sequences, patterns, rules = module.main()
 
@@ -114,7 +114,7 @@ def test_sequences_example_recovers_the_planted_routine(capsys):
 
 
 def test_significance_example_removes_the_noise_rules(capsys):
-    """Casi todas las reglas que pasan los umbrales son ruido; tras corregir quedan las de la asociacion real."""
+    """Almost all the rules that pass the thresholds are noise; after correcting, those of the real association remain."""
     module = importlib.import_module("example_significance")
     rules, fisher, permuted, (pairs, fisher_alarms, shift_alarms) = module.main()
 
@@ -128,12 +128,12 @@ def test_significance_example_removes_the_noise_rules(capsys):
 
 
 def test_rules_in_action_example_finds_predicts_and_classifies(capsys):
-    """Las reglas minadas con el funcionamiento normal encuentran los fallos plantados, predicen y clasifican."""
+    """The rules mined from normal operation find the planted faults, predict and classify."""
     module = importlib.import_module("example_rules_in_action")
     rules, (flagged, fault), (quality, upcoming), (hits, after_coffee), (classifier, accuracy, majority) = module.main()
 
     assert {frozenset(a) for a in rules["antecedents"]} == {frozenset({"motion@lag1"}), frozenset({"door@lag1"})}
-    assert int(fault.loc[flagged.index].sum()) == 30                                  # los 30 fallos, entre 39 instantes
+    assert int(fault.loc[flagged.index].sum()) == 30                                  # the 30 faults, among 39 instants
     assert len(flagged) < 45
     assert quality.loc["light", "precision"] > 0.9 and quality.loc["chime", "precision"] == pytest.approx(0.8, abs=0.08)
     assert "light" in upcoming.index
@@ -142,7 +142,7 @@ def test_rules_in_action_example_finds_predicts_and_classifies(capsys):
 
 
 def test_fuzzy_sequences_example_orders_events_and_grades_the_rule(capsys):
-    """La regla difusa 'frio por la manana => consumo por la tarde' destaca, solo en ese orden, y cada dia la cumple en su grado."""
+    """The fuzzy rule 'cold in the morning => consumption in the afternoon' stands out, only in that order, and each day satisfies it to its degree."""
     module = importlib.import_module("example_fuzzy_sequences")
     patterns, rules, degrees, cold, (crisp_rules, fuzzy_rule) = module.main()
 
@@ -152,12 +152,12 @@ def test_fuzzy_sequences_example_orders_events_and_grades_the_rule(capsys):
     assert rules.iloc[0]["lift"] > 2 > rules.iloc[1]["lift"]
     assert fuzzy_rule["lift"] == pytest.approx(rules.iloc[0]["lift"])
     assert float(np.corrcoef(cold, degrees)[0, 1]) > 0.8 and 0 < degrees.max() < 1 and (degrees == 0).sum() > 20
-    supports = [rule["support"] for rule in crisp_rules.values()]                       # el corte cambia mucho el soporte
+    supports = [rule["support"] for rule in crisp_rules.values()]                       # the cut changes the support a lot
     assert max(supports) > 2.5 * min(supports)
 
 
 def test_generalized_rules_example_sees_categories_and_drops_their_echoes(capsys):
-    """Sin taxonomia solo salen reglas de productos; con ella, las de categoria, y las R-interesantes quitan las que las repiten."""
+    """Without a taxonomy only product rules come out; with it, the category ones, and the R-interesting ones remove those that repeat them."""
     module = importlib.import_module("example_generalized_rules")
     taxonomy, flat, rules, kept, dropped = module.main()
 
@@ -171,7 +171,7 @@ def test_generalized_rules_example_sees_categories_and_drops_their_echoes(capsys
 
 
 def test_quantitative_rules_example_recovers_the_region_and_beats_fixed_labels(capsys):
-    """El rango fundido recupera la region plantada [30, 45); las etiquetas difusas fijas la parten en dos y pierden confianza."""
+    """The merged range recovers the planted region [30, 45); fixed fuzzy labels split it in two and lose confidence."""
     module = importlib.import_module("example_quantitative_rules")
     table, partition, rules, kept, region, fuzzy = module.main()
 
@@ -184,7 +184,7 @@ def test_quantitative_rules_example_recovers_the_region_and_beats_fixed_labels(c
 
 
 def test_special_rules_example_finds_rare_pairs_and_what_is_worth_more(capsys):
-    """Top-k sin umbral, los pares raros que un umbral global ahoga en ruido y la utilidad frente a la frecuencia."""
+    """Top-k without a threshold, the rare pairs that a global threshold drowns in noise, and utility versus frequency."""
     module = importlib.import_module("example_special_rules")
     quantities, top, informative, pairs, mri, rare, flat, by_support, useful, value_rules = module.main()
 
@@ -206,7 +206,7 @@ def test_special_rules_example_finds_rare_pairs_and_what_is_worth_more(capsys):
 
 
 def test_estimators_example_recovers_patterns_and_classifies():
-    """Reglas con RuleMiner sobre datos sinteticos, atributos de regla y un clasificador."""
+    """Rules with RuleMiner on synthetic data, rule attributes and a classifier."""
     module = importlib.import_module("example_estimators")
     patterns, recovered, miner, features, top, accuracy, tennis, weather = module.main()
 

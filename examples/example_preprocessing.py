@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Ejemplo: fuzzificacion de un atributo numerico (preprocessing.FuzzyLib) como
-paso previo a los algoritmos difusos de mineria de itemsets/reglas de
-asociacion (FFIM.fuzzy_fpgrowth, FIM.FARE, FIM.BD_FARE).
+Example: fuzzification of a numeric attribute (preprocessing.FuzzyLib) as a
+previous step to the fuzzy itemset/association rule mining algorithms
+(FFIM.fuzzy_fpgrowth, FIM.FARE, FIM.BD_FARE).
 """
 import pandas as pd
 
@@ -23,7 +23,7 @@ def main():
         FuzzyLabel=[["cold", "comfortable", "warm"]],
     )
 
-    print("Columnas difusas anadidas:", addedColumns)
+    print("Fuzzy columns added:", addedColumns)
     print()
     print(fuzzyLib.GetData().to_string(index=False))
 

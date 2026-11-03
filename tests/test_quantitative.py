@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de ARM.quantitative_rules: particion en intervalos y rangos, y reglas cuantitativas."""
+"""Tests of ARM.quantitative_rules: partition into intervals and ranges, and quantitative rules."""
 from itertools import combinations, product
 
 import numpy as np
@@ -17,7 +17,7 @@ def random_table(seed, rows=150):
 
 
 def planted_table(rows=3000, seed=0):
-    """Los ingresos son altos solo entre 30 y 45 anos; las mujeres con ingresos altos compran casi siempre."""
+    """Income is high only between 30 and 45 years; women with high income almost always buy."""
     rng = np.random.RandomState(seed)
     age = rng.uniform(18, 70, rows)
     income = np.where((age >= 30) & (age < 45), rng.normal(70, 8, rows), rng.normal(35, 10, rows)).clip(5)
@@ -48,7 +48,7 @@ def test_partition_taxonomy_nests_ranges_and_groups_them_by_column():
     part = IntervalPartition(n_intervals=4, max_supp=1.0, columns=["x"]).fit(random_table(1))
     items = part.intervals_.set_index(["n_base", "low"])["item"]
     base = part.intervals_[part.intervals_["n_base"] == 1]["item"].tolist()
-    assert len(part.intervals_) == 10 and part.taxonomy_.depth == 4          # de un intervalo hasta el rango completo
+    assert len(part.intervals_) == 10 and part.taxonomy_.depth == 4          # from one interval up to the full range
     whole = part.intervals_[part.intervals_["n_base"] == 4]["item"].iloc[0]
     assert part.taxonomy_.roots() == [whole] and part.taxonomy_.descendants(whole) == set(part.intervals_["item"]) - {whole}
     assert part.taxonomy_.ancestors(base[1]) >= {whole}
@@ -65,12 +65,12 @@ def test_transform_maps_rows_to_base_intervals_categories_and_missing_values():
     new = pd.DataFrame({"v": [0.0, 24.0, 25.0, 99.0, 500.0, -9.0, np.nan], "c": ["a", None, "b", "a", "b", "a", "a"]})
     baskets = part.transform(new)
     labels = part.intervals_[part.intervals_["n_base"] == 1]["item"].tolist()
-    assert [b[0] for b in baskets[:6]] == [labels[0], labels[0], labels[1], labels[3], labels[3], labels[0]]   # los de fuera, al extremo
+    assert [b[0] for b in baskets[:6]] == [labels[0], labels[0], labels[1], labels[3], labels[3], labels[0]]   # those outside, to the end
     assert baskets[1] == [labels[0]] and baskets[6] == ["c=a"] and baskets[0] == [labels[0], "c=a"]
     assert part.transform(table.iloc[:0]) == []
     with pytest.raises(ValueError, match="fit"):
         IntervalPartition().transform(new)
-    with pytest.raises(ValueError, match="faltan"):
+    with pytest.raises(ValueError, match="missing"):
         part.transform(new[["c"]])
 
 
@@ -78,7 +78,7 @@ def test_partition_edge_cases_and_errors():
     constant = IntervalPartition(n_intervals=3, quantitative=["v"]).fit(pd.DataFrame({"v": [2.0] * 10}))
     assert constant.intervals_["item"].tolist() == ["v=[2,2]"] and constant.transform(pd.DataFrame({"v": [2.0]})) == [["v=[2,2]"]]
     ties = IntervalPartition(n_intervals=8).fit(pd.DataFrame({"v": [0.0] * 50 + list(np.arange(1.0, 51.0))}))
-    assert len(ties.edges_["v"]) < 9                                         # los bordes repetidos se unen
+    assert len(ties.edges_["v"]) < 9                                         # repeated edges are merged
     negative = IntervalPartition(n_intervals=2).fit(pd.DataFrame({"t": np.arange(-10.0, 10.0)}))
     assert all("-" not in item for item in negative.intervals_["item"]) and any("−" in item for item in negative.intervals_["item"])
     uniform = IntervalPartition(n_intervals=4, method="uniform", quantitative=["v"]).fit(pd.DataFrame({"v": [0.0, 1.0, 1.0, 1.0, 10.0]}))
@@ -86,13 +86,13 @@ def test_partition_edge_cases_and_errors():
     for bad in ({"n_intervals": 0}, {"method": "x"}, {"max_supp": 0}):
         with pytest.raises(ValueError):
             IntervalPartition(**bad)
-    with pytest.raises(ValueError, match="inexistentes"):
+    with pytest.raises(ValueError, match="nonexistent"):
         IntervalPartition(columns=["nope"]).fit(random_table(0))
-    with pytest.raises(ValueError, match="numericas"):
+    with pytest.raises(ValueError, match="numeric"):
         IntervalPartition(quantitative=["color"]).fit(random_table(0))
-    with pytest.raises(ValueError, match="no hay columnas"):
+    with pytest.raises(ValueError, match="there are no columns"):
         IntervalPartition(columns=[]).fit(random_table(0))
-    with pytest.raises(ValueError, match="no tiene valores"):
+    with pytest.raises(ValueError, match="has no values"):
         IntervalPartition(quantitative=["v"]).fit(pd.DataFrame({"v": [np.nan, np.nan]}))
 
 
@@ -107,7 +107,7 @@ def test_partial_completeness_intervals_follow_the_formula():
 # ----------------------------------------------------------------------------------- reglas
 
 def brute_force_itemsets(table, part, min_supp, max_len):
-    """Soporte de todos los conjuntos de (un rango por atributo numerico | un valor por categorico) con soporte >= min_supp."""
+    """Support of all the sets of (one range per numeric attribute | one value per categorical) with support >= min_supp."""
     rows = len(table)
     candidates = {}
     for name, edges in part.edges_.items():
@@ -139,7 +139,7 @@ def test_frequent_itemsets_equal_the_brute_force_enumeration(seed, n_intervals, 
     rules = quantitative_rules(table, min_supp=0.12, partition=part, min_threshold=0.0, max_len=3)
     expected = brute_force_itemsets(table, part, 0.12, 3)
     assert len(expected) > 20 and rules.attrs["supports"] == pytest.approx(expected)
-    # ninguna regla menciona dos rangos del mismo atributo
+    # no rule mentions two ranges of the same attribute
     for antecedent, consequent in zip(rules["antecedents"], rules["consequents"]):
         columns = [part.groups_[i] for i in antecedent | consequent if i in part.groups_]
         assert len(columns) == len(set(columns))
@@ -160,10 +160,10 @@ def test_planted_region_is_recovered_and_the_interest_pruning_keeps_it():
                             & one_to_one["consequents"].map(lambda c: next(iter(c)).startswith("income="))]
     assert len(age_income) > 0
     low, high = bounds(next(iter(age_income.sort_values("lift", ascending=False).iloc[0]["antecedents"])))
-    assert 27 <= low and high <= 50                                          # el de mayor lift cae dentro de la region plantada [30, 45)
+    assert 27 <= low and high <= 50                                          # the one with the highest lift falls inside the planted region [30, 45)
     widest = age_income[age_income["confidence"] >= 0.85].sort_values("support", ascending=False)
     low, high = bounds(next(iter(widest.iloc[0]["antecedents"])))
-    assert 27 <= low <= 36 and 40 <= high <= 50                              # el de mas soporte la cubre casi entera
+    assert 27 <= low <= 36 and 40 <= high <= 50                              # the one with the most support covers it almost entirely
     women = rules[rules["antecedents"].map(lambda a: "sex=F" in a) & (rules["consequents"] == frozenset({"buys=yes"}))]
     assert len(women) > 0 and women["confidence"].max() > 0.85
 

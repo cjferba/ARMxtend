@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Ejemplo: otros tipos de reglas y herramientas -- reglas con items ausentes,
-reglas de excepcion y anomalas, reglas graduales, itemsets cerrados y
-maximales, poda de reglas redundantes, y fuzzificacion automatica seguida de
-reglas difusas con medidas adicionales.
+Example: other types of rules and tools -- rules with absent items,
+exception and anomalous rules, gradual rules, closed and
+maximal itemsets, pruning of redundant rules, and automatic fuzzification followed by
+fuzzy rules with additional measures.
 """
 import numpy as np
 import pandas as pd
@@ -28,32 +28,32 @@ def _fmt(items):
 
 
 def main():
-    # 1. Items ausentes: quien toma cafe no toma te (y viceversa) ---------------
+    # 1. Absent items: whoever drinks coffee does not drink tea (and vice versa) ---------------
     drinks = _rep({"coffee", "sugar"}, 30) + _rep({"tea"}, 25) + _rep({"tea", "sugar"}, 5) + _rep({"coffee"}, 10)
     negative = negative_association_rules(drinks, min_supp=0.25, min_threshold=0.95)
-    print("Reglas con items ausentes:")
+    print("Rules with absent items:")
     for _, r in negative.iterrows():
         print("  {} -> {}  support={:.2f} confidence={:.2f}".format(
             _fmt(r["antecedents"]), _fmt(r["consequents"]), r["support"], r["confidence"]))
 
-    # 2. Excepciones y anomalias de la regla "fiebre -> reposo" -------------------
+    # 2. Exceptions and anomalies of the rule "fever -> rest" -------------------
     sickness = (_rep({"fever", "rest"}, 60) + _rep({"fever", "must_work"}, 5) + _rep({"must_work", "rest"}, 35)
                 + _rep({"fever", "hospital"}, 10))
     exceptions = exception_rules(sickness, min_supp=0.3, min_conf=0.8, min_exception_supp=0.03)
-    print("\nExcepciones a reglas comunes fuertes:")
+    print("\nExceptions to strong common rules:")
     for _, r in exceptions.iterrows():
-        print("  {} -> {} (conf {:.2f}), pero con {} ocurre ~{}: confidence={:.2f} (referencia {:.2f})".format(
+        print("  {} -> {} (conf {:.2f}), but with {} ~{} occurs: confidence={:.2f} (reference {:.2f})".format(
             _fmt(r["antecedents"]), r["consequent"], r["common_confidence"], _fmt(r["condition"]),
             r["consequent"], r["exception_confidence"], r["reference_confidence"]))
     anomalies = anomalous_rules(sickness, min_supp=0.3, min_conf=0.7, min_anomalous_supp=0.05,
                                 min_anomalous_conf=0.6)
-    print("Anomalias (A y no b -> C):")
+    print("Anomalies (A and not b -> C):")
     for _, r in anomalies.iterrows():
-        print("  {} -> {}: en {} casos con ~{}, aparece {} (confidence={:.2f})".format(
+        print("  {} -> {}: in {} cases with ~{}, {} appears (confidence={:.2f})".format(
             _fmt(r["antecedents"]), r["consequent"], r["anomalous_cases"], r["consequent"],
             _fmt(r["anomaly"]), r["anomalous_confidence"]))
 
-    # 3. Reglas graduales sobre datos numericos, sin discretizar ----------------------
+    # 3. Gradual rules over numeric data, without discretizing ----------------------
     rng = np.random.RandomState(0)
     age = rng.uniform(20, 80, 150)
     exercise = rng.uniform(0, 10, 150)
@@ -63,13 +63,13 @@ def main():
         "cholesterol": 120 + 1.5 * age - 6 * exercise + rng.normal(0, 8, 150),
     })
     gradual = gradual_rules(health, min_supp=0.25, min_conf=0.8)
-    print("\nReglas graduales:")
+    print("\nGradual rules:")
     for _, r in gradual.sort_values("confidence", ascending=False).head(3).iterrows():
         print("  cuanto {} -> {}  support={:.2f} confidence={:.2f}".format(
             format_gradual_itemset(r["antecedents"]), format_gradual_itemset(r["consequents"]),
             r["support"], r["confidence"]))
 
-    # 4. Itemsets cerrados/maximales y poda de reglas redundantes -------------------------
+    # 4. Closed/maximal itemsets and pruning of redundant rules -------------------------
     baskets = _rep({"a", "b", "c"}, 3) + _rep({"a", "b"}, 1) + _rep({"d"}, 1)
     frequent = fpgrowth(baskets, min_supp=0.2)
     closed, maximal = closed_itemsets(frequent), maximal_itemsets(frequent)
@@ -77,11 +77,11 @@ def main():
                                                "itemsets": [key_to_itemset(k) for k in frequent]}),
                                  min_threshold=0.0)
     pruned = prune_redundant_rules(allRules)
-    print("\nItemsets frecuentes: {}, cerrados: {}, maximales: {}".format(
+    print("\nFrequent itemsets: {}, closed: {}, maximal: {}".format(
         len(frequent), sorted(closed), sorted(maximal)))
-    print("Reglas: {} -> {} tras eliminar las redundantes".format(len(allRules), len(pruned)))
+    print("Rules: {} -> {} after removing the redundant ones".format(len(allRules), len(pruned)))
 
-    # 5. Fuzzificacion automatica + reglas difusas con medidas adicionales ---------------------
+    # 5. Automatic fuzzification + fuzzy rules with additional measures ---------------------
     fuzzy = FuzzyLib()
     fuzzy.data = health[["age", "cholesterol"]].copy()
     fuzzy.AutoFuzzification(n_labels=3, method="quantile")
@@ -89,7 +89,7 @@ def main():
     itemsets = fuzzy_fpgrowth(transactions, min_supp=0.1, num_alpha=10)
     fuzzyRules = fuzzy_association_rules(itemsets, 10, metric="zhangs_metric", min_threshold=0.4,
                                          measures=["zhangs_metric", "kulczynski"])
-    print("\nReglas difusas con Zhang >= 0.4:")
+    print("\nFuzzy rules with Zhang >= 0.4:")
     for _, r in fuzzyRules.sort_values("zhangs_metric", ascending=False).head(3).iterrows():
         print("  {} -> {}  FSupp={:.2f} FConf={:.2f} zhang={:.2f} kulczynski={:.2f}".format(
             _fmt(r["antecedents"]), _fmt(r["consequents"]), r["support"], r["confidence"],

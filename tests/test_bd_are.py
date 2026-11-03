@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-Tests de regresion para la generacion de candidatos (`FIM._shared`) y de
-reglas de asociacion (`FIM.BD_ARE.generate_rules`), usando el dataset de
-ejemplo (Tabla 2) de Fernandez-Basso, Ruiz & Martin-Bautista (2024),
+Regression tests for candidate generation (`FIM._shared`) and for
+association rule generation (`FIM.BD_ARE.generate_rules`), using the example
+dataset (Table 2) of Fernandez-Basso, Ruiz & Martin-Bautista (2024),
 "New Spark solutions for distributed frequent itemset and association rule
 mining algorithms", Cluster Computing, 27, 1217-1234.
 
-Sustituye al fichero de mismo nombre que existia previamente, que no era un
-test real, sino un fragmento de codigo de prueba manual (sin asserts) que
-no podia ejecutarse de forma independiente.
+Replaces the file of the same name that existed previously, which was not a
+real test but a fragment of manual test code (with no asserts) that
+could not be run on its own.
 
-Ejecucion: pytest tests/test_bd_are.py
+Run: pytest tests/test_bd_are.py
 """
 import pytest
 
 from ARMxtend.FIM._shared import generate_candidates
 from ARMxtend.FIM.BD_ARE import generate_rules
 
-# Itemsets frecuentes esperados para el dataset de la Tabla 2 del articulo,
-# con soporte minimo 0.3 (calculado a mano y verificado tambien contra
+# Expected frequent itemsets for the dataset of Table 2 of the paper,
+# with minimum support 0.3 (computed by hand and also verified against
 # DApriori/DAprioriTID/DECLAT en tests/test_fim_apriori_eclat.py)
 FREQ_ITEMSETS = {
     "A": 0.5, "B": 0.8, "C": 0.7, "D": 0.6,
@@ -32,8 +32,8 @@ def test_generate_candidates_from_singletons():
 
 
 def test_generate_candidates_prunes_infrequent_subsets():
-    # A-D no es frecuente en la Tabla 2, luego ningun candidato de longitud 3
-    # que lo contenga debe generarse a partir de los pares frecuentes
+    # A-D is not frequent in Table 2, so no candidate of length 3
+    # that contains it must be generated from the frequent pairs
     frequentPairs = ["A-B", "A-C", "B-C", "B-D", "C-D"]
     candidates = generate_candidates(frequentPairs)
     assert candidates == ["A-B-C", "B-C-D"]
@@ -66,7 +66,7 @@ def test_generate_rules_matches_hand_computed_confidences():
 
 def test_generate_rules_filters_by_min_confidence():
     rules = generate_rules(FREQ_ITEMSETS, min_conf=0.7)
-    # Solo A->C (0.8), C->B (0.714), D->B (0.833) superan 0.7 de confianza
+    # Only A->C (0.8), C->B (0.714), D->B (0.833) exceed 0.7 confidence
     assert set(rules.keys()) == {("A", "C"), ("C", "B"), ("D", "B")}
     assert all(confidence >= 0.7 for confidence in rules.values())
 

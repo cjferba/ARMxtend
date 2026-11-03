@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de ``ARM.rule_drift``: ventanas, estados de las reglas y comparacion de conjuntos de reglas."""
+"""Tests of ``ARM.rule_drift``: windows, rule states and comparison of rule sets."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -12,14 +12,14 @@ WINDOW_ROWS = 20
 
 def build_rows(window):
     """
-    Filas de una ventana de 20 instantes, determinista:
+    Rows of a window of 20 instants, deterministic:
 
-    * D y E siempre juntos (regla estable D <-> E) y en todas las filas;
-    * A y B juntos en las ventanas 0-3 (regla que desaparece), C y B juntos
-      en las 4-7 (regla que aparece);
-    * F y G juntos solo en las ventanas 2, 3 y 5 (regla intermitente, sin
-      estar en la primera ni en la ultima ventana);
-    * H y J juntos solo en las ventanas 0 y 7 (extremos con huecos: intermitente).
+    * D and E always together (stable rule D <-> E) and in all the rows;
+    * A and B together in windows 0-3 (a rule that disappears), C and B together
+      in 4-7 (a rule that appears);
+    * F and G together only in windows 2, 3 and 5 (intermittent rule, without
+      being in the first or the last window);
+    * H and J together only in windows 0 and 7 (ends with gaps: intermittent).
     """
     rows = []
     for position in range(WINDOW_ROWS):
@@ -52,7 +52,7 @@ def windowed(drifting_items):
 
 def status_of(drift, antecedent, consequent):
     match = drift[(drift["antecedents"] == frozenset(antecedent)) & (drift["consequents"] == frozenset(consequent))]
-    assert len(match) == 1, "regla {} -> {} no encontrada".format(antecedent, consequent)
+    assert len(match) == 1, "rule {} -> {} not found".format(antecedent, consequent)
     return match.iloc[0]["status"]
 
 
@@ -73,8 +73,8 @@ def test_rule_drift_statuses(windowed):
     assert status_of(drift, {"A"}, {"B"}) == "vanishing"
     assert status_of(drift, {"B"}, {"A"}) == "vanishing"
     assert status_of(drift, {"C"}, {"B"}) == "emerging"
-    assert status_of(drift, {"F"}, {"G"}) == "intermittent"          # ventanas 2, 3 y 5: ni primera ni ultima
-    assert status_of(drift, {"H"}, {"J"}) == "intermittent"          # extremos pero con persistencia 2/8
+    assert status_of(drift, {"F"}, {"G"}) == "intermittent"          # windows 2, 3 and 5: neither first nor last
+    assert status_of(drift, {"H"}, {"J"}) == "intermittent"          # ends but with persistence 2/8
     assert set(drift["status"]) <= {"stable", "emerging", "vanishing", "intermittent"}
 
 
@@ -88,13 +88,13 @@ def test_rule_drift_counts_windows_and_summarises_the_measure(windowed):
     stable = drift[(drift["antecedents"] == frozenset({"D"})) & (drift["consequents"] == frozenset({"E"}))].iloc[0]
     assert stable["windows"] == 8 and stable["persistence"] == 1.0
     two = drift[(drift["antecedents"] == frozenset({"H"})) & (drift["consequents"] == frozenset({"J"}))].iloc[0]
-    assert np.isnan(two["slope"])                                   # menos de 3 ventanas: sin pendiente
+    assert np.isnan(two["slope"])                                   # fewer than 3 windows: no slope
 
 
 def test_rule_drift_slope_follows_a_trend():
     rows = []
     for window in range(6):
-        confidence = 0.5 + 0.1 * window                              # A -> B sube del 50 % al 100 %
+        confidence = 0.5 + 0.1 * window                              # A -> B rises from 50 % to 100 %
         antecedent = 20
         withB = int(round(confidence * antecedent))
         for position in range(antecedent):
@@ -117,7 +117,7 @@ def test_rule_drift_sort_order_and_errors(windowed):
 
 def test_overlapping_windows_and_row_windows(drifting_items):
     sliding = window_rules(drifting_items, 40, step=20, min_supp=0.3, min_threshold=0.9)
-    assert sliding.attrs["n_windows"] == 7                           # 160 filas, ventanas de 40 cada 20
+    assert sliding.attrs["n_windows"] == 7                           # 160 rows, windows of 40 every 20
     assert sliding.groupby("window")["start"].first().iloc[1] == drifting_items.index[20]
 
 
@@ -129,7 +129,7 @@ def test_duration_windows_match_row_windows_on_regular_data(drifting_items, wind
 
 
 def test_incomplete_last_window_is_skipped(drifting_items):
-    trimmed = drifting_items.iloc[:-5]                               # la ultima ventana de 20h solo tiene 15 filas
+    trimmed = drifting_items.iloc[:-5]                               # the last window of 20h only has 15 rows
     full = window_rules(trimmed, "20h", min_supp=0.3, min_threshold=0.9, min_rows=20)
     assert full.attrs["n_windows"] == 7
     partial = window_rules(trimmed, "20h", min_supp=0.3, min_threshold=0.9, min_rows=2)
@@ -167,9 +167,9 @@ def test_window_validation(drifting_items):
         window_rules(drifting_items.reset_index(drop=True), "1h")
     with pytest.raises(ValueError, match=">= 1"):
         window_rules(drifting_items, 0)
-    with pytest.raises(ValueError, match="ninguna ventana"):
+    with pytest.raises(ValueError, match="no window"):
         window_rules(drifting_items, 1000)
-    with pytest.raises(ValueError, match="positivas"):
+    with pytest.raises(ValueError, match="positive"):
         window_rules(drifting_items, "0h")
 
 
@@ -185,6 +185,6 @@ def test_compare_rule_sets():
     assert byRule["C=>X"]["status"] == "lost" and np.isnan(byRule["C=>X"]["confidence_after"])
     assert byRule["E=>X"]["status"] == "new" and np.isnan(byRule["E=>X"]["confidence_before"])
     assert byRule["D=>X"]["status"] == "stable"
-    assert result["status"].tolist()[0] == "changed"                  # primero lo que mas cambia
-    with pytest.raises(ValueError, match="columnas"):
+    assert result["status"].tolist()[0] == "changed"                  # first what changes the most
+    with pytest.raises(ValueError, match="does not have the columns"):
         compare_rule_sets(before, after.drop(columns="confidence"))

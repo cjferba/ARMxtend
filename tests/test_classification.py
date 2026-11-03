@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Tests de ``ARM.classification``: las reglas de clase frente a una enumeracion por fuerza bruta, la
-seleccion CBA frente a ejecuciones calculadas a mano, y el clasificador sobre datos con estructura plantada.
+Tests of ``ARM.classification``: the class rules against a brute-force enumeration, the
+CBA selection against hand-computed runs, and the classifier on data with planted structure.
 """
 from itertools import combinations
 
@@ -13,7 +13,7 @@ from ARMxtend.ARM import RuleClassifier, class_association_rules, select_rules, 
 
 
 def brute_force(items, labels, min_supp, min_conf, max_len, per_class=True):
-    """Todas las reglas A => clase con soporte y confianza suficientes, contando con enteros."""
+    """All the rules A => class with enough support and confidence, counting with integers."""
     n = len(items)
     matrix = items.to_numpy(bool)
     found, candidates = {}, 0
@@ -82,18 +82,18 @@ def test_class_rules_input_errors():
         class_association_rules(items, labels, support="both")
     with pytest.raises(ValueError, match="max_len"):
         class_association_rules(items, labels, max_len=0)
-    with pytest.raises(ValueError, match="filas"):
+    with pytest.raises(ValueError, match="rows"):
         class_association_rules(items, labels[:-1])
     with pytest.raises(ValueError, match="'-'"):
         class_association_rules(items.rename(columns={"a": "a-1"}), labels)
-    with pytest.raises(ValueError, match="nulos"):
+    with pytest.raises(ValueError, match="null values"):
         class_association_rules(items, [None] + list(labels[1:]))
     assert class_association_rules(items, labels, class_name="y")["consequents"].map(
         lambda c: next(iter(c)).startswith("y=")).all()
 
 
 def rule_list(*rules):
-    """(antecedente, clase, confianza, soporte) como DataFrame con el formato de class_association_rules."""
+    """(antecedent, class, confidence, support) as a DataFrame with the format of class_association_rules."""
     return pd.DataFrame({"antecedents": [frozenset(a) for a, *_ in rules], "class": [c for _, c, *_ in rules],
                          "confidence": [p for *_, p, _ in rules], "support": [s for *_, s in rules]})
 
@@ -104,22 +104,22 @@ def table(rows, columns=("a", "b")):
 
 
 def test_select_rules_hand_computed_cba_run():
-    # 8 casos; R1 {a,b} => X cubre 0 y 1; R2 {a} => X cubre 2 (X) y 3 (Y); R3 {b} => Y cubre 4 y 5
+    # 8 cases; R1 {a,b} => X covers 0 and 1; R2 {a} => X covers 2 (X) and 3 (Y); R3 {b} => Y covers 4 and 5
     items, labels = table([({"a", "b"}, "X"), ({"a", "b"}, "X"), ({"a"}, "X"), ({"a"}, "Y"), ({"b"}, "Y"),
                            ({"b"}, "Y"), (set(), "Y"), (set(), "Y")])
     rules = rule_list(({"a", "b"}, "X", 1.0, 0.25), ({"a"}, "X", 0.75, 0.375), ({"b"}, "Y", 0.5, 0.25))
     kept, default = select_rules(rules, items, labels)
-    # errores totales tras R1, R2 y R3: 1, 1 y 1 -> se corta en el primero (la lista mas corta)
+    # total errors after R1, R2 and R3: 1, 1 and 1 -> cut at the first (the shortest list)
     assert [set(a) for a in kept["antecedents"]] == [{"a", "b"}] and default == "Y"
 
 
 def test_select_rules_skips_rules_that_cover_nothing_new_or_only_wrong_cases():
-    # X: 0-4, 9, 10; Y: 5-8. Tras R1 quedan 9 casos y el defecto (X) falla 4 (total 4); tras R4, 3
+    # X: 0-4, 9, 10; Y: 5-8. After R1, 9 cases remain and the default (X) fails 4 (total 4); after R4, 3
     items, labels = table([({"a", "b"}, "X")] * 2 + [({"a"}, "X")] * 3 + [({"a"}, "Y")] + [({"b"}, "Y")] * 3 +
                           [(set(), "X")] * 2)
     rules = rule_list(({"a", "b"}, "X", 1.0, 0.18),
-                      ({"a", "b"}, "Y", 0.9, 0.1),      # R1 ya cubrio sus casos
-                      ({"b"}, "X", 0.85, 0.2),           # cubre los casos 6-8, todos Y: ninguno bien
+                      ({"a", "b"}, "Y", 0.9, 0.1),      # R1 already covered its cases
+                      ({"b"}, "X", 0.85, 0.2),           # covers cases 6-8, all Y: none right
                       ({"a"}, "X", 0.8, 0.4))
     kept, default = select_rules(rules, items, labels)
     assert [set(a) for a in kept["antecedents"]] == [{"a", "b"}, {"a"}] and default == "Y"
@@ -127,14 +127,14 @@ def test_select_rules_skips_rules_that_cover_nothing_new_or_only_wrong_cases():
 
 
 def test_select_rules_cuts_where_the_total_error_is_lowest():
-    # X: casos 0,1,2,7,8,9; Y: 3,4,5,6. R1 {a} => X (0-3); R2 {b} => Y (4-7)
+    # X: cases 0,1,2,7,8,9; Y: 3,4,5,6. R1 {a} => X (0-3); R2 {b} => Y (4-7)
     items, labels = table([({"a"}, "X")] * 3 + [({"a"}, "Y")] + [({"b"}, "Y")] * 3 + [({"b"}, "X")] +
                           [(set(), "X")] * 2)
     rules = rule_list(({"a"}, "X", 0.75, 0.3), ({"b"}, "Y", 0.75, 0.3))
     kept, default = select_rules(rules, items, labels)
-    # tras R1: 1 error de regla + 3 del defecto = 4; tras R2: 2 errores y defecto perfecto = 2 -> las dos
+    # after R1: 1 rule error + 3 from the default = 4; after R2: 2 errors and a perfect default = 2 -> both
     assert [set(a) for a in kept["antecedents"]] == [{"a"}, {"b"}] and default == "X"
-    # si el segundo fuera X (peor), el error total subiria de 2 a 3 y se corta tras la primera
+    # if the second were X (worse), the total error would rise from 2 to 3 and it is cut after the first
     items2, labels2 = table([({"a"}, "X")] * 4 + [({"a"}, "Y")] + [({"c"}, "Y")] * 2 + [({"c"}, "X")],
                             columns=("a", "c"))
     rules2 = rule_list(({"a"}, "X", 0.8, 0.5), ({"c"}, "X", 0.4, 0.125))
@@ -146,7 +146,7 @@ def test_select_rules_without_useful_rules_uses_the_majority_class():
     items, labels = table([({"a"}, "X"), ({"a"}, "Y"), (set(), "Y")])
     kept, default = select_rules(rule_list(({"a"}, "Z", 0.9, 0.3)).iloc[:0], items, labels)
     assert kept.empty and default == "Y"
-    assert select_rules(rule_list(({"a"}, "Z", 0.9, 0.3)), items, labels)[0].empty      # la clase Z no existe
+    assert select_rules(rule_list(({"a"}, "Z", 0.9, 0.3)), items, labels)[0].empty      # class Z does not exist
 
 
 def planted(rows, seed):
@@ -181,7 +181,7 @@ def test_explain_reports_the_deciding_rule_and_preserves_the_index():
     rule = model.rules_.iloc[int(first["rule"])]
     assert first["prediction"] == rule["class"] and first["confidence"] == rule["confidence"]
     assert shifted.loc[fired.index[0], sorted(rule["antecedents"])].all()
-    # una regla anterior de la lista no se cumple en esa fila: se aplica la primera que se cumple
+    # an earlier rule of the list does not hold in that row: the first one that holds is applied
     for earlier in model.rules_.iloc[:int(first["rule"])]["antecedents"]:
         assert not shifted.loc[fired.index[0], sorted(earlier)].all()
 
@@ -191,13 +191,13 @@ def test_numeric_labels_keep_their_type_and_unfitted_or_bad_inputs_are_rejected(
     numeric = labels.map({"A": 1, "B": 2, "C": 3})
     model = RuleClassifier(min_supp=0.05, min_conf=0.7, max_len=2).fit(items, numeric)
     assert model.predict(items).dtype.kind == "i" and model.score(items, numeric) > 0.85
-    with pytest.raises(ValueError, match="entrenado"):
+    with pytest.raises(ValueError, match="not trained"):
         RuleClassifier().predict(items)
-    with pytest.raises(ValueError, match="entrenar"):
+    with pytest.raises(ValueError, match="no cases to train"):
         RuleClassifier().fit(items.iloc[:0], [])
-    with pytest.raises(ValueError, match="no es una columna"):
+    with pytest.raises(ValueError, match="is not a column"):
         model.predict(items.drop(columns=["x0", "x1", "x2", "x3"]))
-    with pytest.raises(ValueError, match="filas"):
+    with pytest.raises(ValueError, match="rows"):
         model.score(items, numeric[:-1])
 
 

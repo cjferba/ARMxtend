@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests de itemsets cerrados/maximales (FIM.condensed) y poda de reglas redundantes (ARM.redundancy)."""
+"""Tests of closed/maximal itemsets (FIM.condensed) and redundant rule pruning (ARM.redundancy)."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -11,7 +11,7 @@ from ARMxtend.FFIM import fpgrowth, fuzzy_fpgrowth
 from ARMxtend.FIM._shared import key_to_itemset
 from ARMxtend.FIM.condensed import closed_itemsets, maximal_itemsets, support_from_closed
 
-# a,b siempre juntos; c solo con ellos; d aislado
+# a,b always together; c only with them; d isolated
 TRANSACTIONS = [{"a", "b", "c"}] * 3 + [{"a", "b"}] + [{"d"}]
 
 
@@ -39,7 +39,7 @@ def test_support_of_every_frequent_itemset_is_recoverable_from_closed(frequent):
     for key, support in frequent.items():
         assert support_from_closed(key, closed) == pytest.approx(support)
     assert support_from_closed(["a", "c"], closed) == pytest.approx(0.6)
-    assert support_from_closed("a-d", closed) is None            # no es frecuente
+    assert support_from_closed("a-d", closed) is None            # not frequent
 
 
 def test_no_proper_superset_of_a_closed_itemset_has_equal_support(frequent):
@@ -52,21 +52,21 @@ def test_no_proper_superset_of_a_closed_itemset_has_equal_support(frequent):
 
 def test_closed_itemsets_with_a_tolerance():
     freq = {"a": 0.5, "b": 0.5000001, "a-b": 0.5}
-    # a y a-b valen exactamente lo mismo: a no es cerrado; b difiere en 1e-7
+    # a and a-b are worth exactly the same: a is not closed; b differs by 1e-7
     assert set(closed_itemsets(freq, tol=1e-12)) == {"b", "a-b"}
     assert set(closed_itemsets(freq, tol=1e-3)) == {"a-b"}
 
 
 def test_fuzzy_closure_is_level_wise():
-    # b >= a siempre: el bit-list de {a,b} coincide con el de a -> a no es cerrado
+    # b >= a always: the bit-list of {a,b} equals that of a -> a is not closed
     same = fuzzy_fpgrowth([[("a", 1.0), ("b", 1.0)], [("a", 0.5), ("b", 0.5)]], 0.1, 2)
     assert "a" not in closed_itemsets(same) and "a-b" in closed_itemsets(same)
 
-    # mismos grados maximos pero niveles distintos: {a,b} tiene un bit-list diferente
+    # same maximum degrees but different levels: {a,b} has a different bit-list
     different = fuzzy_fpgrowth([[("a", 1.0), ("b", 0.5)], [("a", 0.5), ("b", 1.0)]], 0.1, 2)
     assert "a" in closed_itemsets(different) and "b" in closed_itemsets(different)
     assert set(maximal_itemsets(different)) == {"a-b"}
-    # y se recupera el bit-list (no solo un escalar)
+    # and the bit-list is recovered (not just a scalar)
     assert np.allclose(support_from_closed("a", closed_itemsets(different)), different["a"])
 
 
@@ -74,7 +74,7 @@ def test_empty_input():
     assert closed_itemsets({}) == {} and maximal_itemsets({}) == {}
 
 
-# --- poda de reglas redundantes -------------------------------------------
+# --- pruning of redundant rules -------------------------------------------
 
 def _rules(*specs):
     return pd.DataFrame([
@@ -89,7 +89,7 @@ def test_prune_removes_rules_with_larger_antecedent_or_smaller_consequent():
         ({"a"}, {"b"}, 0.6, 0.75),              # menor consecuente -> redundante
         ({"a", "d"}, {"b", "c"}, 0.6, 0.75),    # mayor antecedente -> redundante
         ({"a", "d"}, {"b"}, 0.6, 0.75),         # ambas -> redundante
-        ({"a"}, {"e"}, 0.6, 0.75),              # no comparable -> se conserva
+        ({"a"}, {"e"}, 0.6, 0.75),              # not comparable -> kept
         ({"a"}, {"b"}, 0.6, 0.80),              # distinta confianza -> se conserva
     )
     pruned = prune_redundant_rules(rules)
@@ -145,18 +145,18 @@ def confidence_rules(*rules):
 def test_unproductive_rules_hand_computed():
     rules = confidence_rules(({"a"}, {"c"}, 0.80), ({"a", "b"}, {"c"}, 0.82), ({"a", "b", "d"}, {"c"}, 0.95),
                              ({"b"}, {"c"}, 0.50), ({"a", "b"}, {"e"}, 0.50))
-    # a,b => c gana 0.02 sobre a => c: improductiva con 0.05, productiva con 0. a,b,d => c gana 0.13 sobre a,b => c
+    # a,b => c gains 0.02 over a => c: unproductive with 0.05, productive with 0. a,b,d => c gains 0.13 over a,b => c
     kept = prune_unproductive_rules(rules, min_improvement=0.05)
     assert [(set(a), set(c)) for a, c in zip(kept["antecedents"], kept["consequents"])] == [
-        ({"a"}, {"c"}), ({"a", "b", "d"}, {"c"}), ({"b"}, {"c"}), ({"a", "b"}, {"e"})]      # a,b => e: sin regla mas general
+        ({"a"}, {"c"}), ({"a", "b", "d"}, {"c"}), ({"b"}, {"c"}), ({"a", "b"}, {"e"})]      # a,b => e: no more general rule
     assert len(prune_unproductive_rules(rules, min_improvement=0.0)) == 5
     equal = confidence_rules(({"a"}, {"c"}, 0.8), ({"a", "b"}, {"c"}, 0.8))
     assert len(prune_unproductive_rules(equal)) == 1                                        # no mejora: sobra
 
 
 def test_unproductive_rules_compare_with_any_more_general_rule_even_if_it_is_dropped():
-    # a,b => c gana 0.03 sobre a => c y se descarta; a,b,d => c gana 0.07 sobre a => c pero solo 0.04 sobre
-    # a,b => c (que esta en `rules`, aunque se descarte): la mejora es el maximo sobre todas las subreglas
+    # a,b => c gains 0.03 over a => c and is discarded; a,b,d => c gains 0.07 over a => c but only 0.04 over
+    # a,b => c (which is in `rules`, even if discarded): the improvement is the maximum over all the sub-rules
     rules = confidence_rules(({"a"}, {"c"}, 0.75), ({"a", "b"}, {"c"}, 0.78), ({"a", "b", "d"}, {"c"}, 0.82))
     assert len(prune_unproductive_rules(rules, 0.05)) == 1
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Tests de regresion para ARMxtend.VizARM.AREtoGraph, siguiendo la
-metodologia VizARE (grafo tipado item/rule, Algoritmo 1) de:
+Regression tests for ARMxtend.VizARM.AREtoGraph, following the
+VizARE methodology (typed item/rule graph, Algorithm 1) of:
     Fernandez-Basso, C., Ruiz, M.D., Molina-Solana, M., Martin-Bautista,
     M.J. (2026). "VizARE: An Intermediate Representation to Support the
     Visualization of Association Rules in Data Mining". Future Internet,
@@ -141,7 +141,7 @@ def test_html_viewer_embeds_the_jgf_and_is_self_contained(rules_df):
     assert html.lstrip().startswith("<!DOCTYPE html>") and "<title>My rules</title>" in html
     assert _embedded(html, "vizare-data") == graph.to_jgf_dict()
     assert _embedded(html, "vizare-options") == {"measure": "lift", "min_value": 1.0}
-    # sin placeholders sin sustituir ni dependencias externas (CDN, fuentes, imagenes remotas)
+    # no unreplaced placeholders and no external dependencies (CDN, fonts, remote images)
     assert "__DATA__" not in html and "__TITLE__" not in html and "__OPTIONS__" not in html
     assert "http://" not in html and "https://" not in html
     assert "src=" not in html and "<link" not in html
@@ -162,10 +162,10 @@ def test_html_viewer_escapes_hostile_labels_and_non_finite_numbers():
     assert "<img" not in html and "</script><img" not in html
     assert "<title>&lt;b&gt;x&lt;/b&gt;</title>" in html
     data = _embedded(html, "vizare-data")["graph"]
-    assert "</script><img src=x onerror=alert(1)>" in data["nodes"]               # el dato sobrevive intacto
+    assert "</script><img src=x onerror=alert(1)>" in data["nodes"]               # the data survives intact
     assert data["nodes"]["r<1>"]["metadata"]["support"] is None                   # NaN -> null (JSON valido)
     assert data["nodes"]["r<1>"]["metadata"]["confidence"] == 0.5
-    # el JGF normal tambien es JSON estricto
+    # the normal JGF is also strict JSON
     json.loads(graph.to_jgf(), parse_constant=lambda c: pytest.fail("NaN/Infinity en el JSON: " + c))
 
 
@@ -175,7 +175,7 @@ def test_max_rules_keeps_the_best_rules_with_their_items(rules_df):
     nodes = _embedded(html, "vizare-data")["graph"]["nodes"]
 
     ruleIds = [i for i, n in nodes.items() if n["metadata"]["kind"] == "rule"]
-    assert ruleIds == ["rule::A=>C"]                                   # la de mayor lift (1.14)
+    assert ruleIds == ["rule::A=>C"]                                   # the one with the highest lift (1.14)
     assert {i for i, n in nodes.items() if n["metadata"]["kind"] == "item"} == {"A", "C"}
 
 

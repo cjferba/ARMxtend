@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-Benchmark de escalabilidad de los algoritmos Big Data de ARMxtend sobre un Spark REAL en modo local.
+Scalability benchmark of the Big Data algorithms of ARMxtend on a REAL Spark in local mode.
 
-Mide, sobre datos sinteticos (items con popularidad tipo Zipf, cestas de ~10 items) leidos desde
-ficheros de texto con ``sc.textFile`` (como en un uso real: el RDD se re-lee y re-parsea salvo que
-se cachee):
+It measures, on synthetic data (items with Zipf-like popularity, baskets of ~10 items) read from
+text files with ``sc.textFile`` (as in real use: the RDD is re-read and re-parsed unless
+it is cached):
 
-* ``data``  -- tiempo frente al numero de transacciones N (a nucleos fijos); se ajusta el exponente
-               alfa de t ~ N^alfa (alfa ~ 1 = escalado lineal) y se registra el pico de memoria RSS
-               del driver (relevante para DECLAT, que lleva las TID-lists al driver).
-* ``cores`` -- aceleracion S = T1/Tn y eficiencia E = S/n frente al numero de nucleos (a N fijo).
-* ``items`` -- tiempo frente al numero de items distintos (a N fijo).
-* ``cache`` -- efecto de cachear el RDD de entrada.
-* ``sequences`` -- PrefixSpan sobre secuencias: ``prefixspan`` (una maquina, Python) frente a
-               ``prefixspan_spark`` (MLlib) con la entrada como lista, como RDD y como DataFrame.
+* ``data``  -- time versus the number of transactions N (at fixed cores); the exponent
+               alpha of t ~ N^alpha is fitted (alpha ~ 1 = linear scaling) and the peak RSS memory
+               of the driver is recorded (relevant for DECLAT, which brings the TID-lists to the driver).
+* ``cores`` -- speedup S = T1/Tn and efficiency E = S/n versus the number of cores (at fixed N).
+* ``items`` -- time versus the number of distinct items (at fixed N).
+* ``cache`` -- effect of caching the input RDD.
+* ``sequences`` -- PrefixSpan over sequences: ``prefixspan`` (single machine, Python) versus
+               ``prefixspan_spark`` (MLlib) with the input as a list, as an RDD and as a DataFrame.
 
-Uso (desde la raiz del repositorio, con un JDK 17+ en JAVA_HOME)::
+Usage (from the repository root, with a JDK 17+ in JAVA_HOME)::
 
     python benchmarks/spark_scalability.py data cores items cache sequences --output results.json
 
-Es un benchmark en UNA maquina (``local[n]``): mide como se reparte el trabajo entre nucleos y como
-crece el coste con los datos, no la red ni el reparto entre nodos de un cluster real.
+It is a benchmark on ONE machine (``local[n]``): it measures how the work is distributed among cores and how
+the cost grows with the data, not the network or the distribution among the nodes of a real cluster.
 """
 import argparse
 import json
@@ -43,7 +43,7 @@ FUZZY = {"FuzzyDAprioriTID": FuzzyDAprioriTID, "FuzzyDECLAT": FuzzyDECLAT}
 
 
 def generate(path, n_transactions, n_items, mean_basket=10, seed=0, shards=8):
-    """Escribe `shards` ficheros de texto con transacciones 'i3,i17,...' (items con popularidad tipo Zipf)."""
+    """Writes `shards` text files with transactions 'i3,i17,...' (items with Zipf-like popularity)."""
     rng = np.random.RandomState(seed)
     popularity = 1.0 / np.arange(1, n_items + 1) ** 0.9
     probabilities = np.minimum(0.7, popularity * mean_basket / popularity.sum())
@@ -66,8 +66,8 @@ def parse_fuzzy(line):
 
 def generate_sequences(path, n_sequences, n_items, mean_elements=6, seed=0, shards=8):
     """
-    Escribe `shards` ficheros con una secuencia por linea: elementos separados por ';' e items de un elemento por ','.
-    Items con popularidad tipo Zipf; cada secuencia tiene unos `mean_elements` elementos de 1 o 2 items.
+    Writes `shards` files with one sequence per line: elements separated by ';' and items of an element by ','.
+    Items with Zipf-like popularity; each sequence has about `mean_elements` elements of 1 or 2 items.
     """
     rng = np.random.RandomState(seed)
     popularity = 1.0 / np.arange(1, n_items + 1) ** 0.9
@@ -128,7 +128,7 @@ def input_rdd(sc, data_dir, fuzzy, cache, partitions):
         rdd = rdd.map(parse_fuzzy)
     if cache:
         rdd.cache()
-        rdd.count()                 # materializa la cache fuera del tiempo medido
+        rdd.count()                 # materializes the cache outside the measured time
     return rdd
 
 
@@ -243,7 +243,7 @@ def experiment_sequences(args, tmp):
                 "prefixspan_spark (RDD)": lambda: prefixspan_spark(
                     session, sc.textFile(data_dir, minPartitions=8).map(parse_sequence), args.seq_min_supp),
             }
-            if args.seq_dataframe:                                              # solo si la libreria ya acepta DataFrames
+            if args.seq_dataframe:                                              # only if the library already accepts DataFrames
                 def from_dataframe():
                     frame = session.createDataFrame(sc.parallelize(local, 8).map(lambda s: (s,)), ["sequence"])
                     return prefixspan_spark(session, frame, args.seq_min_supp)
@@ -265,7 +265,7 @@ def experiment_sequences(args, tmp):
 
 
 def summarize(rows):
-    """Exponente de escalado t ~ N^alfa, y aceleracion/eficiencia por nucleos."""
+    """Scaling exponent t ~ N^alpha, and speedup/efficiency per core."""
     lines = []
     data = [r for r in rows if r["experiment"] == "data"]
     for name in sorted({r["algorithm"] for r in data}):
@@ -293,21 +293,21 @@ def summarize(rows):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("experiments", nargs="+", choices=["data", "cores", "items", "cache", "sequences", "all"])
-    parser.add_argument("--output", help="fichero JSON donde guardar las mediciones")
+    parser.add_argument("--output", help="JSON file where to save the measurements")
     parser.add_argument("--min-supp", type=float, default=0.05)
-    parser.add_argument("--cores", type=int, default=8, help="nucleos de los experimentos data/items/cache")
+    parser.add_argument("--cores", type=int, default=8, help="cores of the data/items/cache experiments")
     parser.add_argument("--items", type=int, default=100, help="items distintos (experimentos data/cache/cores)")
     parser.add_argument("--sizes", default="25000,50000,100000,200000,400000", help="N del experimento data")
-    parser.add_argument("--fuzzy-max", type=int, default=100000, help="N maximo para los algoritmos difusos")
+    parser.add_argument("--fuzzy-max", type=int, default=100000, help="maximum N for the fuzzy algorithms")
     parser.add_argument("--core-list", default="1,2,4,8", help="nucleos del experimento cores")
     parser.add_argument("--cores-n", type=int, default=200000, help="N del experimento cores")
     parser.add_argument("--item-list", default="50,100,200,400", help="items del experimento items")
-    parser.add_argument("--items-n", type=int, default=100000, help="N de los experimentos items/cache")
-    parser.add_argument("--seq-sizes", default="5000,10000,20000,40000", help="numero de secuencias del experimento sequences")
-    parser.add_argument("--seq-items", type=int, default=60, help="items distintos de las secuencias")
-    parser.add_argument("--seq-min-supp", type=float, default=0.05, help="soporte minimo del experimento sequences")
+    parser.add_argument("--items-n", type=int, default=100000, help="N of the items/cache experiments")
+    parser.add_argument("--seq-sizes", default="5000,10000,20000,40000", help="number of sequences of the sequences experiment")
+    parser.add_argument("--seq-items", type=int, default=60, help="distinct items of the sequences")
+    parser.add_argument("--seq-min-supp", type=float, default=0.05, help="minimum support of the sequences experiment")
     parser.add_argument("--seq-dataframe", action="store_true",
-                        help="incluir la entrada como DataFrame de Spark (si prefixspan_spark ya la acepta)")
+                        help="include the input as a Spark DataFrame (if prefixspan_spark already accepts it)")
     args = parser.parse_args(argv)
 
     experiments = ["data", "cores", "items", "cache", "sequences"] if "all" in args.experiments else args.experiments

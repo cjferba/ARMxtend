@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Fixtures compartidas: un SparkContext real (local[2]) para los tests de integracion."""
+"""Shared fixtures: a real SparkContext (local[2]) for the integration tests."""
 import os
 import subprocess
 import sys
@@ -8,8 +8,8 @@ import pytest
 
 
 def java_available():
-    # No basta con shutil.which("java"): macOS trae un /usr/bin/java que
-    # existe aunque no haya ningun JDK instalado y falla al ejecutarse.
+    # shutil.which("java") is not enough: macOS ships a /usr/bin/java that
+    # exists even when no JDK is installed and fails when run.
     java = os.path.join(os.environ["JAVA_HOME"], "bin", "java") if os.environ.get("JAVA_HOME") else "java"
     try:
         return subprocess.run([java, "-version"], capture_output=True).returncode == 0
@@ -19,10 +19,10 @@ def java_available():
 
 @pytest.fixture(scope="session")
 def real_sc():
-    """SparkContext real en modo local[2]; se omite el test si no hay pyspark o un JDK >= 17 (defina JAVA_HOME)."""
+    """Real SparkContext in local[2] mode; the test is skipped if there is no pyspark or no JDK >= 17 (set JAVA_HOME)."""
     pyspark = pytest.importorskip("pyspark")
     if not java_available():
-        pytest.skip("No hay JDK disponible (defina JAVA_HOME)")
+        pytest.skip("No JDK available (set JAVA_HOME)")
     os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
     conf = pyspark.SparkConf().setMaster("local[2]").setAppName("armxtend-tests").set("spark.ui.enabled", "false")
     context = pyspark.SparkContext(conf=conf)

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Tests de las medidas de interes adicionales (ARM._measures), de su uso en
-ARM.association_rules y de su generalizacion difusa por niveles en
-FIM.FARE (RL-theory: medida crisp en cada alpha-corte + agregacion ponderada).
+Tests of the additional interest measures (ARM._measures), of their use in
+ARM.association_rules and of their fuzzy level-wise generalization in
+FIM.FARE (RL-theory: crisp measure at each alpha-cut + weighted aggregation).
 """
 import numpy as np
 import pandas as pd
@@ -47,7 +47,7 @@ def test_measures_accept_arrays_and_return_floats_for_scalars(name):
 
 @pytest.mark.parametrize("name", sorted(MEASURES))
 def test_measures_are_neutral_without_evidence(name):
-    """Sin soporte (0/0) las medidas no producen NaN/inf: devuelven el valor neutro 0."""
+    """Without support (0/0) the measures do not produce NaN/inf: they return the neutral value 0."""
     value = MEASURES[name](0.0, 0.0, 0.0)
     assert np.isfinite(value)
 
@@ -90,7 +90,7 @@ def test_association_rules_can_filter_by_extra_metric():
         "itemsets": [frozenset("A"), frozenset("B"), frozenset("AB")],
     })
     rules = association_rules(itemsets, metric="kulczynski", min_threshold=0.7)
-    # kulczynski es simetrica (0.6857 < 0.7): ninguna de las dos direcciones pasa
+    # kulczynski is symmetric (0.6857 < 0.7): neither direction passes
     assert len(rules) == 0
     rules = association_rules(itemsets, metric="kulczynski", min_threshold=0.6)
     assert len(rules) == 2
@@ -148,10 +148,10 @@ def test_fuzzy_unknown_measure_raises():
         fuzzy_association_rules(_fuzzy_itemsets(), 4, measures=["nope"])
 
 
-# --- factor de certeza frente a la Ec. (7) de Ruiz et al. (2016) -------------
+# --- certainty factor against Eq. (7) of Ruiz et al. (2016) -------------
 
 def _cf_from_4ft(a, b, c, d):
-    """CF(a, b, c, d), Ec. (7), con a + b + c + d = 1 (tabla de frecuencias relativas)."""
+    """CF(a, b, c, d), Eq. (7), with a + b + c + d = 1 (table of relative frequencies)."""
     if a * d > b * c:
         return (a * d - b * c) / ((a + b) * (b + d))
     if a * d < b * c:
@@ -167,14 +167,14 @@ def test_certainty_factor_matches_equation_7_on_random_tables():
 
 
 def test_certainty_factor_is_zero_when_the_antecedent_has_no_support():
-    # a = b = 0 -> ad = bc -> CF = 0 (no -1: sin antecedente no hay evidencia ni a favor ni en contra)
+    # a = b = 0 -> ad = bc -> CF = 0 (not -1: without an antecedent there is no evidence for or against)
     assert MEASURES["certainty_factor"](0.0, 0.0, 0.4) == 0.0
     assert np.allclose(MEASURES["certainty_factor"]([0.0, 0.2], [0.0, 0.5], [0.4, 0.4]),
                        [0.0, _cf_from_4ft(0.2, 0.3, 0.2, 0.3)])
 
 
 def test_fuzzy_certainty_factor_ignores_levels_where_the_antecedent_never_appears():
-    # A solo llega a grado 0.5: en los niveles 1 y 0.75 (de 4) no tiene soporte y su CF es 0
+    # A only reaches degree 0.5: at levels 1 and 0.75 (of 4) it has no support and its CF is 0
     transactions = [[("A", 0.5), ("B", 0.5)], [("A", 0.5)], [("B", 1.0)], [("B", 0.5)]]
     numAlpha = 4
     itemsets = fuzzy_fpgrowth(transactions, min_supp=0.01, num_alpha=numAlpha)
