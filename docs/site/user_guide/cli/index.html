@@ -152,6 +152,10 @@
 <li>
     <a href="../ARM/classification/" class="dropdown-item">ARM.classification (class rules, CBA)</a>
 </li>
+            
+<li>
+    <a href="../ARM/fuzzy_classification/" class="dropdown-item">ARM.fuzzy_classification (fuzzy class rules)</a>
+</li>
     </ul>
   </li>
                                     
@@ -642,6 +646,7 @@ element.</p>
 <ul>
 <li><strong><code>sequences</code></strong> mines the <a href="../FIM/sequential/">frequent sequential patterns</a> (PrefixSpan): <code>--min-supp</code>,
   <code>--min-len</code>, <code>--max-len</code>. Columns: <code>sequence</code> (such as <code>&lt;{alarm} {bathroom} {kitchen}&gt;</code>), <code>support</code>, <code>length</code>.</li>
+<li><strong><code>sequential-rules --veto</code></strong> mines the <a href="../ARM/sequential_rules/#rules-with-veto-x-y">rules with veto</a> <code>X =&gt; ~Y</code> ("after X, Y does not happen").</li>
 <li><strong><code>sequential-rules</code></strong> mines <a href="../ARM/sequential_rules/">sequential rules</a> <code>X =&gt; Y</code>: <code>--min-supp</code>, <code>--metric</code> /
   <code>--min-threshold</code> (default <code>confidence</code> &gt;= 0.7; use <code>--metric lift --min-threshold 1.2</code> to keep informative
   rules), <code>--max-antecedent</code> and <code>--max-consequent</code> (default 2).</li>

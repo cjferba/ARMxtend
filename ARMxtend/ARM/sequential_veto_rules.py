@@ -20,7 +20,7 @@ NOTE: item names must not contain '-', which is the item separator in the itemse
 
 @author Carlos Fernandez-Basso
 """
-from typing import Iterable, List, Union
+from typing import Dict, Iterable, List, Union
 
 import numpy as np
 import pandas as pd
@@ -113,7 +113,7 @@ def contains_veto_rule(sequence: Iterable[Iterable[str]], antecedent: Iterable[s
     """True if ``antecedent => ~vetoed`` is valid in `sequence` (X completes and `vetoed` does not occur afterwards)."""
     elements = [frozenset(e) for e in sequence]
     x = list(antecedent)
-    firstSeen = {}
+    firstSeen: Dict[str, int] = {}
     for position, element in enumerate(elements):
         for item in element:
             firstSeen.setdefault(item, position)

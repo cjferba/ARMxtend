@@ -8,6 +8,7 @@ project uses [semantic versioning](https://semver.org/).
 First version prepared for publication on PyPI (until then: `pip install git+https://github.com/cjferba/ARMxtend.git`).
 
 ### Added
+- **Fuzzy rule classification:** `ARM.fuzzy_class_rules` and `FuzzyRuleClassifier` (fuzzy class rules with Ishibuchi-Yamamoto weights; winner or sum inference).
 - **CBA with multiple minimum supports:** `min_supp` and `min_conf` per class and `min_count` in `class_association_rules` / `RuleClassifier`.
 - **Fuzzy sequential patterns with multi-item elements:** `fuzzy_prefixspan(..., itemset_elements=True)` and `fuzzy-sequences --itemset-elements`.
 - **Sequential rules with veto:** `ARM.sequential_veto_rules` (`X => ~Y`, "after X, Y does not happen") and `sequential-rules --veto`.

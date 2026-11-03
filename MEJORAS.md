@@ -27,7 +27,7 @@ llevan **[tuyo]**.
 17. Fuzzificar también el tiempo (Fiot et al.).
 18. ~~Significación para reglas secuenciales (`ARM.sequential_rule_significance`, test de permutación del orden).~~
 19. ~~CBA con soportes mínimos múltiples completos (`min_supp`/`min_conf` por clase y `min_count`).~~
-20. Clasificación con reglas difusas.
+20. ~~Clasificación con reglas difusas (`ARM.fuzzy_class_rules`, `FuzzyRuleClassifier`).~~
 21. Reglas sobre flujos: `rule_drift` incremental.
 22. ~~Utilidad de la regla (no solo del itemset): `utility_confidence` y `consequent_utility_share`.~~
 23. Explicabilidad: por qué se dispara una regla y comparación con alternativas.

@@ -152,6 +152,10 @@
 <li>
     <a href="../../ARM/classification/" class="dropdown-item">ARM.classification (class rules, CBA)</a>
 </li>
+            
+<li>
+    <a href="../../ARM/fuzzy_classification/" class="dropdown-item">ARM.fuzzy_classification (fuzzy class rules)</a>
+</li>
     </ul>
   </li>
                                     
@@ -487,8 +491,11 @@ second and 0 in the third: its support is <code>(0.8 + 0.2 + 0)/3</code>.</p>
 <li>A <strong>fuzzy sequence</strong> is a list of <strong>events</strong> ordered in time. An event is a dictionary <code>{item: degree}</code> with the
   degrees in <code>[0, 1]</code>; a list of <code>(item, degree)</code> pairs, a bare string or a collection of strings (all with degree 1)
   are accepted too. Items with degree 0 are ignored.</li>
-<li>A <strong>pattern</strong> <code>&lt;x1 x2 ... xk&gt;</code> is an ordered list of single items. Unlike in <code>FIM.sequential</code> there are no
-  multi-item elements (<code>&lt;{a, b} {c}&gt;</code>): the events of a fuzzy sequence are already "baskets of items with degrees".</li>
+<li>A <strong>pattern</strong> <code>&lt;x1 x2 ... xk&gt;</code> is, by default, an ordered list of single items. With <code>itemset_elements=True</code> (command line:
+  <code>--itemset-elements</code>) its elements can hold several simultaneous items, <code>&lt;{a, b} {c}&gt;</code> as in <code>FIM.sequential</code>: the degree of
+  an element <code>{a, b}</code> at an instant is the t-norm of the degrees of <code>a</code> and <code>b</code> at that instant, so adding an item to an element
+  never raises the degree and the search (new element, or one more item in the last one) stays exact. <code>max_len</code> and <code>min_len</code>
+  then count total items. <code>fuzzy_pattern_degree</code> accepts such patterns too: <code>fuzzy_pattern_degree(seq, [{"a", "b"}, "c"])</code>.</li>
 <li>Item names must not contain <code>-</code>.</li>
 </ul>
 <h2 id="definition">Definition</h2>

@@ -152,6 +152,10 @@
 <li>
     <a href="./" class="dropdown-item active" aria-current="page">ARM.classification (class rules, CBA)</a>
 </li>
+            
+<li>
+    <a href="../fuzzy_classification/" class="dropdown-item">ARM.fuzzy_classification (fuzzy class rules)</a>
+</li>
     </ul>
   </li>
                                     
@@ -404,7 +408,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../negative_rules/" class="nav-link">
+                                <a rel="next" href="../fuzzy_classification/" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -475,6 +479,11 @@ diagnoses: out of 12 candidate rules the classifier keeps <code>cough, fever =&g
 the class in the column <code>class</code>. The items must be boolean columns; <code>preprocessing.timeseries.to_items</code> converts numeric
 (by discretising) and categorical columns. <code>support="class"</code> (default) applies <code>min_supp</code> inside each class, so that
 rare classes get their rules; <code>"global"</code> applies it to all rows. The supports in the result are always relative to all rows.</p>
+<p><em>Multiple minimum supports</em> (Liu, Ma and Wong, 2000): the minimum support of the rules of class <code>c</code> is <code>t x freq(c)</code> over all
+the cases, which is <code>t</code> over the cases of the class, i.e. <code>support="class"</code>. Besides, <code>min_supp</code> and <code>min_conf</code> can be
+<strong>dictionaries per class</strong> (<code>min_supp={"rare": 0.3, "common": 0.05}</code>; every class must appear), and <code>min_count</code> (default 1)
+sets an absolute floor on the number of cases a rule must cover, so that a tiny class does not produce rules that hold for one
+single case. All three work in <code>class_association_rules</code> and in <code>RuleClassifier</code>.</p>
 <p><strong>2. Optional pruning.</strong>
 <code>prune_unproductive_rules(rules, min_improvement)</code> (see <a href="../redundancy/#unproductive-rules">redundancy</a>) removes the
 rules whose extra conditions do not improve the confidence of a more general rule. In the <code>RuleClassifier</code>, pass

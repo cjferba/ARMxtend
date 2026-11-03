@@ -152,6 +152,10 @@
 <li>
     <a href="../classification/" class="dropdown-item">ARM.classification (class rules, CBA)</a>
 </li>
+            
+<li>
+    <a href="../fuzzy_classification/" class="dropdown-item">ARM.fuzzy_classification (fuzzy class rules)</a>
+</li>
     </ul>
   </li>
                                     
@@ -443,6 +447,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#rules-with-veto-x-y" class="nav-link">Rules with veto: X =&gt; ~Y</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#is-the-order-real-significance" class="nav-link">Is the order real? Significance</a>
               <ul class="nav flex-column">
               </ul>
@@ -506,6 +514,24 @@ last occurrence of each item. The result equals the definition above (the test s
 exhaustive enumeration). This is <strong>not</strong> the RuleGrowth algorithm of Fournier-Viger et al. (which searches the
 rules incrementally without enumerating all the itemsets), but it yields the same rules with the same support
 and confidence.</p>
+<h2 id="rules-with-veto-x-y">Rules with veto: <code>X =&gt; ~Y</code></h2>
+<p>Positive rules say what <em>will</em> happen; a <strong>veto</strong> rule says what is <em>discarded</em>: once all the items of <code>X</code> have occurred, the
+item <code>Y</code> does <strong>not</strong> occur afterwards (it may have happened before, or at the same instant). <code>sequential_veto_rules</code> mines them:</p>
+<pre><code class="language-python">from ARMxtend.ARM import sequential_veto_rules
+
+sequences = [[&quot;arm&quot;, &quot;sleep&quot;, &quot;wake&quot;], [&quot;arm&quot;, &quot;sleep&quot;], [&quot;arm&quot;, &quot;open&quot;], [&quot;open&quot;, &quot;arm&quot;], [&quot;wake&quot;]]
+sequential_veto_rules(sequences, min_supp=0.2, min_conf=0.7, max_antecedent=1, min_antecedent_supp=0.2)
+# antecedents consequents  support  confidence  consequent support  lift
+#       {arm}      {open}      0.6        0.75                 0.6  1.25   (and the others that pass the thresholds)
+</code></pre>
+<ul>
+<li><code>support</code> is the fraction of sequences where the rule is valid, <code>confidence</code> divides it by the sequences that contain <code>X</code>.</li>
+<li><code>consequent support</code> is the fraction of sequences in which <code>Y</code> <strong>never</strong> appears, the base rate of the veto, so
+  <code>lift = confidence / base rate</code> says whether <code>X</code> makes the absence of <code>Y</code> more likely than it already was.</li>
+<li>Vetoes of rare events hold almost everywhere, so <code>X</code> must be frequent (<code>min_antecedent_supp</code>) and the lift is what to read.</li>
+<li><code>Y</code> is a single item. The test suite compares the rules with the definition applied to every <code>(X, Y)</code>.</li>
+<li>Command line: <code>armxtend sequential-rules routines.txt --veto --min-supp 0.2 --min-threshold 0.8</code>.</li>
+</ul>
 <h2 id="is-the-order-real-significance">Is the order real? Significance</h2>
 <p>A rule can look strong only because <code>X</code> and <code>Y</code> are frequent in the same sequences, in any order.
 <code>sequential_rule_significance</code> tests exactly that: each permutation shuffles the order of the elements inside every
