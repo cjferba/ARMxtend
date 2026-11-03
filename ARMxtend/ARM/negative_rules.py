@@ -1,34 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-Reglas de asociacion con items AUSENTES (reglas negativas), crisp y difusas:
-reglas como  A -> ~B  ("si A, entonces NO B"), ~A -> B  o  ~A -> ~B, donde
-``~i`` significa que el item ``i`` no esta presente en la transaccion.
+Association rules with ABSENT items (negative rules), crisp and fuzzy: rules such as  A -> ~B  ("if A, then NOT B"),
+~A -> B  or  ~A -> ~B, where ``~i`` means that item ``i`` is not present in the transaction.
 
-Sigue el enfoque de la seccion 4 de:
+It follows the approach of section 4 of:
 
     Delgado, M., Ruiz, M.D., Sanchez, D., Serrano, J.M. (2011). "A formal
     model for mining fuzzy rules using the RL representation theory".
     Information Sciences, 181, 5194-5213.
 
-En la RL-theory la ausencia de un item es su COMPLEMENTO en cada nivel de
-restriccion (Ecs. (27)-(28)): el bit-list de ``~i`` en el nivel alpha_k es
-el complemento del bit-list de ``i`` en ese nivel, y la tabla de
-contingencia 4ft de (~A, B) es <c, d, a, b> a partir de la de (A, B)
-= <a, b, c, d>. Por tanto no hace falta calcular frecuencias nuevas, y -- a
-diferencia de la negacion de la teoria de conjuntos difusos (1 - mu) --
-un itemset nunca contiene a la vez ``i`` y ``~i`` (su soporte es 0 en todo
-nivel), de modo que reglas triviales como ``i -> ~i`` no pueden aparecer.
+In the RL-theory the absence of an item is its COMPLEMENT at each restriction level (Eqs. (27)-(28)): the bit-list of
+``~i`` at level alpha_k is the complement of the bit-list of ``i`` at that level, and the 4ft contingency table of
+(~A, B) is <c, d, a, b> from that of (A, B) = <a, b, c, d>. Therefore no new frequencies need to be computed, and --
+unlike the negation of fuzzy set theory (1 - mu) -- an itemset never contains ``i`` and ``~i`` at the same time (its
+support is 0 at every level), so trivial rules such as ``i -> ~i`` cannot appear.
 
-El mayor problema de minar con items ausentes es que, en datos dispersos, la
-ausencia de un item es casi siempre frecuente y el numero de itemsets
-explota (el soporte de la ausencia no cumple la propiedad de cierre
-ascendente utilizada para podar). El articulo adopta la restriccion de Han &
-Beheshti: considerar solo los items negativos ``~i`` cuyo item positivo
-``i`` es frecuente (``only_frequent_positive=True``, por defecto). Con
-``negate_items`` se puede ademas acotar explicitamente que items se niegan.
+The biggest problem of mining with absent items is that, in sparse data, the absence of an item is almost always
+frequent and the number of itemsets explodes (the support of absence does not satisfy the upward-closure property
+used for pruning). The paper adopts the restriction of Han & Beheshti: consider only the negative items ``~i`` whose
+positive item ``i`` is frequent (``only_frequent_positive=True``, default). With ``negate_items`` it is also possible
+to explicitly bound which items are negated.
 
-NOTA: los nombres de item no deben contener '-', que es el separador de
-items en las claves de itemset de ``FIM._shared``.
+NOTE: item names must not contain '-', which is the item separator in the itemset keys of ``FIM._shared``.
 
 @author Carlos Fernandez-Basso
 """
@@ -45,12 +38,12 @@ NEGATION_PREFIX = "~"
 
 
 def negate(item: str) -> str:
-    """Nombre del item que representa la AUSENCIA de `item` ('A' -> '~A')."""
+    """Name of the item that represents the ABSENCE of `item` ('A' -> '~A')."""
     return NEGATION_PREFIX + item
 
 
 def is_negated(item: str) -> bool:
-    """True si `item` es un item ausente ('~A')."""
+    """True if `item` is an absent item ('~A')."""
     return item.startswith(NEGATION_PREFIX)
 
 
@@ -68,17 +61,15 @@ def _negatable_items(vocabulary, positive_supports, negate_items, only_frequent_
 def add_absent_items(transactions: Sequence[Iterable[str]],
                      negate_items: Optional[Iterable[str]] = None) -> List[Set[str]]:
     """
-    Amplia cada transaccion crisp con un item ``~i`` por cada item ``i`` de
-    `negate_items` que NO este presente en ella.
+    Extend each crisp transaction with an item ``~i`` for each item ``i`` of `negate_items` that is NOT present in it.
 
-    Argumentos:
-        transactions (Sequence[Iterable[str]]): transacciones crisp
-        negate_items (Iterable[str], opcional): items cuya ausencia se
-            representa; por defecto, todos los que aparecen en alguna
-            transaccion
+    Args:
+        transactions (Sequence[Iterable[str]]): crisp transactions
+        negate_items (Iterable[str], optional): items whose absence is represented; by default, all those that appear
+            in some transaction
 
-    Retorna:
-        list[set[str]]: las transacciones ampliadas
+    Returns:
+        list[set[str]]: the extended transactions
     """
     sets = [set(t) for t in transactions]
     negatable = set(negate_items) if negate_items is not None else set().union(*sets) if sets else set()
@@ -89,26 +80,21 @@ def negative_association_rules(transactions: Sequence[Iterable[str]], min_supp: 
                                min_threshold: float = 0.8, negate_items: Optional[Iterable[str]] = None,
                                only_frequent_positive: bool = True, only_negative: bool = True) -> pd.DataFrame:
     """
-    Minera reglas de asociacion crisp con items presentes y/o ausentes.
+    Mine crisp association rules with present and/or absent items.
 
-    Argumentos:
-        transactions (Sequence[Iterable[str]]): transacciones crisp
-        min_supp (float): soporte minimo relativo de los itemsets (que
-            pueden incluir items ausentes), en (0, 1]
-        metric (str): medida de `ARM.association_rules` para filtrar
-        min_threshold (float): umbral minimo de `metric`
-        negate_items (Iterable[str], opcional): items cuya ausencia se
-            considera (por defecto, todos)
-        only_frequent_positive (bool): solo se niegan los items cuyo
-            soporte positivo alcanza `min_supp` (restriccion de Han &
-            Beheshti adoptada en Delgado et al., 2011, Seccion 6)
-        only_negative (bool): si True (por defecto), devuelve solo las
-            reglas que contienen al menos un item ausente; si False,
-            tambien las puramente positivas
+    Args:
+        transactions (Sequence[Iterable[str]]): crisp transactions
+        min_supp (float): minimum relative support of the itemsets (which can include absent items), in (0, 1]
+        metric (str): measure of `ARM.association_rules` to filter by
+        min_threshold (float): minimum threshold of `metric`
+        negate_items (Iterable[str], optional): items whose absence is considered (all by default)
+        only_frequent_positive (bool): only the items whose positive support reaches `min_supp` are negated
+            (restriction of Han & Beheshti adopted in Delgado et al., 2011, Section 6)
+        only_negative (bool): if True (default), return only the rules that contain at least one absent item; if
+            False, also the purely positive ones
 
-    Retorna:
-        pandas.DataFrame de reglas (mismo formato que
-        `ARM.association_rules`); los items ausentes aparecen como '~item'.
+    Returns:
+        pandas.DataFrame of rules (same format as `ARM.association_rules`); absent items appear as '~item'.
     """
     transactions = [set(t) for t in transactions]
     total = len(transactions)
@@ -138,32 +124,27 @@ def fuzzy_negative_association_rules(transactions: Sequence[Iterable[Tuple[str, 
                                      only_frequent_positive: bool = True, only_negative: bool = True,
                                      measures: Optional[Iterable[str]] = None) -> pd.DataFrame:
     """
-    Minera reglas de asociacion DIFUSAS con items presentes y/o ausentes,
-    segun la RL-theory (ver el modulo): el bit-list de ``~i`` en cada
-    alpha-corte es el complemento del de ``i`` (no ``1 - grado``), y el
-    soporte (FSupp), la confianza (FConf), el factor de certeza (FCF) y el
-    resto de medidas se agregan nivel a nivel con los pesos
-    (alpha_i - alpha_i+1) como en `FIM.FARE.fuzzy_association_rules`.
+    Mine FUZZY association rules with present and/or absent items, according to the RL-theory (see the module): the
+    bit-list of ``~i`` at each alpha-cut is the complement of that of ``i`` (not ``1 - degree``), and the support
+    (FSupp), confidence (FConf), certainty factor (FCF) and the rest of the measures are aggregated level by level
+    with the weights (alpha_i - alpha_i+1) as in `FIM.FARE.fuzzy_association_rules`.
 
-    Argumentos:
-        transactions (Sequence[Iterable[Tuple[str, float]]]): transacciones
-            difusas, cada una una lista de pares (item, grado en [0, 1]).
-            Un item que no aparece en una transaccion tiene grado 0 en ella
-        min_supp (float): FSupp minimo de los itemsets, en (0, 1]
-        num_alpha (int): numero de alpha-cortes (el articulo recomienda 10)
-        metric (str): medida de `FIM.FARE.fuzzy_association_rules`
-        min_threshold (float): umbral minimo de `metric`
-        negate_items (Iterable[str], opcional): items cuya ausencia se
-            considera (por defecto, todos)
-        only_frequent_positive (bool): solo se niegan los items cuyo FSupp
-            positivo alcanza `min_supp` (Han & Beheshti)
-        only_negative (bool): solo reglas con al menos un item ausente
-        measures (Iterable[str], opcional): medidas adicionales a devolver
-            (ver `FIM.FARE.fuzzy_association_rules`)
+    Args:
+        transactions (Sequence[Iterable[Tuple[str, float]]]): fuzzy transactions, each a list of (item, degree in
+            [0, 1]) pairs. An item that does not appear in a transaction has degree 0 in it
+        min_supp (float): minimum FSupp of the itemsets, in (0, 1]
+        num_alpha (int): number of alpha-cuts (the paper recommends 10)
+        metric (str): measure of `FIM.FARE.fuzzy_association_rules`
+        min_threshold (float): minimum threshold of `metric`
+        negate_items (Iterable[str], optional): items whose absence is considered (all by default)
+        only_frequent_positive (bool): only the items whose positive FSupp reaches `min_supp` are negated
+            (Han & Beheshti)
+        only_negative (bool): only rules with at least one absent item
+        measures (Iterable[str], optional): additional measures to return (see
+            `FIM.FARE.fuzzy_association_rules`)
 
-    Retorna:
-        pandas.DataFrame de reglas difusas; los items ausentes aparecen
-        como '~item'.
+    Returns:
+        pandas.DataFrame of fuzzy rules; absent items appear as '~item'.
     """
     columns = ["antecedents", "consequents", "support", "confidence", "certainty_factor"]
     total = len(transactions)

@@ -1,28 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-Reglas de asociacion CUANTITATIVAS por intervalos (Srikant y Agrawal, 1996, "Mining
-quantitative association rules in large relational tables"): reglas sobre tablas con
-atributos numericos y categoricos, como ``edad en [30, 45) => ingresos en [40000, 90000)``
-y ``sexo=F, edad en [20, 30) => compra=si``.
+Interval-based QUANTITATIVE association rules (Srikant and Agrawal, 1996, "Mining quantitative association rules in
+large relational tables"): rules over tables with numeric and categorical attributes, such as
+``age in [30, 45) => income in [40000, 90000)`` and ``sex=F, age in [20, 30) => purchase=yes``.
 
-Cada atributo numerico se parte en ``n_intervals`` intervalos BASE de igual frecuencia
-(equi-depth) y se forman los RANGOS de intervalos base contiguos cuyo soporte no supera
-``max_supp`` (un rango demasiado ancho es verdad casi siempre y no dice nada). Los rangos
-forman una jerarquia por inclusion -- ``[30, 40)`` esta dentro de ``[30, 50)`` -- y por eso
-todo se reduce a las reglas generalizadas de ``ARM.generalized_rules``, con una taxonomia
-cuyos "antecesores" de un intervalo son los rangos que lo contienen, y con la restriccion
-de que una regla no mencione dos rangos del mismo atributo. La poda R-interesante de Srikant
-y Agrawal elimina entonces las reglas cuyo rango se puede ensanchar o estrechar sin que la
-regla cambie de verdad.
+Each numeric attribute is split into ``n_intervals`` equal-frequency (equi-depth) BASE intervals and the RANGES of
+contiguous base intervals whose support does not exceed ``max_supp`` are formed (a range that is too wide is almost
+always true and says nothing). The ranges form a hierarchy by inclusion -- ``[30, 40)`` is inside ``[30, 50)`` -- and
+so everything reduces to the generalized rules of ``ARM.generalized_rules``, with a taxonomy whose "ancestors" of an
+interval are the ranges that contain it, and with the restriction that a rule does not mention two ranges of the same
+attribute. The R-interesting pruning of Srikant and Agrawal then removes the rules whose range can be widened or
+narrowed without the rule really changing.
 
-* ``IntervalPartition``: ajusta (``fit``) los intervalos con unos datos y transforma
-  (``transform``) filas -- tambien nuevas -- en items.
-* ``quantitative_rules``: tabla -> reglas.
-* ``partial_completeness_intervals``: cuantos intervalos hacen falta para no perder mas de
-  cierta "completitud parcial" K (formula del articulo).
+* ``IntervalPartition``: fits (``fit``) the intervals with some data and transforms (``transform``) rows -- also new
+  ones -- into items.
+* ``quantitative_rules``: table -> rules.
+* ``partial_completeness_intervals``: how many intervals are needed so as not to lose more than a certain "partial
+  completeness" K (formula of the paper).
 
-Los items categoricos son ``columna=valor``; los rangos, ``columna=[bajo,alto)`` (``]`` en
-el ultimo intervalo; el signo menos se escribe con U+2212 porque los items no admiten '-').
+Categorical items are ``column=value``; ranges are ``column=[low,high)`` (``]`` in the last interval; the minus sign is
+written with U+2212 because items do not admit '-').
 
 @author Carlos Fernandez-Basso
 """
@@ -40,13 +37,13 @@ _EPS = 1e-9
 
 def partial_completeness_intervals(n_quantitative: int, min_supp: float, completeness: float = 1.5) -> int:
     """
-    Intervalos base necesarios por atributo, ``2 n / (min_supp (K - 1))``, para que los rangos formados
-    no pierdan mas de una "completitud parcial" K (> 1) respecto a los mejores posibles (Srikant y Agrawal, 1996).
+    Base intervals needed per attribute, ``2 n / (min_supp (K - 1))``, so that the formed ranges do not lose more than
+    a "partial completeness" K (> 1) with respect to the best possible ones (Srikant and Agrawal, 1996).
 
-    Argumentos:
-        n_quantitative (int): maximo de atributos numericos en una regla
-        min_supp (float): soporte minimo, en (0, 1]
-        completeness (float): nivel K de completitud parcial, > 1 (cuanto mas cerca de 1, mas intervalos)
+    Args:
+        n_quantitative (int): maximum number of numeric attributes in a rule
+        min_supp (float): minimum support, in (0, 1]
+        completeness (float): level K of partial completeness, > 1 (the closer to 1, the more intervals)
     """
     if n_quantitative < 1 or not 0 < min_supp <= 1 or completeness <= 1:
         raise ValueError("hace falta n_quantitative >= 1, min_supp en (0, 1] y completeness > 1")
@@ -59,20 +56,20 @@ def _number(value: float) -> str:
 
 class IntervalPartition(object):
     """
-    Particion de los atributos de una tabla en items: intervalos base y rangos para los numericos,
-    ``columna=valor`` para los demas.
+    Partition of the attributes of a table into items: base intervals and ranges for the numeric ones,
+    ``column=value`` for the others.
 
-    Argumentos:
-        n_intervals (int): intervalos base por atributo numerico (menos si hay valores repetidos)
-        method (str): 'quantile' (igual frecuencia, por defecto) o 'uniform' (igual anchura)
-        max_supp (float): soporte maximo de un rango de varios intervalos base, en (0, 1]
-        columns (list, opcional): columnas a usar (por defecto, todas)
-        quantitative (list, opcional): columnas que se tratan como numericas (por defecto, las numericas
-            con mas de `n_intervals` valores distintos; las demas son categoricas)
+    Args:
+        n_intervals (int): base intervals per numeric attribute (fewer if there are repeated values)
+        method (str): 'quantile' (equal frequency, default) or 'uniform' (equal width)
+        max_supp (float): maximum support of a range of several base intervals, in (0, 1]
+        columns (list, optional): columns to use (all by default)
+        quantitative (list, optional): columns treated as numeric (by default, the numeric ones with more than
+            `n_intervals` distinct values; the others are categorical)
 
-    Atributos tras ``fit``: ``taxonomy_`` (jerarquia de rangos), ``groups_`` (rango -> columna, para
-    ``exclusive``), ``intervals_`` (``DataFrame`` con item, column, low, high, support y n_base de cada rango),
-    ``edges_`` (bordes de cada columna numerica) y ``categorical_`` (columnas categoricas).
+    Attributes after ``fit``: ``taxonomy_`` (hierarchy of ranges), ``groups_`` (range -> column, for ``exclusive``),
+    ``intervals_`` (``DataFrame`` with item, column, low, high, support and n_base of each range), ``edges_`` (edges of
+    each numeric column) and ``categorical_`` (categorical columns).
     """
 
     def __init__(self, n_intervals: int = 8, method: str = "quantile", max_supp: float = 0.5,
@@ -95,13 +92,13 @@ class IntervalPartition(object):
             numeric = list(self.quantitative)
             wrong = [name for name in numeric if name not in columns or not pd.api.types.is_numeric_dtype(table[name])]
             if wrong:
-                raise ValueError("las columnas {} no son numericas o no estan en `columns`".format(wrong))
+                raise ValueError("the columns {} are not numeric or are not in `columns`".format(wrong))
         else:
             numeric = [name for name in columns if pd.api.types.is_numeric_dtype(table[name])
                        and not pd.api.types.is_bool_dtype(table[name]) and table[name].nunique() > self.n_intervals]
         self.categorical_: List[str] = [name for name in columns if name not in numeric]
         if not numeric and not self.categorical_:
-            raise ValueError("no hay columnas que usar")
+            raise ValueError("there are no columns to use")
         total = len(table)
         self.edges_: Dict[str, np.ndarray] = {}
         rows: List[Dict[str, Any]] = []
@@ -109,7 +106,7 @@ class IntervalPartition(object):
         for name in numeric:
             values = table[name].dropna().to_numpy(dtype=float)
             if len(values) == 0:
-                raise ValueError("la columna '{}' no tiene valores".format(name))
+                raise ValueError("column '{}' has no values".format(name))
             if self.method == "quantile":
                 edges = np.unique(np.quantile(values, np.linspace(0, 1, self.n_intervals + 1)))
             else:
@@ -140,7 +137,7 @@ class IntervalPartition(object):
 
     @staticmethod
     def _index(values: np.ndarray, edges: np.ndarray) -> np.ndarray:
-        """Indice del intervalo base de cada valor; los valores fuera del rango ajustado caen en el primero o el ultimo."""
+        """Index of the base interval of each value; values outside the fitted range fall into the first or the last one."""
         return np.clip(np.searchsorted(edges[1:-1], values, side="right"), 0, len(edges) - 2)
 
     @staticmethod
@@ -149,9 +146,9 @@ class IntervalPartition(object):
         return "{}=[{},{}{}".format(name, _number(edges[first]), _number(edges[last + 1]), closing)
 
     def transform(self, table: pd.DataFrame) -> List[List[str]]:
-        """Los items base (intervalo o ``columna=valor``) de cada fila; los valores ausentes no dan item."""
+        """The base items (interval or ``column=value``) of each row; missing values give no item."""
         if not hasattr(self, "taxonomy_"):
-            raise ValueError("hay que llamar a fit antes de transform")
+            raise ValueError("fit must be called before transform")
         missing = [name for name in self._numeric + self.categorical_ if name not in table.columns]
         if missing:
             raise ValueError("faltan las columnas {}".format(missing))
@@ -179,21 +176,21 @@ def quantitative_rules(table: pd.DataFrame, min_supp: MinSupp = 0.1, n_intervals
                        max_len: Optional[int] = None, interest: Optional[float] = None,
                        partition: Optional[IntervalPartition] = None) -> pd.DataFrame:
     """
-    Reglas cuantitativas de una tabla (ver el docstring del modulo).
+    Quantitative rules of a table (see the module docstring).
 
-    Argumentos:
-        table (pandas.DataFrame): una fila por registro
-        min_supp: soporte minimo (o ``{nivel: soporte}``, ver ``ARM.generalized_rules``)
-        n_intervals, max_supp, columns, quantitative, method: ver ``IntervalPartition``
-        metric, min_threshold, max_len: ver ``ARM.generalized_rules``
-        interest (float, opcional): si se da (>= 1), solo las reglas R-interesantes de ese R: las que
-            superan en ese factor lo esperado a partir de la regla con rangos mas anchos
-        partition (IntervalPartition, opcional): una particion ya ajustada (por ejemplo, con otros datos);
-            si se da, se ignoran `n_intervals`, `max_supp`, `columns`, `quantitative` y `method`
+    Args:
+        table (pandas.DataFrame): one row per record
+        min_supp: minimum support (or ``{level: support}``, see ``ARM.generalized_rules``)
+        n_intervals, max_supp, columns, quantitative, method: see ``IntervalPartition``
+        metric, min_threshold, max_len: see ``ARM.generalized_rules``
+        interest (float, optional): if given (>= 1), only the R-interesting rules of that R: those that exceed by that
+            factor what is expected from the rule with wider ranges
+        partition (IntervalPartition, optional): an already fitted partition (for example, with other data); if given,
+            `n_intervals`, `max_supp`, `columns`, `quantitative` and `method` are ignored
 
-    Retorna:
-        pandas.DataFrame con el formato de ``ARM.generalized_rules``; ``attrs['partition']`` guarda la
-        particion y ``attrs['taxonomy']`` y ``attrs['supports']`` lo necesario para ``interesting_rules``
+    Returns:
+        pandas.DataFrame with the format of ``ARM.generalized_rules``; ``attrs['partition']`` holds the partition and
+        ``attrs['taxonomy']`` and ``attrs['supports']`` what ``interesting_rules`` needs
     """
     if partition is None:
         partition = IntervalPartition(n_intervals, method, max_supp, columns, quantitative).fit(table)

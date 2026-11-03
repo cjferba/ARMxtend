@@ -1,26 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-Reglas de asociacion GENERALIZADAS (multinivel): reglas cuyos items pueden ser productos
-o categorias de una taxonomia (``FIM.taxonomy``), como "ropa de abrigo => calzado".
+GENERALIZED (multilevel) association rules: rules whose items can be products or categories of a taxonomy
+(``FIM.taxonomy``), such as "outerwear => footwear".
 
-``generalized_rules`` mina los itemsets generalizados (sin items junto a sus antecesores,
-con soporte minimo opcionalmente distinto por nivel) y los convierte en reglas con
-``ARM.association_rules``; como ningun itemset contiene un item y su antecesor, no salen
-las reglas triviales ``item => antecesor`` (confianza 1).
+``generalized_rules`` mines the generalized itemsets (with no items next to their ancestors, with a minimum support
+optionally different per level) and converts them into rules with ``ARM.association_rules``; since no itemset
+contains an item and its ancestor, the trivial rules ``item => ancestor`` (confidence 1) do not come out.
 
-Las categorias generan muchas reglas que solo repiten, a otro nivel, lo que ya dice una
-regla mas general. ``interesting_rules`` conserva las "R-interesantes" de Srikant y Agrawal
-(1995): una regla es interesante si no tiene antecesoras (reglas que resultan de sustituir
-items por sus antecesores en el mismo conjunto de reglas) o si, respecto a cada una de sus
-antecesoras CERCANAS interesantes, su soporte o su confianza reales son al menos R veces los
-ESPERADOS a partir de la antecesora. Con ``X^ => Y^`` la antecesora de ``X => Y`` y ``z^`` la
-antecesora de cada item ``z``:
+Categories generate many rules that merely repeat, at another level, what a more general rule already says.
+``interesting_rules`` keeps the "R-interesting" ones of Srikant and Agrawal (1995): a rule is interesting if it has no
+ancestors (rules that result from replacing items by their ancestors in the same set of rules) or if, with respect to
+each of its CLOSE interesting ancestors, its real support or confidence are at least R times those EXPECTED from the
+ancestor. With ``X^ => Y^`` the ancestor of ``X => Y`` and ``z^`` the ancestor of each item ``z``:
 
-    soporte esperado   = soporte(X^ u Y^) * prod_{z en X u Y} soporte(z) / soporte(z^)
-    confianza esperada = confianza(X^ => Y^) * prod_{y en Y} soporte(y) / soporte(y^)
+    expected support    = support(X^ u Y^) * prod_{z in X u Y} support(z) / support(z^)
+    expected confidence = confidence(X^ => Y^) * prod_{y in Y} support(y) / support(y^)
 
-Es decir, la regla especializada solo aporta algo si es mejor de lo que cabria esperar si
-cada item se comportase como su categoria.
+That is, the specialized rule only contributes something if it is better than would be expected if each item behaved
+like its category.
 
 @author Carlos Fernandez-Basso
 """
@@ -39,23 +36,22 @@ def generalized_rules(transactions: Iterable[Iterable[Any]], taxonomy: Taxonomy,
                       metric: str = "confidence", min_threshold: float = 0.8, max_len: Optional[int] = None,
                       interest: Optional[float] = None, exclusive: Optional[Mapping[str, Any]] = None) -> pd.DataFrame:
     """
-    Minera reglas generalizadas (ver el docstring del modulo).
+    Mine generalized rules (see the module docstring).
 
-    Argumentos:
-        transactions: una transaccion por elemento, cada una una coleccion de items (hojas o categorias)
-        taxonomy (Taxonomy): jerarquia de items
-        min_supp: soporte minimo, o ``{nivel: soporte}`` (ver ``FIM.taxonomy.generalized_itemsets``)
-        metric, min_threshold: medida de ``ARM.association_rules`` y su umbral minimo
-        max_len (int, opcional): maximo de items de una regla
-        interest (float, opcional): si se da (>= 1), se aplica ``interesting_rules`` con ese R
-        exclusive (dict, opcional): ``{item: grupo}``, items de un mismo grupo que no pueden ir juntos (ver
+    Args:
+        transactions: one transaction per element, each a collection of items (leaves or categories)
+        taxonomy (Taxonomy): hierarchy of items
+        min_supp: minimum support, or ``{level: support}`` (see ``FIM.taxonomy.generalized_itemsets``)
+        metric, min_threshold: measure of ``ARM.association_rules`` and its minimum threshold
+        max_len (int, optional): maximum number of items of a rule
+        interest (float, optional): if given (>= 1), ``interesting_rules`` is applied with that R
+        exclusive (dict, optional): ``{item: group}``, items of the same group that cannot go together (see
             ``FIM.taxonomy.generalized_itemsets``)
 
-    Retorna:
-        pandas.DataFrame con el formato de ``ARM.association_rules`` mas la columna 'level' (el nivel
-        del item mas profundo de la regla). ``attrs`` lleva 'n_transactions', 'n_candidates' (para
-        ``ARM.significance``), 'taxonomy' y 'supports' (soporte de cada itemset frecuente, que usa
-        ``interesting_rules``)
+    Returns:
+        pandas.DataFrame with the format of ``ARM.association_rules`` plus the column 'level' (the level of the deepest
+        item of the rule). ``attrs`` holds 'n_transactions', 'n_candidates' (for ``ARM.significance``), 'taxonomy' and
+        'supports' (support of each frequent itemset, which ``interesting_rules`` uses)
     """
     itemsets = generalized_itemsets(transactions, taxonomy, min_supp, max_len=max_len, exclusive=exclusive)
     total = itemsets.attrs["n_transactions"]
@@ -74,23 +70,22 @@ def generalized_rules(transactions: Iterable[Iterable[Any]], taxonomy: Taxonomy,
 def interesting_rules(rules: pd.DataFrame, taxonomy: Optional[Taxonomy] = None, interest: float = 1.1,
                       supports: Optional[Dict[FrozenSet[str], float]] = None) -> pd.DataFrame:
     """
-    Las reglas R-interesantes de `rules` (ver el docstring del modulo), con R = `interest`.
+    The R-interesting rules of `rules` (see the module docstring), with R = `interest`.
 
-    Argumentos:
-        rules (pandas.DataFrame): salida de ``generalized_rules`` SIN podar (las antecesoras de una regla
-            deben estar en el conjunto), con 'antecedents', 'consequents', 'support' y 'confidence'
-        taxonomy (Taxonomy), supports (dict {frozenset: soporte}): por defecto los de ``rules.attrs``
-        interest (float): R >= 1; 1 solo elimina las reglas peores que lo esperado
+    Args:
+        rules (pandas.DataFrame): output of ``generalized_rules`` WITHOUT pruning (the ancestors of a rule must be in
+            the set), with 'antecedents', 'consequents', 'support' and 'confidence'
+        taxonomy (Taxonomy), supports (dict {frozenset: support}): by default those of ``rules.attrs``
+        interest (float): R >= 1; 1 only removes the rules that are worse than expected
 
-    Retorna:
-        las reglas interesantes, en el mismo orden e indice, con la columna 'interest': el menor, sobre
-        las antecesoras cercanas, de max(soporte real / esperado, confianza real / esperada); NaN si la
-        regla no tiene antecesoras
+    Returns:
+        the interesting rules, in the same order and index, with the column 'interest': the smallest, over the close
+        ancestors, of max(real support / expected, real confidence / expected); NaN if the rule has no ancestors
     """
     taxonomy = taxonomy if taxonomy is not None else rules.attrs.get("taxonomy")
     supports = supports if supports is not None else rules.attrs.get("supports")
     if taxonomy is None or supports is None:
-        raise ValueError("hacen falta la taxonomia y los soportes de los itemsets (rules.attrs, o los argumentos)")
+        raise ValueError("the taxonomy and the supports of the itemsets are needed (rules.attrs, or the arguments)")
     if interest < 1:
         raise ValueError("interest debe ser >= 1")
     result = rules.copy()

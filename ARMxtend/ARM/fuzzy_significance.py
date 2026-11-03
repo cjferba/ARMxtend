@@ -1,21 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-Significacion estadistica de reglas DIFUSAS, regla a regla, con un test de permutacion.
+Statistical significance of FUZZY rules, rule by rule, with a permutation test.
 
-Los tests de ``ARM.significance`` (Fisher, chi-cuadrado) necesitan frecuencias enteras y no valen con grados de
-pertenencia. Aqui, para cada regla ``A => B``:
+The tests of ``ARM.significance`` (Fisher, chi-squared) need integer frequencies and do not work with membership
+degrees. Here, for each rule ``A => B``:
 
-* se calcula el vector de pertenencia del antecedente ``a`` y del consecuente ``b`` en cada transaccion (el minimo, la
-  t-norma, de los grados de sus items; un item ausente vale 0);
-* el estadistico es la **confianza por cardinal escalar** ``sum(min(a, b)) / sum(a)`` -- no la confianza agregada por
-  alpha-cortes (``FConf``) de ``FIM.FARE``, pero la misma idea y la misma ordenacion en la practica;
-* la hipotesis nula es que ``b`` no depende de ``a``: se baraja ``b`` entre las transacciones (conserva la distribucion de
-  cada lado y rompe su relacion) y el p-valor es la fraccion de barajados cuyo estadistico alcanza el observado,
-  ``(1 + #barajados >= observado) / (1 + n_permutaciones)`` (Phipson y Smyth, 2010), contraste unilateral.
+* the membership vector of the antecedent ``a`` and of the consequent ``b`` is computed in each transaction (the
+  minimum, the t-norm, of the degrees of its items; an absent item is worth 0);
+* the statistic is the **scalar-cardinality confidence** ``sum(min(a, b)) / sum(a)`` -- not the confidence aggregated
+  by alpha-cuts (``FConf``) of ``FIM.FARE``, but the same idea and the same ordering in practice;
+* the null hypothesis is that ``b`` does not depend on ``a``: ``b`` is shuffled among the transactions (it keeps the
+  distribution of each side and breaks their relation) and the p-value is the fraction of shuffles whose statistic
+  reaches the observed one, ``(1 + #shuffled >= observed) / (1 + n_permutations)`` (Phipson and Smyth, 2010),
+  one-sided test.
 
-El p-valor se corrige por pruebas multiples con ``adjust_pvalues``. Con ``n_permutaciones`` barajados el p-valor minimo es
-``1 / (n_permutaciones + 1)``: para que una correccion de Bonferroni con ``m`` pruebas pueda rechazar a nivel ``alpha``
-hacen falta al menos ``m / alpha`` permutaciones.
+The p-value is corrected for multiple testing with ``adjust_pvalues``. With ``n_permutations`` shuffles the minimum
+p-value is ``1 / (n_permutations + 1)``: for a Bonferroni correction with ``m`` tests to be able to reject at level
+``alpha`` at least ``m / alpha`` permutations are needed.
 
 @author Carlos Fernandez-Basso
 """
@@ -32,7 +33,7 @@ _TOL = 1e-12
 
 
 def _degrees(transactions: FuzzyTransactions, items: Iterable[str]) -> Dict[str, np.ndarray]:
-    """Vector de grados (uno por transaccion, 0 si falta) de cada item de `items`; el mayor grado si se repite."""
+    """Vector of degrees (one per transaction, 0 if missing) of each item of `items`; the highest degree if repeated."""
     wanted = set(items)
     if isinstance(transactions, pd.DataFrame):
         values = transactions.to_numpy(dtype=float)
@@ -48,10 +49,10 @@ def _degrees(transactions: FuzzyTransactions, items: Iterable[str]) -> Dict[str,
                 if item in columns:
                     columns[item][row] = max(columns[item][row], float(degree))
     if missing:
-        raise ValueError("los items {} de las reglas no estan en las transacciones".format(sorted(missing)))
+        raise ValueError("the items {} of the rules are not in the transactions".format(sorted(missing)))
     for item, column in columns.items():
         if np.any((column < 0) | (column > 1)) or np.any(np.isnan(column)):
-            raise ValueError("los grados de pertenencia deben estar en [0, 1] (item '{}')".format(item))
+            raise ValueError("membership degrees must be in [0, 1] (item '{}')".format(item))
     return columns
 
 
@@ -65,18 +66,20 @@ def _side(columns: Dict[str, np.ndarray], items: Iterable[str], rows: int) -> np
 def fuzzy_rule_significance(rules: pd.DataFrame, transactions: FuzzyTransactions, n_permutations: int = 999,
                             random_state: Union[None, int, np.random.Generator] = None) -> pd.DataFrame:
     """
-    Anade a las reglas difusas el estadistico ``fuzzy_confidence`` y el ``p_value`` del test de permutacion.
+    Add to the fuzzy rules the ``fuzzy_confidence`` statistic and the ``p_value`` of the permutation test.
 
-    Argumentos:
-        rules (pandas.DataFrame): reglas con 'antecedents' y 'consequents' (como las de ``FIM.FARE.fuzzy_association_rules``)
-        transactions: las transacciones con las que se minaron, como lista de listas de pares (item, grado) o como tabla
-            de grados (una fila por transaccion, una columna por item; ver ``preprocessing.timeseries.to_fuzzy_transactions``)
-        n_permutations (int): numero de barajados (por defecto 999; mas da p-valores mas finos y mas lentos)
-        random_state: semilla o ``numpy.random.Generator``
+    Args:
+        rules (pandas.DataFrame): rules with 'antecedents' and 'consequents' (like those of
+            ``FIM.FARE.fuzzy_association_rules``)
+        transactions: the transactions they were mined with, as a list of lists of (item, degree) pairs or as a table
+            of degrees (one row per transaction, one column per item; see
+            ``preprocessing.timeseries.to_fuzzy_transactions``)
+        n_permutations (int): number of shuffles (999 by default; more gives finer but slower p-values)
+        random_state: seed or ``numpy.random.Generator``
 
-    Retorna:
-        Copia de `rules` con las columnas 'fuzzy_confidence' y 'p_value'; ``attrs`` conserva las de `rules` y anade
-        'n_permutations' y 'n_transactions'.
+    Returns:
+        Copy of `rules` with the columns 'fuzzy_confidence' and 'p_value'; ``attrs`` keeps those of `rules` and adds
+        'n_permutations' and 'n_transactions'.
     """
     if n_permutations < 1:
         raise ValueError("n_permutations debe ser >= 1")
@@ -91,7 +94,7 @@ def fuzzy_rule_significance(rules: pd.DataFrame, transactions: FuzzyTransactions
         result["p_value"] = pd.Series(dtype=float)
         return result
     if rows == 0:
-        raise ValueError("no hay transacciones")
+        raise ValueError("there are no transactions")
     columns = _degrees(transactions, [item for sides in zip(rules["antecedents"], rules["consequents"])
                                       for side in sides for item in side])
     permutations = np.argsort(rng.random((n_permutations, rows)), axis=1)
@@ -116,11 +119,12 @@ def fuzzy_significant_rules(rules: pd.DataFrame, transactions: FuzzyTransactions
                             correction: str = "fdr_bh", n_permutations: int = 999, n_tests: Optional[int] = None,
                             random_state: Union[None, int, np.random.Generator] = None) -> pd.DataFrame:
     """
-    Las reglas difusas significativas tras corregir por pruebas multiples (ver `fuzzy_rule_significance`).
+    The significant fuzzy rules after correcting for multiple testing (see `fuzzy_rule_significance`).
 
-    `n_tests` es el numero de hipotesis de la familia; por defecto ``rules.attrs['n_candidates']`` (que anota
-    ``FIM.FARE.fuzzy_association_rules``: las particiones antecedente/consecuente examinadas) o, si no esta, el numero de
-    reglas dadas, que SUBESTIMA la familia. Devuelve las reglas con 'p_adjusted' <= alpha, ordenadas por p-valor ajustado.
+    `n_tests` is the number of hypotheses of the family; by default ``rules.attrs['n_candidates']`` (recorded by
+    ``FIM.FARE.fuzzy_association_rules``: the antecedent/consequent partitions examined) or, if it is not there, the
+    number of rules given, which UNDERESTIMATES the family. It returns the rules with 'p_adjusted' <= alpha, sorted by
+    adjusted p-value.
     """
     if not 0 < alpha < 1:
         raise ValueError("alpha debe estar en (0, 1), recibido: {}".format(alpha))

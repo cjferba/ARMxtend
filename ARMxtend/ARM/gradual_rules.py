@@ -1,28 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-Reglas graduales: dependencias del tipo "cuanto MAS A (y cuanto MENOS B),
-MAS C" sobre atributos numericos, sin discretizar ni fuzzificar. Se basan en:
+Gradual rules: dependencies of the type "the MORE A (and the LESS B), the MORE C" over numeric attributes, without
+discretizing or fuzzifying. They are based on:
 
     Hullermeier, E. (2002). "Association rules for expressing gradual
     dependencies". PKDD 2002, LNCS 2431, 200-211.
 
-Un item gradual es un par (atributo, direccion) con direccion '+' ("cuanto
-mas") o '-' ("cuanto menos"); un itemset gradual es un conjunto de items de
-atributos distintos. Un par de filas (s, t) lo SATISFACE si, al pasar de
-s a t, todos sus atributos varian en la direccion indicada (estrictamente:
-los empates no cuentan). El soporte de un itemset gradual es la proporcion
-de los n(n-1)/2 pares no ordenados de filas que lo satisfacen en alguna
-de las dos orientaciones; la confianza de A -> B es supp(A u B) / supp(A).
+A gradual item is a pair (attribute, direction) with direction '+' ("the more") or '-' ("the less"); a gradual
+itemset is a set of items of distinct attributes. A pair of rows (s, t) SATISFIES it if, going from s to t, all its
+attributes vary in the indicated direction (strictly: ties do not count). The support of a gradual itemset is the
+proportion of the n(n-1)/2 unordered pairs of rows that satisfy it in either of the two orientations; the confidence
+of A -> B is supp(A u B) / supp(A).
 
-Simetria: un itemset y su "espejo" (todas las direcciones invertidas)
-tienen el mismo soporte -- "cuanto mas A, mas B" equivale a "cuanto menos
-A, menos B" --, asi que solo se generan itemsets en forma CANONICA (la
-direccion del primer atributo es '+'); cada regla devuelta tiene una regla
-equivalente "espejo" que no se lista.
+Symmetry: an itemset and its "mirror" (all directions reversed) have the same support -- "the more A, the more B" is
+equivalent to "the less A, the less B" --, so only itemsets in CANONICAL form (the direction of the first attribute is
+'+') are generated; each returned rule has an equivalent "mirror" rule that is not listed.
 
-Coste: se manejan matrices booleanas n x n por atributo, es decir O(n^2 m)
-de memoria. Para datos grandes use `max_rows` para trabajar sobre una
-muestra aleatoria reproducible de filas.
+Cost: n x n boolean matrices are handled per attribute, that is, O(n^2 m) memory. For large data use `max_rows` to
+work on a reproducible random sample of rows.
 
 @author Carlos Fernandez-Basso
 """
@@ -43,12 +38,12 @@ def format_gradual_item(item: Tuple[Hashable, str]) -> str:
 
 
 def format_gradual_itemset(items: Iterable[Tuple[Hashable, str]]) -> str:
-    """Texto de un conjunto de items graduales, p.ej. 'A↑, B↓'."""
+    """Text of a set of gradual items, e.g. 'A↑, B↓'."""
     return ", ".join(sorted(format_gradual_item(item) for item in items))
 
 
 def _canonical(itemset, attribute_order):
-    """Forma canonica (ordenada por atributo, primera direccion '+') de un itemset gradual."""
+    """Canonical form (sorted by attribute, first direction '+') of a gradual itemset."""
     ordered = tuple(sorted(itemset, key=lambda item: attribute_order[item[0]]))
     if ordered and ordered[0][1] == DECREASING:
         ordered = tuple((attribute, _FLIP[direction]) for attribute, direction in ordered)
@@ -56,14 +51,14 @@ def _canonical(itemset, attribute_order):
 
 
 class _PairSupport(object):
-    """Calcula el soporte por pares de itemsets graduales sobre una tabla numerica."""
+    """Compute the pairwise support of gradual itemsets over a numeric table."""
 
     def __init__(self, table, attributes):
         self.attributes = list(attributes)
         self.order = {attribute: position for position, attribute in enumerate(self.attributes)}
         n = len(table)
         self.total_pairs = n * (n - 1) / 2.0
-        # lower[a][s, t] = True si el valor de s en `a` es menor que el de t
+        # lower[a][s, t] = True if the value of s in `a` is lower than that of t
         self._lower = {}
         for attribute in self.attributes:
             values = table[attribute].to_numpy(dtype=float)
@@ -79,8 +74,8 @@ class _PairSupport(object):
         satisfied = matrices[0]
         for matrix in matrices[1:]:
             satisfied = satisfied & matrix
-        # Cada par no ordenado satisface a lo sumo una orientacion del
-        # itemset, luego contar pares ordenados cuenta cada par una vez.
+        # Each unordered pair satisfies at most one orientation of the
+        # itemset, so counting ordered pairs counts each pair once.
         return float(satisfied.sum()) / self.total_pairs
 
 
@@ -88,12 +83,12 @@ def _prepare(data, attributes, max_rows, random_state):
     table = data if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
     attributes = list(attributes) if attributes is not None else list(table.select_dtypes("number").columns)
     if not attributes:
-        raise ValueError("No hay atributos numericos sobre los que buscar reglas graduales")
+        raise ValueError("There are no numeric attributes to search for gradual rules")
     table = table[attributes].dropna()
     if max_rows is not None and len(table) > max_rows:
         table = table.sample(n=max_rows, random_state=random_state)
     if len(table) < 2:
-        raise ValueError("Se necesitan al menos 2 filas para formar pares")
+        raise ValueError("At least 2 rows are needed to form pairs")
     return table.reset_index(drop=True), attributes
 
 
@@ -101,23 +96,21 @@ def gradual_itemsets(data: Any, min_supp: float, attributes: Optional[Sequence[H
                     max_len: Optional[int] = None, max_rows: Optional[int] = None,
                     random_state: int = 0) -> Dict[tuple, float]:
     """
-    Itemsets graduales frecuentes (soporte por pares >= `min_supp`),
-    mediante una busqueda por niveles estilo Apriori (el soporte por pares
-    es antimonotono, como el soporte clasico).
+    Frequent gradual itemsets (pairwise support >= `min_supp`), by a level-wise Apriori-style search (pairwise support
+    is anti-monotone, like classic support).
 
-    Argumentos:
-        data (pandas.DataFrame | array-like 2D): tabla de valores numericos
-        min_supp (float): soporte minimo, en (0, 1]
-        attributes (list, opcional): atributos a considerar (por defecto,
-            todas las columnas numericas)
-        max_len (int, opcional): numero maximo de items por itemset
-        max_rows (int, opcional): si hay mas filas, se usa una muestra
-            aleatoria de este tamano (reproducible con `random_state`)
-        random_state (int): semilla del muestreo
+    Args:
+        data (pandas.DataFrame | array-like 2D): table of numeric values
+        min_supp (float): minimum support, in (0, 1]
+        attributes (list, optional): attributes to consider (all the numeric columns by default)
+        max_len (int, optional): maximum number of items per itemset
+        max_rows (int, optional): if there are more rows, a random sample of this size is used (reproducible with
+            `random_state`)
+        random_state (int): seed of the sampling
 
-    Retorna:
-        dict {itemset canonico: soporte}, con el itemset como tupla de
-        pares (atributo, '+'|'-') ordenada segun `attributes`.
+    Returns:
+        dict {canonical itemset: support}, with the itemset as a tuple of (attribute, '+'|'-') pairs sorted according
+        to `attributes`.
     """
     table, attributes = _prepare(data, attributes, max_rows, random_state)
     counter = _PairSupport(table, attributes)
@@ -160,26 +153,23 @@ def gradual_rules(data: Any, min_supp: float, min_conf: float, attributes: Optio
                   max_len: Optional[int] = None, max_rows: Optional[int] = None,
                   random_state: int = 0) -> pd.DataFrame:
     """
-    Reglas graduales  A -> B  (A y B, conjuntos de items graduales de
-    atributos distintos) con soporte >= `min_supp` y confianza >=
-    `min_conf`, p.ej. "cuanto mas edad y cuanto menos ejercicio, mas
-    colesterol".
+    Gradual rules  A -> B  (A and B, sets of gradual items of distinct attributes) with support >= `min_supp` and
+    confidence >= `min_conf`, e.g. "the more age and the less exercise, the more cholesterol".
 
-    Argumentos: ver `gradual_itemsets`, mas
-        min_conf (float): confianza minima supp(A u B) / supp(A)
+    Args: see `gradual_itemsets`, plus
+        min_conf (float): minimum confidence supp(A u B) / supp(A)
 
-    Retorna:
-        pandas.DataFrame con columnas 'antecedents' y 'consequents'
-        (frozensets de pares (atributo, direccion); use
-        `format_gradual_itemset` para mostrarlos), 'antecedent support',
-        'consequent support', 'support' y 'confidence'.
+    Returns:
+        pandas.DataFrame with columns 'antecedents' and 'consequents' (frozensets of (attribute, direction) pairs; use
+        `format_gradual_itemset` to display them), 'antecedent support', 'consequent support', 'support' and
+        'confidence'.
     """
     table, attributes = _prepare(data, attributes, max_rows, random_state)
     frequent = gradual_itemsets(table, min_supp, attributes=attributes, max_len=max_len)
     order = {attribute: position for position, attribute in enumerate(attributes)}
 
-    # Por antimonotonia, todo subconjunto de un itemset frecuente es frecuente
-    # (y, siendo mas corto, ya esta en `frequent` aunque se use `max_len`).
+    # By anti-monotonicity, every subset of a frequent itemset is frequent
+    # (and, being shorter, it is already in `frequent` even if `max_len` is used).
     def supportOf(itemset):
         return frequent[_canonical(itemset, order)]
 

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Reglas de ALTA UTILIDAD: ``X => Y`` donde el itemset ``X u Y`` es de alta utilidad (``FIM.utility``), es
-decir, reglas sobre lo que mas VALE y no sobre lo que mas se repite. La confianza y las demas medidas son
-las habituales (cuentan transacciones); a ellas se anaden la utilidad del itemset de la regla y su peso
-sobre la utilidad total de la base. En la literatura hay otras definiciones de "confianza de utilidad"
-(p. ej. utilidad de ``X u Y`` entre utilidad de ``X``, Sahoo et al., 2015) que no se usan aqui.
+HIGH-UTILITY rules: ``X => Y`` where the itemset ``X u Y`` is high-utility (``FIM.utility``), that is, rules about what
+is worth the MOST and not about what repeats the most. Confidence and the other measures are the usual ones (they
+count transactions); to them are added the utility of the itemset of the rule and its weight over the total utility
+of the database. In the literature there are other definitions of "utility confidence" (e.g. utility of ``X u Y``
+over utility of ``X``, Sahoo et al., 2015) that are not used here.
 
 @author Carlos Fernandez-Basso
 """
@@ -25,18 +25,18 @@ def high_utility_rules(quantities: Quantities, profits: Optional[Mapping[str, fl
                        max_antecedent: Optional[int] = None, max_consequent: Optional[int] = None,
                        max_len: Optional[int] = None) -> pd.DataFrame:
     """
-    Reglas de alta utilidad (ver el docstring del modulo).
+    High-utility rules (see the module docstring).
 
-    Argumentos:
-        quantities, profits, min_utility, absolute, max_len: ver ``FIM.utility.high_utility_itemsets``
-        min_conf (float): confianza minima (en transacciones), en [0, 1]
-        min_lift (float, opcional): lift minimo
-        max_antecedent, max_consequent (int, opcional): maximo de items de X y de Y
+    Args:
+        quantities, profits, min_utility, absolute, max_len: see ``FIM.utility.high_utility_itemsets``
+        min_conf (float): minimum confidence (in transactions), in [0, 1]
+        min_lift (float, optional): minimum lift
+        max_antecedent, max_consequent (int, optional): maximum number of items of X and of Y
 
-    Retorna:
-        pandas.DataFrame con el formato de ``ARM.association_rules`` mas 'utility' (utilidad total de
-        ``X u Y``) y 'utility_share' (su fraccion de la utilidad total de la base), por utilidad decreciente;
-        ``attrs`` lleva 'n_transactions', 'total_utility' y 'n_candidates'
+    Returns:
+        pandas.DataFrame with the format of ``ARM.association_rules`` plus 'utility' (total utility of ``X u Y``) and
+        'utility_share' (its fraction of the total utility of the database), by decreasing utility; ``attrs`` holds
+        'n_transactions', 'total_utility' and 'n_candidates'
     """
     if not 0 <= min_conf <= 1:
         raise ValueError("min_conf debe estar en [0, 1]")

@@ -1,28 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-Reglas secuenciales DIFUSAS: ``X => Y`` ("si ocurren todos los items de X, despues
-ocurren todos los de Y") sobre secuencias de eventos con grado de pertenencia
-(ver ``FIM.fuzzy_sequential``). Es la version difusa de ``ARM.sequential_rules``,
-con la misma definicion de regla valida: aqui es valida EN UN GRADO.
+FUZZY sequential rules: ``X => Y`` ("if all the items of X occur, then all those of Y occur afterwards") over
+sequences of events with a membership degree (see ``FIM.fuzzy_sequential``). It is the fuzzy version of
+``ARM.sequential_rules``, with the same definition of valid rule: here it is valid TO A DEGREE.
 
-Grado de ``X => Y`` en una secuencia: con ``T`` la t-norma (``min`` o producto),
-``mu_X(k) = T_{x in X} max_{p <= k} d(p, x)`` (en que grado han aparecido todos los
-items de X hasta la posicion k), ``mu_Y(k) = T_{y in Y} max_{p > k} d(p, y)`` (en que
-grado aparecen todos los de Y despues de k), y
+Degree of ``X => Y`` in a sequence: with ``T`` the t-norm (``min`` or product),
+``mu_X(k) = T_{x in X} max_{p <= k} d(p, x)`` (to what degree all the items of X have appeared up to position k),
+``mu_Y(k) = T_{y in Y} max_{p > k} d(p, y)`` (to what degree all those of Y appear after k), and
 
-    grado(X => Y) = max_k T(mu_X(k), mu_Y(k)).
+    degree(X => Y) = max_k T(mu_X(k), mu_Y(k)).
 
-Medidas, con las medias sobre las secuencias:
+Measures, with the means over the sequences:
 
-* soporte(X => Y) = media del grado de la regla;
-* soporte del antecedente (consecuente) = media de ``T_{x in X} max_p d(p, x)``: en que
-  grado aparecen todos los items de X (de Y) en la secuencia, en cualquier orden;
-* confianza = soporte(X => Y) / soporte del antecedente; lift y demas medidas de
-  ``ARM._measures`` con esos tres soportes.
+* support(X => Y) = mean of the degree of the rule;
+* support of the antecedent (consequent) = mean of ``T_{x in X} max_p d(p, x)``: to what degree all the items of X (of
+  Y) appear in the sequence, in any order;
+* confidence = support(X => Y) / support of the antecedent; lift and the other measures of ``ARM._measures`` with those
+  three supports.
 
-Con grados 0/1 todo coincide con ``sequential_rules``. La busqueda parte de los itemsets
-frecuentes de las secuencias vistas como cestas (el grado de un itemset es la t-norma de
-los mejores grados de sus items; es antimonotono), y prueba sus particiones.
+With 0/1 degrees everything coincides with ``sequential_rules``. The search starts from the frequent itemsets of the
+sequences seen as baskets (the degree of an itemset is the t-norm of the best degrees of its items; it is
+anti-monotone), and tries their partitions.
 
 @author Carlos Fernandez-Basso
 """
@@ -39,7 +37,7 @@ _EPS = 1e-9
 
 
 def _reduce(combine: Any, values: np.ndarray) -> np.ndarray:
-    """La t-norma de las columnas (ultimo eje) de `values`."""
+    """The t-norm of the columns (last axis) of `values`."""
     result = values[..., 0]
     for column in range(1, values.shape[-1]):
         result = combine(result, values[..., column])
@@ -47,7 +45,7 @@ def _reduce(combine: Any, values: np.ndarray) -> np.ndarray:
 
 
 def _frequent_itemsets(basket: np.ndarray, combine: Any, min_supp: float, max_size: int) -> Dict[Tuple[int, ...], float]:
-    """Itemsets (tuplas de columnas) cuyo soporte difuso como cestas es >= min_supp, por niveles."""
+    """Itemsets (tuples of columns) whose fuzzy support as baskets is >= min_supp, level by level."""
     frequent: Dict[Tuple[int, ...], float] = {}
     level: List[Tuple[int, ...]] = []
     for column in range(basket.shape[1]):
@@ -75,22 +73,21 @@ def fuzzy_sequential_rules(sequences: Iterable[Iterable[Any]], min_supp: float, 
                            max_antecedent: int = 2, max_consequent: int = 2, metric: str = "confidence",
                            min_threshold: float = 0.0, tnorm: str = "min") -> pd.DataFrame:
     """
-    Minera reglas secuenciales difusas ``X => Y`` (ver el docstring del modulo).
+    Mine fuzzy sequential rules ``X => Y`` (see the module docstring).
 
-    Argumentos:
-        sequences: una secuencia por elemento; cada una, una lista de elementos con
-            sus grados de pertenencia (ver ``FIM.fuzzy_sequential``)
-        min_supp (float): soporte difuso minimo de la regla, en (0, 1]
-        min_conf (float): confianza minima, en [0, 1]
-        max_antecedent, max_consequent (int): maximo de items de X y de Y
-        metric, min_threshold: filtro adicional, como en ``sequential_rules``
-        tnorm (str): 'min' (por defecto) o 'product'
+    Args:
+        sequences: one sequence per element; each, a list of elements with their membership degrees (see
+            ``FIM.fuzzy_sequential``)
+        min_supp (float): minimum fuzzy support of the rule, in (0, 1]
+        min_conf (float): minimum confidence, in [0, 1]
+        max_antecedent, max_consequent (int): maximum number of items of X and of Y
+        metric, min_threshold: additional filter, as in ``sequential_rules``
+        tnorm (str): 'min' (default) or 'product'
 
-    Retorna:
-        pandas.DataFrame con el formato de ``sequential_rules`` (columnas 'antecedents'
-        y 'consequents', 'antecedent support', 'consequent support', 'support',
-        'confidence', 'lift' y las demas medidas), ordenado por confianza y soporte
-        decrecientes. Memoria: proporcional a secuencias x longitud maxima x items
+    Returns:
+        pandas.DataFrame with the format of ``sequential_rules`` (columns 'antecedents' and 'consequents', 'antecedent
+        support', 'consequent support', 'support', 'confidence', 'lift' and the other measures), sorted by decreasing
+        confidence and support. Memory: proportional to sequences x maximum length x items
     """
     combine = _check_tnorm(tnorm)
     database = normalize(sequences)
@@ -99,7 +96,7 @@ def fuzzy_sequential_rules(sequences: Iterable[Iterable[Any]], min_supp: float, 
     if not database:
         return pd.DataFrame(columns=columns)
     if metric not in MEASURES and metric != "support":
-        raise ValueError("metric debe ser 'support' o una de {}, recibida: '{}'".format(sorted(MEASURES), metric))
+        raise ValueError("metric must be 'support' or one of {}, received: '{}'".format(sorted(MEASURES), metric))
     if not 0 < min_supp <= 1:
         raise ValueError("min_supp debe estar en (0, 1]")
     if max_antecedent < 1 or max_consequent < 1:
@@ -107,7 +104,7 @@ def fuzzy_sequential_rules(sequences: Iterable[Iterable[Any]], min_supp: float, 
 
     tensor, vocabulary = degree_tensor(database)
     total = len(database)
-    basket = tensor.max(axis=1)                                    # mejor grado de cada item en cada secuencia
+    basket = tensor.max(axis=1)                                    # best degree of each item in each sequence
     upto = np.maximum.accumulate(tensor, axis=1)                   # mejor grado hasta la posicion k (incluida)
     later = np.maximum.accumulate(tensor[:, ::-1, :], axis=1)[:, ::-1, :]
     after = np.concatenate([later[:, 1:, :], np.zeros_like(later[:, :1, :])], axis=1)      # ... estrictamente despues de k
@@ -155,7 +152,7 @@ def fuzzy_sequential_rules(sequences: Iterable[Iterable[Any]], min_supp: float, 
 
 def fuzzy_rule_degree(sequence: Iterable[Any], antecedent: Iterable[str], consequent: Iterable[str],
                       tnorm: str = "min") -> float:
-    """Grado en que la regla ``antecedent => consequent`` es valida en una secuencia (ver el docstring del modulo)."""
+    """Degree to which the rule ``antecedent => consequent`` is valid in a sequence (see the module docstring)."""
     combine = _check_tnorm(tnorm)
     tensor, vocabulary = degree_tensor(normalize([sequence]))
     column = {item: position for position, item in enumerate(vocabulary)}

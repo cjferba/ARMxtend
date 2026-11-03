@@ -1,43 +1,34 @@
 # -*- coding: utf-8 -*-
 """
-Reglas de excepcion y reglas anomalas: patrones que describen CUANDO falla
-una regla de asociacion fuerte. Ambos tipos aparecen en la seccion 4 de
-Delgado, Ruiz, Sanchez & Serrano (2011, Information Sciences 181) como la
-segunda clase de enfoques para tratar la ausencia de items (frente a la
-negacion directa de items, ver ``ARM.negative_rules``), y se basan en:
+Exception rules and anomalous rules: patterns that describe WHEN a strong association rule fails. Both types appear in
+section 4 of Delgado, Ruiz, Sanchez & Serrano (2011, Information Sciences 181) as the second class of approaches to
+deal with the absence of items (versus the direct negation of items, see ``ARM.negative_rules``), and are based on:
 
     Suzuki, E. (1997). "Autonomous discovery of reliable exception rules".
-    KDD-97 (reglas de excepcion).
+    KDD-97 (exception rules).
 
     Delgado, M., Ruiz, M.D., Sanchez, D. (2011). "New approaches for
     discovering exception and anomalous rules". Int. J. Uncertainty,
-    Fuzziness and Knowledge-Based Systems, 19(2), 361-399 (reglas anomalas).
+    Fuzziness and Knowledge-Based Systems, 19(2), 361-399 (anomalous rules).
 
-Ambos tipos parten de una regla "de sentido comun" fuerte  A -> b  (el
-comportamiento habitual) y buscan que explica sus fallos:
+Both types start from a strong "common sense" rule  A -> b  (the usual behavior) and look for what explains its
+failures:
 
-* Regla de EXCEPCION (Suzuki): un conjunto de items Z tal que  A ^ Z -> ~b
-  es fuerte -- cuando ademas de A se da Z, ocurre lo contrario de lo
-  habitual -- mientras que la regla de REFERENCIA  Z -> ~b  NO es fuerte
-  (Z por si solo no implica ~b, asi que la excepcion se debe a la
-  combinacion A ^ Z y no a Z). Como la excepcion es rara, se exige un
-  soporte minimo bastante menor que el de la regla comun.
+* EXCEPTION rule (Suzuki): a set of items Z such that  A ^ Z -> ~b  is strong -- when besides A, Z occurs, the
+  opposite of the usual happens -- while the REFERENCE rule  Z -> ~b  is NOT strong (Z alone does not imply ~b, so the
+  exception is due to the combination A ^ Z and not to Z). Since the exception is rare, a minimum support much lower
+  than that of the common rule is required.
 
-* Regla ANOMALA: un conjunto de items C tal que  A ^ ~b -> C  es fuerte --
-  entre los casos en que A se cumple pero b no (las "anomalias"), C
-  aparece de forma sistematica, es decir, C caracteriza la anomalia --,
-  mientras que  A -> C  NO es fuerte (C no es ya habitual cuando se da A).
+* ANOMALOUS rule: a set of items C such that  A ^ ~b -> C  is strong -- among the cases in which A holds but b does
+  not (the "anomalies"), C appears systematically, that is, C characterizes the anomaly --, while  A -> C  is NOT
+  strong (C is not already usual when A occurs).
 
-Las definiciones de umbrales y de la regla de referencia de las reglas
-anomalas aqui implementadas son una formulacion directa de las
-condiciones anteriores sobre soporte y confianza; consulte el articulo
-original para las variantes formales mas generales (p.ej. medidas distintas
-de la confianza o reglas "dobles").
+The definitions of thresholds and of the reference rule of the anomalous rules implemented here are a direct
+formulation of the previous conditions on support and confidence; consult the original paper for the more general
+formal variants (e.g. measures other than confidence or "double" rules).
 
-Solo se consideran reglas comunes con UN item en el consecuente: la
-negacion de un consecuente con varios items es una disyuncion
-(~(b1 ^ b2) = ~b1 v ~b2), que Delgado et al. advierten de que puede no
-interesar al usuario.
+Only common rules with ONE item in the consequent are considered: the negation of a consequent with several items is
+a disjunction (~(b1 ^ b2) = ~b1 v ~b2), which Delgado et al. warn may not interest the user.
 
 @author Carlos Fernandez-Basso
 """
@@ -86,7 +77,7 @@ def _single_consequent_common_rules(transactions, rules, min_supp, min_conf):
 
 
 def _condition_candidates(matrix, index, excluded_items, min_count):
-    """Columnas de items (fuera de `excluded_items`) con al menos `min_count` apariciones."""
+    """Item columns (outside `excluded_items`) with at least `min_count` occurrences."""
     excluded = {index[item] for item in excluded_items}
     counts = matrix.sum(axis=0)
     return [column for column in range(matrix.shape[1]) if column not in excluded and counts[column] >= min_count]
@@ -103,29 +94,25 @@ def exception_rules(transactions: Sequence[Iterable[str]], min_supp: float = 0.1
                     max_reference_conf: float = 0.5, max_condition_size: int = 1,
                     rules: Optional[pd.DataFrame] = None) -> pd.DataFrame:
     """
-    Encuentra reglas de excepcion (Suzuki, 1997) de las reglas comunes
-    fuertes  A -> b: condiciones Z tales que  A ^ Z -> ~b  es fuerte y
-    Z -> ~b  no lo es.
+    Find exception rules (Suzuki, 1997) of the strong common rules  A -> b: conditions Z such that  A ^ Z -> ~b  is
+    strong and  Z -> ~b  is not.
 
-    Argumentos:
-        transactions (Sequence[Iterable[str]]): transacciones crisp
-        min_supp (float): soporte minimo de las reglas comunes
-        min_conf (float): confianza minima de las reglas comunes
-        min_exception_supp (float): soporte minimo de  A ^ Z ^ ~b  (suele
-            ser mucho menor que `min_supp`: las excepciones son raras)
-        min_exception_conf (float): confianza minima de  A ^ Z -> ~b
-        max_reference_conf (float): confianza MAXIMA de la regla de
-            referencia  Z -> ~b
-        max_condition_size (int): numero maximo de items de Z
-        rules (pandas.DataFrame, opcional): reglas comunes ya calculadas
-            (salida de `ARM.association_rules`). Si se omite, se minan con
-            `min_supp` y `min_conf`
+    Args:
+        transactions (Sequence[Iterable[str]]): crisp transactions
+        min_supp (float): minimum support of the common rules
+        min_conf (float): minimum confidence of the common rules
+        min_exception_supp (float): minimum support of  A ^ Z ^ ~b  (usually much lower than `min_supp`: exceptions
+            are rare)
+        min_exception_conf (float): minimum confidence of  A ^ Z -> ~b
+        max_reference_conf (float): MAXIMUM confidence of the reference rule  Z -> ~b
+        max_condition_size (int): maximum number of items of Z
+        rules (pandas.DataFrame, optional): already computed common rules (output of `ARM.association_rules`). If
+            omitted, they are mined with `min_supp` and `min_conf`
 
-    Retorna:
-        pandas.DataFrame con columnas 'antecedents' (A), 'consequent' (b),
-        'condition' (Z), 'common_support', 'common_confidence',
-        'exception_support', 'exception_confidence' y
-        'reference_confidence', ordenado por confianza de la excepcion.
+    Returns:
+        pandas.DataFrame with columns 'antecedents' (A), 'consequent' (b), 'condition' (Z), 'common_support',
+        'common_confidence', 'exception_support', 'exception_confidence' and 'reference_confidence', sorted by
+        confidence of the exception.
     """
     transactions = [set(t) for t in transactions]
     total = len(transactions)
@@ -176,24 +163,21 @@ def anomalous_rules(transactions: Sequence[Iterable[str]], min_supp: float = 0.1
                     max_reference_conf: float = 0.5, max_anomaly_size: int = 1,
                     rules: Optional[pd.DataFrame] = None) -> pd.DataFrame:
     """
-    Encuentra reglas anomalas: de las reglas comunes fuertes  A -> b, los
-    conjuntos de items C tales que  A ^ ~b -> C  es fuerte (C caracteriza
-    los casos en que A se cumple pero b no) y  A -> C  no lo es.
+    Find anomalous rules: of the strong common rules  A -> b, the sets of items C such that  A ^ ~b -> C  is strong (C
+    characterizes the cases in which A holds but b does not) and  A -> C  is not.
 
-    Argumentos:
-        transactions (Sequence[Iterable[str]]): transacciones crisp
-        min_supp, min_conf, rules: ver `exception_rules`
-        min_anomalous_supp (float): soporte minimo de  A ^ ~b ^ C
-        min_anomalous_conf (float): confianza minima de  A ^ ~b -> C
-        max_reference_conf (float): confianza MAXIMA de  A -> C
-        max_anomaly_size (int): numero maximo de items de C
+    Args:
+        transactions (Sequence[Iterable[str]]): crisp transactions
+        min_supp, min_conf, rules: see `exception_rules`
+        min_anomalous_supp (float): minimum support of  A ^ ~b ^ C
+        min_anomalous_conf (float): minimum confidence of  A ^ ~b -> C
+        max_reference_conf (float): MAXIMUM confidence of  A -> C
+        max_anomaly_size (int): maximum number of items of C
 
-    Retorna:
-        pandas.DataFrame con columnas 'antecedents' (A), 'consequent' (b),
-        'anomaly' (C), 'common_support', 'common_confidence',
-        'anomalous_cases' (numero de transacciones con A ^ ~b),
-        'anomalous_support', 'anomalous_confidence' y
-        'reference_confidence' (de A -> C), ordenado por confianza.
+    Returns:
+        pandas.DataFrame with columns 'antecedents' (A), 'consequent' (b), 'anomaly' (C), 'common_support',
+        'common_confidence', 'anomalous_cases' (number of transactions with A ^ ~b), 'anomalous_support',
+        'anomalous_confidence' and 'reference_confidence' (of A -> C), sorted by confidence.
     """
     transactions = [set(t) for t in transactions]
     total = len(transactions)

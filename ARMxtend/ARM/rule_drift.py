@@ -1,26 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-Deriva de reglas ("rule drift"): como cambian las reglas de asociacion a lo
-largo del tiempo. Se minan las reglas en ventanas sucesivas de una tabla de
-items ordenada en el tiempo (datos de sensores, logs, un flujo troceado) y se
-sigue cada regla de una ventana a otra para saber cuales son estables, cuales
-emergen, cuales desaparecen y cuales aparecen y desaparecen
-(intermitentes), y como evoluciona el valor de su medida.
+Rule drift: how association rules change over time. The rules are mined in successive windows of a time-ordered table
+of items (sensor data, logs, a chunked stream) and each rule is followed from one window to another to know which are
+stable, which emerge, which vanish and which appear and disappear (intermittent), and how the value of its measure
+evolves.
 
-Es la version "por lotes" de las tendencias que FIMoTS (``SARE``/``SFIM``)
-mantiene de forma incremental sobre un flujo de Spark: aqui el minero es
-cualquier funcion ``miner(ventana) -> reglas``, de modo que valen reglas
-crisp, difusas o temporales (``ARM.temporal_rules``), y se ejecuta en una sola
-maquina.
+It is the "batch" version of the trends that FIMoTS (``SARE``/``SFIM``) maintains incrementally over a Spark stream:
+here the miner is any function ``miner(window) -> rules``, so crisp, fuzzy or temporal rules (``ARM.temporal_rules``)
+all work, and it runs on a single machine.
 
-Estados de una regla (``rule_drift``), con ``W`` ventanas:
+States of a rule (``rule_drift``), with ``W`` windows:
 
-* ``stable``: esta en la primera y en la ultima ventana y en al menos
-  ``stable_fraction`` de todas.
-* ``emerging``: no esta en la primera ventana y si en la ultima.
-* ``vanishing``: esta en la primera ventana y no en la ultima.
-* ``intermittent``: el resto (aparece y desaparece, o esta solo en el medio, o
-  esta en los extremos pero con muchos huecos).
+* ``stable``: it is in the first and in the last window and in at least ``stable_fraction`` of all of them.
+* ``emerging``: it is not in the first window and it is in the last.
+* ``vanishing``: it is in the first window and not in the last.
+* ``intermittent``: the rest (it appears and disappears, or it is only in the middle, or it is at the ends but with
+  many gaps).
 
 @author Carlos Fernandez-Basso
 """
@@ -43,7 +38,7 @@ STATUSES = ("stable", "emerging", "vanishing", "intermittent")
 
 
 def crisp_rule_miner(min_supp: float, metric: str = "confidence", min_threshold: float = 0.8) -> Miner:
-    """Mineros por defecto de `window_rules`: FP-Growth + `ARM.association_rules` sobre items booleanos."""
+    """Default miners of `window_rules`: FP-Growth + `ARM.association_rules` over boolean items."""
     def miner(window: pd.DataFrame) -> pd.DataFrame:
         frequent = fpgrowth(to_transactions(window), min_supp)
         itemsets = pd.DataFrame({"support": list(frequent.values()),
@@ -54,7 +49,7 @@ def crisp_rule_miner(min_supp: float, metric: str = "confidence", min_threshold:
 
 def fuzzy_rule_miner(min_supp: float, num_alpha: int = 10, metric: str = "confidence",
                      min_threshold: float = 0.8) -> Miner:
-    """Minero difuso para `window_rules`: `FFIM.fuzzy_fpgrowth` + `FIM.FARE.fuzzy_association_rules` sobre grados de pertenencia."""
+    """Fuzzy miner for `window_rules`: `FFIM.fuzzy_fpgrowth` + `FIM.FARE.fuzzy_association_rules` over membership degrees."""
     def miner(window: pd.DataFrame) -> pd.DataFrame:
         frequent = fuzzy_fpgrowth(to_fuzzy_transactions(window), min_supp, num_alpha)
         return fuzzy_association_rules(frequent, num_alpha, metric=metric, min_threshold=min_threshold)
@@ -62,7 +57,7 @@ def fuzzy_rule_miner(min_supp: float, num_alpha: int = 10, metric: str = "confid
 
 
 def _windows(index: pd.Index, width: Width, step: Optional[Width]) -> Iterator[Tuple[int, int]]:
-    """Intervalos [inicio, fin) de filas de cada ventana, por numero de filas o por duracion."""
+    """Intervals [start, end) of rows of each window, by number of rows or by duration."""
     rows = len(index)
     if isinstance(width, (int, np.integer)):
         stride = int(width) if step is None else int(cast(int, step))
@@ -73,7 +68,7 @@ def _windows(index: pd.Index, width: Width, step: Optional[Width]) -> Iterator[T
         return
 
     if not isinstance(index, pd.DatetimeIndex):
-        raise ValueError("una ventana por duracion ('7D', '1h', ...) requiere un DatetimeIndex ordenado")
+        raise ValueError("a window by duration ('7D', '1h', ...) requires a sorted DatetimeIndex")
     span = pd.Timedelta(width)
     stride_time = span if step is None else pd.Timedelta(step)
     if span <= pd.Timedelta(0) or stride_time <= pd.Timedelta(0):
@@ -88,31 +83,27 @@ def window_rules(data: pd.DataFrame, width: Width, step: Optional[Width] = None,
                  metric: str = "confidence", min_threshold: float = 0.8, miner: Optional[Miner] = None,
                  min_rows: int = 2) -> pd.DataFrame:
     """
-    Mina las reglas de cada ventana de una tabla de items ordenada en el tiempo.
+    Mine the rules of each window of a time-ordered table of items.
 
-    Argumentos:
-        data (pandas.DataFrame): items booleanos (o grados de pertenencia, con
-            un `miner` difuso), una fila por instante y ordenadas en el tiempo
-        width (int | str | pandas.Timedelta): tamano de la ventana: un numero
-            de filas, o una duracion ('7D', '12h') si el indice es un
-            ``DatetimeIndex``
-        step (int | str | pandas.Timedelta, opcional): desplazamiento entre
-            ventanas, en las mismas unidades que `width`; por defecto igual
-            a `width` (ventanas sin solapamiento)
-        min_supp, metric, min_threshold: parametros del minero por defecto
-            (`crisp_rule_miner`), que se ignoran si se da `miner`
-        miner (Callable, opcional): funcion ``ventana -> DataFrame de reglas``
-            con columnas 'antecedents' y 'consequents'; p.ej.
-            `fuzzy_rule_miner(...)`, o una funcion propia que llame a
+    Args:
+        data (pandas.DataFrame): boolean items (or membership degrees, with a fuzzy `miner`), one row per instant and
+            ordered in time
+        width (int | str | pandas.Timedelta): size of the window: a number of rows, or a duration ('7D', '12h') if the
+            index is a ``DatetimeIndex``
+        step (int | str | pandas.Timedelta, optional): displacement between windows, in the same units as `width`; by
+            default equal to `width` (non-overlapping windows)
+        min_supp, metric, min_threshold: parameters of the default miner (`crisp_rule_miner`), ignored if `miner` is
+            given
+        miner (Callable, optional): function ``window -> DataFrame of rules`` with columns 'antecedents' and
+            'consequents'; e.g. `fuzzy_rule_miner(...)`, or a function of your own that calls
             ``ARM.temporal_rules``
-        min_rows (int): las ventanas con menos filas (p.ej. la ultima, si
-            quedo incompleta) se omiten y no se numeran
+        min_rows (int): windows with fewer rows (e.g. the last one, if it was left incomplete) are omitted and not
+            numbered
 
-    Retorna:
-        pandas.DataFrame con las reglas de todas las ventanas, mas las
-        columnas 'window' (0, 1, ...), 'start' y 'end' (primer y ultimo
-        indice de la ventana) y 'n_rows'. El numero de ventanas, incluidas las
-        que no tienen ninguna regla, queda en ``result.attrs["n_windows"]``.
+    Returns:
+        pandas.DataFrame with the rules of all the windows, plus the columns 'window' (0, 1, ...), 'start' and 'end'
+        (first and last index of the window) and 'n_rows'. The number of windows, including those with no rules, is
+        in ``result.attrs["n_windows"]``.
     """
     mine = miner if miner is not None else crisp_rule_miner(min_supp, metric, min_threshold)
     frames: List[pd.DataFrame] = []
@@ -153,27 +144,25 @@ def _status(present: np.ndarray, stable_fraction: float) -> str:
 def rule_drift(windowed_rules: pd.DataFrame, measure: str = "confidence", stable_fraction: float = 0.8,
                n_windows: Optional[int] = None) -> pd.DataFrame:
     """
-    Resume la evolucion de cada regla a lo largo de las ventanas de `window_rules`.
+    Summarize the evolution of each rule across the windows of `window_rules`.
 
-    Argumentos:
-        windowed_rules (pandas.DataFrame): resultado de `window_rules`
-        measure (str): columna cuya evolucion se sigue ('confidence', 'support', 'lift', ...)
-        stable_fraction (float): fraccion minima de ventanas en que debe
-            estar una regla presente en la primera y la ultima para ser 'stable'
-        n_windows (int, opcional): numero total de ventanas; por defecto el
-            de ``windowed_rules.attrs`` o, si se perdio, el mayor indice mas uno
+    Args:
+        windowed_rules (pandas.DataFrame): result of `window_rules`
+        measure (str): column whose evolution is followed ('confidence', 'support', 'lift', ...)
+        stable_fraction (float): minimum fraction of windows in which a rule must be present, being in the first and
+            the last, to be 'stable'
+        n_windows (int, optional): total number of windows; by default that of ``windowed_rules.attrs`` or, if lost,
+            the largest index plus one
 
-    Retorna:
-        pandas.DataFrame con una fila por regla: 'antecedents', 'consequents',
-        'windows' (en cuantas esta presente), 'persistence' (esa fraccion del
-        total), 'first_window', 'last_window', 'mean_<measure>',
-        'min_<measure>', 'max_<measure>', 'slope' (pendiente de la medida por
-        ventana, NaN si la regla esta en menos de 3 ventanas) y 'status'
-        ('stable', 'emerging', 'vanishing' o 'intermittent', ver el
-        docstring del modulo). Ordenada por estado y persistencia.
+    Returns:
+        pandas.DataFrame with one row per rule: 'antecedents', 'consequents', 'windows' (in how many it is present),
+        'persistence' (that fraction of the total), 'first_window', 'last_window', 'mean_<measure>', 'min_<measure>',
+        'max_<measure>', 'slope' (slope of the measure per window, NaN if the rule is in fewer than 3 windows) and
+        'status' ('stable', 'emerging', 'vanishing' or 'intermittent', see the module docstring). Sorted by status
+        and persistence.
     """
     if measure not in windowed_rules.columns:
-        raise ValueError("measure '{}' no es una columna de las reglas: {}".format(
+        raise ValueError("measure '{}' is not a column of the rules: {}".format(
             measure, sorted(windowed_rules.columns)))
     total = n_windows or windowed_rules.attrs.get("n_windows") or int(windowed_rules["window"].max()) + 1
     table = windowed_rules.assign(_key=_key(windowed_rules))
@@ -204,26 +193,23 @@ def rule_drift(windowed_rules: pd.DataFrame, measure: str = "confidence", stable
 def compare_rule_sets(before: pd.DataFrame, after: pd.DataFrame, measure: str = "confidence",
                       tolerance: float = 0.05) -> pd.DataFrame:
     """
-    Compara dos conjuntos de reglas (p.ej. de dos periodos o de dos datasets).
+    Compare two sets of rules (e.g. from two periods or two datasets).
 
-    Argumentos:
-        before, after (pandas.DataFrame): reglas con columnas 'antecedents',
-            'consequents' y `measure`
-        measure (str): medida a comparar
-        tolerance (float): una regla presente en ambos conjuntos es 'changed'
-            si su medida cambia, en valor absoluto, mas que esto, y 'stable' si no
+    Args:
+        before, after (pandas.DataFrame): rules with columns 'antecedents', 'consequents' and `measure`
+        measure (str): measure to compare
+        tolerance (float): a rule present in both sets is 'changed' if its measure changes, in absolute value, by more
+            than this, and 'stable' if not
 
-    Retorna:
-        pandas.DataFrame con una fila por regla de cualquiera de los dos
-        conjuntos: 'antecedents', 'consequents', '<measure>_before',
-        '<measure>_after', 'delta' (despues menos antes) y 'status' ('new',
-        'lost', 'changed' o 'stable'), ordenada: primero las 'changed' (mayor
-        cambio antes), luego 'new', 'lost' y 'stable'.
+    Returns:
+        pandas.DataFrame with one row per rule of either set: 'antecedents', 'consequents', '<measure>_before',
+        '<measure>_after', 'delta' (after minus before) and 'status' ('new', 'lost', 'changed' or 'stable'), sorted:
+        first the 'changed' (largest change first), then 'new', 'lost' and 'stable'.
     """
     for name, rules in (("before", before), ("after", after)):
         missing = [column for column in ("antecedents", "consequents", measure) if column not in rules.columns]
         if missing:
-            raise ValueError("`{}` no tiene las columnas {}".format(name, missing))
+            raise ValueError("`{}` does not have the columns {}".format(name, missing))
     old = pd.Series(before[measure].to_numpy(dtype=float), index=_key(before).to_numpy())
     new = pd.Series(after[measure].to_numpy(dtype=float), index=_key(after).to_numpy())
     sides: Dict[str, Tuple[Any, Any]] = {}

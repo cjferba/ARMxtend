@@ -1,37 +1,30 @@
 # -*- coding: utf-8 -*-
 """
-Meta-reglas de asociacion (crisp y difusas): mineria de asociaciones sobre
-un conjunto de reglas de asociacion YA extraidas de multiples datasets
-D_1, ..., D_k, en lugar de sobre los datos originales. Implementa los
-Algoritmos 3 (crisp) y 4 (difuso) de:
+Association meta-rules (crisp and fuzzy): association mining over a set of association rules ALREADY extracted from
+multiple datasets D_1, ..., D_k, instead of over the original data. It implements Algorithms 3 (crisp) and 4 (fuzzy)
+of:
 
     Ruiz, M.D., Gomez-Romero, J., Molina-Solana, M., Campana, J.R.,
     Martin-Bautista, M.J. (2016). "Meta-association rules for mining
     interesting associations in multiple datasets". Applied Soft Computing,
     49, 212-223.
 
-Idea general (Definicion 3 del articulo): dados k conjuntos de reglas
-R_1, ..., R_k extraidos de k datasets D_1, ..., D_k (mismo dominio, quiza
-distinta estructura), se construye una "meta-base de datos" D en la que cada
-FILA es un dataset D_j y cada COLUMNA (item) es una regla r_i (mas,
-opcionalmente, atributos adicionales sobre el dataset). Sobre esa
-meta-base de datos se aplica de nuevo un algoritmo de mineria de reglas de
-asociacion, obteniendo asi meta-reglas como r1 ^ r2 -> r3 (co-ocurrencia de
-reglas en una alta proporcion de datasets) o r1 -> at2 (relacion entre una
-regla y un atributo del dataset).
+General idea (Definition 3 of the paper): given k sets of rules R_1, ..., R_k extracted from k datasets
+D_1, ..., D_k (same domain, perhaps different structure), a "meta-database" D is built in which each ROW is a dataset
+D_j and each COLUMN (item) is a rule r_i (plus, optionally, additional attributes about the dataset). An association
+rule mining algorithm is applied again over that meta-database, obtaining meta-rules such as r1 ^ r2 -> r3
+(co-occurrence of rules in a high proportion of datasets) or r1 -> at2 (relation between a rule and an attribute of
+the dataset).
 
-Se distinguen dos variantes:
-    * Meta-reglas CRISP (Algoritmo 3): la meta-base de datos es booleana,
-      1 si la regla r_i fue extraida en el dataset D_j, 0 si no. Solo tiene
-      en cuenta la presencia/ausencia de la regla, no su fuerza.
-    * Meta-reglas DIFUSAS (Algoritmo 4): la meta-base de datos usa como
-      grado de pertenencia el valor de una medida de la regla (soporte o
-      factor de certeza) en cada dataset, permitiendo distinguir reglas
-      "primarias" muy fiables de otras marginales.
+Two variants are distinguished:
+    * CRISP meta-rules (Algorithm 3): the meta-database is boolean, 1 if rule r_i was extracted in dataset D_j, 0 if
+      not. It only takes into account the presence/absence of the rule, not its strength.
+    * FUZZY meta-rules (Algorithm 4): the meta-database uses as membership degree the value of a measure of the rule
+      (support or certainty factor) in each dataset, making it possible to tell very reliable "primary" rules from
+      marginal ones.
 
-NOTA IMPORTANTE: los identificadores de regla e items no deben contener el
-caracter '-' (usado como separador de items en las claves de itemset de
-`FIM._shared`); use `rule_key()` para construir identificadores seguros.
+IMPORTANT NOTE: rule and item identifiers must not contain the character '-' (used as item separator in the itemset
+keys of `FIM._shared`); use `rule_key()` to build safe identifiers.
 
 @author Carlos Fernandez-Basso
 """
@@ -46,9 +39,8 @@ from .association_rules import association_rules
 
 def rule_key(antecedent: Iterable[str], consequent: Iterable[str]) -> str:
     """
-    Construye un identificador de regla seguro (sin '-') para usarlo como
-    item en una meta-base de datos, p.ej. rule_key(['A','B'], ['C']) ->
-    'A,B=>C'.
+    Build a safe rule identifier (without '-') to use as an item in a meta-database, e.g.
+    rule_key(['A','B'], ['C']) -> 'A,B=>C'.
     """
     return "{}=>{}".format(",".join(sorted(antecedent)), ",".join(sorted(consequent)))
 
@@ -56,23 +48,19 @@ def rule_key(antecedent: Iterable[str], consequent: Iterable[str]) -> str:
 def mine_primary_rule_measures(datasets: Sequence[Sequence[Iterable[str]]], min_supp: float = 0.1,
                                 min_conf: float = 0.5, metric: str = "confidence") -> List[Dict[str, float]]:
     """
-    Mina, para cada dataset de `datasets`, sus reglas de asociacion crisp
-    (pasos 1-3 de los Algoritmos 3 y 4: "for all Di, obtain Ri using
-    Algorithm 1"), usando `FFIM.fpgrowth` + `ARM.association_rules`.
+    Mine, for each dataset of `datasets`, its crisp association rules (steps 1-3 of Algorithms 3 and 4: "for all Di,
+    obtain Ri using Algorithm 1"), using `FFIM.fpgrowth` + `ARM.association_rules`.
 
-    Argumentos:
-        datasets (Sequence[Sequence[Iterable[str]]]): un dataset D_j por
-            elemento, cada uno una lista de transacciones (colecciones de
-            items)
-        min_supp (float): soporte minimo para la mineria de itemsets
-            frecuentes en cada dataset
-        min_conf (float): umbral minimo de `metric` para conservar una regla
-        metric (str): medida de `ARM.association_rules` usada como umbral y
-            como valor asociado a la regla en la meta-base de datos difusa
+    Args:
+        datasets (Sequence[Sequence[Iterable[str]]]): one dataset D_j per element, each a list of transactions
+            (collections of items)
+        min_supp (float): minimum support for frequent-itemset mining in each dataset
+        min_conf (float): minimum threshold of `metric` to keep a rule
+        metric (str): measure of `ARM.association_rules` used as threshold and as the value associated with the rule
+            in the fuzzy meta-database
 
-    Retorna:
-        list[dict[str, float]]: para cada dataset, un diccionario
-        {rule_key(antecedente, consecuente): valor de `metric`}
+    Returns:
+        list[dict[str, float]]: for each dataset, a dictionary {rule_key(antecedent, consequent): value of `metric`}
     """
     ruleMeasuresPerDataset = []
     for transactions in datasets:
@@ -95,20 +83,17 @@ def mine_primary_rule_measures(datasets: Sequence[Sequence[Iterable[str]]], min_
 def build_crisp_meta_database(rule_sets: Sequence[Iterable[str]],
                               attributes: Optional[Sequence[Dict[str, int]]] = None) -> pd.DataFrame:
     """
-    Construye la meta-base de datos booleana D (Tabla 7 del articulo).
+    Build the boolean meta-database D (Table 7 of the paper).
 
-    Argumentos:
-        rule_sets (Sequence[Set[str]] | Sequence[dict[str, float]]): para
-            cada dataset D_j, el conjunto de claves de las reglas
-            encontradas en R_j (o un dict, del que solo se usan las claves,
-            p.ej. la salida de `mine_primary_rule_measures`)
-        attributes (Sequence[dict[str, int]], opcional): para cada dataset,
-            atributos booleanos adicionales {nombre_atributo: 0/1} (ver
-            Definicion 3)
+    Args:
+        rule_sets (Sequence[Set[str]] | Sequence[dict[str, float]]): for each dataset D_j, the set of keys of the
+            rules found in R_j (or a dict, of which only the keys are used, e.g. the output of
+            `mine_primary_rule_measures`)
+        attributes (Sequence[dict[str, int]], optional): for each dataset, additional boolean attributes
+            {attribute_name: 0/1} (see Definition 3)
 
-    Retorna:
-        pandas.DataFrame con una fila por dataset y una columna booleana
-        (0/1) por cada regla y atributo distintos encontrados
+    Returns:
+        pandas.DataFrame with one row per dataset and one boolean (0/1) column per distinct rule and attribute found
     """
     ruleKeys = sorted(set().union(*(set(rs) for rs in rule_sets))) if rule_sets else []
 
@@ -126,23 +111,19 @@ def crisp_meta_association_rules(rule_sets: Sequence[Iterable[str]],
                                  attributes: Optional[Sequence[Dict[str, int]]] = None, min_supp: float = 0.5,
                                  min_conf: float = 0.5, metric: str = "confidence") -> pd.DataFrame:
     """
-    Algoritmo 3: mineria de meta-reglas de asociacion crisp.
+    Algorithm 3: mining of crisp association meta-rules.
 
-    Argumentos:
-        rule_sets (Sequence[Set[str]] | Sequence[dict[str, float]]): ver
-            `build_crisp_meta_database`
-        attributes (Sequence[dict[str, int]], opcional): ver
-            `build_crisp_meta_database`
-        min_supp (float): soporte minimo para que una meta-regla se
-            considere frecuente (proporcion de datasets en los que
-            co-ocurren sus reglas/atributos)
-        min_conf (float): umbral minimo de `metric` para una meta-regla
-        metric (str): medida de `ARM.association_rules` para filtrar
+    Args:
+        rule_sets (Sequence[Set[str]] | Sequence[dict[str, float]]): see `build_crisp_meta_database`
+        attributes (Sequence[dict[str, int]], optional): see `build_crisp_meta_database`
+        min_supp (float): minimum support for a meta-rule to be considered frequent (proportion of datasets in which
+            its rules/attributes co-occur)
+        min_conf (float): minimum threshold of `metric` for a meta-rule
+        metric (str): measure of `ARM.association_rules` to filter by
 
-    Retorna:
-        pandas.DataFrame de meta-reglas (mismo formato que
-        `ARM.association_rules`): sus 'antecedents'/'consequents' son
-        frozensets de claves de regla y/o nombres de atributo.
+    Returns:
+        pandas.DataFrame of meta-rules (same format as `ARM.association_rules`): their 'antecedents'/'consequents' are
+        frozensets of rule keys and/or attribute names.
     """
     metaDatabase = build_crisp_meta_database(rule_sets, attributes)
     transactions = [
@@ -162,24 +143,21 @@ def build_fuzzy_meta_database(rule_measure_sets: Sequence[Dict[str, float]],
                               attributes: Optional[Sequence[Dict[str, float]]] = None,
                               normalize: bool = False) -> pd.DataFrame:
     """
-    Construye la meta-base de datos difusa D~ (Tabla 8 del articulo): el
-    grado de pertenencia de la regla r_i en el dataset D_j es el valor de la
-    medida (soporte o factor de certeza) obtenida al minarla en D_j (0 si no
-    fue extraida).
+    Build the fuzzy meta-database D~ (Table 8 of the paper): the membership degree of rule r_i in dataset D_j is the
+    value of the measure (support or certainty factor) obtained when mining it in D_j (0 if it was not extracted).
 
-    Argumentos:
-        rule_measure_sets (Sequence[dict[str, float]]): para cada dataset
-            D_j, {rule_key: valor en [0, 1]} (ver `mine_primary_rule_measures`)
-        attributes (Sequence[dict[str, float]], opcional): para cada
-            dataset, grados de pertenencia difusos de atributos adicionales
-        normalize (bool): si True, normaliza cada columna de regla al rango
-            [0, 1] dividiendo por su maximo entre datasets (la variante
-            D~_NS del articulo, Seccion 5.2.2, util cuando el soporte de las
-            reglas primarias es muy bajo en todos los datasets)
+    Args:
+        rule_measure_sets (Sequence[dict[str, float]]): for each dataset D_j, {rule_key: value in [0, 1]} (see
+            `mine_primary_rule_measures`)
+        attributes (Sequence[dict[str, float]], optional): for each dataset, fuzzy membership degrees of additional
+            attributes
+        normalize (bool): if True, normalize each rule column to the range [0, 1] by dividing by its maximum across
+            datasets (the D~_NS variant of the paper, Section 5.2.2, useful when the support of the primary rules is
+            very low in all the datasets)
 
-    Retorna:
-        pandas.DataFrame con una fila por dataset y una columna (grado de
-        pertenencia en [0, 1]) por cada regla y atributo distintos
+    Returns:
+        pandas.DataFrame with one row per dataset and one column (membership degree in [0, 1]) per distinct rule and
+        attribute
     """
     ruleKeys = sorted(set().union(*(set(rm) for rm in rule_measure_sets))) if rule_measure_sets else []
 
@@ -206,26 +184,21 @@ def fuzzy_meta_association_rules(rule_measure_sets: Sequence[Dict[str, float]],
                                  min_supp: float = 0.1, min_conf: float = 0.5, metric: str = "confidence",
                                  normalize: bool = False) -> pd.DataFrame:
     """
-    Algoritmo 4: mineria de meta-reglas de asociacion difusas.
+    Algorithm 4: mining of fuzzy association meta-rules.
 
-    Argumentos:
-        rule_measure_sets (Sequence[dict[str, float]]): ver
-            `build_fuzzy_meta_database` (p.ej. la salida de
+    Args:
+        rule_measure_sets (Sequence[dict[str, float]]): see `build_fuzzy_meta_database` (e.g. the output of
             `mine_primary_rule_measures`)
-        attributes (Sequence[dict[str, float]], opcional): ver
-            `build_fuzzy_meta_database`
-        num_alpha (int): numero de alpha-cortes para la mineria difusa (el
-            articulo de Fernandez-Basso et al. 2021 recomienda 10)
-        min_supp (float): FSupp minimo para que una meta-regla se considere
-            frecuente
-        min_conf (float): umbral minimo de `metric` ('confidence' -> FConf,
-            'certainty_factor' -> FCF) para una meta-regla
-        metric (str): 'support', 'confidence' o 'certainty_factor'
-        normalize (bool): ver `build_fuzzy_meta_database`
+        attributes (Sequence[dict[str, float]], optional): see `build_fuzzy_meta_database`
+        num_alpha (int): number of alpha-cuts for fuzzy mining (the paper of Fernandez-Basso et al. 2021 recommends 10)
+        min_supp (float): minimum FSupp for a meta-rule to be considered frequent
+        min_conf (float): minimum threshold of `metric` ('confidence' -> FConf, 'certainty_factor' -> FCF) for a
+            meta-rule
+        metric (str): 'support', 'confidence' or 'certainty_factor'
+        normalize (bool): see `build_fuzzy_meta_database`
 
-    Retorna:
-        pandas.DataFrame de meta-reglas difusas (mismo formato que
-        `FIM.FARE.fuzzy_association_rules`)
+    Returns:
+        pandas.DataFrame of fuzzy meta-rules (same format as `FIM.FARE.fuzzy_association_rules`)
     """
     metaDatabase = build_fuzzy_meta_database(rule_measure_sets, attributes, normalize)
     fuzzyTransactions = [

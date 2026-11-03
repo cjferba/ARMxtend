@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Reglas RARAS: ``X => Y`` con soporte bajo pero confianza alta, a partir de los itemsets raros minimales
-(``FIM.rare``). Como todo subconjunto propio de un MRI es frecuente, el antecedente ``X`` y el consecuente
-``Y`` de cualquier particion lo son: la regla es rara solo por la combinacion, y su confianza y su lift
-(a menudo muy altos) dicen si esa combinacion es mas que casualidad.
+RARE rules: ``X => Y`` with low support but high confidence, from the minimal rare itemsets (``FIM.rare``). Since every
+proper subset of an MRI is frequent, the antecedent ``X`` and the consequent ``Y`` of any partition are: the rule is
+rare only because of the combination, and its confidence and lift (often very high) tell whether that combination is
+more than chance.
 
 @author Carlos Fernandez-Basso
 """
@@ -23,20 +23,20 @@ def rare_rules(transactions: Iterable[Iterable[Any]], max_supp: float, min_supp:
                min_conf: float = 0.6, min_lift: Optional[float] = None, max_antecedent: Optional[int] = None,
                max_consequent: Optional[int] = None, max_len: Optional[int] = None) -> pd.DataFrame:
     """
-    Reglas raras (ver el docstring del modulo).
+    Rare rules (see the module docstring).
 
-    Argumentos:
-        transactions: una transaccion por elemento, cada una una coleccion de items
-        max_supp (float): soporte por debajo del cual un itemset es raro (y por encima, frecuente), en (0, 1]
-        min_supp (float): soporte relativo minimo de la regla, en [0, max_supp)
-        min_count (int): transacciones minimas de la regla (por defecto 2: lo que ocurre una vez no es un patron)
-        min_conf (float): confianza minima, en [0, 1]
-        min_lift (float, opcional): lift minimo
-        max_antecedent, max_consequent, max_len (int, opcional): tamanos maximos
+    Args:
+        transactions: one transaction per element, each a collection of items
+        max_supp (float): support below which an itemset is rare (and above which, frequent), in (0, 1]
+        min_supp (float): minimum relative support of the rule, in [0, max_supp)
+        min_count (int): minimum transactions of the rule (2 by default: what happens once is not a pattern)
+        min_conf (float): minimum confidence, in [0, 1]
+        min_lift (float, optional): minimum lift
+        max_antecedent, max_consequent, max_len (int, optional): maximum sizes
 
-    Retorna:
-        pandas.DataFrame con el formato de ``ARM.association_rules``, por confianza y soporte decrecientes;
-        ``attrs`` lleva 'n_transactions' y 'n_candidates' (particiones examinadas)
+    Returns:
+        pandas.DataFrame with the format of ``ARM.association_rules``, by decreasing confidence and support; ``attrs``
+        holds 'n_transactions' and 'n_candidates' (partitions examined)
     """
     if not 0 <= min_conf <= 1:
         raise ValueError("min_conf debe estar en [0, 1]")

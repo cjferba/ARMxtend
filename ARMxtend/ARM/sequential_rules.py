@@ -1,38 +1,30 @@
 # -*- coding: utf-8 -*-
 """
-Reglas SECUENCIALES: ``X => Y`` significa "si en una secuencia ocurren todos
-los items de X, despues ocurren todos los de Y". A diferencia de una regla de
-asociacion, el orden importa (X antes que Y); a diferencia de un patron
-secuencial, dentro de X y dentro de Y el orden no importa, y se mide cuan
-FIABLE es la prediccion, con soporte y confianza.
+SEQUENTIAL rules: ``X => Y`` means "if in a sequence all the items of X occur, then all those of Y occur afterwards".
+Unlike an association rule, order matters (X before Y); unlike a sequential pattern, inside X and inside Y order does
+not matter, and how RELIABLE the prediction is, is measured with support and confidence.
 
-Se sigue la definicion de las reglas secuenciales de:
+The definition of sequential rules of the following is followed:
 
     Fournier-Viger, P., Wu, C.-W., Tseng, V.S., Cao, L., Nkambou, R. (2015).
     "Mining partially-ordered sequential rules common to multiple sequences".
     IEEE Transactions on Knowledge and Data Engineering, 27(8), 2203-2216.
 
-(y su algoritmo RuleGrowth, del mismo grupo, 2011). Una secuencia es una lista
-de elementos ordenados en el tiempo (conjuntos de items simultaneos; ver
-``FIM.sequential``). La regla ``X => Y``, con X e Y disjuntos, es VALIDA en una
-secuencia si existe un instante ``k`` tal que todos los items de X han
-aparecido en los elementos hasta ``k`` y todos los de Y aparecen en elementos
-posteriores a ``k``. Medidas:
+(and its RuleGrowth algorithm, from the same group, 2011). A sequence is a list of time-ordered elements (sets of
+simultaneous items; see ``FIM.sequential``). The rule ``X => Y``, with X and Y disjoint, is VALID in a sequence if
+there is an instant ``k`` such that all the items of X have appeared in the elements up to ``k`` and all those of Y
+appear in elements after ``k``. Measures:
 
-* soporte(X => Y)  = fraccion de secuencias en que la regla es valida;
-* confianza(X => Y) = secuencias en que es valida / secuencias que contienen
-  todos los items de X (en cualquier orden);
-* lift = confianza / fraccion de secuencias que contienen todos los items de Y.
+* support(X => Y)    = fraction of sequences in which the rule is valid;
+* confidence(X => Y) = sequences in which it is valid / sequences that contain all the items of X (in any order);
+* lift = confidence / fraction of sequences that contain all the items of Y.
 
-La busqueda se apoya en que, para que la regla sea valida, X, Y y X u Y deben
-estar en las secuencias, de modo que se parte de los itemsets frecuentes de las
-secuencias vistas como cestas (FP-Growth) y se prueban sus particiones, igual
-que en la generacion de reglas de asociacion. No es el algoritmo RuleGrowth
-(que busca de forma incremental sin enumerar todos los itemsets), pero usa la
-misma definicion de regla valida, soporte y confianza.
+The search relies on the fact that, for the rule to be valid, X, Y and X u Y must be in the sequences, so it starts
+from the frequent itemsets of the sequences seen as baskets (FP-Growth) and tries their partitions, as in the
+generation of association rules. It is not the RuleGrowth algorithm (which searches incrementally without enumerating
+all the itemsets), but it uses the same definition of valid rule, support and confidence.
 
-NOTA: los nombres de item no deben contener '-', que es el separador de
-items en las claves de itemset de ``FIM._shared``.
+NOTE: item names must not contain '-', which is the item separator in the itemset keys of ``FIM._shared``.
 
 @author Carlos Fernandez-Basso
 """
@@ -55,27 +47,24 @@ def sequential_rules(sequences: Iterable[Iterable[Union[str, Iterable[str]]]], m
                      min_conf: float = 0.8, max_antecedent: int = 2, max_consequent: int = 2,
                      metric: str = "confidence", min_threshold: float = 0.0) -> pd.DataFrame:
     """
-    Minera reglas secuenciales ``X => Y`` ("si X, despues Y").
+    Mine sequential rules ``X => Y`` ("if X, then Y").
 
-    Argumentos:
-        sequences: una secuencia por elemento; cada una es una lista de
-            elementos (conjuntos de items simultaneos, o un item suelto).
-            Ver ``FIM.sequential``
-        min_supp (float): soporte minimo relativo de la regla, en (0, 1]
-        min_conf (float): confianza minima, en [0, 1]
-        max_antecedent (int): maximo de items de X
-        max_consequent (int): maximo de items de Y
-        metric (str): medida adicional para filtrar, ademas de `min_conf`:
-            cualquiera de ``ARM._measures.MEASURES`` ('lift', 'leverage', ...)
-        min_threshold (float): umbral minimo de `metric` (0 = no filtra)
+    Args:
+        sequences: one sequence per element; each is a list of elements (sets of simultaneous items, or a single
+            item). See ``FIM.sequential``
+        min_supp (float): minimum relative support of the rule, in (0, 1]
+        min_conf (float): minimum confidence, in [0, 1]
+        max_antecedent (int): maximum number of items of X
+        max_consequent (int): maximum number of items of Y
+        metric (str): additional measure to filter by, besides `min_conf`: any of ``ARM._measures.MEASURES``
+            ('lift', 'leverage', ...)
+        min_threshold (float): minimum threshold of `metric` (0 = no filtering)
 
-    Retorna:
-        pandas.DataFrame con las columnas 'antecedents' y 'consequents'
-        (``frozenset``), 'antecedent support' y 'consequent support'
-        (fraccion de secuencias que contienen todos sus items, en cualquier
-        orden), 'support', 'confidence' y 'lift', y las demas medidas de
-        ``ARM._measures`` calculadas con esos tres soportes, ordenado por
-        confianza y soporte decrecientes.
+    Returns:
+        pandas.DataFrame with the columns 'antecedents' and 'consequents' (``frozenset``), 'antecedent support' and
+        'consequent support' (fraction of sequences that contain all their items, in any order), 'support',
+        'confidence' and 'lift', and the other measures of ``ARM._measures`` computed with those three supports,
+        sorted by decreasing confidence and support.
     """
     database = _normalize(sequences)
     total = len(database)
@@ -84,17 +73,17 @@ def sequential_rules(sequences: Iterable[Iterable[Union[str, Iterable[str]]]], m
     if total == 0:
         return pd.DataFrame(columns=columns)
     if metric not in MEASURES and metric != "support":
-        raise ValueError("metric debe ser 'support' o una de {}, recibida: '{}'".format(sorted(MEASURES), metric))
+        raise ValueError("metric must be 'support' or one of {}, received: '{}'".format(sorted(MEASURES), metric))
     if max_antecedent < 1 or max_consequent < 1:
         raise ValueError("max_antecedent y max_consequent deben ser >= 1")
     vocabulary = sorted({item for sequence in database for element in sequence for item in element})
     check_item_names(vocabulary)
 
-    # Soportes de itemsets en las secuencias vistas como cestas (el orden no cuenta)
+    # Supports of itemsets in the sequences seen as baskets (order does not count)
     baskets = [set().union(*sequence) if sequence else set() for sequence in database]
     frequent = fpgrowth(baskets, min_supp)
 
-    # Primera y ultima aparicion de cada item en cada secuencia
+    # First and last appearance of each item in each sequence
     column = {item: index for index, item in enumerate(vocabulary)}
     first = np.full((total, len(vocabulary)), _ABSENT_FIRST, dtype=np.int64)
     last = np.full((total, len(vocabulary)), -1, dtype=np.int64)
@@ -110,13 +99,13 @@ def sequential_rules(sequences: Iterable[Iterable[Union[str, Iterable[str]]]], m
     expiresAt: Dict[frozenset, np.ndarray] = {}
 
     def completed(items: frozenset) -> np.ndarray:
-        """Instante en que X ya ha aparecido entero: el maximo de las primeras apariciones de sus items."""
+        """Instant at which X has already appeared in full: the maximum of the first appearances of its items."""
         if items not in completedAt:
             completedAt[items] = first[:, [column[item] for item in items]].max(axis=1)
         return completedAt[items]
 
     def expiring(items: frozenset) -> np.ndarray:
-        """Ultimo instante en que Y aun puede aparecer entero: el minimo de las ultimas apariciones de sus items."""
+        """Last instant at which Y can still appear in full: the minimum of the last appearances of its items."""
         if items not in expiresAt:
             expiresAt[items] = last[:, [column[item] for item in items]].min(axis=1)
         return expiresAt[items]
@@ -158,7 +147,7 @@ def _key(items: frozenset) -> str:
 
 
 def contains_rule(sequence: Iterable[Iterable[str]], antecedent: Iterable[str], consequent: Iterable[str]) -> bool:
-    """True si la regla ``antecedent => consequent`` es valida en `sequence` (ver el docstring del modulo)."""
+    """True if the rule ``antecedent => consequent`` is valid in `sequence` (see the module docstring)."""
     elements = [frozenset(e) for e in sequence]
     firstSeen: Dict[str, int] = {}
     lastSeen: Dict[str, int] = {}
