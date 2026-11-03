@@ -370,7 +370,7 @@ def _run_fuzzy_sequences(args: argparse.Namespace) -> pd.DataFrame:
     from .FIM.fuzzy_sequential import fuzzy_prefixspan
 
     return fuzzy_prefixspan(_read_fuzzy_sequences(args), args.min_supp, max_len=args.max_len, min_len=args.min_len,
-                            tnorm=args.tnorm)
+                            tnorm=args.tnorm, itemset_elements=args.itemset_elements)
 
 
 def _run_fuzzy_sequential_rules(args: argparse.Namespace) -> pd.DataFrame:
@@ -840,6 +840,8 @@ def build_parser() -> argparse.ArgumentParser:
     _fuzzy_sequence_options(fuzzySequences)
     fuzzySequences.add_argument("--max-len", type=int, help="maximum number of items in a pattern")
     fuzzySequences.add_argument("--min-len", type=int, default=1, help="minimum number of items in a pattern (default: 1)")
+    fuzzySequences.add_argument("--itemset-elements", action="store_true",
+                                help="allow several simultaneous items in an element of a pattern, <{a b} c>")
     _output_options(fuzzySequences, "patterns")
     fuzzySequences.set_defaults(run=_run_fuzzy_sequences, metric=None, keep_order=True,
                                 table_columns=["sequence", "support", "length"])

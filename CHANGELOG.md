@@ -8,6 +8,7 @@ project uses [semantic versioning](https://semver.org/).
 First version prepared for publication on PyPI (until then: `pip install git+https://github.com/cjferba/ARMxtend.git`).
 
 ### Added
+- **Fuzzy sequential patterns with multi-item elements:** `fuzzy_prefixspan(..., itemset_elements=True)` and `fuzzy-sequences --itemset-elements`.
 - **Sequential rules with veto:** `ARM.sequential_veto_rules` (`X => ~Y`, "after X, Y does not happen") and `sequential-rules --veto`.
 - **Fuzzy significance with FConf:** `fuzzy_rule_significance(..., statistic="fconf")` and `armxtend fuzzy-rules --statistic fconf` test the confidence aggregated by alpha-cuts.
 - **Rule-level utility:** `high_utility_rules` adds `utility_confidence` and `consequent_utility_share` (and `min_utility_conf`).

@@ -28,8 +28,11 @@ second and 0 in the third: its support is `(0.8 + 0.2 + 0)/3`.
 - A **fuzzy sequence** is a list of **events** ordered in time. An event is a dictionary `{item: degree}` with the
   degrees in `[0, 1]`; a list of `(item, degree)` pairs, a bare string or a collection of strings (all with degree 1)
   are accepted too. Items with degree 0 are ignored.
-- A **pattern** `<x1 x2 ... xk>` is an ordered list of single items. Unlike in `FIM.sequential` there are no
-  multi-item elements (`<{a, b} {c}>`): the events of a fuzzy sequence are already "baskets of items with degrees".
+- A **pattern** `<x1 x2 ... xk>` is, by default, an ordered list of single items. With `itemset_elements=True` (command line:
+  `--itemset-elements`) its elements can hold several simultaneous items, `<{a, b} {c}>` as in `FIM.sequential`: the degree of
+  an element `{a, b}` at an instant is the t-norm of the degrees of `a` and `b` at that instant, so adding an item to an element
+  never raises the degree and the search (new element, or one more item in the last one) stays exact. `max_len` and `min_len`
+  then count total items. `fuzzy_pattern_degree` accepts such patterns too: `fuzzy_pattern_degree(seq, [{"a", "b"}, "c"])`.
 - Item names must not contain `-`.
 
 ## Definition

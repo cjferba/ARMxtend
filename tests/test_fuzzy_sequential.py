@@ -243,3 +243,55 @@ def test_fuzzy_rules_recover_a_planted_routine_with_noisy_degrees():
     assert 0.78 < planted["confidence"] < 0.92 and planted["lift"] > 1.0       # 90 % of the days, with somewhat lower degrees
     reverse = rules[(rules["antecedents"] == {"heater_on"}) & (rules["consequents"] == {"temp_high"})]
     assert reverse.empty                                                          # el orden importa
+
+
+def brute_itemset_degree(sequence, pattern, tnorm):
+    """Best fit of a pattern of itemset elements, enumerating all the strictly increasing positions."""
+    best = 0.0
+    for positions in combinations(range(len(sequence)), len(pattern)):
+        degrees = [sequence[p].get(item, 0.0) for p, element in zip(positions, pattern) for item in element]
+        best = max(best, tnorm_of(degrees, tnorm))
+    return best
+
+
+def all_itemset_patterns(max_items):
+    elements = [frozenset(c) for size in range(1, max_items + 1) for c in combinations(ITEMS, size)]
+    patterns = [(e,) for e in elements if len(e) <= max_items]
+    frontier = patterns
+    while frontier:
+        grown = [p + (e,) for p in frontier for e in elements if sum(map(len, p)) + len(e) <= max_items]
+        patterns += grown
+        frontier = grown
+    return patterns
+
+
+@pytest.mark.parametrize("tnorm", ["min", "product"])
+def test_itemset_elements_equal_the_brute_force_enumeration(tnorm):
+    sequences = random_sequences(5, count=30)
+    min_supp = 0.08
+    found = fuzzy_prefixspan(sequences, min_supp, max_len=3, tnorm=tnorm, itemset_elements=True)
+    got = {row["sequence"]: row["support"] for _, row in found.iterrows()}
+    expected = {}
+    for pattern in all_itemset_patterns(3):
+        support = np.mean([brute_itemset_degree(s, pattern, tnorm) for s in sequences])
+        if support >= min_supp - 1e-9:
+            expected[tuple(pattern)] = support
+    assert len(expected) > 20 and any(len(element) > 1 for pattern in expected for element in pattern)
+    assert set(got) == set(expected)
+    assert got == pytest.approx(expected)
+    assert (found["length"] == [sum(map(len, p)) for p in found["sequence"]]).all()
+
+
+def test_itemset_elements_with_crisp_degrees_reproduce_prefixspan():
+    sequences = random_sequences(11, crisp=True, count=40)
+    fuzzy = fuzzy_prefixspan(sequences, 0.15, itemset_elements=True)
+    crisp = prefixspan([[frozenset(e) for e in s if e] for s in sequences], 0.15)
+    assert {r["sequence"]: r["support"] for _, r in fuzzy.iterrows()} == pytest.approx(
+        {r["sequence"]: r["support"] for _, r in crisp.iterrows()})
+
+
+def test_pattern_degree_accepts_itemset_elements():
+    sequence = [{"a": 0.9, "b": 0.5}, {"c": 0.7}]
+    assert fuzzy_pattern_degree(sequence, [{"a", "b"}, "c"]) == pytest.approx(0.5)
+    assert fuzzy_pattern_degree(sequence, [{"a", "b"}, "c"], tnorm="product") == pytest.approx(0.9 * 0.5 * 0.7)
+    assert fuzzy_pattern_degree(sequence, ["c", {"a", "b"}]) == 0.0

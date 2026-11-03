@@ -9,8 +9,12 @@ maximum, over the strictly increasing positions ``p1 < p2 < ... < pk``, of the t
 ``d(p1, x1), ..., d(pk, xk)``. The fuzzy support is the mean of that degree over all the sequences, and
 ``support >= min_supp`` is required. With the ``min`` t-norm (default) or the product, extending a pattern never
 raises its degree, so pruning by support is correct (the anti-monotone property of PrefixSpan still holds). If all
-the degrees are 1, the fuzzy support is the usual support of the patterns whose elements have a single item (the
-patterns of ``FIM.sequential`` with multi-item elements are not searched here).
+the degrees are 1, the fuzzy support is the usual support of the patterns whose elements have a single item.
+
+With ``itemset_elements=True`` the elements of a pattern can hold SEVERAL simultaneous items, ``<{a b} c>`` ("a and b
+together, and later c"), as in ``FIM.sequential``. The degree of an element ``{a b}`` at a position is the t-norm of the
+degrees of its items at that position, so adding an item to an element never raises the degree either and the search
+(s-extensions: a new element; i-extensions: one more item in the last element) is still exact.
 
 A sequence is a list of elements; each element can be a dictionary ``{item: degree}``, a list of ``(item, degree)``
 pairs, a single item or a collection of items (all with degree 1). Items with degree 0 are ignored.
@@ -21,6 +25,7 @@ NOTE: item names must not contain '-'.
 
 @author Carlos Fernandez-Basso
 """
+from functools import reduce
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -96,7 +101,7 @@ def _allowed(best_end: np.ndarray) -> np.ndarray:
 
 
 def fuzzy_prefixspan(sequences: Iterable[Iterable[Any]], min_supp: float, max_len: Optional[int] = None,
-                     min_len: int = 1, tnorm: str = "min") -> pd.DataFrame:
+                     min_len: int = 1, tnorm: str = "min", itemset_elements: bool = False) -> pd.DataFrame:
     """
     Frequent fuzzy sequential patterns (see the module docstring).
 
@@ -106,10 +111,12 @@ def fuzzy_prefixspan(sequences: Iterable[Iterable[Any]], min_supp: float, max_le
         max_len (int, optional): maximum number of items of a pattern
         min_len (int): minimum number of items of a returned pattern
         tnorm (str): 'min' (default) or 'product'
+        itemset_elements (bool): allow patterns whose elements have several simultaneous items (see the module
+            docstring); `max_len` and `min_len` then count the total number of items
 
     Returns:
-        pandas.DataFrame with the columns 'support' (fuzzy), 'sequence' (tuple of single-item ``frozenset``, as in
-        ``FIM.prefixspan``) and 'length', by decreasing support and increasing length. Memory: proportional to
+        pandas.DataFrame with the columns 'support' (fuzzy), 'sequence' (tuple of ``frozenset``, one per element and
+        with a single item unless `itemset_elements`, as in ``FIM.prefixspan``) and 'length', by decreasing support and increasing length. Memory: proportional to
         sequences x maximum length x items
     """
     combine = _check_tnorm(tnorm)
@@ -120,6 +127,8 @@ def fuzzy_prefixspan(sequences: Iterable[Iterable[Any]], min_supp: float, max_le
     if total == 0:
         return pd.DataFrame(columns=["support", "sequence", "length"])
     tensor, vocabulary = degree_tensor(database)
+    if itemset_elements:
+        return _fuzzy_prefixspan_itemsets(tensor, vocabulary, min_supp, max_len, min_len, combine)
     found: List[Tuple[float, Tuple[str, ...]]] = []
 
     def grow(prefix: Tuple[str, ...], allowed: np.ndarray) -> None:
@@ -139,17 +148,53 @@ def fuzzy_prefixspan(sequences: Iterable[Iterable[Any]], min_supp: float, max_le
     return result.sort_values(["support", "length"], ascending=[False, True], kind="mergesort").reset_index(drop=True)
 
 
-def fuzzy_pattern_degree(sequence: Iterable[Any], pattern: Iterable[str], tnorm: str = "min") -> float:
+def _fuzzy_prefixspan_itemsets(tensor: np.ndarray, vocabulary: List[str], min_supp: float, max_len: Optional[int],
+                               min_len: int, combine: Callable[[Any, Any], Any]) -> pd.DataFrame:
+    """PrefixSpan with s-extensions (new element) and i-extensions (one more item in the last element)."""
+    found: List[Tuple[float, Tuple[Tuple[int, ...], ...]]] = []
+
+    def grow(pattern: Tuple[Tuple[int, ...], ...], size: int, best_end: np.ndarray) -> None:
+        if max_len is not None and size >= max_len:
+            return
+        allowed = _allowed(best_end) if pattern else np.ones(best_end.shape)
+        candidates = [(combine(allowed[:, :, None], tensor), 0)]
+        if pattern:
+            candidates.append((combine(best_end[:, :, None], tensor), 1))
+        for extension, within in candidates:
+            support = extension.max(axis=1).mean(axis=0)
+            for item in np.flatnonzero(support >= min_supp - _EPS):
+                if within:
+                    if item <= pattern[-1][-1]:
+                        continue
+                    extended = pattern[:-1] + (pattern[-1] + (int(item),),)
+                else:
+                    extended = pattern + ((int(item),),)
+                found.append((float(support[item]), extended))
+                grow(extended, size + 1, extension[:, :, item])
+
+    grow((), 0, np.ones(tensor.shape[:2]))
+    rows = [(support, tuple(frozenset(vocabulary[i] for i in element) for element in pattern),
+             sum(len(element) for element in pattern)) for support, pattern in found]
+    result = pd.DataFrame(rows, columns=["support", "sequence", "length"])
+    result = result[result["length"] >= min_len]
+    return result.sort_values(["support", "length"], ascending=[False, True], kind="mergesort").reset_index(drop=True)
+
+
+def fuzzy_pattern_degree(sequence: Iterable[Any], pattern: Iterable[Union[str, Iterable[str]]],
+                         tnorm: str = "min") -> float:
     """
-    Degree to which the pattern ``<x1 ... xk>`` (list of items) holds in a sequence: the best of its matches (see the
-    module docstring). 0 if it does not appear in order.
+    Degree to which the pattern ``<x1 ... xk>`` holds in a sequence: the best of its matches (see the module
+    docstring). Each element of the pattern is an item or a collection of simultaneous items (``["a", {"b", "c"}]``);
+    0 if it does not appear in order.
     """
     combine = _check_tnorm(tnorm)
     elements = normalize([sequence])[0]
     allowed = np.ones(max(len(elements), 1))
     best = allowed
-    for item in pattern:
-        degrees = np.array([element.get(item, 0.0) for element in elements] or [0.0])
+    for step in pattern:
+        wanted = [step] if isinstance(step, str) else list(step)
+        degrees = np.array([float(reduce(combine, [element.get(item, 0.0) for item in wanted])) for element in elements]
+                           or [0.0])
         best = combine(allowed, degrees)
         allowed = np.zeros_like(best)
         allowed[1:] = np.maximum.accumulate(best)[:-1]
