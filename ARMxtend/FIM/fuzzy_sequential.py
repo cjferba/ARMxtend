@@ -1,29 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-Patrones secuenciales DIFUSOS: secuencias de eventos con un grado de pertenencia
-en (0, 1] ("la temperatura fue ALTA con grado 0.8, y despues la calefaccion
-estuvo ENCENDIDA con grado 0.6"), de modo que un patron se cumple en una
-secuencia en cierto grado y no de forma todo o nada.
+FUZZY sequential patterns: sequences of events with a membership degree in (0, 1] ("the temperature was HIGH to
+degree 0.8, and then the heating was ON to degree 0.6"), so that a pattern holds in a sequence to some degree rather
+than all or nothing.
 
-Un patron es una lista ordenada de items ``<x1 x2 ... xk>``. Su grado en una
-secuencia es el MEJOR de sus encajes: el maximo, sobre las posiciones
-estrictamente crecientes ``p1 < p2 < ... < pk``, de la t-norma de los grados
-``d(p1, x1), ..., d(pk, xk)``. El soporte difuso es la media de ese grado sobre
-todas las secuencias, y se exige ``soporte >= min_supp``. Con la t-norma
-``min`` (por defecto) o el producto, extender un patron nunca aumenta su grado,
-de modo que la poda por soporte es correcta (la propiedad antimonotona de
-PrefixSpan sigue valiendo). Si todos los grados son 1, el soporte difuso es el
-soporte habitual de los patrones cuyos elementos tienen un solo item (los
-patrones de ``FIM.sequential`` con elementos de varios items no se buscan aqui).
+A pattern is an ordered list of items ``<x1 x2 ... xk>``. Its degree in a sequence is the BEST of its matches: the
+maximum, over the strictly increasing positions ``p1 < p2 < ... < pk``, of the t-norm of the degrees
+``d(p1, x1), ..., d(pk, xk)``. The fuzzy support is the mean of that degree over all the sequences, and
+``support >= min_supp`` is required. With the ``min`` t-norm (default) or the product, extending a pattern never
+raises its degree, so pruning by support is correct (the anti-monotone property of PrefixSpan still holds). If all
+the degrees are 1, the fuzzy support is the usual support of the patterns whose elements have a single item (the
+patterns of ``FIM.sequential`` with multi-item elements are not searched here).
 
-Una secuencia es una lista de elementos; cada elemento puede ser un diccionario
-``{item: grado}``, una lista de pares ``(item, grado)``, un item suelto o una
-coleccion de items (todos con grado 1). Los items con grado 0 se ignoran.
-``fuzzy_sequences_from_memberships`` construye secuencias a partir de una tabla
-de grados de pertenencia (una fila por instante), p.ej. la que da la
-fuzzificacion de series temporales.
+A sequence is a list of elements; each element can be a dictionary ``{item: degree}``, a list of ``(item, degree)``
+pairs, a single item or a collection of items (all with degree 1). Items with degree 0 are ignored.
+``fuzzy_sequences_from_memberships`` builds sequences from a table of membership degrees (one row per instant), e.g.
+the one given by the fuzzification of time series.
 
-NOTA: los nombres de item no deben contener '-'.
+NOTE: item names must not contain '-'.
 
 @author Carlos Fernandez-Basso
 """
@@ -46,11 +40,11 @@ def _check_tnorm(tnorm: str) -> Callable[[Any, Any], Any]:
         return np.minimum
     if tnorm == "product":
         return np.multiply
-    raise ValueError("tnorm debe ser una de {}, recibida: '{}'".format(TNORMS, tnorm))
+    raise ValueError("tnorm must be one of {}, received: '{}'".format(TNORMS, tnorm))
 
 
 def _element_degrees(element: Any) -> Degrees:
-    """Un elemento como diccionario {item: grado} (el grado maximo si se repite; se ignoran los grados 0)."""
+    """An element as a dictionary {item: degree} (the highest degree if repeated; degrees of 0 are ignored)."""
     if isinstance(element, Mapping):
         pairs: Iterable[Tuple[Any, Any]] = element.items()
     elif isinstance(element, str):
@@ -61,14 +55,14 @@ def _element_degrees(element: Any) -> Degrees:
     for item, degree in pairs:
         degree = float(degree)
         if not 0.0 <= degree <= 1.0:
-            raise ValueError("los grados de pertenencia deben estar en [0, 1], recibido {} para '{}'".format(degree, item))
+            raise ValueError("membership degrees must be in [0, 1], received {} for '{}'".format(degree, item))
         if degree > 0:
             result[str(item)] = max(result.get(str(item), 0.0), degree)
     return result
 
 
 def normalize(sequences: Iterable[Iterable[Any]]) -> List[FuzzySequence]:
-    """Cada secuencia como lista de diccionarios {item: grado}, sin elementos vacios."""
+    """Each sequence as a list of dictionaries {item: degree}, with no empty elements."""
     result = []
     for sequence in sequences:
         elements = [_element_degrees(element) for element in sequence]
@@ -78,8 +72,8 @@ def normalize(sequences: Iterable[Iterable[Any]]) -> List[FuzzySequence]:
 
 def degree_tensor(sequences: Sequence[FuzzySequence]) -> Tuple[np.ndarray, List[str]]:
     """
-    Tensor de grados (secuencias, posiciones, items) y el vocabulario ordenado de items; las
-    secuencias mas cortas se rellenan con ceros, que no aportan nada a ningun patron.
+    Tensor of degrees (sequences, positions, items) and the sorted vocabulary of items; the shorter sequences are
+    padded with zeros, which contribute nothing to any pattern.
     """
     vocabulary = sorted({item for sequence in sequences for element in sequence for item in element})
     check_item_names(vocabulary)
@@ -94,7 +88,7 @@ def degree_tensor(sequences: Sequence[FuzzySequence]) -> Tuple[np.ndarray, List[
 
 
 def _allowed(best_end: np.ndarray) -> np.ndarray:
-    """Para cada posicion, el mejor encaje del prefijo que termina estrictamente antes."""
+    """For each position, the best match of the prefix that ends strictly before."""
     cumulative = np.maximum.accumulate(best_end, axis=1)
     allowed = np.zeros_like(cumulative)
     allowed[:, 1:] = cumulative[:, :-1]
@@ -104,20 +98,19 @@ def _allowed(best_end: np.ndarray) -> np.ndarray:
 def fuzzy_prefixspan(sequences: Iterable[Iterable[Any]], min_supp: float, max_len: Optional[int] = None,
                      min_len: int = 1, tnorm: str = "min") -> pd.DataFrame:
     """
-    Patrones secuenciales difusos frecuentes (ver el docstring del modulo).
+    Frequent fuzzy sequential patterns (see the module docstring).
 
-    Argumentos:
-        sequences: una secuencia por elemento (ver el docstring del modulo)
-        min_supp (float): soporte difuso minimo, en (0, 1]
-        max_len (int, opcional): maximo de items de un patron
-        min_len (int): minimo de items de un patron que se devuelve
-        tnorm (str): 'min' (por defecto) o 'product'
+    Args:
+        sequences: one sequence per element (see the module docstring)
+        min_supp (float): minimum fuzzy support, in (0, 1]
+        max_len (int, optional): maximum number of items of a pattern
+        min_len (int): minimum number of items of a returned pattern
+        tnorm (str): 'min' (default) or 'product'
 
-    Retorna:
-        pandas.DataFrame con las columnas 'support' (difuso), 'sequence' (tupla
-        de ``frozenset`` de un solo item, como en ``FIM.prefixspan``) y 'length',
-        por soporte decreciente y longitud creciente. Memoria: proporcional a
-        secuencias x longitud maxima x items
+    Returns:
+        pandas.DataFrame with the columns 'support' (fuzzy), 'sequence' (tuple of single-item ``frozenset``, as in
+        ``FIM.prefixspan``) and 'length', by decreasing support and increasing length. Memory: proportional to
+        sequences x maximum length x items
     """
     combine = _check_tnorm(tnorm)
     if not 0 < min_supp <= 1:
@@ -148,8 +141,8 @@ def fuzzy_prefixspan(sequences: Iterable[Iterable[Any]], min_supp: float, max_le
 
 def fuzzy_pattern_degree(sequence: Iterable[Any], pattern: Iterable[str], tnorm: str = "min") -> float:
     """
-    Grado en que el patron ``<x1 ... xk>`` (lista de items) se cumple en una secuencia: el
-    mejor de sus encajes (ver el docstring del modulo). 0 si no aparece en orden.
+    Degree to which the pattern ``<x1 ... xk>`` (list of items) holds in a sequence: the best of its matches (see the
+    module docstring). 0 if it does not appear in order.
     """
     combine = _check_tnorm(tnorm)
     elements = normalize([sequence])[0]
@@ -166,30 +159,28 @@ def fuzzy_pattern_degree(sequence: Iterable[Any], pattern: Iterable[str], tnorm:
 def fuzzy_sequences_from_memberships(memberships: pd.DataFrame, by: Union[Sequence[Any], np.ndarray, pd.Series, None] = None,
                                      min_degree: float = 0.0) -> List[FuzzySequence]:
     """
-    Secuencias difusas a partir de una tabla de grados de pertenencia con una fila por
-    instante (ordenadas en el tiempo): cada fila es un elemento, con los items cuyo grado
-    supera `min_degree`.
+    Fuzzy sequences from a table of membership degrees with one row per instant (ordered in time): each row is an
+    element, with the items whose degree exceeds `min_degree`.
 
-    Argumentos:
-        memberships (pandas.DataFrame): grados en [0, 1], una columna por item
-        by: a que secuencia pertenece cada fila (p.ej. el dia: ``index.date``); por
-            defecto, todas las filas forman una sola secuencia. Se conserva el orden
-            de las filas dentro de cada secuencia, y las secuencias salen por orden de
-            primera aparicion del grupo
-        min_degree (float): grado minimo (exclusivo) para que un item cuente
+    Args:
+        memberships (pandas.DataFrame): degrees in [0, 1], one column per item
+        by: which sequence each row belongs to (e.g. the day: ``index.date``); by default, all the rows form a single
+            sequence. The order of the rows inside each sequence is kept, and the sequences come out in order of
+            first appearance of the group
+        min_degree (float): minimum degree (exclusive) for an item to count
 
-    Retorna:
-        lista de secuencias, cada una una lista de diccionarios {item: grado}; las filas sin
-        ningun item por encima de `min_degree` no producen elemento
+    Returns:
+        list of sequences, each a list of dictionaries {item: degree}; rows with no item above `min_degree` produce
+        no element
     """
     check_item_names(memberships.columns)
     degrees = memberships.to_numpy(dtype=float)
     if np.isnan(degrees).any() or (degrees < 0).any() or (degrees > 1).any():
-        raise ValueError("los grados de pertenencia deben estar en [0, 1]")
+        raise ValueError("membership degrees must be in [0, 1]")
     names = [str(name) for name in memberships.columns]
     groups = np.zeros(len(memberships), dtype=int) if by is None else pd.factorize(np.asarray(by))[0]
     if len(groups) != len(memberships):
-        raise ValueError("`by` debe tener una entrada por fila ({}), tiene {}".format(len(memberships), len(groups)))
+        raise ValueError("`by` must have one entry per row ({}), it has {}".format(len(memberships), len(groups)))
     sequences: Dict[int, FuzzySequence] = {}
     for row, group in zip(degrees, groups):
         element = {names[column]: float(row[column]) for column in np.flatnonzero(row > min_degree)}

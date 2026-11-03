@@ -1,22 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-Prediccion con reglas: usar reglas ya minadas para anticipar lo que ocurrira.
+Prediction with rules: use already mined rules to anticipate what will happen.
 
-* Series de items (sensores, logs): las reglas temporales (``ARM.temporal_rules``)
-  ``A@lag1, B@lag2 => C`` predicen que ``C`` ocurrira en el instante actual a
-  partir de lo que paso antes. ``rule_scores`` da, para cada instante, la
-  confianza con que las reglas que se cumplen predicen cada item;
-  ``forecast_next`` lo hace para el instante que viene tras el ultimo dato y
-  ``evaluate_forecast`` mide la calidad de la prediccion sobre datos reales.
-* Secuencias de eventos: las reglas secuenciales (``ARM.sequential_rules``)
-  ``X => Y`` ("si ocurre X, despues Y") predicen los eventos que faltan por
-  ocurrir. ``predict_next_events`` ordena los eventos pendientes dado el
-  historial de una secuencia y ``evaluate_next_events`` mide los aciertos.
+* Series of items (sensors, logs): the temporal rules (``ARM.temporal_rules``) ``A@lag1, B@lag2 => C`` predict that
+  ``C`` will occur at the current instant from what happened before. ``rule_scores`` gives, for each instant, the
+  confidence with which the rules that hold predict each item; ``forecast_next`` does it for the instant that follows
+  the last datum and ``evaluate_forecast`` measures the quality of the prediction on real data.
+* Sequences of events: the sequential rules (``ARM.sequential_rules``) ``X => Y`` ("if X occurs, then Y") predict the
+  events that are still to occur. ``predict_next_events`` ranks the pending events given the history of a sequence and
+  ``evaluate_next_events`` measures the hits.
 
-Cuando varias reglas predicen el mismo item se combinan con ``combine``:
-``max`` (la confianza de la mejor regla, por defecto) o ``noisy_or``
-(``1 - prod(1 - confianza)``, que supone reglas independientes y por tanto
-sobreestima si hay reglas redundantes: pode antes con ``prune_redundant_rules``).
+When several rules predict the same item they are combined with ``combine``: ``max`` (the confidence of the best
+rule, default) or ``noisy_or`` (``1 - prod(1 - confidence)``, which assumes independent rules and therefore
+overestimates if there are redundant rules: prune first with ``prune_redundant_rules``).
 
 @author Carlos Fernandez-Basso
 """
@@ -34,42 +30,39 @@ COMBINE = ("max", "noisy_or")
 
 def _check_combine(combine: str) -> None:
     if combine not in COMBINE:
-        raise ValueError("combine debe ser una de {}, recibida: '{}'".format(COMBINE, combine))
+        raise ValueError("combine must be one of {}, received: '{}'".format(COMBINE, combine))
 
 
 def _usable(rules: pd.DataFrame, past_only: bool) -> pd.DataFrame:
-    """Reglas aplicables: consecuente en el instante actual y, con `past_only`, antecedente solo del pasado."""
+    """Applicable rules: consequent at the current instant and, with `past_only`, antecedent only from the past."""
     require_columns(rules, "antecedents", "consequents", "confidence")
     keep = []
     for antecedent, consequent in zip(rules["antecedents"], rules["consequents"]):
         if any(split_lag(item)[1] != 0 for item in consequent):
-            raise ValueError("el consecuente de una regla debe estar en el instante actual (sin '@lag'), "
-                             "pero hay {}".format(sorted(consequent)))
+            raise ValueError("the consequent of a rule must be at the current instant (without '@lag'), "
+                             "but there is {}".format(sorted(consequent)))
         keep.append(not (past_only and any(split_lag(item)[1] == 0 for item in antecedent)))
     return rules[np.asarray(keep, dtype=bool)]
 
 
 def rule_scores(items: pd.DataFrame, rules: pd.DataFrame, combine: str = "max", past_only: bool = True) -> pd.DataFrame:
     """
-    Para cada instante, la confianza con la que las reglas que se cumplen
-    predicen cada item.
+    For each instant, the confidence with which the rules that hold predict each item.
 
-    Argumentos:
-        items (pandas.DataFrame): items booleanos (0/1), una fila por instante y
-            ordenadas en el tiempo. Los items de las reglas deben ser columnas
-        rules (pandas.DataFrame): reglas temporales con 'antecedents',
-            'consequents' (en el instante actual) y 'confidence', p.ej. la
-            salida de ``temporal_association_rules``
-        combine (str): 'max' o 'noisy_or' (ver el docstring del modulo)
-        past_only (bool): si True (por defecto), se ignoran las reglas con
-            algun item del antecedente en el instante actual (``same_time_antecedent=True``
-            al minarlas), porque al predecir ese dato aun no se conoce
+    Args:
+        items (pandas.DataFrame): boolean (0/1) items, one row per instant and ordered in time. The items of the rules
+            must be columns
+        rules (pandas.DataFrame): temporal rules with 'antecedents', 'consequents' (at the current instant) and
+            'confidence', e.g. the output of ``temporal_association_rules``
+        combine (str): 'max' or 'noisy_or' (see the module docstring)
+        past_only (bool): if True (default), the rules with any antecedent item at the current instant
+            (``same_time_antecedent=True`` when mining them) are ignored, because when predicting that datum is not
+            yet known
 
-    Retorna:
-        pandas.DataFrame con el indice de `items` y una columna por item que
-        es consecuente de alguna regla, con valores en [0, 1] (0: ninguna regla
-        lo predice). Las primeras filas, sin historia para los retardos, no
-        disparan las reglas que la necesitan.
+    Returns:
+        pandas.DataFrame with the index of `items` and a column per item that is the consequent of some rule, with
+        values in [0, 1] (0: no rule predicts it). The first rows, without history for the lags, do not fire the rules
+        that need it.
     """
     _check_combine(combine)
     usable = _usable(rules, past_only)
@@ -85,12 +78,12 @@ def rule_scores(items: pd.DataFrame, rules: pd.DataFrame, combine: str = "max", 
 
 def forecast_next(items: pd.DataFrame, rules: pd.DataFrame, combine: str = "max") -> pd.Series:
     """
-    Prediccion del instante que viene tras la ultima fila de `items`: la
-    confianza con que las reglas, aplicadas a lo ya observado, predicen cada item.
+    Prediction of the instant that follows the last row of `items`: the confidence with which the rules, applied to
+    what has already been observed, predict each item.
 
-    Solo se usan las reglas cuyo antecedente es del pasado (retardos >= 1); las
-    que piden mas historia de la que hay no se disparan. Retorna una ``Series`` 'score' indexada por item, de mayor a menor (solo
-    los items con alguna regla que se cumple).
+    Only the rules whose antecedent is from the past (lags >= 1) are used; those that ask for more history than there
+    is do not fire. Returns a 'score' ``Series`` indexed by item, from highest to lowest (only the items with some
+    rule that holds).
     """
     _check_combine(combine)
     usable = _usable(rules, past_only=True)
@@ -104,19 +97,17 @@ def forecast_next(items: pd.DataFrame, rules: pd.DataFrame, combine: str = "max"
 def evaluate_forecast(items: pd.DataFrame, rules: pd.DataFrame, threshold: float = 0.5, combine: str = "max",
                       past_only: bool = True) -> pd.DataFrame:
     """
-    Calidad de la prediccion de las reglas sobre datos reales: en cada instante
-    se predice que ocurre el item si su puntuacion (`rule_scores`) es >=
-    `threshold`, y se compara con lo ocurrido. Para una evaluacion honesta, `rules`
-    debe haberse minado con otros datos que `items` (p.ej. con el periodo anterior).
+    Quality of the prediction of the rules on real data: at each instant the item is predicted to occur if its score
+    (`rule_scores`) is >= `threshold`, and this is compared with what happened. For an honest evaluation, `rules` must
+    have been mined with data other than `items` (e.g. with the previous period).
 
-    Se excluyen las primeras filas, sin historia para los retardos de las reglas.
+    The first rows, without history for the lags of the rules, are excluded.
 
-    Retorna:
-        pandas.DataFrame indexado por item con las columnas 'n' (instantes
-        evaluados), 'positives' (veces que ocurrio), 'predicted' (veces que se
-        predijo), 'hits' (predichos y ocurridos), 'precision' y 'recall' (NaN
-        si no hay predicciones, o no ocurrio nunca), 'f1' y 'base_rate'
-        (positives / n: la precision de predecir siempre que ocurre)
+    Returns:
+        pandas.DataFrame indexed by item with the columns 'n' (instants evaluated), 'positives' (times it occurred),
+        'predicted' (times it was predicted), 'hits' (predicted and occurred), 'precision' and 'recall' (NaN if there
+        are no predictions, or it never occurred), 'f1' and 'base_rate' (positives / n: the precision of predicting it
+        always)
     """
     usable = _usable(rules, past_only)
     scores = rule_scores(items, usable, combine=combine, past_only=past_only)
@@ -154,7 +145,7 @@ def _compile(rules: pd.DataFrame) -> Compiled:
 
 
 def _pending(history: Sequence[FrozenSet[str]], compiled: Compiled, combine: str) -> Dict[str, float]:
-    """Puntuacion de cada evento pendiente dado el historial (lista de elementos)."""
+    """Score of each pending event given the history (list of elements)."""
     firstSeen: Dict[str, int] = {}
     lastSeen: Dict[str, int] = {}
     for position, element in enumerate(history):
@@ -167,7 +158,7 @@ def _pending(history: Sequence[FrozenSet[str]], compiled: Compiled, combine: str
             continue
         completed = max(firstSeen[item] for item in antecedent)
         for item in consequent:
-            if lastSeen.get(item, -1) > completed:      # ya ocurrio despues de X: la regla ya se cumplio para este item
+            if lastSeen.get(item, -1) > completed:      # it already occurred after X: the rule already held for this item
                 continue
             previous = scores.get(item, 0.0)
             scores[item] = max(previous, confidence) if combine == "max" else 1.0 - (1.0 - previous) * (1.0 - confidence)
@@ -182,24 +173,20 @@ def _ranked(scores: Dict[str, float]) -> pd.Series:
 
 def predict_next_events(history: SequenceLike, rules: pd.DataFrame, combine: str = "max") -> pd.Series:
     """
-    Eventos que cabe esperar dado el historial de una secuencia, segun las
-    reglas secuenciales ``X => Y``.
+    Events to expect given the history of a sequence, according to the sequential rules ``X => Y``.
 
-    Una regla se dispara si todos los items de X han ocurrido ya en el historial;
-    predice cada item de Y que todavia esta PENDIENTE, es decir, que no ha
-    vuelto a ocurrir despues de completarse X (si ya ocurrio, la regla ya se ha
-    cumplido para ese item).
+    A rule fires if all the items of X have already occurred in the history; it predicts each item of Y that is still
+    PENDING, that is, that has not occurred again after X was completed (if it already occurred, the rule has already
+    held for that item).
 
-    Argumentos:
-        history: la secuencia observada hasta ahora: una lista de elementos
-            (conjuntos de items simultaneos, o un item suelto)
-        rules (pandas.DataFrame): reglas secuenciales con 'antecedents',
-            'consequents' y 'confidence' (salida de ``sequential_rules``)
-        combine (str): 'max' o 'noisy_or'
+    Args:
+        history: the sequence observed so far: a list of elements (sets of simultaneous items, or a single item)
+        rules (pandas.DataFrame): sequential rules with 'antecedents', 'consequents' and 'confidence' (output of
+            ``sequential_rules``)
+        combine (str): 'max' or 'noisy_or'
 
-    Retorna:
-        pandas.Series 'score' indexada por evento, de mayor a menor puntuacion
-        (a igual puntuacion, por orden alfabetico)
+    Returns:
+        pandas.Series 'score' indexed by event, from highest to lowest score (with equal score, in alphabetical order)
     """
     _check_combine(combine)
     return _ranked(_pending(_normalize([history])[0], _compile(rules), combine))
@@ -209,33 +196,28 @@ def evaluate_next_events(sequences: Iterable[SequenceLike], rules: pd.DataFrame,
                          train: Optional[Iterable[SequenceLike]] = None, combine: str = "max",
                          target: str = "future") -> Dict[str, float]:
     """
-    Aciertos de `predict_next_events` sobre secuencias reales: cada secuencia se
-    corta tras cada elemento (a partir de `min_prefix` elementos de historial
-    y hasta el penultimo) y se comprueba si los `k` eventos mejor puntuados
-    ocurren de verdad en lo que queda de la secuencia. Para una evaluacion
-    honesta, `rules` debe haberse minado con otras secuencias que `sequences`.
+    Hits of `predict_next_events` on real sequences: each sequence is cut after each element (from `min_prefix`
+    elements of history up to the second to last) and it is checked whether the `k` best-scored events really occur in
+    what remains of the sequence. For an honest evaluation, `rules` must have been mined with sequences other than
+    `sequences`.
 
-    Argumentos:
-        sequences: secuencias a evaluar
-        rules: reglas secuenciales (ver `predict_next_events`)
-        k (int): numero de eventos predichos por corte
-        min_prefix (int): elementos minimos del historial, >= 1
-        train: secuencias con las que calcular una prediccion de referencia:
-            los `k` eventos mas frecuentes (por numero de secuencias que los
-            contienen) que aun no han ocurrido en el historial
-        combine (str): 'max' o 'noisy_or'
-        target (str): 'future' (por defecto): un evento predicho acierta si
-            ocurre en cualquier elemento posterior al corte, que es lo que
-            afirman las reglas secuenciales; 'next': solo si ocurre en el
-            elemento inmediatamente siguiente (mas exigente)
+    Args:
+        sequences: sequences to evaluate
+        rules: sequential rules (see `predict_next_events`)
+        k (int): number of events predicted per cut
+        min_prefix (int): minimum elements of history, >= 1
+        train: sequences from which to compute a reference prediction: the `k` most frequent events (by number of
+            sequences that contain them) that have not yet occurred in the history
+        combine (str): 'max' or 'noisy_or'
+        target (str): 'future' (default): a predicted event is a hit if it occurs in any element after the cut, which
+            is what the sequential rules claim; 'next': only if it occurs in the immediately following element (more
+            demanding)
 
-    Retorna:
-        dict con 'cases' (cortes evaluados), 'coverage' (parte de los cortes con
-        alguna prediccion), 'hit_rate' (parte de los cortes en que algun
-        evento predicho ocurre despues; un corte sin predicciones cuenta como
-        fallo) y 'precision' (media, sobre los cortes con prediccion, de la
-        parte de los eventos predichos que ocurren despues); con `train`, tambien
-        'baseline_hit_rate' y 'baseline_precision'
+    Returns:
+        dict with 'cases' (cuts evaluated), 'coverage' (share of the cuts with some prediction), 'hit_rate' (share of
+        the cuts in which some predicted event occurs later; a cut without predictions counts as a miss) and
+        'precision' (mean, over the cuts with prediction, of the share of predicted events that occur later); with
+        `train`, also 'baseline_hit_rate' and 'baseline_precision'
     """
     _check_combine(combine)
     if k < 1 or min_prefix < 1:

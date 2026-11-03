@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Medidas de interes para reglas de asociacion compartidas por el caso crisp
-(``ARM.association_rules``) y el difuso (``FIM.FARE``, ``ARM.meta_rules``).
+Interest measures for association rules shared by the crisp case (``ARM.association_rules``) and the fuzzy one
+(``FIM.FARE``, ``ARM.meta_rules``).
 
 @author Carlos Fernandez-Basso
 """
@@ -17,12 +17,12 @@ def _as_arrays(support_AB, support_A, support_B):
 
 
 def _finish(result):
-    """Devuelve un float si el resultado es escalar y un ndarray en otro caso."""
+    """Return a float if the result is scalar and an ndarray otherwise."""
     return float(result) if np.ndim(result) == 0 else result
 
 
 def _safe_div(numerator, denominator, default=0.0):
-    """numerator / denominator elemento a elemento, con `default` donde denominator == 0."""
+    """numerator / denominator element by element, with `default` where denominator == 0."""
     numerator = np.asarray(numerator, dtype=float)
     denominator = np.asarray(denominator, dtype=float)
     positive = denominator != 0
@@ -31,38 +31,33 @@ def _safe_div(numerator, denominator, default=0.0):
 
 def certainty_factor(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """
-    Factor de certeza (certainty factor) de una regla A -> B (Shortliffe &
-    Buchanan), tal y como se define en:
+    Certainty factor of a rule A -> B (Shortliffe & Buchanan), as defined in:
         Delgado, M., Ruiz, M.D., Sanchez, D. (2011). "A formal model for
         mining fuzzy rules using the RL representation theory". Information
-        Sciences, 181, 5194-5213 (Definicion 1).
+        Sciences, 181, 5194-5213 (Definition 1).
 
-    A diferencia de la confianza, el factor de certeza tiene en cuenta el
-    soporte "de fondo" del consecuente: un valor positivo indica que la
-    presencia del antecedente AUMENTA la creencia en el consecuente, un
-    valor negativo que la DISMINUYE, y 0 que no la cambia (independencia).
-    Su dominio es [-1, 1], frente al [0, +inf) no acotado de la conviccion,
-    lo que facilita fijar un umbral y comparar reglas entre si.
+    Unlike confidence, the certainty factor takes into account the "background" support of the consequent: a positive
+    value indicates that the presence of the antecedent INCREASES the belief in the consequent, a negative value that
+    it DECREASES it, and 0 that it does not change it (independence). Its domain is [-1, 1], versus the unbounded
+    [0, +inf) of conviction, which makes it easier to set a threshold and compare rules with each other.
 
-    CF(A -> B) = (Conf(A->B) - supp(B)) / (1 - supp(B))  si Conf(A->B) > supp(B)
-               = (Conf(A->B) - supp(B)) / supp(B)         si Conf(A->B) < supp(B)
-               = 0                                         si Conf(A->B) = supp(B)
+    CF(A -> B) = (Conf(A->B) - supp(B)) / (1 - supp(B))  if Conf(A->B) > supp(B)
+               = (Conf(A->B) - supp(B)) / supp(B)         if Conf(A->B) < supp(B)
+               = 0                                         if Conf(A->B) = supp(B)
 
-    Cuando el antecedente no tiene soporte (supp(A) = 0) el factor de certeza
-    es 0, como en la Ec. (7) de Ruiz et al. (2016) sobre la tabla 4ft.
+    When the antecedent has no support (supp(A) = 0) the certainty factor is 0, as in Eq. (7) of Ruiz et al. (2016) on
+    the 4ft table.
 
-    Es valido tanto con escalares como con arrays de numpy (aplicado
-    elemento a elemento), lo que permite reutilizarlo para agregar el factor
-    de certeza difuso nivel a nivel (ver `FIM._shared.weighted_alpha_aggregate`).
+    It is valid with both scalars and numpy arrays (applied element by element), which allows reusing it to aggregate
+    the fuzzy certainty factor level by level (see `FIM._shared.weighted_alpha_aggregate`).
 
-    Argumentos:
-        support_AB (float | numpy.ndarray): soporte de A uniob B (soporte de
-            la regla), Supp(A -> B)
-        support_A (float | numpy.ndarray): soporte del antecedente, Supp(A)
-        support_B (float | numpy.ndarray): soporte del consecuente, Supp(B)
+    Args:
+        support_AB (float | numpy.ndarray): support of A union B (support of the rule), Supp(A -> B)
+        support_A (float | numpy.ndarray): support of the antecedent, Supp(A)
+        support_B (float | numpy.ndarray): support of the consequent, Supp(B)
 
-    Retorna:
-        float | numpy.ndarray en [-1, 1]
+    Returns:
+        float | numpy.ndarray in [-1, 1]
     """
     supportAB = np.asarray(support_AB, dtype=float)
     supportA = np.asarray(support_A, dtype=float)
@@ -76,24 +71,24 @@ def certainty_factor(support_AB: ArrayLike, support_A: ArrayLike, support_B: Arr
 
     result = np.where(confidence > supportB, increaseBelief,
                       np.where(confidence < supportB, decreaseBelief, 0.0))
-    # Sin antecedente (supp(A) = 0, p.ej. en un alpha-corte alto donde A no
-    # aparece) la tabla 4ft cumple ad = bc y la Ec. (7) de Ruiz et al. (2016)
-    # da CF = 0; sin esta linea saldria -1 (confianza 0 < supp(B)).
+    # Without an antecedent (supp(A) = 0, e.g. at a high alpha-cut where A does not
+    # appear) the 4ft table satisfies ad = bc and Eq. (7) of Ruiz et al. (2016)
+    # gives CF = 0; without this line it would give -1 (confidence 0 < supp(B)).
     result = np.where(supportA > 0, result, 0.0)
 
     return float(result) if result.ndim == 0 else result
 
 
 # ---------------------------------------------------------------------------
-# Medidas de interes adicionales. Todas son funciones de los tres soportes
-# (supp(A u B), supp(A), supp(B)) -- equivalentemente, de la tabla de
+# Additional interest measures. All are functions of the three supports
+# (supp(A u B), supp(A), supp(B)) -- equivalently, of the
 # contingencia 4ft <a, b, c, d> = <sAB, sA - sAB, sB - sAB, 1 - sA - sB + sAB>
-# -- por lo que, segun la RL-theory (Delgado et al., 2011), cada una se
-# generaliza al caso difuso evaluandola en cada alpha-corte y agregando con
-# `FIM._shared.weighted_alpha_aggregate`. Donde la medida es una indeterminacion
-# 0/0 (p.ej. antecedente sin soporte en ese nivel) se devuelve 0.0, el valor
-# neutro ("sin evidencia"); la unica excepcion es la confianza difusa, que
-# sigue la convencion del articulo (0/0 := 1), implementada en `FIM.FARE`.
+# -- so, according to the RL-theory (Delgado et al., 2011), each one is
+# generalized to the fuzzy case by evaluating it at each alpha-cut and aggregating with
+# `FIM._shared.weighted_alpha_aggregate`. Where the measure is a 0/0
+# indeterminacy (e.g. antecedent without support at that level) 0.0 is returned, the
+# neutral value ("no evidence"); the only exception is fuzzy confidence, which
+# follows the convention of the paper (0/0 := 1), implemented in `FIM.FARE`.
 # ---------------------------------------------------------------------------
 
 def confidence(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
@@ -128,9 +123,8 @@ def cosine(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) ->
 
 def kulczynski(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """
-    Kulczynski(A, B) = (Conf(A -> B) + Conf(B -> A)) / 2. Rango [0, 1]; simetrica.
-    A diferencia del lift o el cosine, es invariante frente a transacciones
-    "nulas" (que no contienen A ni B) (Wu, Chen & Han, 2010).
+    Kulczynski(A, B) = (Conf(A -> B) + Conf(B -> A)) / 2. Range [0, 1]; symmetric. Unlike lift or cosine, it is
+    invariant to "null" transactions (that contain neither A nor B) (Wu, Chen & Han, 2010).
     """
     sAB, sA, sB = _as_arrays(support_AB, support_A, support_B)
     return _finish(0.5 * (_safe_div(sAB, sA) + _safe_div(sAB, sB)))
@@ -167,16 +161,16 @@ def zhangs_metric(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayL
 
 def yules_q(support_AB: ArrayLike, support_A: ArrayLike, support_B: ArrayLike) -> Union[float, np.ndarray]:
     """
-    Yule's Q = (ad - bc) / (ad + bc) sobre la tabla 4ft <a, b, c, d> de la
-    regla (Tan et al., 2004). Rango [-1, 1]; 0 = independencia.
+    Yule's Q = (ad - bc) / (ad + bc) over the 4ft table <a, b, c, d> of the rule (Tan et al., 2004). Range [-1, 1];
+    0 = independence.
     """
     sAB, sA, sB = _as_arrays(support_AB, support_A, support_B)
     a, b, c, d = sAB, sA - sAB, sB - sAB, 1.0 - sA - sB + sAB
     return _finish(_safe_div(a * d - b * c, a * d + b * c))
 
 
-# Medidas puras de (sAB, sA, sB), por nombre. `ARM.association_rules` y
-# `FIM.FARE` construyen sus columnas a partir de este registro.
+# Pure measures of (sAB, sA, sB), by name. `ARM.association_rules` and
+# `FIM.FARE` build their columns from this registry.
 MEASURES = {
     "confidence": confidence,
     "lift": lift,
@@ -192,7 +186,7 @@ MEASURES = {
     "yules_q": yules_q,
 }
 
-# Medidas anadidas en esta version (las anteriores a ella eran confidence,
+# Measures added in this version (those before it were confidence,
 # lift, leverage, conviction y certainty_factor).
 EXTRA_MEASURES = ("jaccard", "cosine", "kulczynski", "all_confidence", "max_confidence",
                   "added_value", "zhangs_metric", "yules_q")

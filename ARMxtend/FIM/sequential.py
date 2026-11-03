@@ -1,28 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-Patrones secuenciales frecuentes: subsecuencias de eventos que se repiten, en
-ese orden, en muchas secuencias (rutinas diarias de una casa sensorizada,
-trayectorias de pacientes, sesiones de uso, ...).
+Frequent sequential patterns: subsequences of events that repeat, in that order, in many sequences (daily routines
+of a sensorized house, patient trajectories, usage sessions, ...).
 
-Una SECUENCIA es una lista ordenada en el tiempo de ELEMENTOS, y cada elemento
-es un conjunto de items que ocurren a la vez: ``[{"cocina"}, {"puerta",
-"luz"}, {"salon"}]``. Un elemento puede escribirse tambien como un solo item
-(``"cocina"``). Un patron ``<{a, b} {c}>`` esta contenido en una secuencia si
-existen dos elementos, uno antes que otro, que contienen ``{a, b}`` y ``{c}``
-respectivamente (entre ellos puede haber otros elementos). El soporte de un
-patron es la fraccion de secuencias que lo contienen, contando cada secuencia
-una sola vez.
+A SEQUENCE is a time-ordered list of ELEMENTS, and each element is a set of items that happen at the same time:
+``[{"kitchen"}, {"door", "light"}, {"living_room"}]``. An element can also be written as a single item
+(``"kitchen"``). A pattern ``<{a, b} {c}>`` is contained in a sequence if there are two elements, one before the
+other, that contain ``{a, b}`` and ``{c}`` respectively (there may be other elements between them). The support of a
+pattern is the fraction of sequences that contain it, counting each sequence only once.
 
-`prefixspan` implementa PrefixSpan (Pei, Han, Mortazavi-Asl, Wang, Pinto,
-Chen, Dayal & Hsu, 2004, "Mining sequential patterns by pattern-growth: the
-PrefixSpan approach", IEEE Transactions on Knowledge and Data Engineering,
-16(11)) con la proyeccion por posicion del primer encaje de cada prefijo.
-`prefixspan_spark` ejecuta el mismo calculo en Spark con el PrefixSpan de MLlib
-(`pyspark.ml.fpm`), para secuencias que no caben en una maquina.
+`prefixspan` implements PrefixSpan (Pei, Han, Mortazavi-Asl, Wang, Pinto, Chen, Dayal & Hsu, 2004, "Mining
+sequential patterns by pattern-growth: the PrefixSpan approach", IEEE Transactions on Knowledge and Data
+Engineering, 16(11)) with projection by the position of the first match of each prefix. `prefixspan_spark` runs the
+same computation on Spark with the MLlib PrefixSpan (`pyspark.ml.fpm`), for sequences that do not fit on one
+machine.
 
-Tambien incluye utilidades para construir secuencias a partir de un registro
-de eventos (`sequences_from_events`) o de una tabla de items por instante
-(`sequences_from_items`), y `format_sequence` para mostrarlas.
+It also includes utilities to build sequences from an event log (`sequences_from_events`) or from a table of items
+per instant (`sequences_from_items`), and `format_sequence` to display them.
 
 @author Carlos Fernandez-Basso
 """
@@ -37,7 +31,7 @@ SequenceType = Tuple[Element, ...]
 
 
 def _normalize(sequences: Iterable[Iterable[Union[str, Iterable[str]]]]) -> List[List[Element]]:
-    """Convierte cada secuencia en una lista de elementos (frozenset de items), sin elementos vacios."""
+    """Convert each sequence into a list of elements (frozenset of items), with no empty elements."""
     result = []
     for sequence in sequences:
         elements = []
@@ -50,12 +44,12 @@ def _normalize(sequences: Iterable[Iterable[Union[str, Iterable[str]]]]) -> List
 
 
 def format_sequence(sequence: Sequence[Iterable[str]]) -> str:
-    """Texto legible de un patron: ``({'a','b'}, {'c'})`` -> ``'<{a, b} {c}>'``."""
+    """Readable text of a pattern: ``({'a','b'}, {'c'})`` -> ``'<{a, b} {c}>'``."""
     return "<" + " ".join("{" + ", ".join(sorted(element)) + "}" for element in sequence) + ">"
 
 
 def contains_sequence(sequence: Iterable[Iterable[str]], pattern: Iterable[Iterable[str]]) -> bool:
-    """True si `pattern` esta contenido en `sequence` (en orden, cada elemento del patron dentro de uno distinto)."""
+    """True if `pattern` is contained in `sequence` (in order, each element of the pattern inside a different one)."""
     elements = [frozenset(e) for e in sequence]
     position = 0
     for wanted in pattern:
@@ -71,20 +65,18 @@ def contains_sequence(sequence: Iterable[Iterable[str]], pattern: Iterable[Itera
 def prefixspan(sequences: Iterable[Iterable[Union[str, Iterable[str]]]], min_supp: float,
                max_len: Optional[int] = None, min_len: int = 1) -> pd.DataFrame:
     """
-    Patrones secuenciales frecuentes (PrefixSpan).
+    Frequent sequential patterns (PrefixSpan).
 
-    Argumentos:
-        sequences: una secuencia por elemento; cada secuencia, una lista de
-            elementos (conjuntos de items, o un item suelto)
-        min_supp (float): soporte minimo relativo (fraccion de secuencias), en (0, 1]
-        max_len (int, opcional): numero maximo de items de un patron (suma de
-            los tamanos de sus elementos); por defecto, sin limite
-        min_len (int): numero minimo de items de los patrones devueltos
+    Args:
+        sequences: one sequence per element; each sequence, a list of elements (sets of items, or a single item)
+        min_supp (float): minimum relative support (fraction of sequences), in (0, 1]
+        max_len (int, optional): maximum number of items of a pattern (sum of the sizes of its elements); no limit
+            by default
+        min_len (int): minimum number of items of the returned patterns
 
-    Retorna:
-        pandas.DataFrame con una fila por patron y las columnas 'support',
-        'sequence' (tupla de ``frozenset``, un elemento cada uno) y 'length'
-        (numero de items), ordenado por soporte decreciente y longitud.
+    Returns:
+        pandas.DataFrame with one row per pattern and the columns 'support', 'sequence' (tuple of ``frozenset``, one
+        element each) and 'length' (number of items), sorted by decreasing support and length.
     """
     database = _normalize(sequences)
     total = len(database)
@@ -141,7 +133,7 @@ def prefixspan(sequences: Iterable[Iterable[Union[str, Iterable[str]]]], min_sup
 
 
 def _sorted_elements(sequence: Iterable[Union[str, Iterable[str]]]) -> List[List[str]]:
-    """Una secuencia como lista de elementos (listas de items ordenadas y sin repetidos), sin elementos vacios."""
+    """A sequence as a list of elements (sorted lists of items without repeats), with no empty elements."""
     result = []
     for element in sequence:
         items = sorted({element} if isinstance(element, str) else set(element))
@@ -153,20 +145,20 @@ def _sorted_elements(sequence: Iterable[Union[str, Iterable[str]]]) -> List[List
 def prefixspan_spark(spark: Any, sequences: Any, min_supp: float, max_pattern_length: int = 10,
                      sequence_column: str = "sequence") -> pd.DataFrame:
     """
-    Patrones secuenciales frecuentes en Spark: usa el PrefixSpan de MLlib
-    (``pyspark.ml.fpm.PrefixSpan``). Requiere el extra ``spark``.
+    Frequent sequential patterns on Spark: it uses the MLlib PrefixSpan (``pyspark.ml.fpm.PrefixSpan``). Requires
+    the ``spark`` extra.
 
-    Argumentos:
-        spark: un ``SparkSession`` o un ``SparkContext``
-        sequences: las secuencias, en el mismo formato que `prefixspan`, como lista de Python, como RDD o como
-            ``DataFrame`` de Spark con una columna `sequence_column` de tipo ``array<array<string>>`` (por ejemplo
-            leido de Parquet). El RDD y el DataFrame NO se recogen en el driver: se normalizan en los ejecutores
-        min_supp (float): soporte minimo relativo, en (0, 1]
-        max_pattern_length (int): numero maximo de items de un patron
-        sequence_column (str): columna con las secuencias cuando `sequences` es un DataFrame
+    Args:
+        spark: a ``SparkSession`` or a ``SparkContext``
+        sequences: the sequences, in the same format as `prefixspan`, as a Python list, as an RDD or as a Spark
+            ``DataFrame`` with a `sequence_column` column of type ``array<array<string>>`` (for example read from
+            Parquet). The RDD and the DataFrame are NOT collected on the driver: they are normalized on the executors
+        min_supp (float): minimum relative support, in (0, 1]
+        max_pattern_length (int): maximum number of items of a pattern
+        sequence_column (str): column with the sequences when `sequences` is a DataFrame
 
-    Retorna:
-        pandas.DataFrame con las columnas 'support', 'sequence' y 'length', como `prefixspan`.
+    Returns:
+        pandas.DataFrame with the columns 'support', 'sequence' and 'length', like `prefixspan`.
     """
     from pyspark.ml.fpm import PrefixSpan
     from pyspark.sql import DataFrame, SparkSession
@@ -199,27 +191,24 @@ def prefixspan_spark(spark: Any, sequences: Any, min_supp: float, max_pattern_le
 def sequences_from_events(events: pd.DataFrame, sequence_column: str, time_column: str, item_column: str,
                           bin: Optional[Union[str, pd.Timedelta]] = None) -> List[List[Element]]:
     """
-    Construye secuencias a partir de un registro de eventos (una fila por evento).
+    Build sequences from an event log (one row per event).
 
-    Argumentos:
-        events (pandas.DataFrame): registro con una fila por evento
-        sequence_column (str): columna que identifica la secuencia (usuario,
-            paciente, sesion, dia, ...)
-        time_column (str): instante del evento (ordenable)
-        item_column (str): item del evento
-        bin (str | pandas.Timedelta, opcional): si se da, los eventos de una
-            misma secuencia dentro del mismo intervalo (``'5min'``, ``'1h'``)
-            forman un unico elemento; si no, forman un elemento los eventos
-            con exactamente el mismo instante. Requiere que `time_column`
-            sea de tipo fecha
+    Args:
+        events (pandas.DataFrame): log with one row per event
+        sequence_column (str): column that identifies the sequence (user, patient, session, day, ...)
+        time_column (str): instant of the event (sortable)
+        item_column (str): item of the event
+        bin (str | pandas.Timedelta, optional): if given, the events of the same sequence within the same interval
+            (``'5min'``, ``'1h'``) form a single element; otherwise, the events with exactly the same instant form
+            an element. Requires `time_column` to be of date type
 
-    Retorna:
-        list[list[frozenset[str]]]: una secuencia por valor de `sequence_column`
-        (en el orden de sus valores), con los elementos ordenados en el tiempo.
+    Returns:
+        list[list[frozenset[str]]]: one sequence per value of `sequence_column` (in the order of its values), with
+        the elements ordered in time.
     """
     for column in (sequence_column, time_column, item_column):
         if column not in events.columns:
-            raise ValueError("la columna '{}' no existe en los eventos".format(column))
+            raise ValueError("column '{}' does not exist in the events".format(column))
     table = events[[sequence_column, time_column, item_column]].dropna()
     moment = pd.to_datetime(table[time_column]).dt.floor(bin) if bin is not None else table[time_column]
     table = table.assign(_moment=moment.to_numpy())
@@ -233,19 +222,17 @@ def sequences_from_events(events: pd.DataFrame, sequence_column: str, time_colum
 
 def sequences_from_items(items: pd.DataFrame, by: Any = None) -> List[List[Element]]:
     """
-    Construye secuencias a partir de una tabla de items booleanos (una fila por
-    instante): cada fila con algun item es un elemento, y las filas vacias se
-    omiten.
+    Build sequences from a table of boolean items (one row per instant): each row with some item is an element, and
+    empty rows are omitted.
 
-    Argumentos:
-        items (pandas.DataFrame): items booleanos ordenados en el tiempo
-        by: como partir la tabla en secuencias: una secuencia o ``Series`` de
-            su misma longitud, o una funcion que recibe el indice y la
-            devuelve (p.ej. ``lambda idx: idx.date`` para una secuencia por
-            dia); por defecto, toda la tabla es una sola secuencia
+    Args:
+        items (pandas.DataFrame): boolean items ordered in time
+        by: how to split the table into sequences: a sequence or ``Series`` of the same length, or a function that
+            receives the index and returns it (e.g. ``lambda idx: idx.date`` for one sequence per day); by default,
+            the whole table is a single sequence
 
-    Retorna:
-        list[list[frozenset[str]]]: una secuencia por grupo, en el orden de las claves
+    Returns:
+        list[list[frozenset[str]]]: one sequence per group, in the order of the keys
     """
     names = np.array(items.columns, dtype=object)
     present = items.to_numpy(dtype=bool)
@@ -254,7 +241,7 @@ def sequences_from_items(items: pd.DataFrame, by: Any = None) -> List[List[Eleme
     else:
         groups = np.asarray(by(items.index) if callable(by) else by)
         if len(groups) != len(items):
-            raise ValueError("`by` debe tener una entrada por fila ({}), tiene {}".format(len(items), len(groups)))
+            raise ValueError("`by` must have one entry per row ({}), it has {}".format(len(items), len(groups)))
     result = []
     for key in sorted(set(groups.tolist())):
         rows = present[groups == key]

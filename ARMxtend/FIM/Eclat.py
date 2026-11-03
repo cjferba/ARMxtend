@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-DECLAT y FuzzyDECLAT: algoritmos de mineria de itemsets frecuentes (crisp y
-difusos) sobre Big Data (Apache Spark), inspirados en el algoritmo secuencial
-ECLAT (Zaki, 2000), que representa cada item mediante su lista de
-identificadores de transaccion (TID-list) y calcula el soporte de un
-itemset por interseccion de las TID-lists de sus items.
+DECLAT and FuzzyDECLAT: frequent-itemset mining algorithms (crisp and fuzzy) for Big Data (Apache Spark), inspired by
+the sequential algorithm ECLAT (Zaki, 2000), which represents each item by its list of transaction identifiers
+(TID-list) and computes the support of an itemset by intersecting the TID-lists of its items.
 
-DECLAT implementa el Algoritmo 3 de:
+DECLAT implements Algorithm 3 of:
     Fernandez-Basso, C., Ruiz, M.D., Martin-Bautista, M.J. (2024). "New Spark
     solutions for distributed frequent itemset and association rule mining
     algorithms". Cluster Computing, 27, 1217-1234.
 
-FuzzyDECLAT es la extension difusa (alpha-cortes) del mismo procedimiento,
-consistente con el resto de algoritmos difusos de ARMxtend (FIM.BD_FARE).
+FuzzyDECLAT is the fuzzy (alpha-cut) extension of the same procedure, consistent with the other fuzzy algorithms of
+ARMxtend (FIM.BD_FARE).
 
 @author Carlos Fernandez-Basso
 """
@@ -23,9 +21,9 @@ from ._shared import generate_candidates, alpha_levels, alpha_weights, weighted_
 
 def _intersect_positions(first, second):
     """
-    Posiciones, en `first` y en `second`, de los elementos comunes de dos arrays ORDENADOS y sin repetidos
-    (TID-lists). Busca cada elemento de `first` en `second` con ``searchsorted``: O(|first| log |second|), sin
-    concatenar ni reordenar; conviene que `first` sea el mas corto.
+    Positions, in `first` and in `second`, of the common elements of two SORTED arrays without repeats (TID-lists).
+    It looks up each element of `first` in `second` with ``searchsorted``: O(|first| log |second|), without
+    concatenating or re-sorting; `first` should be the shorter one.
     """
     if len(first) == 0 or len(second) == 0:
         empty = np.zeros(0, dtype=np.intp)
@@ -37,13 +35,12 @@ def _intersect_positions(first, second):
 
 
 def _tid_dtype(total):
-    """int32 si los identificadores caben (la mitad de memoria que int64), int64 si no."""
+    """int32 if the identifiers fit (half the memory of int64), int64 otherwise."""
     return np.int32 if total < 2 ** 31 else np.int64
 
 
 class DECLAT(object):
-    """Mineria de itemsets frecuentes crisp en Spark, vía TID-lists (DECLAT)."""
-
+    """Crisp frequent-itemset mining on Spark, via TID-lists (DECLAT)."""
     item_sep = ","
 
     @classmethod
@@ -53,14 +50,13 @@ class DECLAT(object):
     @classmethod
     def run(cls, sc, transactions, min_supp):
         """
-        Argumentos:
+        Args:
             sc (SparkContext)
-            transactions (RDD[str]): una transaccion por linea
-            min_supp (float): soporte minimo relativo, en (0, 1]
+            transactions (RDD[str]): one transaction per line
+            min_supp (float): minimum relative support, in (0, 1]
 
-        Retorna:
-            dict {itemset_key: soporte relativo} con todos los itemsets
-            frecuentes de cualquier longitud
+        Returns:
+            dict {itemset_key: relative support} with all the frequent itemsets of any length
         """
         indexedTransacs = transactions.zipWithIndex()
         totalTransacs = indexedTransacs.count()
@@ -69,10 +65,10 @@ class DECLAT(object):
         dtype = _tid_dtype(totalTransacs)
 
         # Preprocesado (lineas 4-7 Algoritmo 3): transformar a formato vertical
-        # <item, TID-list> agrupando por item las transacciones en que aparece.
-        # Cada TID-list se compacta EN LOS EJECUTORES a un array numpy ordenado
-        # (4 bytes por aparicion): lo que viaja al driver y se difunde es del
-        # orden de los datos, no de los objetos Python que los representan
+        # <item, TID-list> grouping by item the transactions where it appears.
+        # Each TID-list is compacted ON THE EXECUTORS into a sorted numpy array
+        # (4 bytes per occurrence): what travels to the driver and is broadcast is of the
+        # order of the data, not of the Python objects that represent them
         def emitItemTid(pair):
             line, tid = pair
             return [(item, tid) for item in cls._split(line)]
@@ -85,7 +81,7 @@ class DECLAT(object):
                                        .mapValues(compact) \
                                        .collectAsMap()
 
-        # Fase 1: FreqItems() -- soporte de itemsets de longitud 1
+        # Phase 1: FreqItems() -- support of itemsets of length 1
         freqItemsets = {item: len(tids) / totalTransacs
                         for item, tids in itemTidLists.items()
                         if len(tids) / totalTransacs >= min_supp}
@@ -93,12 +89,12 @@ class DECLAT(object):
         globalFreqItemsets = dict(freqItemsets)
         currentLevelKeys = sorted(freqItemsets.keys())
 
-        # Fase 2: generacion iterativa de candidatos por interseccion de TID-lists.
-        # Las TID-lists se difunden UNA vez para todos los niveles
+        # Phase 2: iterative generation of candidates by intersecting TID-lists.
+        # The TID-lists are broadcast ONCE for all the levels
         broadcastTidLists = sc.broadcast(itemTidLists)
 
         def countCandidate(key):
-            # se empieza por la lista mas corta: cada interseccion cuesta lo que ella
+            # it starts with the shortest list: each intersection costs what it does
             tidLists = sorted((broadcastTidLists.value[item] for item in key.split("-")), key=len)
             common = tidLists[0]
             for tidList in tidLists[1:]:
@@ -132,32 +128,27 @@ class DECLAT(object):
 
 class FuzzyDECLAT(object):
     """
-    Version difusa de DECLAT: cada transaccion es una lista de pares
-    (item, grado de pertenencia), y el soporte de un itemset se calcula, para
-    cada nivel alpha, como la media del minimo (t-norma) de los grados de
-    pertenencia de sus items en las transacciones donde todos ellos aparecen.
+    Fuzzy version of DECLAT: each transaction is a list of (item, membership degree) pairs, and the support of an
+    itemset is computed, for each alpha level, as the mean of the minimum (t-norm) of the membership degrees of its
+    items in the transactions where all of them appear.
     """
 
     @classmethod
     def run(cls, sc, transactions, min_supp, num_alpha):
         """
-        Argumentos:
+        Args:
             sc (SparkContext)
-            transactions (RDD[Iterable[Tuple[str, float]]]): cada transaccion
-                es una lista de pares (item, grado de pertenencia en [0, 1])
-            min_supp (float): soporte minimo relativo, en (0, 1]
-            num_alpha (int): numero de alpha-cortes a considerar
+            transactions (RDD[Iterable[Tuple[str, float]]]): each transaction is a list of (item, membership degree
+                in [0, 1]) pairs
+            min_supp (float): minimum relative support, in (0, 1]
+            num_alpha (int): number of alpha-cuts to consider
 
-        Retorna:
-            dict {itemset_key: numpy.ndarray(num_alpha)} con el bit-list de
-            soporte relativo de cada itemset frecuente en cada alpha-corte
-            (ver `FIM._shared.alpha_cuts`). Un itemset se considera frecuente
-            si su soporte difuso agregado FSupp (ver
-            `FIM._shared.weighted_alpha_aggregate`) alcanza `min_supp`; dicho
-            vector se conserva integro (no solo el agregado) porque
-            `FIM.FARE` lo necesita para calcular la confianza difusa nivel a
-            nivel (Ecs. (2)-(4) de Fernandez-Basso, Ruiz & Martin-Bautista,
-            2021).
+        Returns:
+            dict {itemset_key: numpy.ndarray(num_alpha)} with the bit-list of relative support of each frequent
+            itemset in each alpha-cut (see `FIM._shared.alpha_cuts`). An itemset is considered frequent if its
+            aggregated fuzzy support FSupp (see `FIM._shared.weighted_alpha_aggregate`) reaches `min_supp`; that
+            vector is kept whole (not only the aggregate) because `FIM.FARE` needs it to compute the fuzzy
+            confidence level by level (Eqs. (2)-(4) of Fernandez-Basso, Ruiz & Martin-Bautista, 2021).
         """
         levels = alpha_levels(num_alpha)
         weights = alpha_weights(levels)
@@ -168,11 +159,11 @@ class FuzzyDECLAT(object):
             return {}
         dtype = _tid_dtype(totalTransacs)
 
-        # Formato vertical <item, (TIDs, grados)>: dos arrays numpy por item, construidos EN LOS EJECUTORES
-        # (TIDs ordenados de 4 bytes y grados de 8). El alpha-corte del minimo de varios grados es el minimo de
-        # sus alpha-cortes (``value >= alpha`` es monotona), asi que basta guardar el grado y contar a cada
-        # nivel al final: el resultado es el mismo que llevando un vector de alpha-cortes por TID, con una
-        # fraccion de la memoria y sin bucles de Python por TID
+        # Vertical format <item, (TIDs, degrees)>: two numpy arrays per item, built ON THE EXECUTORS
+        # (sorted 4-byte TIDs and 8-byte degrees). The alpha-cut of the minimum of several degrees is the minimum of
+        # their alpha-cuts (``value >= alpha`` is monotone), so it is enough to store the degree and count at each
+        # level at the end: the result is the same as carrying a vector of alpha-cuts per TID, with a
+        # fraction of the memory and no Python loops per TID
         def emitItemTid(pair):
             memberships, tid = pair
             for _, degree in memberships:
@@ -186,7 +177,7 @@ class FuzzyDECLAT(object):
             degrees = np.fromiter((degree for _, degree in pairs), dtype=float, count=len(pairs))
             order = np.argsort(tids, kind="stable")
             tids, degrees = tids[order], degrees[order]
-            if len(tids) > 1 and (tids[1:] == tids[:-1]).any():           # un item repetido en la transaccion: el mayor grado
+            if len(tids) > 1 and (tids[1:] == tids[:-1]).any():           # a repeated item in the transaction: the highest degree
                 unique, inverse = np.unique(tids, return_inverse=True)
                 best = np.zeros(len(unique))
                 np.maximum.at(best, inverse, degrees)

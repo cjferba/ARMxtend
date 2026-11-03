@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Representacion VERTICAL de una base de transacciones: para cada item, el vector de bits (empaquetado)
-de las transacciones que lo contienen. El soporte de un itemset es el numero de bits de la interseccion
-(AND) de los vectores de sus items. Lo comparten los mineros top-k y de itemsets raros.
+VERTICAL representation of a transaction database: for each item, the (packed) bit vector of the transactions that
+contain it. The support of an itemset is the number of bits of the intersection (AND) of the vectors of its items.
+Shared by the top-k and rare-itemset miners.
 
 @author Carlos Fernandez-Basso
 """
@@ -14,16 +14,16 @@ _POPCOUNT = np.array([bin(value).count("1") for value in range(256)], dtype=np.u
 
 
 def count_bits(mask: np.ndarray) -> int:
-    """Numero de bits a 1 de un vector empaquetado."""
+    """Number of bits set in a packed vector."""
     return int(_POPCOUNT[mask].sum(dtype=np.int64))
 
 
 class Vertical(object):
     """
-    Items ordenados y su vector de bits.
+    Sorted items and their bit vector.
 
-    Atributos: ``items`` (nombres, ordenados), ``masks`` (un vector empaquetado por item), ``total``
-    (numero de transacciones) y ``counts`` (transacciones de cada item).
+    Attributes: ``items`` (names, sorted), ``masks`` (one packed vector per item), ``total``
+    (number of transactions) and ``counts`` (transactions of each item).
     """
 
     def __init__(self, transactions: Iterable[Iterable[Any]]):
@@ -42,7 +42,7 @@ class Vertical(object):
 
     @classmethod
     def from_table(cls, table: Any) -> "Vertical":
-        """Desde una tabla booleana (o 0/1) de transacciones por items, sin pasar por listas de Python."""
+        """From a boolean (or 0/1) table of transactions by items, without going through Python lists."""
         values = np.asarray(table.to_numpy()).astype(bool)
         vertical = cls.__new__(cls)
         vertical.total = len(values)
@@ -62,7 +62,7 @@ class Vertical(object):
         return result
 
     def count_of(self, indices: Sequence[int]) -> int:
-        """Transacciones que contienen todos los items de `indices` (con cache)."""
+        """Transactions that contain all the items of `indices` (cached)."""
         key = tuple(sorted(indices))
         if key not in self._cache:
             self._cache[key] = self.counts[key[0]] if len(key) == 1 else count_bits(self.mask_of(key))

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Protocolo de parametros de los estimadores (``get_params`` / ``set_params`` / ``__repr__``), el mismo de
-scikit-learn pero sin depender de el: un estimador de ARMxtend guarda en ``self.<nombre>`` cada argumento de su
-constructor tal cual lo recibio, y con eso scikit-learn puede clonarlo (``sklearn.base.clone``), meterlo en un
-``Pipeline`` o buscar sus parametros con ``GridSearchCV``.
+Parameter protocol of the estimators (``get_params`` / ``set_params`` / ``__repr__``), the same as scikit-learn's but
+without depending on it: an ARMxtend estimator stores each constructor argument in ``self.<name>`` exactly as it was
+received, and with that scikit-learn can clone it (``sklearn.base.clone``), put it in a ``Pipeline`` or search its
+parameters with ``GridSearchCV``.
 
 @author Carlos Fernandez-Basso
 """
@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 
 
 class ParamsMixin(object):
-    """``get_params``, ``set_params`` y ``__repr__`` a partir de la firma de ``__init__``."""
+    """``get_params``, ``set_params`` and ``__repr__`` from the signature of ``__init__``."""
 
     @classmethod
     def _param_names(cls) -> List[str]:
@@ -21,22 +21,22 @@ class ParamsMixin(object):
                       if name != "self" and parameter.kind not in (parameter.VAR_POSITIONAL, parameter.VAR_KEYWORD))
 
     def get_params(self, deep: bool = True) -> Dict[str, Any]:
-        """Los parametros del constructor y su valor actual (`deep` se admite por compatibilidad: no hay anidados)."""
+        """The constructor parameters and their current value (`deep` is accepted for compatibility: nothing is nested)."""
         return {name: getattr(self, name) for name in self._param_names()}
 
     def set_params(self, **params: Any) -> "ParamsMixin":
-        """Cambia parametros del constructor; devuelve el propio estimador."""
+        """Change constructor parameters; returns the estimator itself."""
         valid = self._param_names()
         for name, value in params.items():
             if name not in valid:
-                raise ValueError("parametro no valido '{}' para {}; los validos son {}".format(
+                raise ValueError("invalid parameter '{}' for {}; the valid ones are {}".format(
                     name, type(self).__name__, valid))
             setattr(self, name, value)
         return self
 
     def __sklearn_tags__(self) -> Any:
-        """Etiquetas que pide scikit-learn >= 1.6 para usar el estimador en ``GridSearchCV`` o ``Pipeline``."""
-        from sklearn.base import BaseEstimator       # solo se importa si scikit-learn esta instalado y lo pide
+        """Tags that scikit-learn >= 1.6 asks for to use the estimator in ``GridSearchCV`` or ``Pipeline``."""
+        from sklearn.base import BaseEstimator       # only imported if scikit-learn is installed and asks for it
 
         return BaseEstimator.__sklearn_tags__(self)
 

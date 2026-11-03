@@ -1,37 +1,28 @@
 # -*- coding: utf-8 -*-
 """
-Significacion estadistica de reglas de asociacion: de "esta regla supera los
-umbrales" a "esta regla es mas fuerte de lo que daria el azar".
+Statistical significance of association rules: from "this rule passes the thresholds" to "this rule is stronger than
+chance would give".
 
-Minar muchas reglas con umbrales de soporte y confianza produce reglas
-espurias -- cuantas mas se prueban, mas aparecen por casualidad -- y sobre
-datos temporales autocorrelacionados todavia mas. Este modulo ofrece tres
-herramientas:
+Mining many rules with support and confidence thresholds produces spurious rules -- the more are tested, the more
+appear by chance -- and on autocorrelated temporal data even more. This module offers three tools:
 
-* TESTS por regla sobre la tabla 2x2 de sus frecuencias (``rule_significance``):
-  test exacto de Fisher (cola de la hipergeometrica) o chi-cuadrado de Pearson.
-  Suponen transacciones independientes.
-* CORRECCION por pruebas multiples (``adjust_pvalues``, ``significant_rules``):
-  Bonferroni, Holm (Holm, 1979), Benjamini-Hochberg (1995) y
-  Benjamini-Yekutieli (2001). El numero de hipotesis es el de reglas
-  candidatas que se han probado, no solo el de las que se muestran
-  (``candidate_rule_count``; ``association_rules`` y ``temporal_association_rules``
-  lo anotan en ``rules.attrs["n_candidates"]``).
-* TESTS DE PERMUTACION (``permutation_null``, ``permutation_p_values``): se
-  re-mina sobre datos barajados que conservan la frecuencia de cada item pero
-  rompen las relaciones entre ellos, y cada regla se compara con la distribucion
-  del MAXIMO de la medida entre todas las reglas del dato barajado
-  (Westfall & Young, 1993), lo que controla la tasa de error por familia
-  teniendo en cuenta que las reglas se seleccionaron por sus propios valores
-  (Webb, 2007). Con series temporales se baraja con desplazamientos circulares
-  (``null="shift"``), que conservan la autocorrelacion de cada serie.
+* Per-rule TESTS on the 2x2 table of their frequencies (``rule_significance``): Fisher's exact test (tail of the
+  hypergeometric) or Pearson's chi-squared. They assume independent transactions.
+* MULTIPLE-TESTING CORRECTION (``adjust_pvalues``, ``significant_rules``): Bonferroni, Holm (Holm, 1979),
+  Benjamini-Hochberg (1995) and Benjamini-Yekutieli (2001). The number of hypotheses is that of the candidate rules
+  that were tested, not only of those shown (``candidate_rule_count``; ``association_rules`` and
+  ``temporal_association_rules`` record it in ``rules.attrs["n_candidates"]``).
+* PERMUTATION TESTS (``permutation_null``, ``permutation_p_values``): the data are re-mined after shuffling them in a
+  way that keeps the frequency of each item but breaks the relations between them, and each rule is compared with the
+  distribution of the MAXIMUM of the measure among all the rules of the shuffled data (Westfall & Young, 1993), which
+  controls the family-wise error rate taking into account that the rules were selected by their own values
+  (Webb, 2007). With time series the shuffling uses circular shifts (``null="shift"``), which keep the
+  autocorrelation of each series.
 
-Ademas, ``confidence_intervals`` da intervalos de Wilson o bootstrap para el
-soporte, la confianza y el lift.
+Besides, ``confidence_intervals`` gives Wilson or bootstrap intervals for support, confidence and lift.
 
-Los tests por regla exigen frecuencias enteras (reglas crisp); para reglas
-difusas use ``ARM.fuzzy_significant_rules`` (test de permutacion regla a regla) o los
-tests de permutacion de este modulo, que valen con cualquier minero.
+The per-rule tests require integer frequencies (crisp rules); for fuzzy rules use ``ARM.fuzzy_significant_rules``
+(rule-by-rule permutation test) or the permutation tests of this module, which work with any miner.
 
 @author Carlos Fernandez-Basso
 """
@@ -62,11 +53,10 @@ def _log_choose(n: int, k: int) -> float:
 
 def _hypergeom_upper(k: int, draws: int, successes: int, population: int) -> float:
     """
-    P(X >= k) para X ~ Hipergeometrica(poblacion, exitos, extracciones): la cola
-    superior del test exacto de Fisher. Se suma desde `k` hacia arriba con la
-    recurrencia entre terminos consecutivos, en bloques, y se para en cuanto los
-    terminos, ya decrecientes, dejan de contar: el coste depende de la desviacion
-    tipica de X y no del tamano de la poblacion.
+    P(X >= k) for X ~ Hypergeometric(population, successes, draws): the upper tail of Fisher's exact test. It is
+    summed from `k` upwards with the recurrence between consecutive terms, in blocks, and stops as soon as the terms,
+    already decreasing, no longer count: the cost depends on the standard deviation of X and not on the size of the
+    population.
     """
     low = max(0, draws + successes - population)
     high = min(draws, successes)
@@ -129,52 +119,48 @@ def _chi2_pvalue(n_ac: int, n_a: int, n_c: int, n: int, alternative: str) -> flo
 def _rule_counts(rules: pd.DataFrame, n_transactions: Optional[int]) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int]:
     n = n_transactions if n_transactions is not None else rules.attrs.get("n_transactions")
     if n is None:
-        raise ValueError("falta el numero de transacciones: pasa `n_transactions` (las reglas de "
-                         "temporal_association_rules ya lo traen en rules.attrs)")
+        raise ValueError("the number of transactions is missing: pass `n_transactions` (the rules of "
+                         "temporal_association_rules already carry it in rules.attrs)")
     n = int(n)
     if n < 1:
         raise ValueError("n_transactions debe ser >= 1, recibido: {}".format(n))
     missing = [column for column in ("support", "antecedent support", "consequent support") if column not in rules.columns]
     if missing:
-        raise ValueError("las reglas necesitan las columnas {}: este test es para reglas crisp "
-                         "(para reglas difusas use permutation_null)".format(missing))
+        raise ValueError("the rules need the columns {}: this test is for crisp rules "
+                         "(for fuzzy rules use permutation_null)".format(missing))
     scaled = [rules[column].to_numpy(dtype=float) * n for column in ("support", "antecedent support", "consequent support")]
     counts = [np.rint(values) for values in scaled]
     if any(np.any(np.abs(values - rounded) > 1e-3) for values, rounded in zip(scaled, counts)):
-        raise ValueError("los soportes no son multiplos de 1/{}: n_transactions no coincide con las "
-                         "transacciones de las que salen las reglas (o son reglas difusas)".format(n))
+        raise ValueError("the supports are not multiples of 1/{}: n_transactions does not match the "
+                         "transactions the rules come from (or they are fuzzy rules)".format(n))
     nAC, nA, nC = (rounded.astype(np.int64) for rounded in counts)
     if np.any(nAC > np.minimum(nA, nC)) or np.any(nA > n) or np.any(nC > n) or np.any(nAC < np.maximum(0, nA + nC - n)):
-        raise ValueError("las frecuencias de las reglas son incoherentes con n_transactions={}".format(n))
+        raise ValueError("the frequencies of the rules are inconsistent with n_transactions={}".format(n))
     return nAC, nA, nC, n
 
 
 def rule_significance(rules: pd.DataFrame, n_transactions: Optional[int] = None, method: str = "fisher",
                       alternative: str = "greater") -> pd.DataFrame:
     """
-    Anade a cada regla el p-valor de su asociacion.
+    Add to each rule the p-value of its association.
 
-    Para cada regla ``A => C`` se contrasta la hipotesis nula de que A y C son
-    independientes con la tabla 2x2 (A / no A) x (C / no C) reconstruida a partir
-    de los soportes y del numero de transacciones.
+    For each rule ``A => C`` the null hypothesis that A and C are independent is tested with the 2x2 table
+    (A / not A) x (C / not C) rebuilt from the supports and the number of transactions.
 
-    Argumentos:
-        rules (pandas.DataFrame): reglas crisp, con las columnas 'support',
-            'antecedent support' y 'consequent support' (la salida de
-            ``ARM.association_rules`` o de ``ARM.temporal_association_rules``)
-        n_transactions (int, opcional): numero de transacciones de las que salen
-            los soportes; por defecto ``rules.attrs["n_transactions"]`` (lo anotan
-            las reglas temporales; en las demas hay que darlo). Si los soportes no
-            son multiplos de 1/n se lanza ``ValueError``
-        method (str): 'fisher' (test exacto, por defecto) o 'chi2' (Pearson, sin
-            correccion de continuidad; aproxima bien con frecuencias esperadas >= 5)
-        alternative (str): 'greater' (asociacion positiva: A favorece C, lo que
-            interesa en una regla; por defecto), 'less' o 'two-sided' (el doble
-            del menor p-valor unilateral)
+    Args:
+        rules (pandas.DataFrame): crisp rules, with the columns 'support', 'antecedent support' and
+            'consequent support' (the output of ``ARM.association_rules`` or of ``ARM.temporal_association_rules``)
+        n_transactions (int, optional): number of transactions the supports come from; by default
+            ``rules.attrs["n_transactions"]`` (recorded by the temporal rules; for the others it must be given). If
+            the supports are not multiples of 1/n, ``ValueError`` is raised
+        method (str): 'fisher' (exact test, default) or 'chi2' (Pearson, without continuity correction; it
+            approximates well with expected frequencies >= 5)
+        alternative (str): 'greater' (positive association: A favors C, which is what matters in a rule; default),
+            'less' or 'two-sided' (twice the smaller one-sided p-value)
 
-    Retorna:
-        Copia de `rules` con la columna 'p_value'. Supone transacciones
-        independientes; con series temporales use ``permutation_null``.
+    Returns:
+        Copy of `rules` with the column 'p_value'. It assumes independent transactions; with time series use
+        ``permutation_null``.
     """
     if method not in TESTS:
         raise ValueError("method debe ser uno de {}, recibido: '{}'".format(TESTS, method))
@@ -193,20 +179,18 @@ def rule_significance(rules: pd.DataFrame, n_transactions: Optional[int] = None,
 def adjust_pvalues(p_values: Union[Iterable[float], np.ndarray], method: str = "fdr_bh",
                    n_tests: Optional[int] = None) -> np.ndarray:
     """
-    Corrige p-valores por pruebas multiples.
+    Correct p-values for multiple testing.
 
-    Argumentos:
-        p_values: los p-valores de las hipotesis contrastadas
-        method (str): 'bonferroni' y 'holm' controlan la probabilidad de algun falso
-            positivo (FWER); 'fdr_bh' (Benjamini-Hochberg, para tests independientes o
-            con dependencia positiva) y 'fdr_by' (Benjamini-Yekutieli, valida con
-            cualquier dependencia) controlan la proporcion esperada de falsos descubrimientos (FDR)
-        n_tests (int, opcional): numero total de hipotesis de la familia, si es mayor
-            que ``len(p_values)``: las no listadas se tratan como no rechazadas
-            (p-valor 1); por defecto, ``len(p_values)``
+    Args:
+        p_values: the p-values of the hypotheses tested
+        method (str): 'bonferroni' and 'holm' control the probability of any false positive (FWER); 'fdr_bh'
+            (Benjamini-Hochberg, for independent tests or positive dependence) and 'fdr_by' (Benjamini-Yekutieli,
+            valid under any dependence) control the expected proportion of false discoveries (FDR)
+        n_tests (int, optional): total number of hypotheses of the family, if larger than ``len(p_values)``: the
+            ones not listed are treated as not rejected (p-value 1); by default, ``len(p_values)``
 
-    Retorna:
-        numpy.ndarray con los p-valores ajustados, en el orden de entrada y en [0, 1].
+    Returns:
+        numpy.ndarray with the adjusted p-values, in the input order and in [0, 1].
     """
     if method not in CORRECTIONS:
         raise ValueError("method debe ser uno de {}, recibido: '{}'".format(CORRECTIONS, method))
@@ -214,7 +198,7 @@ def adjust_pvalues(p_values: Union[Iterable[float], np.ndarray], method: str = "
     count = len(p)
     total = count if n_tests is None else int(n_tests)
     if total < count:
-        raise ValueError("n_tests ({}) no puede ser menor que el numero de p-valores ({})".format(total, count))
+        raise ValueError("n_tests ({}) cannot be smaller than the number of p-values ({})".format(total, count))
     if count == 0:
         return p.copy()
     if np.any((p < 0) | (p > 1)) or np.any(np.isnan(p)):
@@ -236,13 +220,12 @@ def adjust_pvalues(p_values: Union[Iterable[float], np.ndarray], method: str = "
 
 def candidate_rule_count(itemsets: pd.DataFrame) -> int:
     """
-    Numero de reglas candidatas que salen de unos itemsets frecuentes: cada itemset
-    de tamano k >= 2 se parte de ``2^k - 2`` formas en antecedente y consecuente.
-    Es el tamano natural de la familia de hipotesis para `adjust_pvalues` (``n_tests``).
+    Number of candidate rules that come out of some frequent itemsets: each itemset of size k >= 2 is split in
+    ``2^k - 2`` ways into antecedent and consequent. It is the natural size of the family of hypotheses for
+    `adjust_pvalues` (``n_tests``).
 
-    Argumentos:
-        itemsets (pandas.DataFrame): con la columna 'itemsets' (como la entrada de
-            ``ARM.association_rules``)
+    Args:
+        itemsets (pandas.DataFrame): with the column 'itemsets' (like the input of ``ARM.association_rules``)
     """
     return int(sum(2 ** len(items) - 2 for items in itemsets["itemsets"] if len(items) >= 2))
 
@@ -251,22 +234,21 @@ def significant_rules(rules: pd.DataFrame, alpha: float = 0.05, correction: str 
                       n_transactions: Optional[int] = None, method: str = "fisher", alternative: str = "greater",
                       n_tests: Optional[int] = None) -> pd.DataFrame:
     """
-    Se queda con las reglas significativas tras corregir por pruebas multiples.
+    Keep the significant rules after correcting for multiple testing.
 
-    Argumentos:
-        rules (pandas.DataFrame): reglas crisp (ver `rule_significance`)
-        alpha (float): nivel de significacion, en (0, 1): FWER o FDR segun `correction`
-        correction (str): ver `adjust_pvalues`
-        n_transactions, method, alternative: ver `rule_significance`
-        n_tests (int, opcional): numero de hipotesis de la familia. Por defecto
-            ``rules.attrs["n_candidates"]`` (el numero de reglas candidatas que anotan
-            ``association_rules`` y ``temporal_association_rules``) o, si no esta, el
-            numero de reglas dadas -- que SUBESTIMA la familia, porque las reglas se
-            eligieron por superar umbrales; use `candidate_rule_count` o un test de permutacion
+    Args:
+        rules (pandas.DataFrame): crisp rules (see `rule_significance`)
+        alpha (float): significance level, in (0, 1): FWER or FDR depending on `correction`
+        correction (str): see `adjust_pvalues`
+        n_transactions, method, alternative: see `rule_significance`
+        n_tests (int, optional): number of hypotheses of the family. By default ``rules.attrs["n_candidates"]`` (the
+            number of candidate rules recorded by ``association_rules`` and ``temporal_association_rules``) or, if it
+            is not there, the number of rules given -- which UNDERESTIMATES the family, because the rules were chosen
+            for passing thresholds; use `candidate_rule_count` or a permutation test
 
-    Retorna:
-        pandas.DataFrame con las reglas cuyo 'p_adjusted' <= alpha, con las columnas
-        'p_value' y 'p_adjusted', ordenado por p-valor ajustado.
+    Returns:
+        pandas.DataFrame with the rules whose 'p_adjusted' <= alpha, with the columns 'p_value' and 'p_adjusted',
+        sorted by adjusted p-value.
     """
     if not 0 < alpha < 1:
         raise ValueError("alpha debe estar en (0, 1), recibido: {}".format(alpha))
@@ -284,11 +266,10 @@ def significant_rules(rules: pd.DataFrame, alpha: float = 0.05, correction: str 
 def significant_miner(miner: Miner, alpha: float = 0.05, correction: str = "fdr_bh", method: str = "fisher",
                       alternative: str = "greater") -> Miner:
     """
-    Envuelve un minero ``tabla -> reglas`` para que solo devuelva las reglas
-    significativas (ver `significant_rules`). Sirve como ``miner=`` de
-    ``ARM.window_rules`` y de `permutation_null`. El numero de transacciones es
-    ``rules.attrs["n_transactions"]`` si el minero lo anota (las reglas temporales)
-    y, si no, el numero de filas de la tabla.
+    Wrap a ``table -> rules`` miner so that it returns only the significant rules (see `significant_rules`). It serves
+    as ``miner=`` of ``ARM.window_rules`` and of `permutation_null`. The number of transactions is
+    ``rules.attrs["n_transactions"]`` if the miner records it (the temporal rules) and, if not, the number of rows of
+    the table.
     """
     def significant(table: pd.DataFrame) -> pd.DataFrame:
         rules = miner(table)
@@ -304,24 +285,23 @@ def significant_miner(miner: Miner, alpha: float = 0.05, correction: str = "fdr_
 def confidence_intervals(rules: pd.DataFrame, n_transactions: Optional[int] = None, level: float = 0.95,
                          method: str = "wilson", n_resamples: int = 1000, random_state: Optional[int] = 0) -> pd.DataFrame:
     """
-    Intervalos de confianza para el soporte, la confianza y el lift de cada regla.
+    Confidence intervals for the support, confidence and lift of each rule.
 
-    Argumentos:
-        rules (pandas.DataFrame): reglas crisp (ver `rule_significance`)
-        n_transactions (int, opcional): numero de transacciones (ver `rule_significance`)
-        level (float): nivel del intervalo, en (0, 1)
-        method (str): 'wilson' -- intervalo de Wilson de una proporcion: el soporte sobre
-            n transacciones y la confianza sobre las transacciones del antecedente; no da
-            intervalo del lift (NaN) --; o 'bootstrap' -- percentiles de `n_resamples`
-            remuestreos de las transacciones con reemplazo, que dan tambien el lift. Para
-            una regla basta remuestrear sus cuatro celdas 2x2 (una multinomial), asi que
-            no hace falta la tabla de transacciones
-        n_resamples (int), random_state (int): solo para 'bootstrap'
+    Args:
+        rules (pandas.DataFrame): crisp rules (see `rule_significance`)
+        n_transactions (int, optional): number of transactions (see `rule_significance`)
+        level (float): level of the interval, in (0, 1)
+        method (str): 'wilson' -- Wilson interval of a proportion: the support over n transactions and the confidence
+            over the transactions of the antecedent; it gives no interval for the lift (NaN) --; or 'bootstrap' --
+            percentiles of `n_resamples` resamplings of the transactions with replacement, which also give the lift.
+            For one rule it is enough to resample its four 2x2 cells (a multinomial), so the table of transactions is
+            not needed
+        n_resamples (int), random_state (int): only for 'bootstrap'
 
-    Retorna:
-        Copia de `rules` con las columnas 'support_low', 'support_high', 'confidence_low',
-        'confidence_high', 'lift_low' y 'lift_high'. Ambos metodos suponen transacciones
-        independientes: con series autocorrelacionadas los intervalos quedan demasiado estrechos.
+    Returns:
+        Copy of `rules` with the columns 'support_low', 'support_high', 'confidence_low', 'confidence_high',
+        'lift_low' and 'lift_high'. Both methods assume independent transactions: with autocorrelated series the
+        intervals are too narrow.
     """
     if not 0 < level < 1:
         raise ValueError("level debe estar en (0, 1), recibido: {}".format(level))
@@ -367,16 +347,15 @@ def _wilson(successes: int, trials: int, z: float) -> Tuple[float, float]:
 
 def shuffled_items(items: pd.DataFrame, null: str = "shift", random_state: Union[None, int, np.random.Generator] = None) -> pd.DataFrame:
     """
-    Una version de `items` sin las relaciones entre columnas, para usarla como dato nulo.
+    A version of `items` without the relations between columns, to use as null data.
 
-    Argumentos:
-        items (pandas.DataFrame): tabla de items (booleana o de grados), una fila por instante
-        null (str): 'permute' -- cada columna se permuta al azar por separado: valida con
-            transacciones independientes --; o 'shift' (por defecto) -- cada columna se
-            desplaza circularmente un numero aleatorio de filas: conserva la autocorrelacion y
-            los ciclos de cada serie y solo rompe su alineacion con las demas, que es lo que
-            hay que hacer con series temporales
-        random_state: semilla o ``numpy.random.Generator``
+    Args:
+        items (pandas.DataFrame): table of items (boolean or of degrees), one row per instant
+        null (str): 'permute' -- each column is permuted at random separately: valid with independent
+            transactions --; or 'shift' (default) -- each column is circularly shifted by a random number of rows:
+            it keeps the autocorrelation and the cycles of each series and only breaks its alignment with the
+            others, which is what must be done with time series
+        random_state: seed or ``numpy.random.Generator``
     """
     if null not in NULLS:
         raise ValueError("null debe ser uno de {}, recibido: '{}'".format(NULLS, null))
@@ -396,31 +375,28 @@ def permutation_null(items: pd.DataFrame, miner: Miner, measure: str = "p_value"
                      null: str = "shift", random_state: Optional[int] = 0, n_transactions: Optional[int] = None,
                      test: str = "fisher") -> pd.DataFrame:
     """
-    Distribucion nula del mejor valor de una medida: re-mina `n_permutations` veces
-    sobre datos barajados (`shuffled_items`) y guarda, de cada uno, el numero de reglas
-    encontradas y la MEJOR medida entre ellas (el maximo, o el minimo si es un p-valor).
+    Null distribution of the best value of a measure: it re-mines `n_permutations` times over shuffled data
+    (`shuffled_items`) and stores, for each one, the number of rules found and the BEST measure among them (the
+    maximum, or the minimum if it is a p-value).
 
-    Argumentos:
-        items (pandas.DataFrame): la tabla de items de la que salieron las reglas
-        miner (Callable): ``tabla -> DataFrame de reglas`` con los mismos parametros con
-            que se minaron las reglas reales (p.ej. ``crisp_rule_miner(0.05)``, una
-            funcion que llame a ``temporal_association_rules`` o a un minero difuso)
-        measure (str): estadistico a seguir. 'p_value' (por defecto): el MENOR p-valor
-            (`rule_significance`) entre las reglas del dato barajado -- el metodo minP de
-            Westfall y Young, que tiene en cuenta que las reglas de poco soporte alcanzan
-            medidas extremas por casualidad; solo para reglas crisp --. Cualquier otra
-            columna de las reglas ('lift', 'confidence', 'zhangs_metric', ...): su MAXIMO;
-            es la unica opcion con reglas difusas
-        n_permutations (int): numero de datos barajados (el p-valor minimo posible es ``1/(n+1)``)
-        null (str): 'shift' o 'permute' (ver `shuffled_items`)
-        random_state (int): semilla
-        n_transactions (int, opcional): con 'p_value', numero de transacciones si el minero
-            no lo anota en ``rules.attrs`` (por defecto, el numero de filas)
-        test (str): con 'p_value', 'fisher' o 'chi2'
+    Args:
+        items (pandas.DataFrame): the table of items the rules came from
+        miner (Callable): ``table -> DataFrame of rules`` with the same parameters used to mine the real rules (e.g.
+            ``crisp_rule_miner(0.05)``, a function that calls ``temporal_association_rules`` or a fuzzy miner)
+        measure (str): statistic to follow. 'p_value' (default): the SMALLEST p-value (`rule_significance`) among the
+            rules of the shuffled data -- the minP method of Westfall and Young, which takes into account that rules
+            of low support reach extreme measures by chance; only for crisp rules --. Any other column of the rules
+            ('lift', 'confidence', 'zhangs_metric', ...): its MAXIMUM; it is the only option with fuzzy rules
+        n_permutations (int): number of shuffled datasets (the minimum possible p-value is ``1/(n+1)``)
+        null (str): 'shift' or 'permute' (see `shuffled_items`)
+        random_state (int): seed
+        n_transactions (int, optional): with 'p_value', number of transactions if the miner does not record it in
+            ``rules.attrs`` (by default, the number of rows)
+        test (str): with 'p_value', 'fisher' or 'chi2'
 
-    Retorna:
-        pandas.DataFrame con una fila por permutacion: 'permutation', 'n_rules' y
-        'min_p_value' o 'max_<measure>' (NaN si no salio ninguna regla).
+    Returns:
+        pandas.DataFrame with one row per permutation: 'permutation', 'n_rules' and 'min_p_value' or
+        'max_<measure>' (NaN if no rule came out).
     """
     if n_permutations < 1:
         raise ValueError("n_permutations debe ser >= 1")
@@ -439,7 +415,7 @@ def permutation_null(items: pd.DataFrame, miner: Miner, measure: str = "p_value"
             elif measure in rules.columns:
                 best = float(rules[measure].max())
             else:
-                raise ValueError("measure '{}' no es una columna de las reglas: {}".format(measure, sorted(rules.columns)))
+                raise ValueError("measure '{}' is not a column of the rules: {}".format(measure, sorted(rules.columns)))
         rows.append({"permutation": permutation, "n_rules": len(rules), column: best})
     result = pd.DataFrame(rows, columns=["permutation", "n_rules", column])
     result.attrs.update({"measure": measure, "test": test})
@@ -449,24 +425,24 @@ def permutation_null(items: pd.DataFrame, miner: Miner, measure: str = "p_value"
 def permutation_p_values(rules: pd.DataFrame, null_distribution: pd.DataFrame,
                          n_transactions: Optional[int] = None) -> pd.DataFrame:
     """
-    p-valor de permutacion de cada regla frente a la distribucion nula de la mejor medida
-    (`permutation_null`): la fraccion de datos barajados cuya mejor regla es al menos tan
-    buena como la suya, ``(1 + #{mejor_nulo mejor o igual}) / (1 + n_permutaciones)``. Como
-    compara con la mejor de TODAS las reglas del dato barajado, ya esta ajustado por pruebas
-    multiples (FWER) y por haber seleccionado las reglas de los propios datos.
+    Permutation p-value of each rule against the null distribution of the best measure (`permutation_null`): the
+    fraction of shuffled datasets whose best rule is at least as good as its own,
+    ``(1 + #{null best better or equal}) / (1 + n_permutations)``. Since it compares with the best of ALL the rules of
+    the shuffled data, it is already adjusted for multiple testing (FWER) and for having selected the rules from the
+    data itself.
 
-    Argumentos:
-        rules (pandas.DataFrame): las reglas reales, minadas con el mismo minero
-        null_distribution (pandas.DataFrame): resultado de `permutation_null`
-        n_transactions (int, opcional): con la medida 'p_value', numero de transacciones si
-            las reglas no tienen aun la columna 'p_value' ni lo anotan en ``rules.attrs``
+    Args:
+        rules (pandas.DataFrame): the real rules, mined with the same miner
+        null_distribution (pandas.DataFrame): result of `permutation_null`
+        n_transactions (int, optional): with the 'p_value' measure, number of transactions if the rules do not have
+            the 'p_value' column yet nor record it in ``rules.attrs``
 
-    Retorna:
-        Copia de `rules` con la columna 'p_permutation' (y 'p_value' si se uso esa medida).
+    Returns:
+        Copy of `rules` with the column 'p_permutation' (and 'p_value' if that measure was used).
     """
     measure = null_distribution.attrs.get("measure")
     if measure is None:
-        raise ValueError("`null_distribution` no viene de permutation_null (falta attrs['measure'])")
+        raise ValueError("`null_distribution` does not come from permutation_null (attrs['measure'] is missing)")
     result = rules.copy()
     if measure == "p_value":
         if "p_value" not in result.columns:
@@ -475,7 +451,7 @@ def permutation_p_values(rules: pd.DataFrame, null_distribution: pd.DataFrame,
         exceed = (null[None, :] <= result["p_value"].to_numpy(dtype=float)[:, None] * (1 + 1e-9) + 1e-300).sum(axis=1)
     else:
         if measure not in result.columns:
-            raise ValueError("measure '{}' no es una columna de las reglas".format(measure))
+            raise ValueError("measure '{}' is not a column of the rules".format(measure))
         null = null_distribution["max_" + measure].to_numpy(dtype=float)
         exceed = (null[None, :] >= result[measure].to_numpy(dtype=float)[:, None] - 1e-12).sum(axis=1)
     result["p_permutation"] = (1.0 + exceed) / (1.0 + len(null))
@@ -485,10 +461,9 @@ def permutation_p_values(rules: pd.DataFrame, null_distribution: pd.DataFrame,
 def count_candidates(itemsets: Iterable[Iterable[str]], is_valid: Callable[[frozenset, frozenset], bool],
                      eligible_consequent: Callable[[str], bool]) -> int:
     """
-    Cuenta las reglas candidatas ``A => C`` de unos itemsets que cumplen una condicion
-    estructural: el consecuente solo usa items con ``eligible_consequent`` y el par
-    (antecedente, consecuente) pasa ``is_valid``. Lo usa ``temporal_association_rules``
-    para dar el tamano de su familia de hipotesis.
+    Count the candidate rules ``A => C`` of some itemsets that meet a structural condition: the consequent uses only
+    items with ``eligible_consequent`` and the (antecedent, consequent) pair passes ``is_valid``. It is used by
+    ``temporal_association_rules`` to give the size of its family of hypotheses.
     """
     total = 0
     for itemset in itemsets:

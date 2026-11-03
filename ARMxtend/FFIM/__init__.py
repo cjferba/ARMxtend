@@ -1,32 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-FFIM (Fuzzy Frequent Itemset Mining): mineria de itemsets frecuentes,
-crisp y difusos, en una sola maquina (sin Spark), mediante el algoritmo
-FP-Growth (Han, Pei & Yin, 2000).
+FFIM (Fuzzy Frequent Itemset Mining): crisp and fuzzy frequent-itemset mining on a single machine (no Spark), with
+the FP-Growth algorithm (Han, Pei & Yin, 2000).
 
-Es el contrapunto secuencial de los algoritmos difusos de Big Data de
-``ARMxtend.FIM.BD_FARE``/``ARMxtend.FIM.Eclat.FuzzyDECLAT``: en lugar de
-generar y contar candidatos nivel a nivel (Apriori/Eclat), construye un
-arbol de patrones frecuentes (FP-Tree) y lo consulta recursivamente sin
-generar candidatos explicitos, lo que suele ser mas eficiente en una unica
-maquina para datasets con muchos items.
+It is the sequential counterpart of the Big Data fuzzy algorithms of ``ARMxtend.FIM.BD_FARE`` /
+``ARMxtend.FIM.Eclat.FuzzyDECLAT``: instead of generating and counting candidates level by level (Apriori/Eclat), it
+builds a frequent-pattern tree (FP-Tree) and queries it recursively without generating explicit candidates, which is
+usually more efficient on a single machine for datasets with many items.
 
-Para la version difusa, el arbol FP-Growth (que fusiona conteos de
-transacciones con el MISMO prefijo de items) no admite directamente grados
-de pertenencia reales, ya que dos transacciones con los mismos items pero
-distinto grado de pertenencia dejarian de ser "el mismo camino" del arbol.
-Este modulo resuelve esto binarizando cada transaccion en cada alpha-corte
-(ver ``ARMxtend.FIM._shared.alpha_cuts``) y ejecutando el FP-Growth crisp de
-forma independiente en cada uno de los `num_alpha` niveles para descubrir
-candidatos, recalculando despues su soporte exacto en todos los niveles y
-filtrando por el soporte difuso agregado FSupp (ver `fuzzy_fpgrowth`) --
-exactamente la misma convencion (bit-list de soporte por alpha-corte) que
-usan ``FuzzyDECLAT`` y ``FuzzyDAprioriTID``, lo que permite usar
-indistintamente cualquiera de los tres algoritmos como entrada de
+For the fuzzy version, the FP-Growth tree (which merges counts of transactions with the SAME prefix of items) does not
+directly admit real membership degrees, since two transactions with the same items but different membership degree
+would stop being "the same path" of the tree. This module solves this by binarizing each transaction at each alpha-cut
+(see ``ARMxtend.FIM._shared.alpha_cuts``) and running crisp FP-Growth independently at each of the `num_alpha` levels
+to discover candidates, then recomputing their exact support at all levels and filtering by the aggregated fuzzy
+support FSupp (see `fuzzy_fpgrowth`) -- exactly the same convention (bit-list of support per alpha-cut) used by
+``FuzzyDECLAT`` and ``FuzzyDAprioriTID``, which allows using any of the three algorithms interchangeably as input of
 ``ARMxtend.FIM.FARE``.
 
-Sustituye al contenido que existia previamente en este fichero, que era una
-copia identica (con los mismos errores) de ``FIM/BD_FARE/__init__.py``.
+It replaces the content that previously lived in this file, which was an identical copy (with the same errors) of
+``FIM/BD_FARE/__init__.py``.
 
 @author Carlos Fernandez-Basso
 """
@@ -51,14 +43,12 @@ class _FPNode(object):
 
 def _build_fptree(weighted, min_count):
     """
-    Construye un FP-Tree a partir de pares (items, peso): cada transaccion (o camino
-    condicional) con el numero de veces que se repite. Conserva unicamente los items cuyo
-    conteo absoluto (ponderado) alcanza `min_count`, que es el del conjunto ORIGINAL de
-    transacciones, no el tamano de `weighted`.
+    Build an FP-Tree from (items, weight) pairs: each transaction (or conditional path) with the number of times it
+    repeats. It keeps only the items whose absolute (weighted) count reaches `min_count`, which is that of the
+    ORIGINAL set of transactions, not the size of `weighted`.
 
-    Retorna (header, order, item_counts): la tabla de cabeceras (item -> primer nodo del
-    arbol con ese item, enlazados entre si via `link`), el orden descendente de frecuencia
-    de los items conservados, y sus conteos.
+    Returns (header, order, item_counts): the header table (item -> first node of the tree with that item, linked to
+    each other via `link`), the decreasing-frequency order of the kept items, and their counts.
     """
     rawCounts: Counter = Counter()
     for items, weight in weighted:
@@ -96,7 +86,7 @@ def _build_fptree(weighted, min_count):
 
 
 def _ascend_prefix_path(node):
-    """Items (sin contar el propio nodo) desde el nodo dado hacia la raiz."""
+    """Items (not counting the node itself) from the given node towards the root."""
     path = []
     node = node.parent
     while node is not None and node.item is not None:
@@ -106,9 +96,9 @@ def _ascend_prefix_path(node):
 
 
 def _mine_fptree(header, order, itemCounts, min_count, prefix, result):
-    # Se procesan los items del menos al mas frecuente: cada uno se combina con el prefijo
-    # actual para formar un nuevo itemset frecuente, y su base de patrones condicional
-    # (caminos con su peso, sin repetirlos) se mina recursivamente
+    # The items are processed from the least to the most frequent: each one is combined with the current
+    # prefix to form a new frequent itemset, and its conditional pattern base
+    # (paths with their weight, without repeating them) is mined recursively
     for item in reversed(order):
         newItemset = prefix | {item}
         result[newItemset] = itemCounts[item]
@@ -129,20 +119,17 @@ def _mine_fptree(header, order, itemCounts, min_count, prefix, result):
 
 def fpgrowth(transactions: Sequence[Iterable[str]], min_supp: float) -> Dict[str, float]:
     """
-    FP-Growth crisp: mineria exhaustiva de itemsets frecuentes sin generar
-    candidatos explicitos.
+    Crisp FP-Growth: exhaustive mining of frequent itemsets without generating explicit candidates.
 
-    Las transacciones iguales se agrupan antes de construir el arbol (con pesos), y las
-    bases condicionales llevan cada camino una sola vez con su peso.
+    Equal transactions are grouped before building the tree (with weights), and the conditional bases carry each path
+    only once with its weight.
 
-    Argumentos:
-        transactions (Sequence[Iterable[str]]): una transaccion por
-            elemento, cada una una coleccion de items
-        min_supp (float): soporte minimo relativo, en (0, 1]
+    Args:
+        transactions (Sequence[Iterable[str]]): one transaction per element, each a collection of items
+        min_supp (float): minimum relative support, in (0, 1]
 
-    Retorna:
-        dict {itemset_key: soporte relativo} con todos los itemsets
-        frecuentes de cualquier longitud
+    Returns:
+        dict {itemset_key: relative support} with all the frequent itemsets of any length
     """
     totalTransacs = len(transactions)
     if totalTransacs == 0:
@@ -162,39 +149,30 @@ def fpgrowth(transactions: Sequence[Iterable[str]], min_supp: float) -> Dict[str
 def fuzzy_fpgrowth(transactions: Sequence[Iterable[Tuple[str, float]]], min_supp: float,
                    num_alpha: int) -> Dict[str, np.ndarray]:
     """
-    FP-Growth difuso: encuentra candidatos ejecutando `fpgrowth` de forma
-    independiente en cada uno de los `num_alpha` alpha-cortes (tras
-    binarizar los grados de pertenencia de cada transaccion con
-    `alpha_cuts`), y despues recalcula, para cada candidato, su bit-list de
-    soporte EXACTO en todos los niveles (no solo en aquellos donde ya era
-    frecuente de forma aislada), de forma que el soporte difuso agregado
-    FSupp (ver `FIM._shared.weighted_alpha_aggregate`, Ec. (2) de
-    Fernandez-Basso, Ruiz & Martin-Bautista, 2021) se calcule correctamente.
+    Fuzzy FP-Growth: it finds candidates by running `fpgrowth` independently at each of the `num_alpha` alpha-cuts
+    (after binarizing the membership degrees of each transaction with `alpha_cuts`), and then recomputes, for each
+    candidate, its bit-list of EXACT support at all levels (not only those where it was already frequent in
+    isolation), so that the aggregated fuzzy support FSupp (see `FIM._shared.weighted_alpha_aggregate`, Eq. (2) of
+    Fernandez-Basso, Ruiz & Martin-Bautista, 2021) is computed correctly.
 
-    Este paso de recalculo es necesario porque, si un itemset es frecuente
-    en el nivel alpha_i (soporte >= min_supp), su soporte agregado FSupp
-    (una media ponderada de sus soportes en todos los niveles) puede ser
-    inferior a min_supp si en el resto de niveles su soporte es bajo; y a la
-    inversa, un itemset puede tener FSupp >= min_supp sin llegar a
-    min_supp de forma aislada en NINGUN nivel salvo el de mayor soporte
-    (ya que FSupp es una media ponderada, esta acotada por el maximo de los
-    soportes por nivel, luego ese nivel de soporte maximo si sera detectado
-    por `fpgrowth`). Por eso es correcto usar la union de los itemsets
-    frecuentes de cada nivel como conjunto de candidatos, pero es necesario
-    recalcular su soporte real en cada nivel (no asumir 0 en los niveles
-    donde no fueron detectados) antes de agregar y filtrar por FSupp.
+    This recomputation step is necessary because, if an itemset is frequent at level alpha_i (support >= min_supp),
+    its aggregated support FSupp (a weighted mean of its supports at all levels) can be lower than min_supp if at the
+    other levels its support is low; and conversely, an itemset can have FSupp >= min_supp without reaching min_supp
+    in isolation at ANY level except the one of highest support (since FSupp is a weighted mean, it is bounded by the
+    maximum of the supports per level, so that level of maximum support will be detected by `fpgrowth`). That is why
+    it is correct to use the union of the frequent itemsets of each level as the set of candidates, but it is
+    necessary to recompute their real support at each level (not to assume 0 at the levels where they were not
+    detected) before aggregating and filtering by FSupp.
 
-    Argumentos:
-        transactions (Sequence[Iterable[Tuple[str, float]]]): cada
-            transaccion es una lista de pares (item, grado de pertenencia
-            en [0, 1])
-        min_supp (float): soporte minimo relativo, en (0, 1]
-        num_alpha (int): numero de alpha-cortes a considerar
+    Args:
+        transactions (Sequence[Iterable[Tuple[str, float]]]): each transaction is a list of (item, membership degree
+            in [0, 1]) pairs
+        min_supp (float): minimum relative support, in (0, 1]
+        num_alpha (int): number of alpha-cuts to consider
 
-    Retorna:
-        dict {itemset_key: numpy.ndarray(num_alpha)} con el bit-list de
-        soporte relativo de cada itemset frecuente (FSupp >= min_supp) en
-        cada alpha-corte.
+    Returns:
+        dict {itemset_key: numpy.ndarray(num_alpha)} with the bit-list of relative support of each frequent itemset
+        (FSupp >= min_supp) in each alpha-cut.
     """
     transactionAlphaVectors = [
         {item: alpha_cuts(degree, num_alpha) for item, degree in transaction}
@@ -206,23 +184,20 @@ def fuzzy_fpgrowth(transactions: Sequence[Iterable[Tuple[str, float]]], min_supp
 def fuzzy_fpgrowth_from_vectors(transaction_vectors: Sequence[Dict[str, np.ndarray]], min_supp: float,
                                 num_alpha: int) -> Dict[str, np.ndarray]:
     """
-    Igual que `fuzzy_fpgrowth`, pero partiendo de transacciones ya
-    expresadas como bit-lists por alpha-corte en lugar de grados de
-    pertenencia. Permite minar items cuyo bit-list no se deriva de un unico
-    grado -- p.ej. los items AUSENTES de la RL-theory, cuyo bit-list es el
-    complemento nivel a nivel del bit-list del item (ver
+    Same as `fuzzy_fpgrowth`, but starting from transactions already expressed as bit-lists per alpha-cut instead of
+    membership degrees. It allows mining items whose bit-list is not derived from a single degree -- e.g. the ABSENT
+    items of the RL-theory, whose bit-list is the level-by-level complement of the bit-list of the item (see
     `ARM.negative_rules`).
 
-    Argumentos:
-        transaction_vectors (Sequence[dict[str, numpy.ndarray]]): para cada
-            transaccion, {item: bit-list de `num_alpha` valores 0/1}. Un
-            item que no aparece en el dict se considera ausente en todos
-            los niveles de esa transaccion
-        min_supp (float): soporte minimo relativo FSupp, en (0, 1]
-        num_alpha (int): numero de alpha-cortes (longitud de los bit-lists)
+    Args:
+        transaction_vectors (Sequence[dict[str, numpy.ndarray]]): for each transaction, {item: bit-list of
+            `num_alpha` 0/1 values}. An item that does not appear in the dict is considered absent at all the levels
+            of that transaction
+        min_supp (float): minimum relative support FSupp, in (0, 1]
+        num_alpha (int): number of alpha-cuts (length of the bit-lists)
 
-    Retorna:
-        dict {itemset_key: numpy.ndarray(num_alpha)}, como `fuzzy_fpgrowth`.
+    Returns:
+        dict {itemset_key: numpy.ndarray(num_alpha)}, like `fuzzy_fpgrowth`.
     """
     transactionAlphaVectors = transaction_vectors
     totalTransacs = len(transactionAlphaVectors)

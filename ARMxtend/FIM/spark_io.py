@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Entrada desde DataFrames de Spark (por ejemplo, ficheros Parquet) para los algoritmos Big Data
-(``DApriori``, ``DAprioriTID``, ``DECLAT``, ``FuzzyDAprioriTID``, ``FuzzyDECLAT``), que trabajan con RDDs.
+Input from Spark DataFrames (for example Parquet files) for the Big Data algorithms (``DApriori``, ``DAprioriTID``,
+``DECLAT``, ``FuzzyDAprioriTID``, ``FuzzyDECLAT``), which work with RDDs.
 
-* ``transactions_from_dataframe``: columna ``array<string>`` (o texto con separador) -> ``RDD[str]``
-  ('a,b,c'), la entrada de los algoritmos crisp.
-* ``fuzzy_transactions_from_dataframe``: columna ``array<struct<item,degree>>`` o dos columnas paralelas
-  (items y grados) -> ``RDD[list[(item, grado)]]``, la entrada de los algoritmos difusos.
-* ``read_transactions``: lee un fichero (Parquet por defecto) y llama a la anterior.
+* ``transactions_from_dataframe``: ``array<string>`` column (or text with a separator) -> ``RDD[str]`` ('a,b,c'),
+  the input of the crisp algorithms.
+* ``fuzzy_transactions_from_dataframe``: ``array<struct<item,degree>>`` column or two parallel columns (items and
+  degrees) -> ``RDD[list[(item, degree)]]``, the input of the fuzzy algorithms.
+* ``read_transactions``: reads a file (Parquet by default) and calls the previous one.
 
-No se recoge nada en el driver: la conversion se hace en los ejecutores. Los nombres de item no pueden
-contener ',' ni '-'.
+Nothing is collected on the driver: the conversion is done on the executors. Item names cannot contain ',' or '-'.
 
 @author Carlos Fernandez-Basso
 """
@@ -19,27 +18,27 @@ from typing import Any, Optional
 
 def _check(name: str) -> None:
     if not name:
-        raise ValueError("falta el nombre de una columna")
+        raise ValueError("a column name is missing")
 
 
 def transactions_from_dataframe(frame: Any, column: str = "items", sep: Optional[str] = None) -> Any:
     """
-    RDD de transacciones 'a,b,c' desde una columna de un DataFrame.
+    RDD of 'a,b,c' transactions from a column of a DataFrame.
 
-    Argumentos:
-        frame: ``DataFrame`` de Spark
-        column (str): columna ``array<...>`` (los elementos se convierten a texto) o, si se da `sep`, texto
-            con los items separados por `sep`
-        sep (str, opcional): separador de la columna de texto
+    Args:
+        frame: Spark ``DataFrame``
+        column (str): ``array<...>`` column (the elements are converted to text) or, if `sep` is given, text with the
+            items separated by `sep`
+        sep (str, optional): separator of the text column
     """
     _check(column)
     if column not in frame.columns:
-        raise ValueError("la columna '{}' no existe; hay: {}".format(column, ", ".join(frame.columns)))
+        raise ValueError("column '{}' does not exist; available: {}".format(column, ", ".join(frame.columns)))
     dtype = dict(frame.dtypes)[column]
     if sep is None and not dtype.startswith("array"):
-        raise ValueError("la columna '{}' es {}; use `sep` para una columna de texto".format(column, dtype))
+        raise ValueError("column '{}' is {}; use `sep` for a text column".format(column, dtype))
     if sep is not None and dtype.startswith("array"):
-        raise ValueError("`sep` solo vale para columnas de texto, no para {}".format(dtype))
+        raise ValueError("`sep` only applies to text columns, not to {}".format(dtype))
 
     def join(row):
         value = row[0]
@@ -53,17 +52,17 @@ def transactions_from_dataframe(frame: Any, column: str = "items", sep: Optional
 
 def fuzzy_transactions_from_dataframe(frame: Any, items_column: str = "items", degrees_column: Optional[str] = None) -> Any:
     """
-    RDD de transacciones difusas ``[(item, grado), ...]`` desde un DataFrame.
+    RDD of fuzzy transactions ``[(item, degree), ...]`` from a DataFrame.
 
-    Argumentos:
-        frame: ``DataFrame`` de Spark
-        items_column (str): ``array<struct<item, degree>>`` (los dos primeros campos del struct) si no se da
-            `degrees_column`; si se da, un ``array<string>`` de items
-        degrees_column (str, opcional): ``array<double>`` con los grados, del mismo tamano que los items
+    Args:
+        frame: Spark ``DataFrame``
+        items_column (str): ``array<struct<item, degree>>`` (the first two fields of the struct) if `degrees_column`
+            is not given; if it is, an ``array<string>`` of items
+        degrees_column (str, optional): ``array<double>`` with the degrees, of the same size as the items
     """
     for name in (items_column, degrees_column):
         if name is not None and name not in frame.columns:
-            raise ValueError("la columna '{}' no existe; hay: {}".format(name, ", ".join(frame.columns)))
+            raise ValueError("column '{}' does not exist; available: {}".format(name, ", ".join(frame.columns)))
     if degrees_column is None:
         def convert(row):
             return [(str(pair[0]), float(pair[1])) for pair in (row[0] or [])]
@@ -72,7 +71,7 @@ def fuzzy_transactions_from_dataframe(frame: Any, items_column: str = "items", d
     def zip_columns(row):
         items, degrees = row[0] or [], row[1] or []
         if len(items) != len(degrees):
-            raise ValueError("items y grados deben tener el mismo tamano en cada fila")
+            raise ValueError("items and degrees must have the same size in every row")
         return [(str(item), float(degree)) for item, degree in zip(items, degrees)]
     return frame.select(items_column, degrees_column).rdd.map(zip_columns)
 
@@ -80,8 +79,8 @@ def fuzzy_transactions_from_dataframe(frame: Any, items_column: str = "items", d
 def read_transactions(spark: Any, path: str, format: str = "parquet", column: str = "items", sep: Optional[str] = None,
                       degrees_column: Optional[str] = None, fuzzy: bool = False) -> Any:
     """
-    Lee un fichero (``parquet``, ``json``, ``csv``, ...) con ``spark.read`` y devuelve el RDD de transacciones
-    (crisp, o difusas con ``fuzzy=True``; ver las funciones anteriores).
+    Read a file (``parquet``, ``json``, ``csv``, ...) with ``spark.read`` and return the RDD of transactions (crisp,
+    or fuzzy with ``fuzzy=True``; see the previous functions).
     """
     reader = spark.read.format(format)
     if format == "csv":

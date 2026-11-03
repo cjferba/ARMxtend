@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-FuzzyDAprioriTID: mineria de itemsets frecuentes difusos sobre Big Data
-(Apache Spark), inspirada en Apriori-TID, usando una representacion en
-alpha-cortes de los grados de pertenencia (ver ``ARMxtend.FIM._shared``).
+FuzzyDAprioriTID: fuzzy frequent-itemset mining on Big Data (Apache Spark), inspired by Apriori-TID, using an
+alpha-cut representation of the membership degrees (see ``ARMxtend.FIM._shared``).
 
-Sustituye a la clase ``AprioriTID`` que existia previamente en este fichero:
-tenia varios errores que impedian su uso (un `__init__`/`run_model` que
-referenciaban un `sc`/`model` inexistentes fuera de un notebook interactivo,
-una llamada a la funcion `AlphaCortes` sin cualificar que lanzaba
-`NameError`, e imports duplicados/sin usar). La logica de alpha-cortes y de
-generacion de candidatos es ahora compartida con el resto de algoritmos de
-`FIM` a traves de `FIM._shared`.
+It replaces the ``AprioriTID`` class that previously lived in this file: it had several errors that prevented its
+use (an `__init__`/`run_model` that referenced a `sc`/`model` that exist only in an interactive notebook, a call to
+an unqualified `AlphaCortes` function that raised `NameError`, and duplicated/unused imports). The alpha-cut and
+candidate-generation logic is now shared with the rest of the `FIM` algorithms through `FIM._shared`.
 
 @author Carlos Fernandez-Basso
 """
@@ -21,29 +17,26 @@ from .._shared import generate_candidates, alpha_cuts, alpha_levels, alpha_weigh
 
 class FuzzyDAprioriTID(object):
     """
-    Mineria de itemsets frecuentes difusos en Spark. Cada transaccion es una
-    lista de pares (item, grado de pertenencia en [0, 1]); el soporte de un
-    itemset se calcula, para cada alpha-corte, como la media del minimo
-    (t-norma) de los grados de pertenencia de sus items en cada transaccion.
+    Fuzzy frequent-itemset mining on Spark. Each transaction is a list of (item, membership degree in [0, 1]) pairs;
+    the support of an itemset is computed, for each alpha-cut, as the mean of the minimum (t-norm) of the membership
+    degrees of its items in each transaction.
     """
 
     @classmethod
     def run(cls, sc, transactions, min_supp, num_alpha):
         """
-        Argumentos:
+        Args:
             sc (SparkContext)
-            transactions (RDD[Iterable[Tuple[str, float]]]): cada
-                transaccion es una lista de pares (item, grado de
-                pertenencia)
-            min_supp (float): soporte minimo relativo, en (0, 1]
-            num_alpha (int): numero de alpha-cortes a considerar
+            transactions (RDD[Iterable[Tuple[str, float]]]): each transaction is a list of (item, membership degree)
+                pairs
+            min_supp (float): minimum relative support, in (0, 1]
+            num_alpha (int): number of alpha-cuts to consider
 
-        Retorna:
-            dict {itemset_key: numpy.ndarray(num_alpha)} con el bit-list de
-            soporte relativo de cada itemset frecuente en cada alpha-corte.
-            Un itemset se considera frecuente si su soporte difuso agregado
-            FSupp (ver `FIM._shared.weighted_alpha_aggregate`, Ec. (2) de
-            Fernandez-Basso, Ruiz & Martin-Bautista, 2021) alcanza `min_supp`.
+        Returns:
+            dict {itemset_key: numpy.ndarray(num_alpha)} with the bit-list of relative support of each frequent
+            itemset in each alpha-cut. An itemset is considered frequent if its aggregated fuzzy support FSupp (see
+            `FIM._shared.weighted_alpha_aggregate`, Eq. (2) of Fernandez-Basso, Ruiz & Martin-Bautista, 2021)
+            reaches `min_supp`.
         """
         weights = alpha_weights(alpha_levels(num_alpha))
 
@@ -54,7 +47,7 @@ class FuzzyDAprioriTID(object):
         if totalTransacs == 0:
             return {}
 
-        # Fase 1: soporte (vector de alpha-cortes) de itemsets de longitud 1
+        # Phase 1: support (alpha-cut vector) of itemsets of length 1
         itemVectors = alphaTransactions.flatMap(lambda tx: list(tx.items())) \
                                         .reduceByKey(lambda a, b: a + b) \
                                         .collectAsMap()
@@ -63,8 +56,8 @@ class FuzzyDAprioriTID(object):
                         for item, vector in itemVectors.items()
                         if weighted_alpha_aggregate(vector / totalTransacs, weights) >= min_supp}
 
-        # Filtrar de cada transaccion los items infrecuentes (optimizacion
-        # Apriori-TID: las fases siguientes solo consultan datos reducidos)
+        # Filter the infrequent items out of each transaction (optimization
+        # Apriori-TID: the following phases only query reduced data)
         broadcastFreqItems = sc.broadcast(set(freqItemsets.keys()))
         filteredTransactions = alphaTransactions.map(
             lambda tx: {item: vector for item, vector in tx.items() if item in broadcastFreqItems.value})
@@ -72,7 +65,7 @@ class FuzzyDAprioriTID(object):
         globalFreqItemsets = dict(freqItemsets)
         currentLevelKeys = sorted(freqItemsets.keys())
 
-        # Fase 2: generacion iterativa de candidatos de longitud creciente
+        # Phase 2: iterative generation of candidates of increasing length
         while len(currentLevelKeys) > 1:
             candidateKeys = generate_candidates(currentLevelKeys)
             if not candidateKeys:

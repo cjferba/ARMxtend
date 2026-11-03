@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Reglas de asociacion TEMPORALES con retardo (reglas inter-transaccion), crisp
-y difusas: reglas como ``temp=high@lag2, door_open@lag1 -> heater_on`` ("si
-hace dos pasos la temperatura era alta y hace uno estaba la puerta abierta,
-entonces ahora esta la calefaccion encendida").
+TEMPORAL association rules with lag (inter-transaction rules), crisp and fuzzy: rules such as
+``temp=high@lag2, door_open@lag1 -> heater_on`` ("if two steps ago the temperature was high and one step ago the door
+was open, then now the heating is on").
 
-Se sigue la formulacion de las reglas de asociacion inter-transaccion de:
+The formulation of the inter-transaction association rules of the following is followed:
 
     Lu, H., Han, J., Feng, L. (1998). "Stock movement prediction and
     N-dimensional inter-transaction association rules". ACM SIGMOD Workshop
@@ -15,22 +14,17 @@ Se sigue la formulacion de las reglas de asociacion inter-transaccion de:
     intertransaction association rules". IEEE Transactions on Knowledge and
     Data Engineering, 15(1), 43-56.
 
-Cada instante ``t`` (desde ``max_lag``) pasa a ser una transaccion que
-contiene los items de ``t`` (sin sufijo) y los de ``t-1, ..., t-max_lag``
-(con sufijo ``@lagk``, ver ``preprocessing.timeseries``). Se minan los
-itemsets frecuentes de esas transacciones y se conservan las reglas cuyo
-CONSECUENTE esta solo en el instante actual y cuyo antecedente mira al
-pasado. El soporte se calcula sobre las ``N - max_lag`` filas que tienen todos
-los retardos disponibles, de modo que todas las medidas comparten
-denominador. La version difusa usa los grados de pertenencia con la
-descomposicion por alpha-cortes de la RL-theory (``FIM.FARE``).
+Each instant ``t`` (from ``max_lag``) becomes a transaction that contains the items of ``t`` (without suffix) and
+those of ``t-1, ..., t-max_lag`` (with suffix ``@lagk``, see ``preprocessing.timeseries``). The frequent itemsets of
+those transactions are mined and the rules whose CONSEQUENT is only at the current instant and whose antecedent looks
+at the past are kept. The support is computed over the ``N - max_lag`` rows that have all the lags available, so that
+all the measures share the denominator. The fuzzy version uses the membership degrees with the alpha-cut
+decomposition of the RL-theory (``FIM.FARE``).
 
-El coste crece con el numero de items por el numero de retardos: ajuste
-``min_supp``, ``lags`` y, sobre todo, simbolice con pocos valores
-(``preprocessing.timeseries.symbolize``).
+The cost grows with the number of items times the number of lags: tune ``min_supp``, ``lags`` and, above all,
+symbolize with few values (``preprocessing.timeseries.symbolize``).
 
-NOTA: los nombres de item no deben contener '-', que es el separador de
-items en las claves de itemset de ``FIM._shared``.
+NOTE: item names must not contain '-', which is the item separator in the itemset keys of ``FIM._shared``.
 
 @author Carlos Fernandez-Basso
 """
@@ -63,7 +57,7 @@ def _is_target(item: str, targets: Optional[FrozenSet[str]]) -> bool:
 
 def _keep_rules(rules: pd.DataFrame, targets: Optional[Iterable[str]], require_lagged_antecedent: bool,
                 same_time_antecedent: bool, exclude_persistence: bool) -> pd.DataFrame:
-    """Filtra las reglas por estructura temporal y anade las columnas 'lags' y 'max_lag'."""
+    """Filter the rules by temporal structure and add the columns 'lags' and 'max_lag'."""
     wanted = None if targets is None else frozenset(targets)
     if len(rules):
         mask = rules.apply(lambda rule: _passes(rule, wanted, require_lagged_antecedent, same_time_antecedent,
@@ -105,7 +99,7 @@ def _valid_split(antecedents: Iterable[str], consequents: Iterable[str], wanted:
 
 def _count_candidates(itemsets: pd.DataFrame, targets: Optional[Iterable[str]], require_lagged_antecedent: bool,
                       same_time_antecedent: bool, exclude_persistence: bool) -> int:
-    """Reglas candidatas con estructura temporal valida que salen de los itemsets frecuentes (la familia de hipotesis)."""
+    """Candidate rules with valid temporal structure that come out of the frequent itemsets (the family of hypotheses)."""
     wanted = None if targets is None else frozenset(targets)
     return count_candidates(
         itemsets["itemsets"],
@@ -118,38 +112,31 @@ def temporal_association_rules(items: pd.DataFrame, max_lag: int, min_supp: floa
                                targets: Optional[Iterable[str]] = None, require_lagged_antecedent: bool = True,
                                same_time_antecedent: bool = True, exclude_persistence: bool = False) -> pd.DataFrame:
     """
-    Minera reglas de asociacion crisp con retardo: antecedente en instantes
-    anteriores (``item@lagk``) y, opcionalmente, en el actual, y consecuente
-    en el instante actual.
+    Mine crisp association rules with lag: antecedent at earlier instants (``item@lagk``) and, optionally, at the
+    current one, and consequent at the current instant.
 
-    Argumentos:
-        items (pandas.DataFrame): items booleanos, una fila por instante y
-            ordenadas en el tiempo (ver ``preprocessing.timeseries.to_items``)
-        max_lag (int): mayor retardo del antecedente, en pasos, >= 1
-        min_supp (float): soporte minimo relativo de los itemsets, en (0, 1]
-        metric (str): medida de `ARM.association_rules` para filtrar
-        min_threshold (float): umbral minimo de `metric`
-        lags (Iterable[int], opcional): retardos permitidos, dentro de
-            1..max_lag (por defecto, todos); p.ej. [1, 24] para mirar solo
-            "hace un paso" y "hace 24 pasos"
-        targets (Iterable[str], opcional): consecuentes permitidos, por nombre
-            de item ('heater_on', 'temp=high') o de variable ('temp'); por
-            defecto, cualquiera
-        require_lagged_antecedent (bool): si True (por defecto), el antecedente
-            debe incluir algun item de un instante anterior; si False tambien
-            se devuelven reglas de co-ocurrencia en el mismo instante
-        same_time_antecedent (bool): si False, el antecedente solo puede
-            contener items de instantes anteriores
-        exclude_persistence (bool): si True, descarta las reglas cuyo
-            antecedente incluye, con retardo, la misma variable que el
-            consecuente (p.ej. 'temp=high@lag1 -> temp=high')
+    Args:
+        items (pandas.DataFrame): boolean items, one row per instant and ordered in time (see
+            ``preprocessing.timeseries.to_items``)
+        max_lag (int): largest lag of the antecedent, in steps, >= 1
+        min_supp (float): minimum relative support of the itemsets, in (0, 1]
+        metric (str): measure of `ARM.association_rules` to filter by
+        min_threshold (float): minimum threshold of `metric`
+        lags (Iterable[int], optional): allowed lags, within 1..max_lag (all by default); e.g. [1, 24] to look only at
+            "one step ago" and "24 steps ago"
+        targets (Iterable[str], optional): allowed consequents, by item name ('heater_on', 'temp=high') or by variable
+            ('temp'); by default, any
+        require_lagged_antecedent (bool): if True (default), the antecedent must include some item from an earlier
+            instant; if False, co-occurrence rules at the same instant are also returned
+        same_time_antecedent (bool): if False, the antecedent can only contain items from earlier instants
+        exclude_persistence (bool): if True, discard the rules whose antecedent includes, with lag, the same variable
+            as the consequent (e.g. 'temp=high@lag1 -> temp=high')
 
-    Retorna:
-        pandas.DataFrame con el formato de `ARM.association_rules` y dos
-        columnas mas: 'lags' (tupla de retardos distintos del antecedente) y
-        'max_lag' (el mayor de ellos). Anota en ``rules.attrs`` el numero de
-        transacciones ('n_transactions') y el de reglas candidatas con estructura
-        temporal valida ('n_candidates'), que usa ``ARM.significance``
+    Returns:
+        pandas.DataFrame with the format of `ARM.association_rules` and two more columns: 'lags' (tuple of distinct
+        lags of the antecedent) and 'max_lag' (the largest of them). It records in ``rules.attrs`` the number of
+        transactions ('n_transactions') and that of candidate rules with valid temporal structure ('n_candidates'),
+        which ``ARM.significance`` uses
     """
     check_item_names(items.columns)
     lagged = lag_items(items, _lag_set(max_lag, lags))
@@ -171,24 +158,20 @@ def fuzzy_temporal_association_rules(memberships: pd.DataFrame, max_lag: int, mi
                                      exclude_persistence: bool = False,
                                      measures: Optional[Iterable[str]] = None) -> pd.DataFrame:
     """
-    Version difusa de `temporal_association_rules`: los items son grados de
-    pertenencia en [0, 1] y el soporte, la confianza y el factor de certeza se
-    calculan con la descomposicion por alpha-cortes de la RL-theory
-    (`FIM.FARE`).
+    Fuzzy version of `temporal_association_rules`: the items are membership degrees in [0, 1] and the support,
+    confidence and certainty factor are computed with the alpha-cut decomposition of the RL-theory (`FIM.FARE`).
 
-    Argumentos:
-        memberships (pandas.DataFrame): grados de pertenencia, una columna por
-            item (p.ej. las columnas que anade ``FuzzyLib.AutoFuzzification``)
-            y una fila por instante, ordenadas en el tiempo
+    Args:
+        memberships (pandas.DataFrame): membership degrees, one column per item (e.g. the columns added by
+            ``FuzzyLib.AutoFuzzification``) and one row per instant, ordered in time
         max_lag, lags, targets, require_lagged_antecedent,
-        same_time_antecedent, exclude_persistence: ver `temporal_association_rules`
-        min_supp (float): soporte difuso minimo FSupp, en (0, 1]
-        num_alpha (int): numero de alpha-cortes
-        metric, min_threshold, measures: ver `FIM.FARE.fuzzy_association_rules`
+        same_time_antecedent, exclude_persistence: see `temporal_association_rules`
+        min_supp (float): minimum fuzzy support FSupp, in (0, 1]
+        num_alpha (int): number of alpha-cuts
+        metric, min_threshold, measures: see `FIM.FARE.fuzzy_association_rules`
 
-    Retorna:
-        pandas.DataFrame con el formato de `FIM.FARE.fuzzy_association_rules`
-        y las columnas 'lags' y 'max_lag'
+    Returns:
+        pandas.DataFrame with the format of `FIM.FARE.fuzzy_association_rules` and the columns 'lags' and 'max_lag'
     """
     check_item_names(memberships.columns)
     lagged = lag_items(memberships, _lag_set(max_lag, lags))
@@ -201,7 +184,7 @@ def fuzzy_temporal_association_rules(memberships: pd.DataFrame, max_lag: int, mi
 
 
 def format_lagged_item(item: str) -> str:
-    """Texto legible de un item con retardo: 'temp=high@lag2' -> 'temp=high (t-2)'; sin retardo, 'temp=high (t)'."""
+    """Readable text of a lagged item: 'temp=high@lag2' -> 'temp=high (t-2)'; without lag, 'temp=high (t)'."""
     base, lag = split_lag(item)
     return "{} (t{})".format(base, "-{}".format(lag) if lag else "")
 
@@ -209,37 +192,32 @@ def format_lagged_item(item: str) -> str:
 def rule_profile(items: pd.DataFrame, antecedent: Iterable[str], consequent: Iterable[str],
                  by: Union[Sequence[Any], np.ndarray, pd.Series, Any]) -> pd.DataFrame:
     """
-    Como se comporta una regla en cada grupo de instantes (por hora del dia,
-    dia de la semana, mes, estacion...): sirve para detectar reglas CICLICAS,
-    que son debiles en promedio pero muy fiables a ciertas horas o dias.
+    How a rule behaves in each group of instants (by hour of the day, day of the week, month, season...): it serves to
+    detect CYCLIC rules, which are weak on average but very reliable at certain hours or days.
 
-    Argumentos:
-        items (pandas.DataFrame): items booleanos, una fila por instante. La
-            regla puede usar items con retardo (``item@lagk``): se calculan a
-            partir de las columnas de `items`
-        antecedent (Iterable[str]): items del antecedente (con o sin retardo)
-        consequent (Iterable[str]): items del consecuente (con o sin retardo)
-        by: grupo de cada fila de `items`: una secuencia o ``Series`` de su
-            misma longitud (p.ej. ``items.index.hour``) o una funcion que
-            recibe el indice de `items` y devuelve esa secuencia
+    Args:
+        items (pandas.DataFrame): boolean items, one row per instant. The rule can use lagged items (``item@lagk``):
+            they are computed from the columns of `items`
+        antecedent (Iterable[str]): items of the antecedent (with or without lag)
+        consequent (Iterable[str]): items of the consequent (with or without lag)
+        by: group of each row of `items`: a sequence or ``Series`` of the same length (e.g. ``items.index.hour``) or a
+            function that receives the index of `items` and returns that sequence
 
-    Retorna:
-        pandas.DataFrame indexado por grupo con las columnas 'n' (instantes del
-        grupo), 'antecedent_count', 'joint_count', 'support', 'confidence'
-        (NaN si el antecedente no aparece) y 'lift' (NaN si no esta definido).
-        Las primeras filas, sin datos para los retardos, no se cuentan. Para el
-        total, use un `by` constante.
+    Returns:
+        pandas.DataFrame indexed by group with the columns 'n' (instants of the group), 'antecedent_count',
+        'joint_count', 'support', 'confidence' (NaN if the antecedent does not appear) and 'lift' (NaN if not
+        defined). The first rows, without data for the lags, are not counted. For the total, use a constant `by`.
     """
     antecedent = list(antecedent)
     consequent = list(consequent)
     parsed = [split_lag(item) for item in antecedent + consequent]
     missing = [base for base, _ in parsed if base not in items.columns]
     if missing:
-        raise ValueError("items que no son columnas de `items`: {}".format(sorted(set(missing))))
+        raise ValueError("items that are not columns of `items`: {}".format(sorted(set(missing))))
 
     groups = np.asarray(by(items.index) if callable(by) else by)
     if len(groups) != len(items):
-        raise ValueError("`by` debe tener una entrada por fila ({}), tiene {}".format(len(items), len(groups)))
+        raise ValueError("`by` must have one entry per row ({}), it has {}".format(len(items), len(groups)))
     start = max(lag for _, lag in parsed)
     rows = len(items)
 

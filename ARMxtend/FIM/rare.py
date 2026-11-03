@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Itemsets RAROS: poco frecuentes pero con significado (el efecto adverso de dos farmacos juntos, el fallo
-que sigue a una secuencia concreta de alarmas). Con un soporte minimo bajo para alcanzarlos, el minado
-habitual se desborda: casi todo itemset es "frecuente" y salen millones.
+RARE itemsets: infrequent but meaningful (the adverse effect of two drugs together, the failure that follows a
+specific sequence of alarms). With a low minimum support to reach them, ordinary mining overflows: almost every
+itemset is "frequent" and millions come out.
 
-Un itemset es RARO si ``min_supp <= soporte < max_supp`` (``min_supp`` es un suelo contra el ruido: lo que
-ocurre una o dos veces no es un patron), y es RARO MINIMAL (MRI) si ademas TODOS sus subconjuntos propios
-son frecuentes (``soporte >= max_supp``). Los MRI son la base compacta de los itemsets raros: cualquier
-raro es un MRI o contiene uno (Szathmary, Napoli y Valtchev, 2007, "Towards rare itemset mining"). Se hallan
-con Apriori por niveles: se unen itemsets frecuentes de tamano k-1; un candidato frecuente sigue creciendo,
-y uno raro es un MRI y se detiene (sus superconjuntos ya no serian minimales).
+An itemset is RARE if ``min_supp <= support < max_supp`` (``min_supp`` is a floor against noise: what happens once
+or twice is not a pattern), and it is MINIMAL RARE (MRI) if, besides, ALL its proper subsets are frequent
+(``support >= max_supp``). The MRIs are the compact basis of the rare itemsets: every rare itemset is an MRI or
+contains one (Szathmary, Napoli and Valtchev, 2007, "Towards rare itemset mining"). They are found with level-wise
+Apriori: frequent itemsets of size k-1 are joined; a frequent candidate keeps growing, and a rare one is an MRI and
+stops (its supersets would no longer be minimal).
 
 @author Carlos Fernandez-Basso
 """
@@ -26,19 +26,19 @@ _EPS = 1e-9
 def minimal_rare_itemsets(transactions: Iterable[Iterable[Any]], max_supp: float, min_supp: float = 0.0,
                           min_count: int = 1, min_len: int = 1, max_len: Optional[int] = None) -> pd.DataFrame:
     """
-    Itemsets raros minimales (ver el docstring del modulo).
+    Minimal rare itemsets (see the module docstring).
 
-    Argumentos:
-        transactions: una transaccion por elemento, cada una una coleccion de items
-        max_supp (float): soporte a partir del cual un itemset es frecuente, en (0, 1]; los raros estan por debajo
-        min_supp (float): soporte relativo minimo de un raro, en [0, 1)
-        min_count (int): numero minimo de transacciones de un raro (por defecto 1)
-        min_len, max_len (int): numero minimo (por defecto 1) y maximo de items de los itemsets devueltos
+    Args:
+        transactions: one transaction per element, each a collection of items
+        max_supp (float): support from which an itemset is frequent, in (0, 1]; the rare ones are below it
+        min_supp (float): minimum relative support of a rare itemset, in [0, 1)
+        min_count (int): minimum number of transactions of a rare itemset (default 1)
+        min_len, max_len (int): minimum (default 1) and maximum number of items of the returned itemsets
 
-    Retorna:
-        pandas.DataFrame con 'support' e 'itemsets' (``frozenset``), por soporte decreciente;
-        ``attrs`` lleva 'n_transactions' y 'n_frequent' (itemsets frecuentes visitados, por si se quiere
-        comparar con el minado habitual)
+    Returns:
+        pandas.DataFrame with 'support' and 'itemsets' (``frozenset``), by decreasing support; ``attrs`` holds
+        'n_transactions' and 'n_frequent' (frequent itemsets visited, in case you want to compare with ordinary
+        mining)
     """
     if not 0 < max_supp <= 1 or not 0 <= min_supp < max_supp:
         raise ValueError("hace falta 0 <= min_supp < max_supp <= 1")

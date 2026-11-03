@@ -1,28 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-Representaciones condensadas de los itemsets frecuentes: itemsets CERRADOS
-y MAXIMALES.
+Condensed representations of the frequent itemsets: CLOSED and MAXIMAL itemsets.
 
-* Un itemset es CERRADO si ningun superconjunto suyo tiene exactamente su
-  mismo soporte (Pasquier, Bastide, Taouil & Lakhal, 1999). Los cerrados
-  conservan el soporte de TODOS los frecuentes (ver `support_from_closed`)
-  con menos itemsets.
-* Un itemset es MAXIMAL si ninguno de sus superconjuntos es frecuente
-  (Bayardo, 1998). Es una representacion aun mas pequena, pero pierde los
-  soportes de los subconjuntos.
+* An itemset is CLOSED if none of its supersets has exactly its same support (Pasquier, Bastide, Taouil & Lakhal,
+  1999). The closed itemsets keep the support of ALL the frequent ones (see `support_from_closed`) with fewer
+  itemsets.
+* An itemset is MAXIMAL if none of its supersets is frequent (Bayardo, 1998). It is an even smaller
+  representation, but loses the supports of the subsets.
 
-Ambas funciones operan sobre cualquier diccionario {clave 'A-B-C': soporte}
-producido por los algoritmos de ARMxtend, tanto crisp (soporte escalar:
-``FFIM.fpgrowth``, ``FIM.apriori.DApriori``, ``FIM.Eclat.DECLAT``, ...) como
-difusos (soporte = bit-list por alpha-corte: ``FFIM.fuzzy_fpgrowth``,
-``FIM.Eclat.FuzzyDECLAT``, ...). En el caso difuso, dos itemsets "tienen el
-mismo soporte" si coinciden en TODOS los alpha-cortes, es decir, la
-clausura se define nivel a nivel, coherentemente con la RL-theory.
+Both functions work on any dictionary {key 'A-B-C': support} produced by the ARMxtend algorithms, both crisp
+(scalar support: ``FFIM.fpgrowth``, ``FIM.apriori.DApriori``, ``FIM.Eclat.DECLAT``, ...) and fuzzy (support =
+bit-list per alpha-cut: ``FFIM.fuzzy_fpgrowth``, ``FIM.Eclat.FuzzyDECLAT``, ...). In the fuzzy case, two itemsets
+"have the same support" if they coincide in ALL the alpha-cuts, that is, the closure is defined level by level,
+consistently with the RL-theory.
 
-Basta comparar cada itemset con sus superconjuntos INMEDIATOS (un item mas):
-el soporte es antimonotono, luego si algun superconjunto tuviera el mismo
-soporte tambien lo tendria el itemset intermedio, que es frecuente y por
-tanto esta en el diccionario.
+It is enough to compare each itemset with its IMMEDIATE supersets (one more item): support is anti-monotone, so if
+some superset had the same support the intermediate itemset would too, and it is frequent and therefore in the
+dictionary.
 
 @author Carlos Fernandez-Basso
 """
@@ -37,7 +31,7 @@ def _same_support(first, second, tol):
 
 
 def _immediate_subsets(freq_itemsets):
-    """Genera (clave del itemset Z, clave de cada subconjunto X = Z - {item} que tambien es frecuente)."""
+    """Generate (key of itemset Z, key of each subset X = Z - {item} that is also frequent)."""
     for key in freq_itemsets:
         items = key_to_itemset(key)
         if len(items) < 2:
@@ -50,15 +44,15 @@ def _immediate_subsets(freq_itemsets):
 
 def closed_itemsets(freq_itemsets: Mapping[str, Any], tol: float = 1e-12) -> Dict[str, Any]:
     """
-    Itemsets frecuentes cerrados.
+    Closed frequent itemsets.
 
-    Argumentos:
-        freq_itemsets (dict[str, float | numpy.ndarray]): itemsets
-            frecuentes con su soporte (escalar o bit-list por alpha-corte)
-        tol (float): tolerancia absoluta para considerar iguales dos soportes
+    Args:
+        freq_itemsets (dict[str, float | numpy.ndarray]): frequent itemsets with their support (scalar or
+            bit-list per alpha-cut)
+        tol (float): absolute tolerance to consider two supports equal
 
-    Retorna:
-        dict con las entradas de `freq_itemsets` que son cerradas
+    Returns:
+        dict with the entries of `freq_itemsets` that are closed
     """
     notClosed = set()
     for superset, subset in _immediate_subsets(freq_itemsets):
@@ -69,13 +63,13 @@ def closed_itemsets(freq_itemsets: Mapping[str, Any], tol: float = 1e-12) -> Dic
 
 def maximal_itemsets(freq_itemsets: Mapping[str, Any]) -> Dict[str, Any]:
     """
-    Itemsets frecuentes maximales (sin ningun superconjunto frecuente).
+    Maximal frequent itemsets (with no frequent superset).
 
-    Argumentos:
-        freq_itemsets (dict[str, float | numpy.ndarray]): itemsets frecuentes
+    Args:
+        freq_itemsets (dict[str, float | numpy.ndarray]): frequent itemsets
 
-    Retorna:
-        dict con las entradas de `freq_itemsets` que son maximales
+    Returns:
+        dict with the entries of `freq_itemsets` that are maximal
     """
     notMaximal = {subset for _, subset in _immediate_subsets(freq_itemsets)}
     return {key: support for key, support in freq_itemsets.items() if key not in notMaximal}
@@ -83,17 +77,15 @@ def maximal_itemsets(freq_itemsets: Mapping[str, Any]) -> Dict[str, Any]:
 
 def support_from_closed(itemset: Union[str, Iterable[str]], closed: Mapping[str, Any]) -> Any:
     """
-    Recupera el soporte de un itemset frecuente a partir de los itemsets
-    cerrados: es el MAXIMO (elemento a elemento, si es un bit-list) entre
-    los soportes de los cerrados que lo contienen.
+    Recover the support of a frequent itemset from the closed itemsets: it is the MAXIMUM (element by element, if it
+    is a bit-list) among the supports of the closed itemsets that contain it.
 
-    Argumentos:
-        itemset (str | Iterable[str]): clave 'A-B' o coleccion de items
-        closed (dict): salida de `closed_itemsets`
+    Args:
+        itemset (str | Iterable[str]): key 'A-B' or collection of items
+        closed (dict): output of `closed_itemsets`
 
-    Retorna:
-        El soporte del itemset, o None si ningun cerrado lo contiene (es
-        decir, si no es frecuente).
+    Returns:
+        The support of the itemset, or None if no closed itemset contains it (that is, if it is not frequent).
     """
     items = key_to_itemset(itemset) if isinstance(itemset, str) else frozenset(itemset)
     supports = [support for key, support in closed.items() if items <= key_to_itemset(key)]

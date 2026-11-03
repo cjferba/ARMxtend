@@ -1,22 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-Mineria de reglas de asociacion crisp sobre Big Data (Apache Spark), a
-partir de un conjunto de itemsets frecuentes ya calculado (p.ej. con
-``ARMxtend.FIM.apriori.DApriori/DAprioriTID`` o ``ARMxtend.FIM.Eclat.DECLAT``).
+Crisp association rule mining on Big Data (Apache Spark), from an already computed set of frequent itemsets (e.g.
+with ``ARMxtend.FIM.apriori.DApriori/DAprioriTID`` or ``ARMxtend.FIM.Eclat.DECLAT``).
 
-Implementa el Algoritmo 4 ("Spark procedure for association rule mining")
-de:
+It implements Algorithm 4 ("Spark procedure for association rule mining") of:
     Fernandez-Basso, C., Ruiz, M.D., Martin-Bautista, M.J. (2024). "New Spark
     solutions for distributed frequent itemset and association rule mining
     algorithms". Cluster Computing, 27, 1217-1234.
 
-Este modulo sustituye a las clases ``Apriori``/``AprioriTID``/``Eclat``/``ARE``
-que existian previamente en este fichero: eran copias, con errores (nombres
-indefinidos, una ruta de fichero de un unico equipo de desarrollo, y una
-llamada a ``exit()`` en mitad de la definicion de una clase que abortaba el
-interprete al importar el modulo), del contenido de ``FIM/apriori.py``. La
-mineria de itemsets ya vive en ``FIM.apriori``/``FIM.Eclat``; aqui solo queda
-la Fase de generacion de reglas, comun a los tres algoritmos.
+This module replaces the ``Apriori``/``AprioriTID``/``Eclat``/``ARE`` classes that previously lived in this file:
+they were buggy copies (undefined names, a file path from a single development machine, and an ``exit()`` call in
+the middle of a class definition that aborted the interpreter when the module was imported) of the content of
+``FIM/apriori.py``. Itemset mining now lives in ``FIM.apriori``/``FIM.Eclat``; only the rule-generation phase,
+common to the three algorithms, remains here.
 
 @author Carlos Fernandez-Basso
 """
@@ -25,21 +21,18 @@ import itertools
 
 def generate_rules(freq_itemsets, min_conf):
     """
-    Genera, de forma puramente secuencial, todas las reglas de asociacion
-    X -> Y con confianza >= min_conf a partir de un conjunto de itemsets
-    frecuentes. Es la parte de calculo (independiente de Spark) reutilizada
-    por `association_rules_bd` para distribuirla en un cluster.
+    Generate, purely sequentially, all the association rules X -> Y with confidence >= min_conf from a set of
+    frequent itemsets. It is the computation part (independent of Spark) reused by `association_rules_bd` to
+    distribute it on a cluster.
 
-    Argumentos:
-        freq_itemsets (dict[str, float]): itemsets frecuentes, con clave
-            'A-B-C' y valor su soporte relativo. Debe incluir el soporte de
-            todo subconjunto no vacio de cada itemset (garantizado por la
-            propiedad de cierre descendente de los algoritmos de FIM.apriori
-            y FIM.Eclat)
-        min_conf (float): confianza minima, en (0, 1]
+    Args:
+        freq_itemsets (dict[str, float]): frequent itemsets, with key 'A-B-C' and their relative support as value.
+            It must include the support of every non-empty subset of each itemset (guaranteed by the downward
+            closure property of the FIM.apriori and FIM.Eclat algorithms)
+        min_conf (float): minimum confidence, in (0, 1]
 
-    Retorna:
-        dict {(antecedente, consecuente): confianza}
+    Returns:
+        dict {(antecedent, consequent): confidence}
     """
     rules = {}
     for itemsetKey, supportXY in freq_itemsets.items():
@@ -65,19 +58,18 @@ def generate_rules(freq_itemsets, min_conf):
 
 def association_rules_bd(sc, freq_itemsets, min_conf):
     """
-    Version distribuida (Spark) de `generate_rules` (Algoritmo 4): reparte
-    la generacion de reglas de cada itemset frecuente entre los nodos del
-    cluster mediante un FlatMap, y filtra por confianza minima con un Reduce.
+    Distributed (Spark) version of `generate_rules` (Algorithm 4): it spreads the rule generation of each frequent
+    itemset among the nodes of the cluster with a FlatMap, and filters by minimum confidence with a Reduce.
 
-    Argumentos:
-        sc (SparkContext): contexto Spark para crear la variable broadcast
-            con los itemsets frecuentes (Global_FreqItemset en el articulo)
-        freq_itemsets (dict[str, float]): itemsets frecuentes candidatos,
-            con clave 'A-B-C' y valor su soporte relativo
-        min_conf (float): confianza minima, en (0, 1]
+    Args:
+        sc (SparkContext): Spark context to create the broadcast variable with the frequent itemsets
+            (Global_FreqItemset in the paper)
+        freq_itemsets (dict[str, float]): candidate frequent itemsets, with key 'A-B-C' and their relative support
+            as value
+        min_conf (float): minimum confidence, in (0, 1]
 
-    Retorna:
-        dict {(antecedente, consecuente): confianza}
+    Returns:
+        dict {(antecedent, consequent): confidence}
     """
     broadcastFreqItemsets = sc.broadcast(freq_itemsets)
 

@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Aplicacion de reglas ya minadas a una tabla de items booleanos, compartida por
-la deteccion de anomalias (``ARM.anomaly``), la prediccion (``ARM.prediction``)
-y la clasificacion (``ARM.classification``).
+Application of already mined rules to a table of boolean items, shared by anomaly detection (``ARM.anomaly``),
+prediction (``ARM.prediction``) and classification (``ARM.classification``).
 
-Los items pueden llevar retardo (``item@lagk``, ver ``preprocessing.timeseries``):
-``x@lag2`` en la fila ``t`` es el valor de ``x`` en la fila ``t - 2``. Para las
-primeras filas, sin datos anteriores, el item con retardo se toma como ausente.
+Items can carry a lag (``item@lagk``, see ``preprocessing.timeseries``): ``x@lag2`` in row ``t`` is the value of ``x``
+in row ``t - 2``. For the first rows, with no previous data, the lagged item is taken as absent.
 
 @author Carlos Fernandez-Basso
 """
@@ -19,14 +17,14 @@ from ..preprocessing.timeseries import split_lag
 
 
 class ItemTable:
-    """Una tabla de items booleanos con acceso a los items con retardo y a las conjunciones de items."""
+    """A table of boolean items with access to lagged items and to conjunctions of items."""
 
     def __init__(self, items: pd.DataFrame) -> None:
         values = items.to_numpy()
         if values.dtype != bool:
             if not np.isin(values, (0, 1)).all():
-                raise ValueError("`items` debe ser una tabla de items booleanos (o 0/1); para datos difusos o "
-                                 "numericos use antes preprocessing.timeseries.to_items")
+                raise ValueError("`items` must be a table of boolean (or 0/1) items; for fuzzy or numeric data first use "
+                                 "preprocessing.timeseries.to_items")
             values = values.astype(bool)
         self.rows = len(items)
         self.values = values
@@ -34,11 +32,11 @@ class ItemTable:
         self._cache: Dict[str, np.ndarray] = {}
 
     def item(self, name: str) -> np.ndarray:
-        """Vector booleano (una entrada por fila) con el valor del item `name`, con retardo si lo lleva."""
+        """Boolean vector (one entry per row) with the value of item `name`, lagged if it carries a lag."""
         if name not in self._cache:
             base, lag = split_lag(name)
             if base not in self.columns:
-                raise ValueError("el item '{}' de las reglas no es una columna de `items`".format(base))
+                raise ValueError("item '{}' of the rules is not a column of `items`".format(base))
             column = self.values[:, self.columns[base]]
             if lag == 0:
                 shifted = column
@@ -50,20 +48,20 @@ class ItemTable:
         return self._cache[name]
 
     def holds(self, names: Iterable[str]) -> np.ndarray:
-        """Filas en las que se cumplen todos los items de `names`."""
+        """Rows where all the items of `names` hold."""
         result = np.ones(self.rows, dtype=bool)
         for name in names:
             result &= self.item(name)
         return result
 
     def evaluable(self, names: Iterable[str]) -> np.ndarray:
-        """Filas con datos anteriores suficientes para leer todos los items de `names` (retardo <= fila)."""
+        """Rows with enough previous data to read all the items of `names` (lag <= row)."""
         reach = max([split_lag(name)[1] for name in names] or [0])
         return np.arange(self.rows) >= reach
 
 
 def max_lag(itemsets: Iterable[Iterable[str]]) -> int:
-    """El mayor retardo de los items de los conjuntos dados (0 si no hay ninguno)."""
+    """The largest lag of the items of the given sets (0 if there are none)."""
     return max([split_lag(item)[1] for itemset in itemsets for item in itemset] or [0])
 
 
@@ -74,7 +72,7 @@ def require_columns(rules: pd.DataFrame, *names: str) -> None:
 
 
 def describe_rule(antecedent: Iterable[str], consequent: Iterable[str]) -> str:
-    """Texto legible de una regla: 'door (t-1), motion (t-1) => light (t)'."""
+    """Readable text of a rule: 'door (t-1), motion (t-1) => light (t)'."""
     from .temporal_rules import format_lagged_item
 
     def side(items: Iterable[str]) -> str:

@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Itemsets mas frecuentes (TOP-K) sin fijar el soporte minimo.
+Most frequent itemsets (TOP-K) without fixing the minimum support.
 
-Fijar un soporte minimo es dificil: demasiado alto no sale nada, demasiado bajo salen millones de
-itemsets. Aqui se pide el numero K de itemsets que se quiere. Como el soporte es antimonotono (un itemset
-nunca es mas frecuente que sus subconjuntos), una busqueda "el mejor primero" sobre el arbol de
-enumeracion (estilo Eclat) con una cola de prioridad por soporte genera los itemsets en orden de soporte
-NO creciente: los K primeros son exactamente los K mas frecuentes, y la busqueda se detiene sin explorar el
-resto. El desempate es determinista: menos items primero y luego orden lexicografico.
+Fixing a minimum support is hard: too high and nothing comes out, too low and millions of itemsets do. Here you ask
+for the number K of itemsets you want. Since support is anti-monotone (an itemset is never more frequent than its
+subsets), a best-first search over the enumeration tree (Eclat style) with a priority queue on support generates the
+itemsets in NON-increasing order of support: the first K are exactly the K most frequent, and the search stops
+without exploring the rest. Ties are broken deterministically: fewer items first, then lexicographic order.
 
-``iter_itemsets_by_support`` es ese generador perezoso; ``ARM.topk_rules`` lo usa para las K mejores reglas.
+``iter_itemsets_by_support`` is that lazy generator; ``ARM.topk_rules`` uses it for the K best rules.
 
 @author Carlos Fernandez-Basso
 """
@@ -24,8 +23,8 @@ from ._vertical import Vertical, count_bits
 
 def iter_itemsets_by_support(vertical: Vertical, min_count: int = 1, max_len: Optional[int] = None) -> Iterator[Tuple[int, Tuple[int, ...]]]:
     """
-    Itemsets (tuplas de indices de item) con al menos `min_count` transacciones, por numero de
-    transacciones no creciente (desempate: menos items, luego orden lexicografico).
+    Itemsets (tuples of item indices) with at least `min_count` transactions, by non-increasing number of
+    transactions (ties: fewer items, then lexicographic order).
     """
     heap: List[Tuple[int, int, Tuple[int, ...]]] = []
     for index, count in enumerate(vertical.counts):
@@ -46,18 +45,18 @@ def iter_itemsets_by_support(vertical: Vertical, min_count: int = 1, max_len: Op
 def top_k_itemsets(transactions: Iterable[Iterable[Any]], k: int, min_len: int = 1, max_len: Optional[int] = None,
                    min_supp: float = 0.0) -> pd.DataFrame:
     """
-    Los `k` itemsets con mayor soporte (ver el docstring del modulo).
+    The `k` itemsets with the highest support (see the module docstring).
 
-    Argumentos:
-        transactions: una transaccion por elemento, cada una una coleccion de items
-        k (int): cuantos itemsets
-        min_len, max_len (int): numero minimo (por defecto 1) y maximo de items de los itemsets devueltos
-        min_supp (float): suelo opcional de soporte relativo; si no hay k itemsets que lo alcancen, salen menos
+    Args:
+        transactions: one transaction per element, each a collection of items
+        k (int): how many itemsets
+        min_len, max_len (int): minimum (default 1) and maximum number of items of the returned itemsets
+        min_supp (float): optional floor of relative support; if there are not k itemsets reaching it, fewer come out
 
-    Retorna:
-        pandas.DataFrame con 'support' e 'itemsets' (``frozenset``), por soporte decreciente
-        (el formato de ``ARM.association_rules``); ``attrs['n_transactions']`` guarda el numero de
-        transacciones. Memoria: proporcional a transacciones x items mas la frontera de la busqueda
+    Returns:
+        pandas.DataFrame with 'support' and 'itemsets' (``frozenset``), by decreasing support (the format of
+        ``ARM.association_rules``); ``attrs['n_transactions']`` holds the number of transactions. Memory:
+        proportional to transactions x items plus the frontier of the search
     """
     if k < 1:
         raise ValueError("k debe ser >= 1")

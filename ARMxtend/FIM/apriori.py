@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-DApriori y DAprioriTID: algoritmos de mineria de itemsets frecuentes sobre
-Big Data (Apache Spark), inspirados respectivamente en los algoritmos
-secuenciales Apriori y Apriori-TID (Agrawal & Srikant, 1994).
+DApriori and DAprioriTID: frequent-itemset mining algorithms for Big Data (Apache Spark), inspired respectively by
+the sequential algorithms Apriori and Apriori-TID (Agrawal & Srikant, 1994).
 
-Implementan los Algoritmos 1 y 2 de:
+They implement Algorithms 1 and 2 of:
     Fernandez-Basso, C., Ruiz, M.D., Martin-Bautista, M.J. (2024). "New Spark
     solutions for distributed frequent itemset and association rule mining
     algorithms". Cluster Computing, 27, 1217-1234.
@@ -32,13 +31,12 @@ class DApriori(object):
     @classmethod
     def _count_candidates(cls, transactions, broadcast_candidates):
         """
-        broadcast_candidates: variable broadcast cuyo valor es un dict
-        {itemset_key: frozenset(items)}. Se lee con `.value` DENTRO del
-        closure, es decir, en los ejecutores: si se leyera en el driver, los
-        candidatos viajarian serializados dentro de cada tarea en lugar de
-        enviarse una sola vez a cada nodo.
-        Devuelve un RDD[(itemset_key, count)] con el conteo de apariciones
-        de cada itemset candidato en las transacciones.
+        broadcast_candidates: broadcast variable whose value is a dict
+        {itemset_key: frozenset(items)}. It is read with `.value` INSIDE the closure, that is, on the executors: if
+        it were read on the driver, the candidates would travel serialized inside every task instead of being sent
+        once to each node.
+        Returns an RDD[(itemset_key, count)] with the count of occurrences of each candidate itemset in the
+        transactions.
         """
         def emit(line):
             items_in_tx = cls._split(line)
@@ -50,24 +48,22 @@ class DApriori(object):
     @classmethod
     def run(cls, sc, transactions, min_supp):
         """
-        Ejecuta el algoritmo (Fases 1 y 2 del Algoritmo 1/2).
+        Run the algorithm (Phases 1 and 2 of Algorithm 1/2).
 
-        Argumentos:
-            sc (SparkContext): contexto Spark para crear variables broadcast
-            transactions (RDD[str]): una transaccion por linea, items
-                separados por `cls.item_sep`
-            min_supp (float): soporte minimo relativo, en (0, 1]
+        Args:
+            sc (SparkContext): Spark context to create broadcast variables
+            transactions (RDD[str]): one transaction per line, items separated by `cls.item_sep`
+            min_supp (float): minimum relative support, in (0, 1]
 
-        Retorna:
-            dict {itemset_key ('A-B-C'): soporte relativo} con todos los
-            itemsets frecuentes de cualquier longitud
+        Returns:
+            dict {itemset_key ('A-B-C'): relative support} with all the frequent itemsets of any length
         """
         transactions = cls._preprocess(sc, transactions, min_supp)
         totalTransacs = transactions.count()
         if totalTransacs == 0:
             return {}
 
-        # Fase 1: FreqItems() -- soporte de itemsets de longitud 1
+        # Phase 1: FreqItems() -- support of itemsets of length 1
         itemCounts = cls._count_items(transactions).collectAsMap()
         freqItemsets = {item: count / totalTransacs
                         for item, count in itemCounts.items()
@@ -76,7 +72,7 @@ class DApriori(object):
         globalFreqItemsets = dict(freqItemsets)
         currentLevelKeys = sorted(freqItemsets.keys())
 
-        # Fase 2: generacion iterativa de candidatos de longitud creciente
+        # Phase 2: iterative generation of candidates of increasing length
         while len(currentLevelKeys) > 1:
             candidateKeys = generate_candidates(currentLevelKeys)
             if not candidateKeys:
@@ -101,16 +97,15 @@ class DApriori(object):
 
     @classmethod
     def _preprocess(cls, sc, transactions, min_supp):
-        """Punto de extension para DAprioriTID: DApriori no transforma los datos."""
+        """Extension point for DAprioriTID: DApriori does not transform the data."""
         return transactions
 
 
 class DAprioriTID(DApriori):
     """
-    Variante DApriori-TID: tras la Fase 1, ordena los items por soporte
-    descendente y elimina de cada transaccion los items infrecuentes, de
-    forma que las fases siguientes operan sobre datos ya reducidos
-    (linea 10 del Algoritmo 2 del articulo).
+    DApriori-TID variant: after Phase 1, it sorts the items by descending support and removes the infrequent items
+    from every transaction, so that the following phases work on already reduced data (line 10 of Algorithm 2 of the
+    paper).
     """
 
     @classmethod
@@ -123,7 +118,7 @@ class DAprioriTID(DApriori):
         freqItems = {item: count for item, count in itemCounts.items()
                      if count / totalTransacs >= min_supp}
 
-        # Orden descendente de soporte: acelera el filtrado en fases siguientes
+        # Descending support order: speeds up the filtering in later phases
         orderedItems = sorted(freqItems, key=lambda item: freqItems[item], reverse=True)
         broadcastOrder = sc.broadcast(orderedItems)
 

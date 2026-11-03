@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-Itemsets de ALTA UTILIDAD: no los mas frecuentes, sino los que mas VALEN. Una transaccion lleva cantidades
-(3 botellas, 1 queso) y cada item tiene un beneficio unitario; la utilidad de un itemset en una transaccion
-que lo contiene es la suma de ``cantidad x beneficio`` de sus items, y su utilidad total, la suma sobre las
-transacciones. Un itemset es de alta utilidad (HUI) si su utilidad total alcanza ``min_utility``. Un par
-de productos caros puede ser un HUI sin ser frecuente, y uno muy frecuente de productos baratos, no serlo
-(Yao, Hamilton y Butz, 2004, "A foundational approach to mining itemset utilities from databases").
+HIGH-UTILITY itemsets: not the most frequent ones, but those that are worth the most. A transaction carries
+quantities (3 bottles, 1 cheese) and each item has a unit profit; the utility of an itemset in a transaction that
+contains it is the sum of ``quantity x profit`` of its items, and its total utility is the sum over the
+transactions. An itemset is high-utility (HUI) if its total utility reaches ``min_utility``. A pair of expensive
+products can be a HUI without being frequent, and a very frequent one of cheap products may not be (Yao, Hamilton
+and Butz, 2004, "A foundational approach to mining itemset utilities from databases").
 
-La utilidad NO es antimonotona (anadir un item puede subirla), asi que no se puede podar con ella. Se usa el
-algoritmo de dos fases (Liu, Liao y Choudhary, 2005): la utilidad ponderada por transaccion (TWU) de un
-itemset, la suma de las utilidades TOTALES de las transacciones que lo contienen, SI es antimonotona y
-acota por arriba la utilidad de todos sus superconjuntos; se buscan por niveles los itemsets con
-``TWU >= min_utility`` y de ellos se queda con los de utilidad real suficiente. Es exacto. Los beneficios
-deben ser >= 0 (con beneficios negativos la cota TWU deja de valer).
+Utility is NOT anti-monotone (adding an item can raise it), so it cannot be used for pruning. The two-phase
+algorithm (Liu, Liao and Choudhary, 2005) is used: the transaction-weighted utility (TWU) of an itemset, the sum of
+the TOTAL utilities of the transactions that contain it, IS anti-monotone and bounds from above the utility of all
+its supersets; the itemsets with ``TWU >= min_utility`` are searched level by level and, of those, the ones with
+enough real utility are kept. It is exact. Profits must be >= 0 (with negative profits the TWU bound no longer
+holds).
 
 @author Carlos Fernandez-Basso
 """
@@ -26,14 +26,14 @@ _EPS = 1e-9
 
 
 def utility_tables(quantities: Quantities, profits: Optional[Mapping[Any, float]]) -> Tuple[List[str], np.ndarray, np.ndarray]:
-    """Items, matriz de cantidades (transacciones x items) y matriz de utilidades (cantidad x beneficio)."""
+    """Items, quantity matrix (transactions x items) and utility matrix (quantity x profit)."""
     table = quantities.copy() if isinstance(quantities, pd.DataFrame) else pd.DataFrame(list(quantities))
     table.columns = [str(name) for name in table.columns]
     if not all(pd.api.types.is_numeric_dtype(table[name]) for name in table.columns):
         raise ValueError("las cantidades deben ser numericas")
     amounts = table.fillna(0.0).to_numpy(dtype=float)
     if (amounts < 0).any():
-        raise ValueError("las cantidades no pueden ser negativas")
+        raise ValueError("quantities cannot be negative")
     items = list(table.columns)
     if profits is None:
         gain = np.ones(len(items))
@@ -41,7 +41,7 @@ def utility_tables(quantities: Quantities, profits: Optional[Mapping[Any, float]
         by_name = {str(item): float(value) for item, value in profits.items()}
         missing = [item for item in items if item not in by_name]
         if missing:
-            raise ValueError("faltan los beneficios de {}".format(missing))
+            raise ValueError("the profits of {} are missing".format(missing))
         gain = np.array([by_name[item] for item in items])
         if (gain < 0).any():
             raise ValueError("los beneficios deben ser >= 0")
@@ -51,20 +51,20 @@ def utility_tables(quantities: Quantities, profits: Optional[Mapping[Any, float]
 def high_utility_itemsets(quantities: Quantities, profits: Optional[Mapping[Any, float]] = None, min_utility: float = 0.1,
                           absolute: bool = False, min_len: int = 1, max_len: Optional[int] = None) -> pd.DataFrame:
     """
-    Itemsets de alta utilidad (ver el docstring del modulo).
+    High-utility itemsets (see the module docstring).
 
-    Argumentos:
-        quantities: una transaccion por fila: un ``DataFrame`` (columnas = items, valores = cantidades; 0 o NaN
-            si no se compra) o una lista de diccionarios ``{item: cantidad}``
-        profits (dict, opcional): beneficio unitario de cada item (>= 0); por defecto 1 para todos
-        min_utility (float): utilidad minima: una fraccion en (0, 1] de la utilidad total de la base, o un
-            valor absoluto si `absolute` es ``True``
-        min_len, max_len (int): numero minimo (por defecto 1) y maximo de items de los itemsets devueltos
+    Args:
+        quantities: one transaction per row: a ``DataFrame`` (columns = items, values = quantities; 0 or NaN if not
+            bought) or a list of dictionaries ``{item: quantity}``
+        profits (dict, optional): unit profit of each item (>= 0); 1 for all by default
+        min_utility (float): minimum utility: a fraction in (0, 1] of the total utility of the database, or an
+            absolute value if `absolute` is ``True``
+        min_len, max_len (int): minimum (default 1) and maximum number of items of the returned itemsets
 
-    Retorna:
-        pandas.DataFrame con 'utility', 'itemsets' (``frozenset``), 'support' (fraccion de transacciones que
-        lo contienen) y 'length', por utilidad decreciente; ``attrs`` lleva 'n_transactions', 'total_utility'
-        y 'min_utility' (absoluta)
+    Returns:
+        pandas.DataFrame with 'utility', 'itemsets' (``frozenset``), 'support' (fraction of transactions that
+        contain it) and 'length', by decreasing utility; ``attrs`` holds 'n_transactions', 'total_utility' and
+        'min_utility' (absolute)
     """
     items, amounts, utilities = utility_tables(quantities, profits)
     total_rows = len(amounts)
@@ -76,14 +76,14 @@ def high_utility_itemsets(quantities: Quantities, profits: Optional[Mapping[Any,
         threshold = float(min_utility)
     else:
         if not 0 < min_utility <= 1:
-            raise ValueError("min_utility debe estar en (0, 1] (una fraccion de la utilidad total)")
+            raise ValueError("min_utility must be in (0, 1] (a fraction of the total utility)")
         threshold = min_utility * total_utility
     if max_len is not None and max_len < 1:
         raise ValueError("max_len debe ser >= 1")
     present = amounts > 0
     cutoff = threshold - _EPS * max(1.0, abs(threshold))
     found: List[Tuple[float, Tuple[int, ...], float]] = []
-    if threshold <= 0:                      # base vacia o sin beneficio: ningun itemset tiene utilidad que valga
+    if threshold <= 0:                      # empty database or no profit: no itemset has any utility
         items = []
 
     level: Dict[Tuple[int, ...], np.ndarray] = {}
